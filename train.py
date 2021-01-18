@@ -172,16 +172,18 @@ def main():
     run(gru, lr, [[train_x], [test_x]], [train_y, test_y],
         n_ephocs, scalers, grid, "gru", erros)
 
-    if os.path.exists("erros.txt"):
-        with open("erros.txt", "r") as f:
-            json_dat = json.load(f)
+    if os.path.exists("erros.json"):
+        with open("erros.json") as json_file:
+            json_dat = json.load(json_file)
 
         for key, value in erros.items():
             json_dat[key].append(value)
 
+        with open("erros.json", "w") as json_file:
+            json.dump(json_dat, json_file)
     else:
-        with open("erros.txt", "w") as f:
-            f.write(json.dumps(erros, sort_keys=True, indent=4, separators=(',', ': ')))
+        with open("erros.json", "w") as json_file:
+            json.dump(erros, json_file)
 
 
 if __name__ == '__main__':
