@@ -69,13 +69,13 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
         #print("epohc : {} loss : {}".format(i, math.sqrt(loss)))
 
 
-def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros):
+def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros, max_len):
 
     erros[name] = list()
     train_x, test_x = inputs[0], inputs[1]
     train_y, test_y = outputs[0], outputs[1]
     train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
-    rmse, mape = evaluate(model, test_x, scalers, grid, test_y, 28)
+    rmse, mape = evaluate(model, test_x, scalers, grid, test_y, max_len)
     erros[name].append(rmse.item())
     erros[name].append(mape.item())
 
@@ -83,11 +83,16 @@ def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros):
 def main():
 
     inputs = pickle.load(open("inputs.p", "rb"))
+    print(inputs.shape)
     outputs = pickle.load(open("outputs.p", "rb"))
     grid = pickle.load(open("grid.p", "rb"))
     scalers = pickle.load(open("scalers.pkl", "rb"))
 
+    max_len = min(len(inputs), 1000)
+    inputs = inputs[-max_len:, :, :, :]
+    outputs = outputs[-max_len:, :, :]
     trn_len = int(inputs.shape[0] * 0.8)
+    tst_len = inputs.shape[0] - trn_len
 
     train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
     test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
@@ -99,25 +104,22 @@ def main():
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 28
-    input_size = 144
+    output_size = 1
+    input_size = 9
     lr = 0.0001
     n_ephocs = 10
 
-    max_len = 1128
-    test_len = 128
-    train_x, train_y = train_x[-max_len:-test_len, :, :, :], train_y[-max_len:-test_len, :, :]
-    test_x, test_y = test_x[-test_len:, :, :, :], test_y[-test_len:, :, :]
-
-    en_l = int(.8 * (max_len - test_len))
-    de_l = (max_len - test_len) - en_l
+    en_l = int(.8 * trn_len)
+    de_l = trn_len - en_l
     x_en = train_x[-en_l:-de_l, :, :, :]
     x_de = train_x[-de_l:, :, :, :]
     y_true = train_y[-de_l:, :, :]
 
-    x_en_t = test_x[-128:-28, :, :, :]
-    x_de_t = test_x[-28:, :, :, :]
-    y_true_t = test_y[-28:, :, :]
+    en_l = int(.8 * tst_len)
+    de_l = tst_len - en_l
+    x_en_t = test_x[-en_l:-de_l, :, :, :]
+    x_de_t = test_x[-de_l:, :, :, :]
+    y_true_t = test_y[-de_l:, :, :]
 
     erros = dict()
 
@@ -128,10 +130,24 @@ def main():
                                     out_channel=out_channel,
                                     kernel=kernel,
                                     n_layers=n_layers,
-                                    output_size=output_size)
+                                    output_size=output_size,
+                                    pos_enc="rel")
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "deepRelST", erros)
+        n_ephocs, scalers, grid, "deepRelST", erros, de_l)
+
+    attn_model = DeepRelativeST(d_model=d_model,
+                                    dff=dff,
+                                    n_h=n_head,
+                                    in_channel=in_channel,
+                                    out_channel=out_channel,
+                                    kernel=kernel,
+                                    n_layers=n_layers,
+                                    output_size=output_size,
+                                    pos_enc="sincos")
+
+    run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
+        n_ephocs, scalers, grid, "attn", erros, de_l)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -142,7 +158,7 @@ def main():
                        rnn_type="LSTM")
 
     run(lstm_conv, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "LSConv", erros)
+        n_ephocs, scalers, grid, "LSConv", erros, de_l)
 
     gru_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -153,7 +169,7 @@ def main():
                        rnn_type="gru")
 
     run(gru_conv, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "GruConv", erros)
+        n_ephocs, scalers, grid, "GruConv", erros, de_l)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -162,7 +178,7 @@ def main():
                rnn_type="LSTM")
 
     run(lstm, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "lstm", erros)
+        n_ephocs, scalers, grid, "lstm", erros, de_l)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -171,7 +187,7 @@ def main():
               rnn_type="GRU")
 
     run(gru, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "gru", erros)
+        n_ephocs, scalers, grid, "gru", erros, de_l)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:

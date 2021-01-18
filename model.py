@@ -37,10 +37,10 @@ class Conv(nn.Module):
 
 class EncoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, d_r=0.1):
 
         super(EncoderLayer, self).__init__()
-        self.attn = MultiheadAttention(n_heads, d_model)
+        self.attn = MultiheadAttention(n_heads, d_model, pos_emd)
         self.dropout1 = nn.Dropout(d_r)
         self.dropout2 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
@@ -63,15 +63,15 @@ class EncoderLayer(nn.Module):
 
 class DecoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, d_r=0.1):
 
         super(DecoderLayer, self).__init__()
 
-        self.mask_attn = MultiheadAttention(n_heads, d_model)
+        self.mask_attn = MultiheadAttention(n_heads, d_model, pos_emd)
         self.dropout1 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
 
-        self.attn = MultiheadAttention(n_heads, d_model, self_attn=False)
+        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, self_attn=False)
         self.dropout2 = nn.Dropout(d_r)
         self.norm2 = nn.LayerNorm(d_model)
 
@@ -101,7 +101,7 @@ class DecoderLayer(nn.Module):
 
 
 class MultiheadAttention(nn.Module):
-    def __init__(self, n_heads, d_model, self_attn=True):
+    def __init__(self, n_heads, d_model, pos_enc, self_attn=True):
 
         super(MultiheadAttention, self).__init__()
         self.n_heads = n_heads
@@ -109,6 +109,7 @@ class MultiheadAttention(nn.Module):
         self.depth = int(d_model / n_heads)
         self.softmax = nn.Softmax()
         self.self_attn = self_attn
+        self.pos_enc = pos_enc
         self.w_qs = nn.Linear(d_model, n_heads * self.depth, bias=False)
         self.w_ks = nn.Linear(d_model, n_heads * self.depth, bias=False)
         self.w_vs = nn.Linear(d_model, n_heads * self.depth, bias=False)
@@ -138,7 +139,12 @@ class MultiheadAttention(nn.Module):
 
             bmm_qk = bmm_qk + mask
 
-        bmm_qk = bmm_qk + rel_pos(q)
+        pos = torch.zeros(bmm_qk.shape)
+
+        if self.pos_enc == "rel":
+            pos = rel_pos(q)
+
+        bmm_qk = bmm_qk + pos
         scaled_product = bmm_qk
         attn_weights = self.softmax(scaled_product)
 
@@ -164,24 +170,46 @@ class RelativePositionalEmbed(nn.Module):
         l = i + j - 1
         x = x.view(*_, -1)
         zero_pad = torch.zeros(*_, -x.size(-1) % l)
-        shiftted = torch.cat([x, zero_pad], -1).view(*_, -1, l)
-        skewd = shiftted[..., :i, i - 1:]
+        shifted = torch.cat([x, zero_pad], -1).view(*_, -1, l)
+        skewd = shifted[..., :i, i - 1:]
         return skewd
+
+
+class PositionalEncoder(nn.Module):
+
+    def __init__(self, d_model, seq_len):
+        super(PositionalEncoder, self).__init__()
+
+        self.pe = torch.zeros(seq_len, d_model)
+        position = torch.arange(0., seq_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0., d_model, 2) *
+                             -(math.log(10000.0) / d_model))
+        self.pe[:, 0::2] = torch.sin(position * div_term)
+        self.pe[:, 1::2] = torch.cos(position * div_term)
+        self.pe = self.pe.unsqueeze(0)
+
+    def forward(self, x):
+        b, n, d = x.shape
+        self.pe = self.pe.reshape(b, 1, d)
+        x = x + self.pe
+        return x
 
 
 class DeepRelativeST(nn.Module):
 
-    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, output_size):
+    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, output_size, pos_enc):
         super(DeepRelativeST, self).__init__()
 
         self.convs = Conv(in_channel, out_channel, kernel, n_layers)
         self.lstm = nn.LSTM(d_model, d_model, n_layers, dropout=0.1)
         self.hidden_size = d_model
-        self.encoders = [EncoderLayer(n_h, d_model, dff) for _ in range(n_layers)]
-        self.decoders = [DecoderLayer(n_h, d_model, dff) for _ in range(n_layers)]
+        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc) for _ in range(n_layers)]
+        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc) for _ in range(n_layers)]
         self.n_layers = n_layers
         self.softmax = nn.Softmax()
         self.linear = nn.Linear(d_model, output_size)
+        self.d_model = d_model
+        self.pos_enc = pos_enc
 
     def forward(self, X_en, X_de, hidden=None):
 
@@ -189,9 +217,15 @@ class DeepRelativeST(nn.Module):
         x_p_de = self.convs(X_de)
         b, d, h, w = x_p_en.shape
         x_en = torch.reshape(x_p_en, (b, h * w, d))
+        if self.pos_enc == "sincos":
+            pos_enc = PositionalEncoder(self.d_model, x_en.shape[0])
+            x_en = pos_enc(x_en)
 
         b, d, h, w = x_p_de.shape
         x_de = torch.reshape(x_p_de, (b, h * w, d))
+        if self.pos_enc == "sincos":
+            pos_enc = PositionalEncoder(self.d_model, x_de.shape[0])
+            x_de = pos_enc(x_de)
 
         '''if hidden is None:
             hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size)
