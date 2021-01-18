@@ -22,13 +22,13 @@ class Data:
         self.sites_data = site_data
         self.ts = time_steps
         self.n_seasons = 4
-        self.nf = n_features + self.n_seasons
+        self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 1
+        self.window = 28
         self.grid = grid
-        self.inputs = torch.zeros((self.ts, self.nf * self.window, self.I, self.J))
-        self.outputs = torch.zeros((self.ts, 1, self.I, self.J))
+        self.inputs = torch.zeros((self.ts, self.nf * self.window + self.n_seasons, self.I, self.J))
+        self.outputs = torch.zeros((self.ts, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))
@@ -45,7 +45,7 @@ class Data:
             scalers_per_site = Scaler(abr)
             self.scalers.append(scalers_per_site)
 
-            for f in range(self.nf - self.n_seasons):
+            for f in range(self.nf):
 
                 stScaler = MinMaxScaler()
                 dat = df_site.iloc[-self.ts:, f + 1]
@@ -58,7 +58,7 @@ class Data:
                 self.inputs[:, f:f+self.window, i, j] = in_data
                 self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[:self.ts, :])
                 if f == 2:
-                    self.outputs[:, 0, i, j] = out_data
+                    self.outputs[:, :self.window, i, j] = out_data
 
     def create_one_hot(self, df):
 
@@ -73,9 +73,9 @@ class Data:
 
         ln = len(data)
         data_2d_in = torch.zeros((ln, self.window))
-        data_out = torch.zeros(ln)
+        data_out = torch.zeros((ln, self.window))
         for i in range(ln):
-            if i + self.window < ln - 1:
+            if i + self.window < ln - self.window:
                 data_2d_in[i, :] = data[i:i+self.window]
                 data_out[i] = data[i+self.window + 1]
         return data_2d_in, data_out

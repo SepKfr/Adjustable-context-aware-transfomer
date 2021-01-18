@@ -99,8 +99,8 @@ def main():
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 1
-    input_size = 9
+    output_size = 28
+    input_size = 144
     lr = 0.0001
     n_ephocs = 10
 
