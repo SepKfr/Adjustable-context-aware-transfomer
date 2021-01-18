@@ -8,7 +8,8 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 from baselines import RNConv, RNN
-import math
+import json
+import os
 
 
 def inverse_transform(data, scalers, grid):
@@ -68,15 +69,14 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
         #print("epohc : {} loss : {}".format(i, math.sqrt(loss)))
 
 
-def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, n_times, name, erros):
+def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros):
 
     erros[name] = list()
     train_x, test_x = inputs[0], inputs[1]
     train_y, test_y = outputs[0], outputs[1]
-    for i in range(n_times):
-        train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
-        rmse, mape = evaluate(model, test_x, scalers, grid, test_y, 28)
-        erros[name].append([rmse, mape])
+    train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
+    rmse, mape = evaluate(model, test_x, scalers, grid, test_y, 28)
+    erros[name].append([rmse, mape])
 
 
 def main():
@@ -130,7 +130,7 @@ def main():
                                     output_size=output_size)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, 50, "deepRelST", erros)
+        n_ephocs, scalers, grid, "deepRelST", erros)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -141,7 +141,7 @@ def main():
                        rnn_type="LSTM")
 
     run(lstm_conv, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, 50, "LSConv", erros)
+        n_ephocs, scalers, grid, "LSConv", erros)
 
     gru_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -152,7 +152,7 @@ def main():
                        rnn_type="gru")
 
     run(gru_conv, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, 50, "GruConv", erros)
+        n_ephocs, scalers, grid, "GruConv", erros)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -161,7 +161,7 @@ def main():
                rnn_type="LSTM")
 
     run(lstm, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, 50, "lstm", erros)
+        n_ephocs, scalers, grid, "lstm", erros)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -170,30 +170,18 @@ def main():
               rnn_type="GRU")
 
     run(gru, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, 50, "gru", erros)
+        n_ephocs, scalers, grid, "gru", erros)
 
-    stdmean = dict()
+    if os.path.exists("erros.txt"):
+        with open("erros.txt", "r") as f:
+            json_dat = json.load(f.read())
 
-    for key, value in erros.items():
-        rmses = list()
-        mapes = list()
-        for item in value:
-            rmses.append(item[0])
-            mapes.append(item[1])
+        for key, value in erros.items():
+            json_dat[key].append(value)
 
-        rmses = np.array(rmses)
-        mapes = np.array(mapes)
-
-        mean_rmse = np.mean(rmses)
-        std_rmse = np.std(rmses)
-
-        mean_mapes = np.mean(mapes)
-        std_mapes = np.std(mapes)
-
-        stdmean[key] = [mean_rmse, std_rmse, mean_mapes, std_mapes]
-
-    for key, value in stdmean.items():
-        print("{} rmse : {} +- {} mape: {} +- {}".format(key, value[0], value[1], value[2], value[3]))
+    else:
+        with open("erros.txt", "w") as f:
+            f.write(json.dumps(erros, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
 if __name__ == '__main__':

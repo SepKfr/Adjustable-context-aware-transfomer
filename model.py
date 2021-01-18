@@ -183,7 +183,6 @@ class DeepRelativeST(nn.Module):
         self.softmax = nn.Softmax()
         self.linear = nn.Linear(d_model, output_size)
 
-
     def forward(self, X_en, X_de, hidden=None):
 
         x_p_en = self.convs(X_en)
