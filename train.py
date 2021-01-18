@@ -174,7 +174,7 @@ def main():
 
     if os.path.exists("erros.txt"):
         with open("erros.txt", "r") as f:
-            json_dat = json.load(f.read())
+            json_dat = json.load(f)
 
         for key, value in erros.items():
             json_dat[key].append(value)
