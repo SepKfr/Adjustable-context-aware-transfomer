@@ -17,12 +17,16 @@ class FeedForward(nn.Module):
 
 class Conv(nn.Module):
 
-    def __init__(self, in_channel, out_channel, kernel, n_layers, d_r=0.1):
+    def __init__(self, in_channel, out_channel, kernel, n_layers, local=True, d_r=0.1):
 
         super(Conv, self).__init__()
         self.n_layers = n_layers
+        kernel2 = (3, 3)
+        self.local = local
         self.conv = [nn.Conv2d(in_channel, out_channel, kernel) for _ in range(n_layers)]
-        self.dropout = [nn.Dropout(d_r) for _ in range(n_layers)]
+        self.conv2 = [nn.Conv2d(out_channel, out_channel, kernel2, padding=1) for _ in range(n_layers)]
+        self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
+        self.dropout2 = [nn.Dropout(d_r) for _ in range(n_layers)]
 
     def forward(self, X):
 
@@ -30,7 +34,12 @@ class Conv(nn.Module):
 
         for i in range(self.n_layers):
             output = self.conv[i](X)
-            output = self.dropout[i](output)
+            output = self.dropout1[i](output)
+
+        if self.local is True:
+            for i in range(self.n_layers):
+                output = self.conv2[i](output)
+                output = self.dropout2[i](output)
 
         return output
 
@@ -107,7 +116,7 @@ class MultiheadAttention(nn.Module):
         self.n_heads = n_heads
         self.d_model = d_model
         self.depth = int(d_model / n_heads)
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=0)
         self.self_attn = self_attn
         self.pos_enc = pos_enc
         self.w_qs = nn.Linear(d_model, n_heads * self.depth, bias=False)
@@ -197,16 +206,16 @@ class PositionalEncoder(nn.Module):
 
 class DeepRelativeST(nn.Module):
 
-    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, output_size, pos_enc):
+    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, local, output_size, pos_enc):
         super(DeepRelativeST, self).__init__()
 
-        self.convs = Conv(in_channel, out_channel, kernel, n_layers)
+        self.convs = Conv(in_channel, out_channel, kernel, n_layers, local)
         self.lstm = nn.LSTM(d_model, d_model, n_layers, dropout=0.1)
         self.hidden_size = d_model
         self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc) for _ in range(n_layers)]
         self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc) for _ in range(n_layers)]
         self.n_layers = n_layers
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=0)
         self.linear = nn.Linear(d_model, output_size)
         self.d_model = d_model
         self.pos_enc = pos_enc

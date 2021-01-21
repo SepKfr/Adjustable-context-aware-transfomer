@@ -25,7 +25,7 @@ class Data:
         self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 1
+        self.window = 96
         self.grid = grid
         self.ln = int(self.ts / (self.window * 2))
         self.inputs = torch.zeros((self.ln, self.nf * self.window + self.n_seasons, self.I, self.J))
@@ -75,10 +75,12 @@ class Data:
         ln = len(data)
         data_2d_in = torch.zeros((self.ln, self.window))
         data_out = torch.zeros((self.ln, self.window))
-        for i in range(ln, self.window*2):
-            if i + self.window < ln - self.window:
-                data_2d_in[i, :] = data[i:i+self.window]
-                data_out[i] = data[i+self.window:i+self.window * 2]
+        j = 0
+        for i in range(0, ln, self.window*2):
+            if j < self.ln:
+                data_2d_in[j, :] = data[i:i+self.window]
+                data_out[j, :] = data[i+self.window:i+self.window * 2]
+                j += 1
         return data_2d_in, data_out
 
 
