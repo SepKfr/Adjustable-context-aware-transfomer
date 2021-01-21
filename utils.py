@@ -9,4 +9,4 @@ class Metrics:
         self.rmse = math.sqrt(self.mse(y_true, y_pred))
         y_true_den = y_true.clone()
         y_true_den[y_true == 0] = 1
-        self.mape = 100 * torch.sum(abs(y_true - y_pred) / y_true_den)
+        self.mape = torch.sum(abs(y_true - y_pred) / y_true_den)

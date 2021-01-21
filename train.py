@@ -30,8 +30,6 @@ def inverse_transform(data, scalers, grid):
 
 def evaluate(model, inputs, scalers, grid, y_true, max_num):
 
-    rmses = dict()
-    mapes = dict()
     y_true_in, locs = inverse_transform(y_true, scalers, grid)
 
     model.eval()
@@ -44,13 +42,9 @@ def evaluate(model, inputs, scalers, grid, y_true, max_num):
     outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
     outputs_in, _ = inverse_transform(outputs, scalers, grid)
 
-    for loc in locs:
+    metrics = Metrics(outputs_in[-max_num:, :, :], y_true_in[-max_num:, :, :])
+    return metrics.rmse, metrics.mape
 
-        metrics = Metrics(outputs_in[-max_num:, :, loc], y_true_in[-max_num:, :, loc])
-        rmses[loc] = metrics.rmse
-        mapes[loc] = metrics.mape
-
-    return rmses, mapes
 
 
 def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
@@ -83,8 +77,8 @@ def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros, max_le
     train_y, test_y = outputs[0], outputs[1]
     train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
     rmses, mapes= evaluate(model, test_x, scalers, grid, test_y, max_len)
-    erros[name].append(rmses[1])
-    erros[name].append(mapes[1].item())
+    erros[name].append(rmses)
+    erros[name].append(mapes.item())
 
 
 def main():
