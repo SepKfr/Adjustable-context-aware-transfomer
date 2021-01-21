@@ -12,9 +12,13 @@ def main():
         for key, values in json_dat.items():
 
             erros = np.array(list(values))
-            mean = erros.mean()
-            std = erros.std()
-            f_erros[key] = (mean, std)
+            rmse = erros[0::2]
+            mape = erros[1::2]
+            rmse_mean = rmse.mean()
+            rmse_std = rmse.std()
+            mape_mean = mape.mean()
+            mape_std = mape.std()
+            f_erros[key] = (rmse_mean, rmse_std, mape_mean, mape_std)
 
     with open("f_erros.json", "w") as json_file:
         json.dump(f_erros, json_file)
