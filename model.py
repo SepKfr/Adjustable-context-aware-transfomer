@@ -46,10 +46,10 @@ class Conv(nn.Module):
 
 class EncoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, window, d_r=0.1):
 
         super(EncoderLayer, self).__init__()
-        self.attn = MultiheadAttention(n_heads, d_model, pos_emd)
+        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, window)
         self.dropout1 = nn.Dropout(d_r)
         self.dropout2 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
@@ -72,15 +72,15 @@ class EncoderLayer(nn.Module):
 
 class DecoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, window, d_r=0.1):
 
         super(DecoderLayer, self).__init__()
 
-        self.mask_attn = MultiheadAttention(n_heads, d_model, pos_emd)
+        self.mask_attn = MultiheadAttention(n_heads, d_model, pos_emd, window)
         self.dropout1 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
 
-        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, self_attn=False)
+        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, window, self_attn=False)
         self.dropout2 = nn.Dropout(d_r)
         self.norm2 = nn.LayerNorm(d_model)
 
@@ -110,12 +110,13 @@ class DecoderLayer(nn.Module):
 
 
 class MultiheadAttention(nn.Module):
-    def __init__(self, n_heads, d_model, pos_enc, self_attn=True):
+    def __init__(self, n_heads, d_model, pos_enc, window, self_attn=True):
 
         super(MultiheadAttention, self).__init__()
         self.n_heads = n_heads
         self.d_model = d_model
         self.depth = int(d_model / n_heads)
+        self.window = window
         self.softmax = nn.Softmax(dim=0)
         self.self_attn = self_attn
         self.pos_enc = pos_enc
@@ -135,10 +136,31 @@ class MultiheadAttention(nn.Module):
         scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, mask)
         return scaled_attn, attn_weights
 
-    def scaled_dot_product(self, q, k, v, mask=False):
+    @staticmethod
+    def get_wnd_values(shape, window, tns):
+
+        values = torch.zeros(shape[0], shape[1], shape[2] * window, shape[3])
+        for i in range(shape[2] - window):
+            values[:, :, i, :] = tns[:, :, i + window, :]
+        return values
+
+    def scaled_dot_product(self, q, k, v, window=1, mask=False):
+
+        q_s, k_s, v_s = q.shape, k.shape, v.shape
+
+        if window > 1:
+            q = self.get_wnd_values(q_s, window, q)
+            k = self.get_wnd_values(k_s, window, k)
+            v = self.get_wnd_values(v_s, window, v)
+        else:
+            q, k, v = q, k, v
 
         k_t = k.transpose(2, 3)
         bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
+        emd1 = nn.Embedding(window * k_s[2], k_s[2])
+        emd2 = nn.Embedding(window * q_s[2], q_s[2])
+        qk = emd1(bmm_qk.to().long())
+        qk = emd2(qk.transpose(2, 3).to().long())
         q_shape = q.shape
         rel_pos = RelativePositionalEmbed(q, k_t)
 
@@ -146,7 +168,7 @@ class MultiheadAttention(nn.Module):
             mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1) * \
                    (-torch.finfo().max)
 
-            bmm_qk = bmm_qk + mask
+            bmm_qk = qk + mask
 
         pos = torch.zeros(bmm_qk.shape)
 
@@ -158,7 +180,6 @@ class MultiheadAttention(nn.Module):
         attn_weights = self.softmax(scaled_product)
 
         output = torch.matmul(attn_weights, v)
-
         return output, attn_weights
 
 
@@ -206,14 +227,15 @@ class PositionalEncoder(nn.Module):
 
 class DeepRelativeST(nn.Module):
 
-    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, local, output_size, pos_enc):
+    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, local, output_size, pos_enc,
+                 window):
         super(DeepRelativeST, self).__init__()
 
         self.convs = Conv(in_channel, out_channel, kernel, n_layers, local)
         self.lstm = nn.LSTM(d_model, d_model, n_layers, dropout=0.1)
         self.hidden_size = d_model
-        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc) for _ in range(n_layers)]
-        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc) for _ in range(n_layers)]
+        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, window) for _ in range(n_layers)]
+        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, window) for _ in range(n_layers)]
         self.n_layers = n_layers
         self.softmax = nn.Softmax(dim=0)
         self.linear = nn.Linear(d_model, output_size)

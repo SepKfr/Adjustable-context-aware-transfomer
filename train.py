@@ -104,8 +104,8 @@ def main():
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 96
-    input_size = 484
+    output_size = 1
+    input_size = 9
     lr = 0.0001
     n_ephocs = 10
 
@@ -132,7 +132,8 @@ def main():
                                     n_layers=n_layers,
                                     local=False,
                                     output_size=output_size,
-                                    pos_enc="rel")
+                                    pos_enc="rel",
+                                    window=7)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "deepRelST", erros, 1)
@@ -146,7 +147,8 @@ def main():
                                     n_layers=n_layers,
                                     local=False,
                                     output_size=output_size,
-                                    pos_enc="sincos")
+                                    pos_enc="rel",
+                                    window=1)
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "attnconv", erros, 1)

@@ -25,7 +25,7 @@ class Data:
         self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 96
+        self.window = 1
         self.grid = grid
         self.ln = int(self.ts / (self.window * 2))
         self.inputs = torch.zeros((self.ln, self.nf * self.window + self.n_seasons, self.I, self.J))
