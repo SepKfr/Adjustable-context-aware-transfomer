@@ -133,7 +133,7 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
 
-        scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, mask)
+        scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, self.window, mask)
         return scaled_attn, attn_weights
 
     @staticmethod
@@ -157,10 +157,10 @@ class MultiheadAttention(nn.Module):
 
         k_t = k.transpose(2, 3)
         bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
-        emd1 = nn.Embedding(window * k_s[2], k_s[2])
-        emd2 = nn.Embedding(window * q_s[2], q_s[2])
-        qk = emd1(bmm_qk.to().long())
-        qk = emd2(qk.transpose(2, 3).to().long())
+        linear1 = nn.Linear(window * k_s[2], k_s[2])
+        linear2 = nn.Linear(window * q_s[2], q_s[2])
+        qk = linear1(bmm_qk)
+        qk = linear2(qk.transpose(2, 3))
         q_shape = q.shape
         rel_pos = RelativePositionalEmbed(q, k_t)
 
