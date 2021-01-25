@@ -46,13 +46,13 @@ def evaluate(model, inputs, scalers, grid, y_true, max_num):
     return metrics.rmse, metrics.mape
 
 
-
 def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
     y_true_in, _ = inverse_transform(y_true, scalers, grid)
     optimizer = Adam(model.parameters(), lr)
     criterion = nn.MSELoss()
 
     model.train()
+    model.float()
 
     for i in range(n_ephocs):
         optimizer.zero_grad()
@@ -66,6 +66,7 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
         loss = criterion(outputs_in, y_true_in)
         loss = Variable(loss, requires_grad=True)
         loss.backward()
+        model.float()
         optimizer.step()
         #print("epohc : {} loss : {}".format(i, math.sqrt(loss)))
 
@@ -133,7 +134,7 @@ def main():
                                     local=False,
                                     output_size=output_size,
                                     pos_enc="rel",
-                                    window=2)
+                                    window=7)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "deepRelST", erros, 1)
