@@ -77,7 +77,7 @@ def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros, max_le
     train_y, test_y = outputs[0], outputs[1]
     train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
     rmses, mapes= evaluate(model, test_x, scalers, grid, test_y, max_len)
-    erros[name].append(rmses)
+    erros[name].append(rmses.item())
     erros[name].append(mapes.item())
 
 
@@ -133,7 +133,7 @@ def main():
                                     local=False,
                                     output_size=output_size,
                                     pos_enc="rel",
-                                    window=7)
+                                    window=2)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "deepRelST", erros, 1)
