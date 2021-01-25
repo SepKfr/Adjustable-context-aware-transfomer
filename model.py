@@ -93,7 +93,7 @@ class DecoderLayer(nn.Module):
         mask_attn_out, _ = self.mask_attn(x, x, x, mask=True)
         mask_attn_out = self.dropout1(mask_attn_out)
         a_s = mask_attn_out.shape
-        attn = mask_attn_out.view(a_s[2], a_s[0], -1)
+        attn = mask_attn_out.reshape(a_s[2], a_s[0], -1)
         mask_attn_out = self.norm1(x + attn)
 
         attn_out, _ = self.attn(mask_attn_out, enc_out, enc_out)
@@ -146,21 +146,16 @@ class MultiheadAttention(nn.Module):
 
     def scaled_dot_product(self, q, k, v, window=1, mask=False):
 
-        q_s, k_s, v_s = q.shape, k.shape, v.shape
-
+        q_s = q.shape
         if window > 1:
-            q = self.get_wnd_values(q_s, window, q)
-            k = self.get_wnd_values(k_s, window, k)
-            v = self.get_wnd_values(v_s, window, v)
+            q = self.get_wnd_values(q.shape, window, q)
+            k = self.get_wnd_values(k.shape, window, k)
+            v = self.get_wnd_values(v.shape, window, v)
         else:
             q, k, v = q, k, v
 
         k_t = k.transpose(2, 3)
         bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
-        linear1 = nn.Linear(window * k_s[2], k_s[2])
-        linear2 = nn.Linear(window * q_s[2], q_s[2])
-        qk = linear1(bmm_qk)
-        qk = linear2(qk.transpose(2, 3))
         q_shape = q.shape
         rel_pos = RelativePositionalEmbed(q, k_t)
 
@@ -168,7 +163,7 @@ class MultiheadAttention(nn.Module):
             mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1) * \
                    (-torch.finfo().max)
 
-            bmm_qk = qk + mask
+            bmm_qk = bmm_qk + mask
 
         pos = torch.zeros(bmm_qk.shape)
 
@@ -180,6 +175,9 @@ class MultiheadAttention(nn.Module):
         attn_weights = self.softmax(scaled_product)
 
         output = torch.matmul(attn_weights, v)
+        linear = nn.Linear(output.shape[2], q_s[2])
+        output = linear(output.transpose(2, 3)).transpose(2, 3)
+
         return output, attn_weights
 
 
