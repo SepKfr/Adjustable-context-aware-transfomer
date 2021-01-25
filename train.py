@@ -33,6 +33,7 @@ def evaluate(model, inputs, scalers, grid, y_true, max_num):
     y_true_in, locs = inverse_transform(y_true, scalers, grid)
 
     model.eval()
+
     if len(inputs) == 2:
         outputs = model(inputs[0], inputs[1])
     else:
@@ -52,7 +53,6 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
     criterion = nn.MSELoss()
 
     model.train()
-    model.float()
 
     for i in range(n_ephocs):
         optimizer.zero_grad()
@@ -66,7 +66,6 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
         loss = criterion(outputs_in, y_true_in)
         loss = Variable(loss, requires_grad=True)
         loss.backward()
-        model.float()
         optimizer.step()
         #print("epohc : {} loss : {}".format(i, math.sqrt(loss)))
 
@@ -98,8 +97,8 @@ def main():
     train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
     test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
 
-    d_model = 240
-    dff = 560
+    d_model = 8
+    dff = 32
     n_head = 4
     in_channel = train_x.shape[1]
     out_channel = d_model
@@ -134,10 +133,10 @@ def main():
                                     local=False,
                                     output_size=output_size,
                                     pos_enc="rel",
-                                    window=7)
+                                    window=3)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "deepRelST", erros, 1)
+        n_ephocs, scalers, grid, "conattn", erros, de_l)
 
     attn_model = DeepRelativeST(d_model=d_model,
                                     dff=dff,
@@ -152,7 +151,7 @@ def main():
                                     window=1)
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "attnconv", erros, 1)
+        n_ephocs, scalers, grid, "attn", erros, de_l)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -163,7 +162,7 @@ def main():
                        rnn_type="LSTM")
 
     run(lstm_conv, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "LSConv", erros, 1)
+        n_ephocs, scalers, grid, "LSConv", erros, de_l)
 
     gru_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -174,7 +173,7 @@ def main():
                        rnn_type="gru")
 
     run(gru_conv, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "GruConv", erros, 1)
+        n_ephocs, scalers, grid, "GruConv", erros, de_l)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -183,7 +182,7 @@ def main():
                rnn_type="LSTM")
 
     run(lstm, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "lstm", erros, 1)
+        n_ephocs, scalers, grid, "lstm", erros, de_l)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -192,7 +191,7 @@ def main():
               rnn_type="GRU")
 
     run(gru, lr, [[train_x], [test_x]], [train_y, test_y],
-        n_ephocs, scalers, grid, "gru", erros, 1)
+        n_ephocs, scalers, grid, "gru", erros, de_l)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
