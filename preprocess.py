@@ -3,7 +3,7 @@ import pandas as pd
 import openpyxl
 import torch
 import pickle
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 
 class Scaler:
@@ -25,10 +25,10 @@ class Data:
         self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 1
+        self.window = 96
         self.grid = grid
         self.ln = int(self.ts / (self.window * 2))
-        self.inputs = torch.zeros((self.ln, self.nf * self.window + self.n_seasons, self.I, self.J))
+        self.inputs = torch.zeros((self.ln, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
         self.outputs = torch.zeros((self.ln, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
@@ -48,7 +48,7 @@ class Data:
 
             for f in range(self.nf):
 
-                stScaler = MinMaxScaler()
+                stScaler = StandardScaler()
                 dat = df_site.iloc[-self.ts:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
                 stScaler.fit(dat)
@@ -56,8 +56,9 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-                self.inputs[:, f:f+self.window, i, j] = in_data
-                self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ln:, :])
+                if f != 2:
+                    self.inputs[:, f:f+self.window, i, j] = in_data
+                    self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ln:, :])
                 if f == 2:
                     self.outputs[:, :self.window, i, j] = out_data
 
@@ -200,7 +201,7 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2015-05-15"
+        start_date = "2014-05-15"
         end_date = "2016-05-15"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]

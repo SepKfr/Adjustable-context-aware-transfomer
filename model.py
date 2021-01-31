@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import math
 import torch.nn.functional as F
+import collections
 
 
 class FeedForward(nn.Module):
@@ -46,15 +47,16 @@ class Conv(nn.Module):
 
 class EncoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, window, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.1):
 
         super(EncoderLayer, self).__init__()
-        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, window)
+        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type)
         self.dropout1 = nn.Dropout(d_r)
         self.dropout2 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.ffn = FeedForward(d_model, dff)
+        self.attn_type = attn_type
 
     def forward(self, x):
 
@@ -72,21 +74,23 @@ class EncoderLayer(nn.Module):
 
 class DecoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, window, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.1):
 
         super(DecoderLayer, self).__init__()
 
-        self.mask_attn = MultiheadAttention(n_heads, d_model, pos_emd, window)
+        self.mask_attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type)
         self.dropout1 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
 
-        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, window, self_attn=False)
+        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type, self_attn=False)
+
         self.dropout2 = nn.Dropout(d_r)
         self.norm2 = nn.LayerNorm(d_model)
 
         self.ffn = FeedForward(d_model, dff)
         self.dropout3 = nn.Dropout(d_r)
         self.norm3 = nn.LayerNorm(d_model)
+        self.attn_type = attn_type
 
     def forward(self, x, enc_out):
 
@@ -110,20 +114,21 @@ class DecoderLayer(nn.Module):
 
 
 class MultiheadAttention(nn.Module):
-    def __init__(self, n_heads, d_model, pos_enc, window, self_attn=True):
+    def __init__(self, n_heads, d_model, pos_enc, attn_type, self_attn=True):
 
         super(MultiheadAttention, self).__init__()
         self.n_heads = n_heads
         self.d_model = d_model
+        assert d_model % n_heads == 0
         self.depth = int(d_model / n_heads)
-        self.window = window
-        self.softmax = nn.Softmax(dim=0)
+        self.softmax = nn.Softmax(dim=-1)
         self.self_attn = self_attn
         self.pos_enc = pos_enc
         self.w_qs = nn.Linear(d_model, n_heads * self.depth, bias=False)
         self.w_ks = nn.Linear(d_model, n_heads * self.depth, bias=False)
         self.w_vs = nn.Linear(d_model, n_heads * self.depth, bias=False)
         self.fc = nn.Linear(n_heads * self.depth, d_model, bias=False)
+        self.attn_type = attn_type
 
     def forward(self, q, k, v, mask=False):
 
@@ -133,29 +138,26 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
 
-        scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, self.window, mask)
+        scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, mask)
         return scaled_attn, attn_weights
 
-    @staticmethod
-    def get_wnd_values(shape, window, tns):
+    def scaled_dot_product(self, q, k, v, mask=False):
 
-        values = torch.zeros(shape[0], shape[1], shape[2] * window, shape[3])
-        for i in range(shape[2] - window):
-            values[:, :, i, :] = tns[:, :, i + window, :]
-        return values
-
-    def scaled_dot_product(self, q, k, v, window=1, mask=False):
-
-        q_s = q.shape
-        if window > 1:
-            q = self.get_wnd_values(q.shape, window, q)
-            k = self.get_wnd_values(k.shape, window, k)
-            v = self.get_wnd_values(v.shape, window, v)
-        else:
-            q, k, v = q, k, v
-
+        q, k, v = q, k, v
         k_t = k.transpose(2, 3)
-        bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
+        rel_0 = nn.Parameter(torch.randn(k_t.shape), requires_grad=True)
+        rel_1 = nn.Parameter(torch.randn(k_t.shape), requires_grad=True)
+
+        if self.attn_type == "multihead":
+            bmm_qk = torch.matmul(q / math.sqrt(self.depth), (k_t + rel_0))
+        else:
+            bmm_qk = torch.matmul(q / math.sqrt(self.depth), (k_t + rel_0))
+            bmm_qk = bmm_qk.transpose(2, 3)
+            emded = nn.Linear(bmm_qk.shape[-1], self.depth)
+            emd = emded(bmm_qk)
+            emd = emd.transpose(2, 3)
+            bmm_qk = torch.matmul(q / math.sqrt(self.depth), (emd + rel_1))
+
         q_shape = q.shape
         rel_pos = RelativePositionalEmbed(q, k_t)
 
@@ -165,18 +167,15 @@ class MultiheadAttention(nn.Module):
 
             bmm_qk = bmm_qk + mask
 
-        pos = torch.zeros(bmm_qk.shape)
+        '''pos = torch.zeros(bmm_qk.shape)
 
         if self.pos_enc == "rel":
-            pos = rel_pos(q)
+            pos = rel_pos(q)'''
 
-        bmm_qk = bmm_qk + pos
         scaled_product = bmm_qk
         attn_weights = self.softmax(scaled_product)
 
         output = torch.matmul(attn_weights, v)
-        linear = nn.Linear(output.shape[2], q_s[2])
-        output = linear(output.transpose(2, 3)).transpose(2, 3)
 
         return output, attn_weights
 
@@ -187,7 +186,7 @@ class RelativePositionalEmbed(nn.Module):
         super(RelativePositionalEmbed, self).__init__()
         q_0, q_1, _, q_3 = q.shape
         k_3 = k.shape[3]
-        self.weights = nn.Parameter(torch.Tensor(q_0, q_1, q_3, k_3))
+        self.weights = nn.Parameter(torch.randn(q_0, q_1, q_3, k_3), requires_grad=True)
 
     def forward(self, q):
 
@@ -225,22 +224,22 @@ class PositionalEncoder(nn.Module):
 
 class DeepRelativeST(nn.Module):
 
-    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel, n_layers, local, output_size, pos_enc,
-                 window):
+    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel,
+                 n_layers, local, output_size, pos_enc, attn_type):
         super(DeepRelativeST, self).__init__()
 
         self.convs = Conv(in_channel, out_channel, kernel, n_layers, local)
         self.lstm = nn.LSTM(d_model, d_model, n_layers, dropout=0.1)
         self.hidden_size = d_model
-        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, window) for _ in range(n_layers)]
-        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, window) for _ in range(n_layers)]
+        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, attn_type) for _ in range(n_layers)]
+        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, attn_type) for _ in range(n_layers)]
         self.n_layers = n_layers
-        self.softmax = nn.Softmax(dim=0)
+        self.softmax = nn.Softmax(dim=-1)
         self.linear = nn.Linear(d_model, output_size)
         self.d_model = d_model
         self.pos_enc = pos_enc
 
-    def forward(self, X_en, X_de, hidden=None):
+    def forward(self, X_en, X_de, training=True):
 
         x_p_en = self.convs(X_en)
         x_p_de = self.convs(X_de)
@@ -256,22 +255,25 @@ class DeepRelativeST(nn.Module):
             pos_enc = PositionalEncoder(self.d_model, x_de.shape[0])
             x_de = pos_enc(x_de)
 
-        '''if hidden is None:
-            hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size)
-
-        x_en, (hidden, _) = self.lstm(x_en, (hidden, hidden))
-
-        x_de, (hidden, _) = self.lstm(x_de, (hidden, hidden))'''
-
         enc_out = None
-        dec_out = None
 
         for i in range(self.n_layers):
             enc_out = self.encoders[i](x_en)
 
-        for i in range(self.n_layers):
-            dec_out = self.decoders[i](x_de, enc_out)
+        outputs = torch.zeros(x_de.shape)
+        pred_len = x_de.shape[0]
 
-        output_f = self.linear(dec_out)
+        for i in range(self.n_layers):
+            #if training:
+            outputs = self.decoders[i](x_de, enc_out)
+            '''else:
+                dec_inp = x_en[-1, :, :]
+                dec_inp = dec_inp.view(-1, dec_inp.shape[0], dec_inp.shape[1])
+                for j in range(pred_len):
+                    dec_out = self.decoders[i](dec_inp, enc_out)
+                    dec_inp = dec_out
+                    outputs[j, :, :] = dec_out'''
+
+        output_f = self.linear(outputs)
         output_f = self.softmax(output_f)
         return output_f
