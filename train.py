@@ -191,8 +191,9 @@ def main():
             json_dat = json.load(json_file)
 
         for key, value in erros.items():
-            json_dat[key].append(value[0])
-            json_dat[key].append(value[1])
+
+            json_dat[key].append(float("{:.4f}".format(value[0])))
+            json_dat[key].append(float("{:.4f}".format(value[1])))
 
         with open("erros.json", "w") as json_file:
             json.dump(json_dat, json_file)

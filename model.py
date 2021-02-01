@@ -145,32 +145,29 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q, k, v
         k_t = k.transpose(2, 3)
-        rel_0 = nn.Parameter(torch.randn(k_t.shape), requires_grad=True)
-        rel_1 = nn.Parameter(torch.randn(k_t.shape), requires_grad=True)
+        rel_pos = RelativePositionalEmbed(q, k_t)
 
         if self.attn_type == "multihead":
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), (k_t + rel_0))
+
+            bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
+            bmm_qk = rel_pos() + bmm_qk
         else:
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), (k_t + rel_0))
+            bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
+            bmm_qk = bmm_qk + rel_pos()
             bmm_qk = bmm_qk.transpose(2, 3)
             emded = nn.Linear(bmm_qk.shape[-1], self.depth)
             emd = emded(bmm_qk)
             emd = emd.transpose(2, 3)
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), (emd + rel_1))
+            bmm_qk = torch.matmul(q / math.sqrt(self.depth), emd)
+            bmm_qk = bmm_qk + rel_pos()
 
         q_shape = q.shape
-        rel_pos = RelativePositionalEmbed(q, k_t)
 
         if mask is not False:
             mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1) * \
                    (-torch.finfo().max)
 
             bmm_qk = bmm_qk + mask
-
-        '''pos = torch.zeros(bmm_qk.shape)
-
-        if self.pos_enc == "rel":
-            pos = rel_pos(q)'''
 
         scaled_product = bmm_qk
         attn_weights = self.softmax(scaled_product)
@@ -184,13 +181,14 @@ class RelativePositionalEmbed(nn.Module):
     def __init__(self, q, k):
 
         super(RelativePositionalEmbed, self).__init__()
+        self.q = q
         q_0, q_1, _, q_3 = q.shape
         k_3 = k.shape[3]
         self.weights = nn.Parameter(torch.randn(q_0, q_1, q_3, k_3), requires_grad=True)
 
-    def forward(self, q):
+    def forward(self):
 
-        emd = torch.matmul(q, self.weights)
+        emd = torch.matmul(self.q, self.weights)
         *_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
         x = torch.cat([emd, zero_pad], -1)
