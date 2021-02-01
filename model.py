@@ -262,15 +262,15 @@ class DeepRelativeST(nn.Module):
         pred_len = x_de.shape[0]
 
         for i in range(self.n_layers):
-            #if training:
-            outputs = self.decoders[i](x_de, enc_out)
-            '''else:
+            if training:
+                outputs = self.decoders[i](x_de, enc_out)
+            else:
                 dec_inp = x_en[-1, :, :]
                 dec_inp = dec_inp.view(-1, dec_inp.shape[0], dec_inp.shape[1])
                 for j in range(pred_len):
                     dec_out = self.decoders[i](dec_inp, enc_out)
                     dec_inp = dec_out
-                    outputs[j, :, :] = dec_out'''
+                    outputs[j, :, :] = dec_out
 
         output_f = self.linear(outputs)
         output_f = self.softmax(output_f)

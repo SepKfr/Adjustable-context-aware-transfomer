@@ -90,15 +90,15 @@ def main():
     train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
     test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
 
-    d_model = 256
-    dff = 1024
+    d_model = 32
+    dff = 64
     n_head = 4
     in_channel = train_x.shape[1]
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 96
-    input_size = 388
+    output_size = 1
+    input_size = 8
     lr = 0.0001
     n_ephocs = 10
 
@@ -108,11 +108,11 @@ def main():
     x_de = train_x[-de_l:, :, :, :]
     y_true = train_y[-de_l:, :, :]
 
-    '''en_l = int(.8 * tst_len)
-    de_l = tst_len - en_l'''
-    x_en_t = test_x[:-1, :, :, :]
-    x_de_t = test_x[-1:, :, :, :]
-    y_true_t = test_y[-1:, :, :]
+    en_l = int(.8 * tst_len)
+    de_l = tst_len - en_l
+    x_en_t = test_x[-en_l:-de_l, :, :, :]
+    x_de_t = test_x[-de_l:, :, :, :]
+    y_true_t = test_y[-de_l:, :, :]
 
     erros = dict()
 
