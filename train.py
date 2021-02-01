@@ -19,11 +19,11 @@ def inverse_transform(data, scalers, grid):
     locs_1d = [np.ravel_multi_index(loc, (3, 6)) for loc in locs]
 
     for i, scalers_per_site in enumerate(scalers):
-        f, scaler = list(scalers_per_site.scalers.items())[3]
-        dat = data[:, f - 3, locs_1d[i]]
+        f, scaler = list(scalers_per_site.scalers.items())[2]
+        dat = data[:, f - 2, locs_1d[i]]
         in_dat = scaler.inverse_transform(dat.detach().numpy().reshape(-1, 1))
         in_dat = torch.from_numpy(np.array(in_dat).flatten())
-        inv_data[:, f - 3, locs_1d[i]] = in_dat
+        inv_data[:, f - 2, locs_1d[i]] = in_dat
 
     return inv_data, locs_1d
 
@@ -90,15 +90,15 @@ def main():
     train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
     test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
 
-    d_model = 32
-    dff = 64
+    d_model = 256
+    dff = 1024
     n_head = 4
     in_channel = train_x.shape[1]
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 1
-    input_size = 8
+    output_size = 96
+    input_size = 388
     lr = 0.0001
     n_ephocs = 10
 
@@ -110,9 +110,9 @@ def main():
 
     en_l = int(.8 * tst_len)
     de_l = tst_len - en_l
-    x_en_t = test_x[-en_l:-de_l, :, :, :]
-    x_de_t = test_x[-de_l:, :, :, :]
-    y_true_t = test_y[-de_l:, :, :]
+    x_en_t = test_x[:-1, :, :, :]
+    x_de_t = test_x[-1:, :, :, :]
+    y_true_t = test_y[-1:, :, :]
 
     erros = dict()
 
@@ -132,16 +132,16 @@ def main():
         n_ephocs, scalers, grid, "conattn", erros)
 
     attn_model = DeepRelativeST(d_model=d_model,
-                                    dff=dff,
-                                    n_h=n_head,
-                                    in_channel=in_channel,
-                                    out_channel=out_channel,
-                                    kernel=kernel,
-                                    n_layers=n_layers,
-                                    local=False,
-                                    output_size=output_size,
-                                    pos_enc="rel",
-                                    attn_type="multihead")
+                                dff=dff,
+                                n_h=n_head,
+                                in_channel=in_channel,
+                                out_channel=out_channel,
+                                kernel=kernel,
+                                n_layers=n_layers,
+                                local=False,
+                                output_size=output_size,
+                                pos_enc="rel",
+                                attn_type="multihead")
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "attn", erros)
@@ -158,12 +158,12 @@ def main():
         n_ephocs, scalers, grid, "LSConv", erros)
 
     gru_conv = RNConv(n_layers=n_layers,
-                       hidden_size=out_channel,
-                       input_size=input_size,
-                       output_size=output_size,
-                       out_channel=out_channel,
-                       kernel=kernel,
-                       rnn_type="gru")
+                      hidden_size=out_channel,
+                      input_size=input_size,
+                      output_size=output_size,
+                      out_channel=out_channel,
+                      kernel=kernel,
+                      rnn_type="gru")
 
     run(gru_conv, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "GruConv", erros)

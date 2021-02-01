@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import math
 import torch.nn.functional as F
-import collections
+from torch import einsum
 
 
 class FeedForward(nn.Module):
@@ -18,14 +18,11 @@ class FeedForward(nn.Module):
 
 class Conv(nn.Module):
 
-    def __init__(self, in_channel, out_channel, kernel, n_layers, local=True, d_r=0.1):
+    def __init__(self, in_channel, out_channel, kernel, n_layers, d_r=0.1):
 
         super(Conv, self).__init__()
         self.n_layers = n_layers
-        kernel2 = (3, 3)
-        self.local = local
         self.conv = [nn.Conv2d(in_channel, out_channel, kernel) for _ in range(n_layers)]
-        self.conv2 = [nn.Conv2d(out_channel, out_channel, kernel2, padding=1) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
         self.dropout2 = [nn.Dropout(d_r) for _ in range(n_layers)]
 
@@ -36,11 +33,6 @@ class Conv(nn.Module):
         for i in range(self.n_layers):
             output = self.conv[i](X)
             output = self.dropout1[i](output)
-
-        if self.local is True:
-            for i in range(self.n_layers):
-                output = self.conv2[i](output)
-                output = self.dropout2[i](output)
 
         return output
 
@@ -145,50 +137,45 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q, k, v
         k_t = k.transpose(2, 3)
-        rel_pos = RelativePositionalEmbed(q, k_t)
+        rel_pos = RelativePositionalEmbed((q.shape[0], q.shape[1], k.shape[2], k.shape[2]))
         a = rel_pos()
 
         if self.attn_type == "multihead":
 
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
-            bmm_qk = torch.matmul(bmm_qk, a)
+            bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
+            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
         else:
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
-            bmm_qk = torch.matmul(bmm_qk, a)
+            bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
+            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
             bmm_qk = bmm_qk.transpose(2, 3)
             emded = nn.Linear(bmm_qk.shape[-1], self.depth)
             emd = emded(bmm_qk)
             emd = emd.transpose(2, 3)
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), emd)
-            bmm_qk = torch.matmul(bmm_qk, a)
+            bmm_qk = einsum('bink,bijm->binm', q, emd)
+            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
 
         q_shape = q.shape
 
         if mask is not False:
-            mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1) * \
-                   (-torch.finfo().max)
+            mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1)
 
-            bmm_qk = bmm_qk + mask
+            bmm_qk.masked_fill(mask, -1e9)
 
         attn_weights = self.softmax(bmm_qk)
 
-        output = torch.matmul(attn_weights, v)
+        output = einsum('bijk,bikn->bijn', attn_weights, v)
 
         return output, attn_weights
 
 
 class RelativePositionalEmbed(nn.Module):
-    def __init__(self, q, k):
+    def __init__(self, shape):
 
         super(RelativePositionalEmbed, self).__init__()
-        self.q = q
-        q_0, q_1, _, q_3 = q.shape
-        k_3 = k.shape[3]
-        self.weights = nn.Parameter(torch.randn(q_0, q_1, k_3, k_3), requires_grad=True)
+        self.weights = nn.Parameter(torch.randn(shape), requires_grad=True)
 
     def forward(self):
 
-        #emd = torch.matmul(self.q, self.weights)
         emd = self.weights
         *_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
@@ -263,15 +250,16 @@ class DeepRelativeST(nn.Module):
         pred_len = x_de.shape[0]
 
         for i in range(self.n_layers):
-            if training:
-                outputs = self.decoders[i](x_de, enc_out)
-            else:
+
+            #if training:
+            outputs = self.decoders[i](x_de, enc_out)
+            '''else:
                 dec_inp = x_en[-1, :, :]
                 dec_inp = dec_inp.view(-1, dec_inp.shape[0], dec_inp.shape[1])
                 for j in range(pred_len):
                     dec_out = self.decoders[i](dec_inp, enc_out)
                     dec_inp = dec_out
-                    outputs[j, :, :] = dec_out
+                    outputs[j, :, :] = dec_out'''
 
         output_f = self.linear(outputs)
         output_f = self.softmax(output_f)

@@ -41,27 +41,27 @@ class RNConv(nn.Module):
         if self.rnn_type == "LSTM":
             en_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
 
-            if training:
-                outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
-            else:
+            #if training:
+            outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
+            '''else:
                 dec_in = x_en[-1, :, :]
                 dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
                 for i in range(out_len):
                     dec_out, _ = self.decoder_lstm(dec_in, (hidden, hidden))
                     dec_in = dec_out
-                    outputs[i, :, :] = dec_out
+                    outputs[i, :, :] = dec_out'''
 
         else:
             en_out, hidden = self.encoder_gru(x_en, hidden)
-            if training:
-                outputs, _ = self.decoder_gru(x_de, hidden)
-            else:
+            #if training:
+            outputs, _ = self.decoder_gru(x_de, hidden)
+            '''else:
                 dec_in = x_en[-1, :, :]
                 dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
                 for i in range(out_len):
                     dec_out, _ = self.decoder_gru(dec_in, hidden)
                     dec_in = dec_out
-                    outputs[i, :, :] = dec_out
+                    outputs[i, :, :] = dec_out'''
 
         outputs = self.linear(outputs)
 
@@ -97,28 +97,28 @@ class RNN(nn.Module):
 
         if self.rnn_type == "GRU":
             enc_out, hidden = self.encoder_gru(x_en, hidden)
-            if training:
-                outputs, _ = self.decoder_gru(x_de, hidden)
-            else:
+            #if training:
+            outputs, _ = self.decoder_gru(x_de, hidden)
+            '''else:
                 dec_in = x_en[-1, :, :]
                 dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
                 for i in range(out_len):
                     dec_out, _ = self.decoder_gru(dec_in, hidden)
                     dec_in = dec_out
-                    outputs[i, :, :] = dec_out
+                    outputs[i, :, :] = dec_out'''
 
         else:
 
             enc_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
-            if training:
-                outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
-            else:
+            #if training:
+            outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
+            '''else:
                 dec_in = x_en[-1, :, :]
                 dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
                 for i in range(out_len):
                     dec_out, _ = self.decoder_lstm(dec_in, (hidden, hidden))
                     dec_in = dec_out
-                    outputs[i, :, :] = dec_out
+                    outputs[i, :, :] = dec_out'''
 
         outputs = self.linear2(outputs)
 

@@ -25,7 +25,7 @@ class Data:
         self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 1
+        self.window = 96
         self.grid = grid
         self.ln = int(self.ts / (self.window * 2))
         self.inputs = torch.zeros((self.ln, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
@@ -201,7 +201,7 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2014-05-15"
+        start_date = "2013-05-15"
         end_date = "2016-05-15"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
