@@ -146,11 +146,19 @@ class MultiheadAttention(nn.Module):
         q, k, v = q, k, v
         k_t = k.transpose(2, 3)
         rel_pos = RelativePositionalEmbed(q, k_t)
+        a = rel_pos()
+        n, n_h, seq_len, d = q.shape
+        E = torch.zeros(n, n_h, seq_len, seq_len)
 
         if self.attn_type == "multihead":
 
-            bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
-            bmm_qk = rel_pos() + bmm_qk
+            for d1 in range(n):
+                for d2 in range(n_h):
+                    for i in range(seq_len):
+                        for j in range(seq_len):
+                            E[d1, d2, i, j] = torch.sum(q[d1, d2, i, :] * k[d1, d2, j, :] * a[d1, d2, i, j])
+            bmm_qk = E
+            #bmm_qk = rel_pos() + bmm_qk
         else:
             bmm_qk = torch.matmul(q / math.sqrt(self.depth), k_t)
             bmm_qk = bmm_qk + rel_pos()
@@ -184,11 +192,12 @@ class RelativePositionalEmbed(nn.Module):
         self.q = q
         q_0, q_1, _, q_3 = q.shape
         k_3 = k.shape[3]
-        self.weights = nn.Parameter(torch.randn(q_0, q_1, q_3, k_3), requires_grad=True)
+        self.weights = nn.Parameter(torch.randn(q_0, q_1, k_3, k_3), requires_grad=True)
 
     def forward(self):
 
-        emd = torch.matmul(self.q, self.weights)
+        #emd = torch.matmul(self.q, self.weights)
+        emd = self.weights
         *_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
         x = torch.cat([emd, zero_pad], -1)
