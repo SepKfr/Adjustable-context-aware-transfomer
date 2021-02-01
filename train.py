@@ -70,8 +70,8 @@ def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros):
     train_y, test_y = outputs[0], outputs[1]
     train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
     rmses, mapes= evaluate(model, test_x, scalers, grid, test_y)
-    erros[name].append(rmses.item())
-    erros[name].append(mapes.item())
+    erros[name].append(float("{:.4f}".format(rmses.item())))
+    erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
 def main():
@@ -191,9 +191,8 @@ def main():
             json_dat = json.load(json_file)
 
         for key, value in erros.items():
-
-            json_dat[key].append(float("{:.4f}".format(value[0])))
-            json_dat[key].append(float("{:.4f}".format(value[1])))
+            json_dat[key].append(value[0])
+            json_dat[key].append(value[1])
 
         with open("erros.json", "w") as json_file:
             json.dump(json_dat, json_file)
