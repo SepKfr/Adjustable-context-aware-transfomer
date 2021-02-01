@@ -128,8 +128,8 @@ def main():
                                     pos_enc="rel",
                                     attn_type="conmultihead")
 
-    '''run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "conattn", erros)'''
+    run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
+        n_ephocs, scalers, grid, "conattn", erros)
 
     attn_model = DeepRelativeST(d_model=d_model,
                                     dff=dff,
