@@ -214,32 +214,35 @@ class PositionalEncoder(nn.Module):
 class DeepRelativeST(nn.Module):
 
     def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel,
-                 n_layers,output_size, pos_enc, attn_type):
+                 n_layers, output_size, pos_enc, attn_type):
         super(DeepRelativeST, self).__init__()
 
         self.convs = Conv(in_channel, out_channel, kernel, n_layers)
-        self.lstm = nn.LSTM(d_model, d_model, n_layers, dropout=0.1)
         self.hidden_size = d_model
         self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, attn_type) for _ in range(n_layers)]
         self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, attn_type) for _ in range(n_layers)]
         self.n_layers = n_layers
         self.softmax = nn.Softmax(dim=-1)
-        self.linear = nn.Linear(d_model, output_size)
+        self.linear2 = nn.Linear(d_model, output_size)
         self.d_model = d_model
         self.pos_enc = pos_enc
+        self.linear1 = nn.Linear(in_channel, d_model)
 
     def forward(self, X_en, X_de, training=True):
 
-        x_p_en = self.convs(X_en)
-        x_p_de = self.convs(X_de)
-        b, d, h, w = x_p_en.shape
-        x_en = torch.reshape(x_p_en, (b, h * w, d))
+        b_in, n_in, h, w = X_en.shape
+        b_out, n_out, h, w = X_de.shape
+
+        x_en = self.linear1(X_en.view(b_in, h*w, n_in))
+        x_de = self.linear1(X_de.view(b_out, h*w, n_out))
+
+        #x_en = torch.reshape(x_p_en, (b_in, h * w, self.d_model))
         if self.pos_enc == "sincos":
             pos_enc = PositionalEncoder(self.d_model, x_en.shape[0])
             x_en = pos_enc(x_en)
 
-        b, d, h, w = x_p_de.shape
-        x_de = torch.reshape(x_p_de, (b, h * w, d))
+        '''b, d, h, w = x_p_de.shape
+        x_de = torch.reshape(x_p_de, (b_out, h * w, d))'''
         if self.pos_enc == "sincos":
             pos_enc = PositionalEncoder(self.d_model, x_de.shape[0])
             x_de = pos_enc(x_de)
@@ -264,6 +267,6 @@ class DeepRelativeST(nn.Module):
                     dec_inp = dec_out
                     outputs[j, :, :] = dec_out'''
 
-        output_f = self.linear(outputs)
+        output_f = self.linear2(outputs)
         output_f = self.softmax(output_f)
         return output_f
