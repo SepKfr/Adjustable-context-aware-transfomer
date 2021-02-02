@@ -149,8 +149,8 @@ class MultiheadAttention(nn.Module):
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
             #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
             bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
-            mask_kt = torch.triu(torch.ones(k_t.shape), diagonal=1)
-            k_t.masked_fill_(mask_kt, -1e9)
+            mask_kt = torch.triu(torch.ones(k_t.shape), diagonal=1) * -1e9
+            k_t += mask_kt
             bmm_qk = einsum('bink,bijm->binm', bmm_qk / math.sqrt(self.depth), k_t)
             #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
             bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
@@ -158,8 +158,8 @@ class MultiheadAttention(nn.Module):
         q_shape = q.shape
 
         if mask is not False:
-            mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1)
-            bmm_qk.masked_fill_(mask, -1e9)
+            mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1) * -1e9
+            bmm_qk += mask
 
         attn_weights = self.softmax(bmm_qk)
 
