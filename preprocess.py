@@ -27,9 +27,9 @@ class Data:
         self.J = J
         self.window = 96
         self.grid = grid
-        self.ln = int(self.ts / (self.window * 2))
-        self.inputs = torch.zeros((self.ln, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
-        self.outputs = torch.zeros((self.ln, self.window, self.I, self.J))
+        #self.ln = int(self.ts / (self.window * 2))
+        self.inputs = torch.zeros((self.ts, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
+        self.outputs = torch.zeros((self.ts, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))
@@ -58,7 +58,7 @@ class Data:
                 in_data, out_data = self.get_window_data(dat)
                 if f != 2:
                     self.inputs[:, f:f+self.window, i, j] = in_data
-                    self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ln:, :])
+                    self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ts:, :])
                 if f == 2:
                     self.outputs[:, :self.window, i, j] = out_data
 
@@ -74,11 +74,11 @@ class Data:
     def get_window_data(self, data):
 
         ln = len(data)
-        data_2d_in = torch.zeros((self.ln, self.window))
-        data_out = torch.zeros((self.ln, self.window))
+        data_2d_in = torch.zeros((self.ts, self.window))
+        data_out = torch.zeros((self.ts, self.window))
         j = 0
-        for i in range(0, ln, self.window*2):
-            if j < self.ln:
+        for i in range(0, ln):
+            if j < self.ts - self.window*2:
                 data_2d_in[j, :] = data[i:i+self.window]
                 data_out[j, :] = data[i+self.window:i+self.window * 2]
                 j += 1

@@ -123,7 +123,6 @@ def main():
                                     out_channel=out_channel,
                                     kernel=kernel,
                                     n_layers=n_layers,
-                                    local=False,
                                     output_size=output_size,
                                     pos_enc="rel",
                                     attn_type="conmultihead")
@@ -138,7 +137,6 @@ def main():
                                 out_channel=out_channel,
                                 kernel=kernel,
                                 n_layers=n_layers,
-                                local=False,
                                 output_size=output_size,
                                 pos_enc="rel",
                                 attn_type="multihead")
