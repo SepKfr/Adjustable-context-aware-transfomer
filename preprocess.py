@@ -25,10 +25,10 @@ class Data:
         self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 96
+        self.window = 28
         self.grid = grid
         #self.ln = int(self.ts / (self.window * 2))
-        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
+        self.inputs = torch.zeros((self.ts - self.window*2, self.nf * self.window + self.n_seasons, self.I, self.J))
         self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
@@ -56,9 +56,8 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-                if f != 2:
-                    self.inputs[:, f:f+self.window, i, j] = in_data
-                    self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ts:, :])
+                self.inputs[:, f:f+self.window, i, j] = in_data
+                self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ts:, :])
                 if f == 2:
                     self.outputs[:, :self.window, i, j] = out_data
 
