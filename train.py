@@ -14,16 +14,18 @@ import os
 
 def inverse_transform(data, scalers, grid):
 
+    n, d, hw = data.shape
     inv_data = torch.zeros(data.shape)
     locs = list(grid.values())
     locs_1d = [np.ravel_multi_index(loc, (3, 6)) for loc in locs]
 
     for i, scalers_per_site in enumerate(scalers):
         f, scaler = list(scalers_per_site.scalers.items())[2]
-        dat = data[:, f - 2, locs_1d[i]]
+        dat = data[:, :, locs_1d[i]]
+        dat = dat.view(n*d)
         in_dat = scaler.inverse_transform(dat.detach().numpy().reshape(-1, 1))
         in_dat = torch.from_numpy(np.array(in_dat).flatten())
-        inv_data[:, f - 2, locs_1d[i]] = in_dat
+        inv_data[:, :, locs_1d[i]] = in_dat.view(n, d)
 
     return inv_data, locs_1d
 
@@ -39,7 +41,6 @@ def evaluate(model, inputs, scalers, grid, y_true):
     o_s = outputs.shape
     outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
     outputs_in, _ = inverse_transform(outputs, scalers, grid)
-
     metrics = Metrics(outputs_in, y_true_in)
     return metrics.rmse, metrics.mape
 

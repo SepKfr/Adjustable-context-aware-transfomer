@@ -28,8 +28,8 @@ class Data:
         self.window = 96
         self.grid = grid
         #self.ln = int(self.ts / (self.window * 2))
-        self.inputs = torch.zeros((self.ts, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
-        self.outputs = torch.zeros((self.ts, self.window, self.I, self.J))
+        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
+        self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))
@@ -65,17 +65,18 @@ class Data:
     def create_one_hot(self, df):
 
         months = df["Date"].dt.month
-        one_hot = torch.zeros((len(months), self.n_seasons))
+        one_hot = torch.zeros((len(months) - self.window*2, self.n_seasons))
         for i, m in enumerate(months):
-            j = 1 if m <= 3 else 2 if m > 3 & m <= 6 else 3 if m > 6 & m <= 9 else 4
-            one_hot[i, j - 1] = 1
+            if i < len(months) - self.window*2:
+                j = 1 if m <= 3 else 2 if m > 3 & m <= 6 else 3 if m > 6 & m <= 9 else 4
+                one_hot[i, j - 1] = 1
         return one_hot
 
     def get_window_data(self, data):
 
         ln = len(data)
-        data_2d_in = torch.zeros((self.ts, self.window))
-        data_out = torch.zeros((self.ts, self.window))
+        data_2d_in = torch.zeros((self.ts - self.window*2, self.window))
+        data_out = torch.zeros((self.ts - self.window*2, self.window))
         j = 0
         for i in range(0, ln):
             if j < self.ts - self.window*2:
