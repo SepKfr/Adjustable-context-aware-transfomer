@@ -56,7 +56,7 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-                if f!= 2:
+                if f != 2:
                     self.inputs[:, f:f+self.window, i, j] = in_data
                     self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ts:, :])
                 if f == 2:
@@ -202,7 +202,7 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2013-05-15"
+        start_date = "2015-05-15"
         end_date = "2016-05-15"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]

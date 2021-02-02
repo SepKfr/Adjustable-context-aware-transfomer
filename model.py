@@ -143,17 +143,15 @@ class MultiheadAttention(nn.Module):
         if self.attn_type == "multihead":
 
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
-            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
+            #bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
         else:
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
             #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
             bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
-            bmm_qk = bmm_qk.transpose(2, 3)
-            emded = nn.Linear(bmm_qk.shape[-1], self.depth)
-            emd = emded(bmm_qk)
-            emd = emd.transpose(2, 3)
-            bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), emd)
+            mask_kt = torch.triu(torch.ones(k_t.shape), diagonal=1)
+            k_t.masked_fill(mask_kt, -1e9)
+            bmm_qk = einsum('bink,bijm->binm', bmm_qk / math.sqrt(self.depth), k_t)
             #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
             bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
 
