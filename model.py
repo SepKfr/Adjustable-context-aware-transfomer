@@ -137,7 +137,7 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q, k, v
         k_t = k.transpose(2, 3)
-        rel_pos = RelativePositionalEmbed((q.shape[0], q.shape[1], q.shape[2], k.shape[2]))
+        rel_pos = RelativePositionalEmbed((q.shape[0], q.shape[1], k.shape[2], k.shape[2]))
         a = rel_pos()
 
         if self.attn_type == "multihead":
