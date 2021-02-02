@@ -137,23 +137,20 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q, k, v
         k_t = k.transpose(2, 3)
-        rel_pos = RelativePositionalEmbed((q.shape[0], q.shape[1], k.shape[2], k.shape[2]))
-        a = rel_pos()
+        rel_pos_q = RelativePositionalEmbed(q, k)
 
         if self.attn_type == "multihead":
 
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
-            #bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk += rel_pos_q()
         else:
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
-            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk += rel_pos_q()
             mask_kt = torch.triu(torch.ones(k_t.shape), diagonal=1) * -1e9
             k_t += mask_kt
-            bmm_qk = einsum('bink,bijm->binm', bmm_qk / math.sqrt(self.depth), k_t)
-            #bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
-            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk = einsum('bink,bijm->binm', bmm_qk, k_t)
+            rel_pos_k = RelativePositionalEmbed(bmm_qk, k)
+            bmm_qk += rel_pos_k()
 
         q_shape = q.shape
 
@@ -169,14 +166,17 @@ class MultiheadAttention(nn.Module):
 
 
 class RelativePositionalEmbed(nn.Module):
-    def __init__(self, shape):
+    def __init__(self, q, k):
 
         super(RelativePositionalEmbed, self).__init__()
-        self.weights = nn.Parameter(torch.randn(shape), requires_grad=True)
+        self.q = q
+        q_s = q.shape
+        k_s = k.shape
+        self.weights = nn.Parameter(torch.randn(q_s[0], q_s[1], q_s[3], k_s[2]), requires_grad=True)
 
     def forward(self):
 
-        emd = self.weights
+        emd = einsum('bijk,bikm->bijm', self.q, self.weights)
         *_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
         x = torch.cat([emd, zero_pad], -1)
