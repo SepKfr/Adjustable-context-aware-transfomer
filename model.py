@@ -137,22 +137,26 @@ class MultiheadAttention(nn.Module):
 
         q, k, v = q, k, v
         k_t = k.transpose(2, 3)
-        rel_pos = RelativePositionalEmbed((q.shape[0], q.shape[1], k.shape[2], k.shape[2]))
+        rel_pos = RelativePositionalEmbed((q.shape[0], q.shape[1], q.shape[2], k.shape[2]))
         a = rel_pos()
 
         if self.attn_type == "multihead":
 
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
+
+            #bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
         else:
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
+            #bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
             bmm_qk = bmm_qk.transpose(2, 3)
             emded = nn.Linear(bmm_qk.shape[-1], self.depth)
             emd = emded(bmm_qk)
             emd = emd.transpose(2, 3)
-            bmm_qk = einsum('bink,bijm->binm', q, emd)
-            bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
+            bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), emd)
+            bmm_qk += einsum('bink,bijm->binm', q / math.sqrt(self.depth), a)
+            #bmm_qk = einsum('bijm,bikm->bijk', bmm_qk, a)
 
         q_shape = q.shape
 

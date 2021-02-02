@@ -98,10 +98,10 @@ def main():
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 28
-    input_size = 144
+    output_size = 48
+    input_size = 196
     lr = 0.0001
-    n_ephocs = 10
+    n_ephocs = 20
 
     en_l = int(.8 * trn_len)
     de_l = trn_len - en_l
