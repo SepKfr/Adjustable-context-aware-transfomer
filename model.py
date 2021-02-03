@@ -148,7 +148,7 @@ class MultiheadAttention(nn.Module):
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
             if self.pos_enc == "rel":
                 bmm_qk += rel_pos_q()
-            mask_kt = torch.triu(torch.ones(k_t.shape), diagonal=1) * -1e9
+            mask_kt = torch.triu(torch.ones(1, 1, k_t.shape[3], k_t.shape[3]), diagonal=1) * -1e9
             k_t += mask_kt
             bmm_qk = einsum('bink,bijm->binm', bmm_qk, k_t)
             rel_pos_k = RelativePositionalEmbed(bmm_qk, k)
@@ -158,7 +158,7 @@ class MultiheadAttention(nn.Module):
         q_shape = q.shape
 
         if mask is not False:
-            mask = torch.triu(torch.ones((q_shape[0], q_shape[1], q_shape[2], q_shape[2])), diagonal=1) * -1e9
+            mask = torch.triu(torch.ones((1, 1, q_shape[2], q_shape[2])), diagonal=1) * -1e9
             bmm_qk += mask
 
         attn_weights = self.softmax(bmm_qk)
@@ -234,10 +234,10 @@ class DeepRelativeST(nn.Module):
         b_in, n_in, h, w = X_en.shape
         b_out, n_out, h, w = X_de.shape
 
-        '''x_en = self.linear1(X_en.view(b_in, h*w, n_in))
-        x_de = self.linear1(X_de.view(b_out, h*w, n_out))'''
-        x_en = self.convs(X_en)
-        x_de = self.convs(X_de)
+        x_en = self.linear1(X_en.view(b_in, h*w, n_in))
+        x_de = self.linear1(X_de.view(b_out, h*w, n_out))
+        '''x_en = self.convs(X_en)
+        x_de = self.convs(X_de)'''
 
         x_en = torch.reshape(x_en, (b_in, h * w, self.d_model))
         x_de = torch.reshape(x_de, (b_out, h * w, self.d_model))
