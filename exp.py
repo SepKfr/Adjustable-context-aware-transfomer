@@ -14,10 +14,10 @@ def main():
             erros = np.array(list(values))
             rmse = erros[0::2]
             mape = erros[1::2]
-            rmse_mean = rmse.mean()
-            rmse_std = rmse.std()
-            mape_mean = mape.mean()
-            mape_std = mape.std()
+            rmse_mean = float('{:.4f}'.format(rmse.mean()))
+            rmse_std = float('{:.4f}'.format(rmse.std()))
+            mape_mean = float('{:.4f}'.format(mape.mean()))
+            mape_std = float('{:.4f}'.format(mape.std()))
             f_erros[key] = (rmse_mean, rmse_std, mape_mean, mape_std)
 
     with open("f_erros.json", "w") as json_file:
