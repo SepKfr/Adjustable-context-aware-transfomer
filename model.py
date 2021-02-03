@@ -18,7 +18,7 @@ class FeedForward(nn.Module):
 
 class Conv(nn.Module):
 
-    def __init__(self, in_channel, out_channel, kernel, n_layers, d_r=0.1):
+    def __init__(self, in_channel, out_channel, kernel, n_layers, d_r=0.0):
 
         super(Conv, self).__init__()
         self.n_layers = n_layers
@@ -39,7 +39,7 @@ class Conv(nn.Module):
 
 class EncoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.0):
 
         super(EncoderLayer, self).__init__()
         self.attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type)
@@ -66,7 +66,7 @@ class EncoderLayer(nn.Module):
 
 class DecoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.1):
+    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.0):
 
         super(DecoderLayer, self).__init__()
 
