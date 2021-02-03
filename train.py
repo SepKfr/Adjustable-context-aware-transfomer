@@ -126,7 +126,8 @@ def main():
                                     n_layers=n_layers,
                                     output_size=output_size,
                                     pos_enc="sincos",
-                                    attn_type="conmultihead")
+                                    attn_type="conmultihead",
+                                    d_r=0.5)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "conattn_sc", erros)
@@ -140,7 +141,8 @@ def main():
                                     n_layers=n_layers,
                                     output_size=output_size,
                                     pos_enc="rel",
-                                    attn_type="conmultihead")
+                                    attn_type="conmultihead",
+                                    d_r=0.5)
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "conattn_rel", erros)
