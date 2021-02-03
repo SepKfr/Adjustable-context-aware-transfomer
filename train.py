@@ -99,7 +99,7 @@ def main():
     kernel = 1
     n_layers = 2
     output_size = 48
-    input_size = 196
+    input_size = 192
     lr = 0.0001
     n_ephocs = 20
 
@@ -125,11 +125,25 @@ def main():
                                     kernel=kernel,
                                     n_layers=n_layers,
                                     output_size=output_size,
+                                    pos_enc="sincos",
+                                    attn_type="conmultihead")
+
+    run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
+        n_ephocs, scalers, grid, "conattn_sc", erros)
+
+    deep_rel_model = DeepRelativeST(d_model=d_model,
+                                    dff=dff,
+                                    n_h=n_head,
+                                    in_channel=in_channel,
+                                    out_channel=out_channel,
+                                    kernel=kernel,
+                                    n_layers=n_layers,
+                                    output_size=output_size,
                                     pos_enc="rel",
                                     attn_type="conmultihead")
 
     run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "conattn", erros)
+        n_ephocs, scalers, grid, "conattn_rel", erros)
 
     attn_model = DeepRelativeST(d_model=d_model,
                                 dff=dff,
@@ -143,7 +157,7 @@ def main():
                                 attn_type="multihead")
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "attn", erros)
+        n_ephocs, scalers, grid, "attn_rel", erros)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,

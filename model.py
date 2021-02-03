@@ -142,15 +142,18 @@ class MultiheadAttention(nn.Module):
         if self.attn_type == "multihead":
 
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            bmm_qk += rel_pos_q()
+            if self.pos_enc == "rel":
+                bmm_qk += rel_pos_q()
         else:
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
-            bmm_qk += rel_pos_q()
+            if self.pos_enc == "rel":
+                bmm_qk += rel_pos_q()
             mask_kt = torch.triu(torch.ones(k_t.shape), diagonal=1) * -1e9
             k_t += mask_kt
             bmm_qk = einsum('bink,bijm->binm', bmm_qk, k_t)
             rel_pos_k = RelativePositionalEmbed(bmm_qk, k)
-            bmm_qk += rel_pos_k()
+            if self.pos_enc == "rel":
+                bmm_qk += rel_pos_k()
 
         q_shape = q.shape
 
@@ -183,6 +186,7 @@ class RelativePositionalEmbed(nn.Module):
         l = i + j - 1
         x = x.view(*_, -1)
         zero_pad = torch.zeros(*_, -x.size(-1) % l)
+
         shifted = torch.cat([x, zero_pad], -1).view(*_, -1, l)
         skewd = shifted[..., :i, i - 1:]
         return skewd
@@ -230,16 +234,18 @@ class DeepRelativeST(nn.Module):
         b_in, n_in, h, w = X_en.shape
         b_out, n_out, h, w = X_de.shape
 
-        x_en = self.linear1(X_en.view(b_in, h*w, n_in))
-        x_de = self.linear1(X_de.view(b_out, h*w, n_out))
+        '''x_en = self.linear1(X_en.view(b_in, h*w, n_in))
+        x_de = self.linear1(X_de.view(b_out, h*w, n_out))'''
+        x_en = self.convs(X_en)
+        x_de = self.convs(X_de)
 
-        #x_en = torch.reshape(x_p_en, (b_in, h * w, self.d_model))
+        x_en = torch.reshape(x_en, (b_in, h * w, self.d_model))
+        x_de = torch.reshape(x_de, (b_out, h * w, self.d_model))
+
         if self.pos_enc == "sincos":
             pos_enc = PositionalEncoder(self.d_model, x_en.shape[0])
             x_en = pos_enc(x_en)
 
-        '''b, d, h, w = x_p_de.shape
-        x_de = torch.reshape(x_p_de, (b_out, h * w, d))'''
         if self.pos_enc == "sincos":
             pos_enc = PositionalEncoder(self.d_model, x_de.shape[0])
             x_de = pos_enc(x_de)

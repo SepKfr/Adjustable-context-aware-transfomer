@@ -28,11 +28,12 @@ class Data:
         self.window = 48
         self.grid = grid
         #self.ln = int(self.ts / (self.window * 2))
-        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window + self.n_seasons, self.I, self.J))
+        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window, self.I, self.J))
         self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))
+
         pickle.dump(self.inputs, open("inputs.p", "wb"))
         pickle.dump(self.outputs, open("outputs.p", "wb"))
         pickle.dump(self.grid, open("grid.p", "wb"))
@@ -46,6 +47,8 @@ class Data:
             scalers_per_site = Scaler(abr)
             self.scalers.append(scalers_per_site)
 
+            f_ind = 0
+
             for f in range(self.nf):
 
                 stScaler = StandardScaler()
@@ -57,8 +60,8 @@ class Data:
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
                 if f != 2:
-                    self.inputs[:, f:f+self.window, i, j] = in_data
-                    self.inputs[:, -self.n_seasons:, i, j] = self.create_one_hot(df_site.iloc[-self.ts:, :])
+                    self.inputs[:, f_ind:f_ind+self.window, i, j] = in_data
+                    f_ind += self.window
                 if f == 2:
                     self.outputs[:, :self.window, i, j] = out_data
 
@@ -202,7 +205,7 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2013-05-15"
+        start_date = "2015-05-15"
         end_date = "2016-05-15"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
