@@ -171,7 +171,7 @@ def main():
                                 attn_type="multihead")
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "attn_rel", erros)
+        n_ephocs, scalers, grid, "attn_cs", erros)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
