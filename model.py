@@ -175,11 +175,11 @@ class RelativePositionalEmbed(nn.Module):
         self.q = q
         q_s = q.shape
         k_s = k.shape
-        self.weights = nn.Parameter(torch.randn(q_s[0], q_s[1], q_s[3], k_s[2]), requires_grad=True)
+        self.weights = nn.Parameter(torch.randn(1, 1, q_s[3], k_s[2]), requires_grad=True)
 
     def forward(self):
 
-        emd = einsum('bijk,bikm->bijm', self.q, self.weights)
+        emd = einsum('bijk,hlkm->bijm', self.q, self.weights)
         *_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
         x = torch.cat([emd, zero_pad], -1)
