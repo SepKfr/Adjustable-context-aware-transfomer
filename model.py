@@ -148,7 +148,7 @@ class MultiheadAttention(nn.Module):
             bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
             if self.pos_enc == "rel":
                 bmm_qk += rel_pos_q()
-            mask_kt = torch.triu(torch.ones(1, 1, k_t.shape[3], k_t.shape[3]), diagonal=1) * -1e9
+            mask_kt = torch.triu(torch.ones(1, 1, k_t.shape[2], k_t.shape[3]), diagonal=1) * -1e9
             k_t += mask_kt
             bmm_qk = einsum('bink,bijm->binm', bmm_qk, k_t)
             rel_pos_k = RelativePositionalEmbed(bmm_qk, k)
