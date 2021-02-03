@@ -154,7 +154,8 @@ def main():
                                 n_layers=n_layers,
                                 output_size=output_size,
                                 pos_enc="rel",
-                                attn_type="multihead")
+                                attn_type="multihead",
+                                d_r=0.5)
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "attn_rel", erros)
@@ -168,7 +169,8 @@ def main():
                                 n_layers=n_layers,
                                 output_size=output_size,
                                 pos_enc="sincos",
-                                attn_type="multihead")
+                                attn_type="multihead",
+                                d_r=0.5)
 
     run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "attn_cs", erros)
@@ -179,7 +181,8 @@ def main():
                        output_size=output_size,
                        out_channel=out_channel,
                        kernel=kernel,
-                       rnn_type="LSTM")
+                       rnn_type="LSTM",
+                       d_r=0.5)
 
     run(lstm_conv, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "LSConv", erros)
@@ -190,7 +193,8 @@ def main():
                       output_size=output_size,
                       out_channel=out_channel,
                       kernel=kernel,
-                      rnn_type="gru")
+                      rnn_type="gru",
+                      d_r=0.5)
 
     run(gru_conv, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "GruConv", erros)
@@ -199,7 +203,8 @@ def main():
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
-               rnn_type="LSTM")
+               rnn_type="LSTM",
+               d_r=0.5)
 
     run(lstm, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "lstm", erros)
@@ -208,7 +213,8 @@ def main():
               hidden_size=d_model,
               input_size=input_size,
               output_size=output_size,
-              rnn_type="GRU")
+              rnn_type="GRU",
+              d_r=0.5)
 
     run(gru, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
         n_ephocs, scalers, grid, "gru", erros)

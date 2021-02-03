@@ -215,13 +215,13 @@ class PositionalEncoder(nn.Module):
 class DeepRelativeST(nn.Module):
 
     def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel,
-                 n_layers, output_size, pos_enc, attn_type):
+                 n_layers, output_size, pos_enc, attn_type, d_r):
         super(DeepRelativeST, self).__init__()
 
-        self.convs = Conv(in_channel, out_channel, kernel, n_layers)
+        self.convs = Conv(in_channel, out_channel, kernel, n_layers, d_r)
         self.hidden_size = d_model
-        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, attn_type) for _ in range(n_layers)]
-        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, attn_type) for _ in range(n_layers)]
+        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, attn_type, d_r) for _ in range(n_layers)]
+        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, attn_type, d_r) for _ in range(n_layers)]
         self.n_layers = n_layers
         self.softmax = nn.Softmax(dim=-1)
         self.linear2 = nn.Linear(d_model, output_size)
