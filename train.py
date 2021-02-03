@@ -98,8 +98,8 @@ def main():
     out_channel = d_model
     kernel = 1
     n_layers = 2
-    output_size = 48
-    input_size = 192
+    output_size = train_y.shape[1]
+    input_size = train_x.shape[1]
     lr = 0.0001
     n_ephocs = 20
 
