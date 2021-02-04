@@ -94,7 +94,7 @@ class STData:
         self.site_path = site_path
         self.I = 3
         self.J = 6
-        self.n_features = 5
+        self.n_features = 3
         self.site_abrs = ["BDC", "BEF", "DCF", "GOF", "HBF", "LMP", 'MCQ', "SBM", "TPB", "WHB"]
         self.sites_data = dict()
         self.grid = self.create_grid()
@@ -208,7 +208,7 @@ class STData:
         end_date = "2016-05-15"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
-        df = df[["Date", "TempC", "Conductivity", "SpConductivity", "pH", "Stage", "Q"]]
+        df = df[["Date", "TempC", "SpConductivity", "Q"]]
         df = df.ffill().bfill()
         return df
 
