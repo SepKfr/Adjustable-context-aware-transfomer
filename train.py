@@ -12,6 +12,46 @@ import json
 import os
 
 
+inputs = pickle.load(open("inputs.p", "rb"))
+outputs = pickle.load(open("outputs.p", "rb"))
+grid = pickle.load(open("grid.p", "rb"))
+scalers = pickle.load(open("scalers.pkl", "rb"))
+
+max_len = min(len(inputs), 1000)
+inputs = inputs[-max_len:, :, :, :]
+outputs = outputs[-max_len:, :, :]
+trn_len = int(inputs.shape[0] * 0.8)
+tst_len = inputs.shape[0] - trn_len
+
+train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
+test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
+
+
+d_model = 256
+dff = 1024
+n_head = 4
+in_channel = train_x.shape[1]
+out_channel = d_model
+kernel = 1
+n_layers = 2
+output_size = train_y.shape[1]
+input_size = train_x.shape[1]
+lr = 0.0001
+n_ephocs = 20
+
+en_l = int(.8 * trn_len)
+de_l = trn_len - en_l
+x_en = train_x[-en_l:-de_l, :, :, :]
+x_de = train_x[-de_l:, :, :, :]
+y_true = train_y[-de_l:, :, :]
+
+x_en_t = test_x[:-1, :, :, :]
+x_de_t = test_x[-1:, :, :, :]
+y_true_t = test_y[-1:, :, :]
+
+erros = dict()
+
+
 def inverse_transform(data, scalers, grid):
 
     n, d, hw = data.shape
@@ -36,7 +76,7 @@ def evaluate(model, inputs, scalers, grid, y_true):
 
     model.eval()
 
-    outputs = model(inputs[0], inputs[1], training=False)
+    outputs = model(inputs[0], inputs[1])
 
     o_s = outputs.shape
     outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
@@ -46,6 +86,7 @@ def evaluate(model, inputs, scalers, grid, y_true):
 
 
 def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
+
     y_true_in, _ = inverse_transform(y_true, scalers, grid)
     optimizer = Adam(model.parameters(), lr)
     criterion = nn.MSELoss()
@@ -64,118 +105,45 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
         optimizer.step()
 
 
-def run(model, lr, inputs, outputs, n_ephocs, scalers, grid, name, erros):
+def run(model, name):
 
     erros[name] = list()
-    train_x, test_x = inputs[0], inputs[1]
-    train_y, test_y = outputs[0], outputs[1]
-    train(model, lr, train_x, n_ephocs, scalers, grid, train_y)
-    rmses, mapes= evaluate(model, test_x, scalers, grid, test_y)
+    trn_x, tst_x = inputs[0], inputs[1]
+    trn_y, tst_y = outputs[0], outputs[1]
+    train(model, lr, trn_x, n_ephocs, scalers, grid, trn_y)
+    rmses, mapes = evaluate(model, tst_x, scalers, grid, tst_y)
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
+def call_atn_model(name, pos_enc, attn_type, pre_conv):
+
+    atn_model = DeepRelativeST(d_model=d_model,
+                               dff=dff,
+                               n_h=n_head,
+                               in_channel=in_channel,
+                               out_channel=out_channel,
+                               kernel=kernel,
+                               n_layers=n_layers,
+                               output_size=output_size,
+                               pos_enc=pos_enc,
+                               attn_type=attn_type,
+                               conv_pre=pre_conv,
+                               d_r=0.5)
+
+    run(atn_model, name)
+
+
 def main():
 
-    inputs = pickle.load(open("inputs.p", "rb"))
-    outputs = pickle.load(open("outputs.p", "rb"))
-    grid = pickle.load(open("grid.p", "rb"))
-    scalers = pickle.load(open("scalers.pkl", "rb"))
-
-    max_len = min(len(inputs), 1000)
-    inputs = inputs[-max_len:, :, :, :]
-    outputs = outputs[-max_len:, :, :]
-    trn_len = int(inputs.shape[0] * 0.8)
-    tst_len = inputs.shape[0] - trn_len
-
-    train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
-    test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
-
-    d_model = 256
-    dff = 1024
-    n_head = 4
-    in_channel = train_x.shape[1]
-    out_channel = d_model
-    kernel = 1
-    n_layers = 2
-    output_size = train_y.shape[1]
-    input_size = train_x.shape[1]
-    lr = 0.0001
-    n_ephocs = 20
-
-    en_l = int(.8 * trn_len)
-    de_l = trn_len - en_l
-    x_en = train_x[-en_l:-de_l, :, :, :]
-    x_de = train_x[-de_l:, :, :, :]
-    y_true = train_y[-de_l:, :, :]
-
-    en_l = int(.8 * tst_len)
-    de_l = tst_len - en_l
-    x_en_t = test_x[:-1, :, :, :]
-    x_de_t = test_x[-1:, :, :, :]
-    y_true_t = test_y[-1:, :, :]
-
-    erros = dict()
-
-    deep_rel_model = DeepRelativeST(d_model=d_model,
-                                    dff=dff,
-                                    n_h=n_head,
-                                    in_channel=in_channel,
-                                    out_channel=out_channel,
-                                    kernel=kernel,
-                                    n_layers=n_layers,
-                                    output_size=output_size,
-                                    pos_enc="sincos",
-                                    attn_type="conmultihead",
-                                    d_r=0.5)
-
-    run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "conattn_sc", erros)
-
-    deep_rel_model = DeepRelativeST(d_model=d_model,
-                                    dff=dff,
-                                    n_h=n_head,
-                                    in_channel=in_channel,
-                                    out_channel=out_channel,
-                                    kernel=kernel,
-                                    n_layers=n_layers,
-                                    output_size=output_size,
-                                    pos_enc="rel",
-                                    attn_type="conmultihead",
-                                    d_r=0.5)
-
-    run(deep_rel_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "conattn_rel", erros)
-
-    attn_model = DeepRelativeST(d_model=d_model,
-                                dff=dff,
-                                n_h=n_head,
-                                in_channel=in_channel,
-                                out_channel=out_channel,
-                                kernel=kernel,
-                                n_layers=n_layers,
-                                output_size=output_size,
-                                pos_enc="rel",
-                                attn_type="multihead",
-                                d_r=0.5)
-
-    run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "attn_rel", erros)
-
-    attn_model = DeepRelativeST(d_model=d_model,
-                                dff=dff,
-                                n_h=n_head,
-                                in_channel=in_channel,
-                                out_channel=out_channel,
-                                kernel=kernel,
-                                n_layers=n_layers,
-                                output_size=output_size,
-                                pos_enc="sincos",
-                                attn_type="multihead",
-                                d_r=0.5)
-
-    run(attn_model, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "attn_cs", erros)
+    call_atn_model("attn_cs", "sincos", "multihead", False)
+    call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
+    call_atn_model("attn_rel", "rel", "multihead", False)
+    call_atn_model("con_attn_rel", "rel", "conmultihead", False)
+    call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
+    call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
+    call_atn_model("attn_rel_cnv", "rel", "multihead", True)
+    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
@@ -186,8 +154,7 @@ def main():
                        rnn_type="LSTM",
                        d_r=0.5)
 
-    run(lstm_conv, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "LSConv", erros)
+    run(lstm_conv, "LSConv")
 
     gru_conv = RNConv(n_layers=n_layers,
                       hidden_size=out_channel,
@@ -198,8 +165,7 @@ def main():
                       rnn_type="gru",
                       d_r=0.5)
 
-    run(gru_conv, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "GruConv", erros)
+    run(gru_conv, "GruConv")
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -208,8 +174,7 @@ def main():
                rnn_type="LSTM",
                d_r=0.5)
 
-    run(lstm, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "lstm", erros)
+    run(lstm, "lstm")
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -218,8 +183,7 @@ def main():
               rnn_type="GRU",
               d_r=0.5)
 
-    run(gru, lr, [[x_en, x_de], [x_en_t, x_de_t]], [y_true, y_true_t],
-        n_ephocs, scalers, grid, "gru", erros)
+    run(gru, "gru")
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
