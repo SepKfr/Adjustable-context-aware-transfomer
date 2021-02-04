@@ -45,9 +45,9 @@ x_en = train_x[-en_l:-de_l, :, :, :]
 x_de = train_x[-de_l:, :, :, :]
 y_true = train_y[-de_l:, :, :]
 
-x_en_t = test_x[:-1, :, :, :]
-x_de_t = test_x[-1:, :, :, :]
-y_true_t = test_y[-1:, :, :]
+x_en_t = test_x[:-28, :, :, :]
+x_de_t = test_x[-28:, :, :, :]
+y_true_t = test_y[-28:, :, :]
 
 erros = dict()
 
