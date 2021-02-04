@@ -39,10 +39,10 @@ class Conv(nn.Module):
 
 class EncoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.0):
+    def __init__(self, n_heads, d_model, input_size, dff, pos_emd, attn_type, d_r=0.0):
 
         super(EncoderLayer, self).__init__()
-        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type)
+        self.attn = MultiheadAttention(n_heads, input_size, d_model, pos_emd, attn_type)
         self.dropout1 = nn.Dropout(d_r)
         self.dropout2 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
@@ -53,8 +53,6 @@ class EncoderLayer(nn.Module):
     def forward(self, x):
 
         attn_out, _ = self.attn(x, x, x)
-        a_s = attn_out.shape
-        attn_out = attn_out.reshape(a_s[2], a_s[0], -1)
         attn_out = self.dropout1(attn_out)
         output = self.norm1(x + attn_out)
 
@@ -66,15 +64,15 @@ class EncoderLayer(nn.Module):
 
 class DecoderLayer(nn.Module):
 
-    def __init__(self, n_heads, d_model, dff, pos_emd, attn_type, d_r=0.0):
+    def __init__(self, n_heads, d_model, input_size, dff, pos_emd, attn_type, d_r=0.0):
 
         super(DecoderLayer, self).__init__()
 
-        self.mask_attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type)
+        self.mask_attn = MultiheadAttention(n_heads, input_size, d_model, pos_emd, attn_type)
         self.dropout1 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
 
-        self.attn = MultiheadAttention(n_heads, d_model, pos_emd, attn_type, self_attn=False)
+        self.attn = MultiheadAttention(n_heads, input_size, d_model, pos_emd, attn_type, self_attn=False)
 
         self.dropout2 = nn.Dropout(d_r)
         self.norm2 = nn.LayerNorm(d_model)
@@ -88,14 +86,10 @@ class DecoderLayer(nn.Module):
 
         mask_attn_out, _ = self.mask_attn(x, x, x, mask=True)
         mask_attn_out = self.dropout1(mask_attn_out)
-        a_s = mask_attn_out.shape
-        attn = mask_attn_out.reshape(a_s[2], a_s[0], -1)
-        mask_attn_out = self.norm1(x + attn)
+        mask_attn_out = self.norm1(x + mask_attn_out)
 
         attn_out, _ = self.attn(mask_attn_out, enc_out, enc_out)
         attn_out = self.dropout2(attn_out)
-        a_s = attn_out.shape
-        attn_out = attn_out.reshape(a_s[2], a_s[0], -1)
         attn_out = self.norm2(attn_out + mask_attn_out)
 
         ffn_out = self.ffn(attn_out)
@@ -106,7 +100,7 @@ class DecoderLayer(nn.Module):
 
 
 class MultiheadAttention(nn.Module):
-    def __init__(self, n_heads, d_model, pos_enc, attn_type, self_attn=True):
+    def __init__(self, n_heads, input_size, d_model, pos_enc, attn_type, self_attn=True):
 
         super(MultiheadAttention, self).__init__()
         self.n_heads = n_heads
@@ -124,11 +118,20 @@ class MultiheadAttention(nn.Module):
 
     def forward(self, q, k, v, mask=False):
 
-        q = self.w_qs(q).view(q.shape[1], q.shape[0], self.n_heads, self.depth)
-        k = self.w_ks(k).view(k.shape[1], k.shape[0], self.n_heads, self.depth)
-        v = self.w_vs(v).view(v.shape[1], v.shape[0], self.n_heads, self.depth)
+        if self.pos_enc == "sincos":
 
-        q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
+            p_q = PositionalEncoder(self.d_model, q.shape[0])
+            q = p_q(self.w_qs(q))
+            p_k = PositionalEncoder(self.d_model, k.shape[0])
+            k = p_k(self.w_qs(k))
+            p_v = PositionalEncoder(self.d_model, v.shape[0])
+            v = p_v(self.w_qs(v))
+
+        q = q.view(q.shape[1], q.shape[2], q.shape[0], self.n_heads, self.depth)
+        k = k.view(k.shape[1], k.shape[2], k.shape[0], self.n_heads, self.depth)
+        v = v.view(v.shape[1], v.shape[2], v.shape[0], self.n_heads, self.depth)
+
+        q, k, v = q.transpose(2, 3), k.transpose(2, 3), v.transpose(2, 3)
 
         scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, mask)
         return scaled_attn, attn_weights
@@ -136,31 +139,33 @@ class MultiheadAttention(nn.Module):
     def scaled_dot_product(self, q, k, v, mask=False):
 
         q, k, v = q, k, v
-        k_t = k.transpose(2, 3)
+        k_t = k.transpose(3, 4)
+        mask_kt = torch.triu(torch.ones(1, 1, 1, k_t.shape[3], k_t.shape[4]), diagonal=1) * -1e9
         if mask:
-            mask = torch.triu(torch.ones(1, 1, k_t.shape[2], k_t.shape[3]), diagonal=1) * -1e9
-            k_t += mask
+            k_t += mask_kt
         rel_pos_q = RelativePositionalEmbed(q, k)
 
         if self.attn_type == "multihead":
 
-            bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
+            bmm_qk = einsum('hwink,hwijm->hwinm', q / math.sqrt(self.depth), k_t)
             if self.pos_enc == "rel":
                 bmm_qk += rel_pos_q()
             attn_weights = self.softmax(bmm_qk)
         else:
-            bmm_qk = einsum('bink,bijm->binm', q / math.sqrt(self.depth), k_t)
+            bmm_qk = einsum('hwink,hwijm->hwinm', q / math.sqrt(self.depth), k_t)
             if self.pos_enc == "rel":
                 bmm_qk += rel_pos_q()
             qk = self.softmax(bmm_qk)
-            qk = einsum('bink,bijm->binm', qk, k_t)
+            qk = einsum('hwink,hwijm->hwinm', qk, k_t)
             rel_pos_k = RelativePositionalEmbed(qk, k)
             if self.pos_enc == "rel":
                 qk += rel_pos_k()
             attn_weights = self.softmax(qk)
 
-        output = einsum('bijk,bikn->bijn', attn_weights, v)
-
+        output = einsum('hwijk,hwikn->hwijn', attn_weights, v)
+        h, w, n_h, seq_len, d_k = output.shape
+        output = output.reshape(seq_len, h, w, n_h*d_k)
+        output = self.fc(output)
         return output, attn_weights
 
 
@@ -171,7 +176,7 @@ class RelativePositionalEmbed(nn.Module):
         self.q = q
         q_s = q.shape
         k_s = k.shape
-        self.weights = nn.Parameter(torch.randn(1, 1, q_s[3], k_s[2]), requires_grad=True)
+        self.weights = nn.Parameter(torch.randn(1, 1, 1, q_s[4], k_s[3]), requires_grad=True)
 
     def forward(self):
 
@@ -202,22 +207,25 @@ class PositionalEncoder(nn.Module):
         self.pe = self.pe.unsqueeze(0)
 
     def forward(self, x):
-        b, n, d = x.shape
-        self.pe = self.pe.reshape(b, 1, d)
+
+        b, h, w, d = x.shape
+        self.pe = self.pe.reshape(b, 1, 1, d)
         x = x + self.pe
         return x
 
 
 class DeepRelativeST(nn.Module):
 
-    def __init__(self, d_model, dff, n_h, in_channel, out_channel, kernel,
+    def __init__(self, d_model, input_size, dff, n_h, in_channel, out_channel, kernel,
                  n_layers, output_size, pos_enc, attn_type, conv_pre, d_r):
         super(DeepRelativeST, self).__init__()
 
         self.convs = Conv(in_channel, out_channel, kernel, n_layers, d_r)
         self.hidden_size = d_model
-        self.encoders = [EncoderLayer(n_h, d_model, dff, pos_enc, attn_type, d_r) for _ in range(n_layers)]
-        self.decoders = [DecoderLayer(n_h, d_model, dff, pos_enc, attn_type, d_r) for _ in range(n_layers)]
+        self.encoders = [EncoderLayer(n_h, d_model, input_size, dff, pos_enc, attn_type, d_r)
+                         for _ in range(n_layers)]
+        self.decoders = [DecoderLayer(n_h, d_model, input_size, dff, pos_enc, attn_type, d_r)
+                         for _ in range(n_layers)]
         self.n_layers = n_layers
         self.softmax = nn.Softmax(dim=-1)
         self.linear2 = nn.Linear(d_model, output_size)
@@ -226,28 +234,19 @@ class DeepRelativeST(nn.Module):
         self.conv_pre = conv_pre
         self.linear1 = nn.Linear(in_channel, d_model)
 
-    def forward(self, X_en, X_de):
+    def forward(self, x_en, x_de):
 
-        b_in, n_in, h, w = X_en.shape
-        b_out, n_out, h, w = X_de.shape
+        b_in, n_in, h, w = x_en.shape
+        b_out, n_out, h, w = x_de.shape
 
         if self.conv_pre:
-            x_en = self.convs(X_en)
-            x_de = self.convs(X_de)
+            x_en = self.convs(x_en)
+            x_de = self.convs(x_de)
+            x_en = torch.reshape(x_en, (b_in, h, w, self.d_model))
+            x_de = torch.reshape(x_de, (b_out, h, w, self.d_model))
         else:
-            x_en = self.linear1(X_en.view(b_in, h*w, n_in))
-            x_de = self.linear1(X_de.view(b_out, h*w, n_out))
-
-        x_en = torch.reshape(x_en, (b_in, h * w, self.d_model))
-        x_de = torch.reshape(x_de, (b_out, h * w, self.d_model))
-
-        if self.pos_enc == "sincos":
-            pos_enc = PositionalEncoder(self.d_model, x_en.shape[0])
-            x_en = pos_enc(x_en)
-
-        if self.pos_enc == "sincos":
-            pos_enc = PositionalEncoder(self.d_model, x_de.shape[0])
-            x_de = pos_enc(x_de)
+            x_en = self.linear1(x_en.view(b_in, h, w, n_in))
+            x_de = self.linear1(x_de.view(b_out, h, w, n_out))
 
         enc_out = None
 
@@ -262,4 +261,6 @@ class DeepRelativeST(nn.Module):
 
         output_f = self.linear2(outputs)
         output_f = self.softmax(output_f)
+        b, h, w, _ = output_f.shape
+        output_f = output_f.view(b, h*w, -1)
         return output_f
