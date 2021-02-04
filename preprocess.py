@@ -58,8 +58,10 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-                self.inputs[:, f_ind:f_ind+self.window, i, j] = in_data
-                f_ind += self.window
+
+                if f != 1:
+                    self.inputs[:, f_ind:f_ind + self.window, i, j] = in_data
+                    f_ind += self.window
                 if f == 1:
                     self.outputs[:, :self.window, i, j] = out_data
 
