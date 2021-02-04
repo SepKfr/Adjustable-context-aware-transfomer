@@ -20,7 +20,7 @@ def inverse_transform(data, scalers, grid):
     locs_1d = [np.ravel_multi_index(loc, (3, 6)) for loc in locs]
 
     for i, scalers_per_site in enumerate(scalers):
-        f, scaler = list(scalers_per_site.scalers.items())[2]
+        f, scaler = list(scalers_per_site.scalers.items())[1]
         dat = data[:, :, locs_1d[i]]
         dat = dat.view(n*d)
         in_dat = scaler.inverse_transform(dat.detach().numpy().reshape(-1, 1))
