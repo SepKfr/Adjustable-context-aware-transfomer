@@ -27,7 +27,7 @@ class Data:
         self.J = J
         self.window = 96
         self.grid = grid
-        self.inputs = torch.zeros((self.ts - self.window*2, self.nf * self.window, self.I, self.J))
+        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window, self.I, self.J))
         self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
@@ -58,9 +58,10 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-                self.inputs[:, f_ind:f_ind+self.window, i, j] = in_data
-                f_ind += self.window
-                if f == 1:
+                if f != 2:
+                    self.inputs[:, f_ind:f_ind+self.window, i, j] = in_data
+                    f_ind += self.window
+                if f == 2:
                     self.outputs[:, :self.window, i, j] = out_data
 
     def create_one_hot(self, df):
@@ -93,7 +94,7 @@ class STData:
         self.site_path = site_path
         self.I = 3
         self.J = 6
-        self.n_features = 3
+        self.n_features = 4
         self.site_abrs = ["BDC", "BEF", "DCF", "GOF", "HBF", "LMP", 'MCQ', "SBM", "TPB", "WHB"]
         self.sites_data = dict()
         self.grid = self.create_grid()
@@ -207,7 +208,7 @@ class STData:
         end_date = "2016-05-15"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
-        df = df[["Date", "TempC", "SpConductivity", "Q"]]
+        df = df[["Date", "TempC", "SpConductivity", "pH", "Stage", "Q"]]
         df = df.ffill().bfill()
         return df
 
