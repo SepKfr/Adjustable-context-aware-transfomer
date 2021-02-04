@@ -52,7 +52,7 @@ y_true_t = test_y[-1:, :, :]
 erros = dict()
 
 
-def inverse_transform(data, scalers, grid):
+def inverse_transform(data):
 
     n, d, hw = data.shape
     inv_data = torch.zeros(data.shape)
@@ -70,24 +70,24 @@ def inverse_transform(data, scalers, grid):
     return inv_data, locs_1d
 
 
-def evaluate(model, inputs, scalers, grid, y_true):
+def evaluate(model, tst_x, y_t):
 
-    y_true_in, locs = inverse_transform(y_true, scalers, grid)
+    y_t_in, locs = inverse_transform(y_t)
 
     model.eval()
 
-    outputs = model(inputs[0], inputs[1])
+    outputs = model(tst_x[0], tst_x[1])
 
     o_s = outputs.shape
     outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
-    outputs_in, _ = inverse_transform(outputs, scalers, grid)
-    metrics = Metrics(outputs_in, y_true_in)
+    outputs_in, _ = inverse_transform(outputs)
+    metrics = Metrics(outputs_in, y_t_in)
     return metrics.rmse, metrics.mape
 
 
-def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
+def train(model, trn_x, y_t):
 
-    y_true_in, _ = inverse_transform(y_true, scalers, grid)
+    y_true_in, _ = inverse_transform(y_t)
     optimizer = Adam(model.parameters(), lr)
     criterion = nn.MSELoss()
 
@@ -95,10 +95,10 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
 
     for i in range(n_ephocs):
         optimizer.zero_grad()
-        outputs = model(inputs[0], inputs[1])
-        o_s = outputs.shape
-        outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
-        outputs_in, _ = inverse_transform(outputs, scalers, grid)
+        output = model(trn_x[0], trn_x[1])
+        o_s = output.shape
+        output = output.reshape(o_s[0], o_s[2], o_s[1])
+        outputs_in, _ = inverse_transform(output)
         loss = criterion(outputs_in, y_true_in)
         loss = Variable(loss, requires_grad=True)
         loss.backward()
@@ -108,10 +108,10 @@ def train(model, lr, inputs, n_ephocs, scalers, grid, y_true):
 def run(model, name):
 
     erros[name] = list()
-    trn_x, tst_x = inputs[0], inputs[1]
-    trn_y, tst_y = outputs[0], outputs[1]
-    train(model, lr, trn_x, n_ephocs, scalers, grid, trn_y)
-    rmses, mapes = evaluate(model, tst_x, scalers, grid, tst_y)
+    trn_x, tst_x = [x_en, x_de], [x_en_t, x_de_t]
+    trn_y, tst_y = y_true, y_true_t
+    train(model, trn_x, trn_y)
+    rmses, mapes = evaluate(model, tst_x, tst_y)
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
