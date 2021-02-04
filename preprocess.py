@@ -27,7 +27,7 @@ class Data:
         self.J = J
         self.window = 96
         self.grid = grid
-        self.inputs = torch.zeros((self.ts - self.window*2, self.nf * self.window, self.I, self.J))
+        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window, self.I, self.J))
         self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
         self.create_raster()
         self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
