@@ -24,7 +24,6 @@ class Conv(nn.Module):
         self.n_layers = n_layers
         self.conv = [nn.Conv2d(in_channel, out_channel, kernel) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
-        self.dropout2 = [nn.Dropout(d_r) for _ in range(n_layers)]
 
     def forward(self, X):
 
@@ -72,7 +71,8 @@ class DecoderLayer(nn.Module):
         self.dropout1 = nn.Dropout(d_r)
         self.norm1 = nn.LayerNorm(d_model)
 
-        self.attn = MultiheadAttention(n_heads, input_size, d_model, pos_emd, attn_type, self_attn=False)
+        self.attn = MultiheadAttention(n_heads, input_size, d_model, pos_emd,
+                                       attn_type, self_attn=False)
 
         self.dropout2 = nn.Dropout(d_r)
         self.norm2 = nn.LayerNorm(d_model)
@@ -180,7 +180,7 @@ class RelativePositionalEmbed(nn.Module):
 
     def forward(self):
 
-        emd = einsum('bijk,hlkm->bijm', self.q, self.weights)
+        emd = einsum('hwijk,hwnlkm->hwijm', self.q, self.weights)
         *_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
         x = torch.cat([emd, zero_pad], -1)

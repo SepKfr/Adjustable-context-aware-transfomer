@@ -4,6 +4,7 @@ import openpyxl
 import torch
 import pickle
 from sklearn.preprocessing import StandardScaler
+import argparse
 
 
 class Scaler:
@@ -16,7 +17,7 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, grid, time_steps, n_features, I, J):
+    def __init__(self, site_data, grid, time_steps, n_features, window, I, J):
 
         self.scalers = list()
         self.sites_data = site_data
@@ -25,7 +26,7 @@ class Data:
         self.nf = n_features
         self.I = I
         self.J = J
-        self.window = 96
+        self.window = window
         self.grid = grid
         self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window, self.I, self.J))
         self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
@@ -90,7 +91,7 @@ class Data:
 
 
 class STData:
-    def __init__(self, meta_path, site_path):
+    def __init__(self, meta_path, site_path, params):
         self.meta_path = meta_path
         self.site_path = site_path
         self.I = 3
@@ -114,7 +115,7 @@ class STData:
             if site_ln < self.min_len:
                 self.min_len = site_ln
 
-        self.raster = Data(self.sites_data, self.grid, self.min_len, self.n_features,self.I, self.J)
+        self.raster = Data(self.sites_data, self.grid, self.min_len, self.n_features, params.window,self.I, self.J)
 
     class Site:
         def __init__(self, name, abr, lat, long):
@@ -216,7 +217,10 @@ class STData:
 
 def main():
 
-    stdata = STData("data/metadata.xlsx", "data")
+    parser = argparse.ArgumentParser(description="preprocess argument parser")
+    parser.add_argument("--window", type=int, default=28)
+    params = parser.parse_args()
+    stdata = STData("data/metadata.xlsx", "data", params)
 
 
 if __name__ == '__main__':
