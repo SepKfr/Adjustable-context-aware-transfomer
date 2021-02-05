@@ -81,8 +81,6 @@ def evaluate(model, tst_x, y_t):
     o_s = outputs.shape
     outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
     outputs_in, _ = inverse_transform(outputs)
-    print(y_t_in[0, 0])
-    print(outputs_in[0, 0])
     metrics = Metrics(outputs_in, y_t_in)
     return metrics.rmse, metrics.mape
 
