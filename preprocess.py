@@ -94,16 +94,17 @@ class STData:
     def __init__(self, meta_path, site_path, params):
         self.meta_path = meta_path
         self.site_path = site_path
-        self.I = 3
-        self.J = 6
+        self.I = 2
+        self.J = 3
         self.n_features = 3
-        self.site_abrs = ["BDC", "BEF", "DCF", "GOF", "HBF", "LMP", 'MCQ', "SBM", "TPB", "WHB"]
+        self.site_abrs = ["BEF", "GOF", "DCF", "WHB"]
         self.sites_data = dict()
         self.grid = self.create_grid()
         for abr in self.site_abrs:
+
             self.sites_data[abr] = self.prep_data_per_site(abr)
 
-        dates = self.sites_data["BDC"]["Date"].values
+        dates = self.sites_data["BEF"]["Date"].values
         for abr2, df2 in self.sites_data.items():
             df2 = df2[np.in1d(df2["Date"].values, dates)]
             self.sites_data[abr2] = df2
@@ -115,7 +116,8 @@ class STData:
             if site_ln < self.min_len:
                 self.min_len = site_ln
 
-        self.raster = Data(self.sites_data, self.grid, self.min_len, self.n_features, params.window,self.I, self.J)
+        self.raster = Data(self.sites_data, self.grid, self.min_len,
+                           self.n_features, params.window, self.I, self.J)
 
     class Site:
         def __init__(self, name, abr, lat, long):
@@ -149,7 +151,8 @@ class STData:
             name = sheet_site.cell(row=row, column=1).value
             lat = sheet_site.cell(row=row, column=10).value
             long = sheet_site.cell(row=row, column=11).value
-            site_list.append(self.Site(name, abr, lat, long))
+            if abr in self.site_abrs:
+                site_list.append(self.Site(name, abr, lat, long))
 
         min_lat, min_long, max_lat, max_long = 100, 100, -100, -100
 
@@ -192,6 +195,7 @@ class STData:
             else:
                 self.move_near(grid, site.abr, x, y)
 
+        print(grid)
         grid_site = dict()
 
         for i in range(self.I):
@@ -206,8 +210,8 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2013-05-15"
-        end_date = "2016-05-15"
+        start_date = "2018-01-13"
+        end_date = "2019-01-3"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
@@ -218,7 +222,7 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--window", type=int, default=28)
+    parser.add_argument("--window", type=int, default=7)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 

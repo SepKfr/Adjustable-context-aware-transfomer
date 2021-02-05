@@ -143,7 +143,7 @@ class MultiheadAttention(nn.Module):
         mask_kt = torch.triu(torch.ones(1, 1, 1, k_t.shape[3], k_t.shape[4]), diagonal=1) * -1e9
         if mask:
             k_t += mask_kt
-        rel_pos_q = RelativePositionalEmbed(q, k)
+        rel_pos_q = RelativePositionalEmbed(q, k, self.depth)
 
         if self.attn_type == "multihead":
 
@@ -157,7 +157,7 @@ class MultiheadAttention(nn.Module):
                 bmm_qk += rel_pos_q()
             qk = self.softmax(bmm_qk)
             qk = einsum('hwink,hwijm->hwinm', qk, k_t)
-            rel_pos_k = RelativePositionalEmbed(qk, k)
+            rel_pos_k = RelativePositionalEmbed(qk, k, self.depth)
             if self.pos_enc == "rel":
                 qk += rel_pos_k()
             attn_weights = self.softmax(qk)
@@ -170,18 +170,19 @@ class MultiheadAttention(nn.Module):
 
 
 class RelativePositionalEmbed(nn.Module):
-    def __init__(self, q, k):
+    def __init__(self, q, k, d_k):
 
         super(RelativePositionalEmbed, self).__init__()
         self.q = q
         q_s = q.shape
         k_s = k.shape
+        self.d_k = d_k
         self.weights = nn.Parameter(torch.randn(1, 1, 1, q_s[4], k_s[3]), requires_grad=True)
 
     def forward(self):
 
-        emd = einsum('hwijk,hwnlkm->hwijm', self.q, self.weights)
-        *_, i, j = emd.shape
+        emd = einsum('hwijk,bdlkm->hwijm', self.q / math.sqrt(self.d_k), self.weights)
+        '''*_, i, j = emd.shape
         zero_pad = torch.zeros((*_, i, j))
         x = torch.cat([emd, zero_pad], -1)
         l = i + j - 1
@@ -189,8 +190,8 @@ class RelativePositionalEmbed(nn.Module):
         zero_pad = torch.zeros(*_, -x.size(-1) % l)
 
         shifted = torch.cat([x, zero_pad], -1).view(*_, -1, l)
-        skewd = shifted[..., :i, i - 1:]
-        return skewd
+        skewd = shifted[..., :i, i - 1:]'''
+        return emd
 
 
 class PositionalEncoder(nn.Module):
