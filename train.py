@@ -130,7 +130,7 @@ def call_atn_model(name, pos_enc, attn_type, pre_conv):
                                pos_enc=pos_enc,
                                attn_type=attn_type,
                                conv_pre=pre_conv,
-                               d_r=0.5)
+                               d_r=0.1)
 
     run(atn_model, name)
 
@@ -153,7 +153,7 @@ def main():
                        out_channel=out_channel,
                        kernel=kernel,
                        rnn_type="LSTM",
-                       d_r=0.5)
+                       d_r=0.1)
 
     run(lstm_conv, "LSConv")
 
@@ -164,7 +164,7 @@ def main():
                       out_channel=out_channel,
                       kernel=kernel,
                       rnn_type="gru",
-                      d_r=0.5)
+                      d_r=0.1)
 
     run(gru_conv, "GruConv")
 
@@ -173,7 +173,7 @@ def main():
                input_size=input_size,
                output_size=output_size,
                rnn_type="LSTM",
-               d_r=0.5)
+               d_r=0.1)
 
     run(lstm, "lstm")
 
@@ -182,7 +182,7 @@ def main():
               input_size=input_size,
               output_size=output_size,
               rnn_type="GRU",
-              d_r=0.5)
+              d_r=0.1)
 
     run(gru, "gru")
 
