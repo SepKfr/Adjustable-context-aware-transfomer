@@ -196,11 +196,11 @@ class RelativePositionalEmbed(nn.Module):
 
 class PositionalEncoder(nn.Module):
 
-    def __init__(self, d_model, seq_len):
+    def __init__(self, d_model, max_seq_len=160):
         super(PositionalEncoder, self).__init__()
 
-        self.pe = torch.zeros(seq_len, d_model)
-        position = torch.arange(0., seq_len).unsqueeze(1)
+        self.pe = torch.zeros(max_seq_len, d_model)
+        position = torch.arange(0., max_seq_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0., d_model, 2) *
                              -(math.log(10000.0) / d_model))
         self.pe[:, 0::2] = torch.sin(position * div_term)

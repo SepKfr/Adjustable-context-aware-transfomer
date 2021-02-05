@@ -27,13 +27,13 @@ train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
 test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
 
 
-d_model = 256
-dff = 1024
-n_head = 4
+d_model = 512
+dff = 2048
+n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 2
+n_layers = 6
 output_size = train_y.shape[1]
 input_size = train_x.shape[1]
 lr = 0.0001
@@ -139,12 +139,12 @@ def main():
 
     call_atn_model("attn_cs", "sincos", "multihead", False)
     call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
-    call_atn_model("attn_rel", "rel", "multihead", False)
+    '''call_atn_model("attn_rel", "rel", "multihead", False)
     call_atn_model("con_attn_rel", "rel", "conmultihead", False)
     call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
     call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
     call_atn_model("attn_rel_cnv", "rel", "multihead", True)
-    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
+    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)'''
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
