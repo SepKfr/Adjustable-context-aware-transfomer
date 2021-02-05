@@ -139,12 +139,12 @@ def call_atn_model(name, pos_enc, attn_type, pre_conv):
 
 def main():
 
-    '''call_atn_model("attn_cs", "sincos", "multihead", False)
+    call_atn_model("attn_cs", "sincos", "multihead", False)
     call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
     call_atn_model("attn_rel", "rel", "multihead", False)
     call_atn_model("con_attn_rel", "rel", "conmultihead", False)
     call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
-    call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)'''
+    call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
     call_atn_model("attn_rel_cnv", "rel", "multihead", True)
     call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
 
@@ -170,7 +170,7 @@ def main():
 
     run(gru_conv, "GruConv")
 
-    '''lstm = RNN(n_layers=n_layers,
+    lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
@@ -186,7 +186,7 @@ def main():
               rnn_type="GRU",
               d_r=0.5)
 
-    run(gru, "gru")'''
+    run(gru, "gru")
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:

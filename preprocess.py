@@ -195,7 +195,6 @@ class STData:
             else:
                 self.move_near(grid, site.abr, x, y)
 
-        print(grid)
         grid_site = dict()
 
         for i in range(self.I):
