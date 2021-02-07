@@ -39,12 +39,12 @@ input_size = train_x.shape[2]
 lr = 0.0001
 n_ephocs = 20
 
-x_en = train_x[:, :-28, :]
-x_de = train_x[:, -28:, :]
+x_en = train_x[:, :-100, :]
+x_de = train_x[:, -100:, :]
 y_true = train_y[:, :, :]
 
-x_en_t = test_x[:, :-28, :]
-x_de_t = test_x[:, -28:, :]
+x_en_t = test_x[:, :-100, :]
+x_de_t = test_x[:, -100:, :]
 y_true_t = test_y[:, :, :]
 
 erros = dict()
