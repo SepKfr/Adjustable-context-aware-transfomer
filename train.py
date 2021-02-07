@@ -188,7 +188,7 @@ def main():
               rnn_type="GRU",
               d_r=0.1)
 
-    run(gru, "gru")
+    run(gru, "gru")'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
@@ -202,7 +202,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open("erros.json", "w") as json_file:
-            json.dump(erros, json_file)'''
+            json.dump(erros, json_file)
 
 
 if __name__ == '__main__':
