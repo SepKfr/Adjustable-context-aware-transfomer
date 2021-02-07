@@ -137,7 +137,7 @@ def main():
                       d_model=128,
                       d_ff=256,
                       d_k=64, d_v=64, n_heads=8,
-                      n_layers=4, src_pad_index=0,
+                      n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'))
     run(attn_model, "attn_model")
 
