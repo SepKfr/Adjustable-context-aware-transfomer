@@ -131,7 +131,7 @@ def call_atn_model(name, pos_enc, attn_type, pre_conv):
 
 def main():
 
-    #call_atn_model("attn_cs", "sincos", "multihead", False)
+    call_atn_model("attn_cs", "sincos", "multihead", False)
     #call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
     call_atn_model("attn_rel", "rel", "multihead", False)
     #call_atn_model("con_attn_rel", "rel", "conmultihead", False)
