@@ -170,7 +170,7 @@ def main():
                       rnn_type="gru",
                       d_r=0.1)
 
-    run(gru_conv, "GruConv")
+    run(gru_conv, "GruConv")'''
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -188,7 +188,7 @@ def main():
               rnn_type="GRU",
               d_r=0.1)
 
-    run(gru, "gru")'''
+    run(gru, "gru")
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
