@@ -27,8 +27,8 @@ train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
 test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 
-d_model = 8
-dff = 32
+d_model = 128
+dff = 256
 n_head = 2
 in_channel = train_x.shape[1]
 out_channel = d_model

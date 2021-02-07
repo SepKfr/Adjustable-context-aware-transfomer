@@ -17,7 +17,7 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, ts, n_features, seq_len):
+    def __init__(self, site_data, ts, n_features, in_seq_len, out_seq_len):
 
         self.scalers = list()
         self.sites_data = site_data
@@ -28,10 +28,11 @@ class Data:
         '''self.I = I
         self.J = J'''
         #self.window = window
-        self.seq_len = seq_len
+        self.in_seq_len = in_seq_len
+        self.out_seq_len = out_seq_len
         #self.grid = grid
-        self.inputs = torch.zeros((self.ts - self.seq_len, self.seq_len, self.nf))
-        self.outputs = torch.zeros((self.ts - self.seq_len, 28, 1))
+        self.inputs = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.in_seq_len, self.nf))
+        self.outputs = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.out_seq_len, 1))
         self.create_raster()
         '''self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))'''
@@ -69,10 +70,10 @@ class Data:
     def create_one_hot(self, df):
 
         months = df["Date"].dt.month
-        b = self.ts - self.seq_len*2
-        one_hot = torch.zeros((b, self.seq_len, self.n_seasons))
+        b = self.ts - self.in_seq_len*2
+        one_hot = torch.zeros((b, self.in_seq_len, self.n_seasons))
         for i in range(b):
-            for s in range(self.seq_len):
+            for s in range(self.in_seq_len):
                 m = months.iloc[i+s]
                 j = 1 if m <= 3 else 2 if m > 3 & m <= 6 else 3 if m > 6 & m <= 9 else 4
                 one_hot[i, s, j - 1] = 1
@@ -81,13 +82,13 @@ class Data:
     def get_window_data(self, data):
 
         ln = len(data)
-        data_2d_in = torch.zeros((self.ts - self.seq_len, self.seq_len))
-        data_out = torch.zeros((self.ts - self.seq_len, 28))
+        data_2d_in = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.in_seq_len))
+        data_out = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.out_seq_len))
         j = 0
-        for i in range(0, ln):
-            if j < self.ts - self.seq_len - 28:
-                data_2d_in[j, :] = data[i:i+self.seq_len]
-                data_out[j, :] = data[i+self.seq_len:i+self.seq_len + 28]
+        for i in range(0, ln, self.in_seq_len):
+            if j < self.ts - self.in_seq_len - self.out_seq_len:
+                data_2d_in[j, :] = data[i:i+self.in_seq_len]
+                data_out[j, :] = data[i+self.in_seq_len:i+self.out_seq_len + 100]
                 j += 1
         return data_2d_in, data_out
 
@@ -122,7 +123,8 @@ class STData:
                 self.min_len = site_ln'''
 
         #self.raster = Data(self.sites_data, self.grid, self.min_len, self.n_features, params.window, self.I, self.J)
-        self.raster = Data(self.sites_data, ln, self.n_features, params.seq_len)
+        self.raster = Data(self.sites_data, ln, self.n_features,
+                           params.in_seq_len, params.out_seq_len)
 
     class Site:
         def __init__(self, name, abr, lat, long):
@@ -225,7 +227,8 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=128)
+    parser.add_argument("--in_seq_len", type=int, default=128)
+    parser.add_argument("--out_seq_len", type=int, default=28)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
