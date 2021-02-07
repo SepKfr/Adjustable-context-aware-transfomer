@@ -30,9 +30,10 @@ class Data:
         #self.window = window
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
+        self.ln = int (self.ts / (self.in_seq_len + self.out_seq_len))
         #self.grid = grid
-        self.inputs = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.in_seq_len, self.nf))
-        self.outputs = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.out_seq_len, 1))
+        self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
+        self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
         '''self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))'''
@@ -81,14 +82,13 @@ class Data:
 
     def get_window_data(self, data):
 
-        ln = len(data)
-        data_2d_in = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.in_seq_len))
-        data_out = torch.zeros((self.ts - self.in_seq_len - self.out_seq_len, self.out_seq_len))
+        data_2d_in = torch.zeros((self.ln, self.in_seq_len))
+        data_out = torch.zeros((self.ln, self.out_seq_len))
         j = 0
-        for i in range(0, ln, self.in_seq_len):
-            if j < self.ts - self.in_seq_len - self.out_seq_len:
+        for i in range(0, self.ts, self.in_seq_len):
+            if j < self.ln:
                 data_2d_in[j, :] = data[i:i+self.in_seq_len]
-                data_out[j, :] = data[i+self.in_seq_len:i+self.out_seq_len + 100]
+                data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
                 j += 1
         return data_2d_in, data_out
 
