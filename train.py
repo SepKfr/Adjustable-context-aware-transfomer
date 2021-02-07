@@ -2,6 +2,7 @@ import pickle
 from preprocess import Scaler
 from utils import Metrics
 from model import DeepRelativeST
+from attn import Attn
 from torch.optim import Adam
 import torch.nn as nn
 import numpy as np
@@ -14,7 +15,7 @@ import os
 
 inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
-grid = pickle.load(open("grid.p", "rb"))
+#grid = pickle.load(open("grid.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
 max_len = min(len(inputs), 1000)
@@ -131,16 +132,25 @@ def call_atn_model(name, pos_enc, attn_type, pre_conv):
 
 def main():
 
-    call_atn_model("attn_cs", "sincos", "multihead", False)
-    #call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
-    call_atn_model("attn_rel", "rel", "multihead", False)
-    #call_atn_model("con_attn_rel", "rel", "conmultihead", False)
-    call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
-    #call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
-    call_atn_model("attn_rel_cnv", "rel", "multihead", True) 
-    #call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
+    attn_model = Attn(src_input_size=input_size,
+                      tgt_input_size=output_size,
+                      d_model=128,
+                      d_ff=256,
+                      d_k=64, d_v=64, n_heads=8,
+                      n_layers=4, src_pad_index=0,
+                      tgt_pad_index=0, device=torch.device('cpu'))
+    run(attn_model, "attn_model")
 
-    lstm_conv = RNConv(n_layers=n_layers,
+    '''call_atn_model("attn_cs", "sincos", "multihead", False)
+    call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
+    call_atn_model("attn_rel", "rel", "multihead", False)
+    call_atn_model("con_attn_rel", "rel", "conmultihead", False)
+    call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
+    call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
+    call_atn_model("attn_rel_cnv", "rel", "multihead", True) 
+    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)'''
+
+    '''lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
                        input_size=input_size,
                        output_size=output_size,
@@ -192,7 +202,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open("erros.json", "w") as json_file:
-            json.dump(erros, json_file)
+            json.dump(erros, json_file)'''
 
 
 if __name__ == '__main__':
