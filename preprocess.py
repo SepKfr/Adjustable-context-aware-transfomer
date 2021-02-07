@@ -17,42 +17,43 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, grid, time_steps, n_features, window, I, J):
+    def __init__(self, site_data, ts, n_features, seq_len):
 
         self.scalers = list()
         self.sites_data = site_data
-        self.ts = time_steps
+        #self.ts = time_steps
+        self.ts = ts
         self.n_seasons = 4
         self.nf = n_features
-        self.I = I
-        self.J = J
-        self.window = window
-        self.grid = grid
-        self.inputs = torch.zeros((self.ts - self.window*2, (self.nf - 1) * self.window, self.I, self.J))
-        self.outputs = torch.zeros((self.ts - self.window*2, self.window, self.I, self.J))
+        '''self.I = I
+        self.J = J'''
+        #self.window = window
+        self.seq_len = seq_len
+        #self.grid = grid
+        self.inputs = torch.zeros((self.ts - self.seq_len, self.seq_len, self.nf))
+        self.outputs = torch.zeros((self.ts - self.seq_len, 28, 1))
         self.create_raster()
-        self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
-                                                    self.outputs.shape[2] * self.outputs.shape[3]))
+        '''self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
+                                                    self.outputs.shape[2] * self.outputs.shape[3]))'''
 
         pickle.dump(self.inputs, open("inputs.p", "wb"))
         pickle.dump(self.outputs, open("outputs.p", "wb"))
-        pickle.dump(self.grid, open("grid.p", "wb"))
+        #pickle.dump(self.grid, open("grid.p", "wb"))
         pickle.dump(self.scalers, open("scalers.pkl", "wb"))
 
     def create_raster(self):
 
         for abr, df_site in self.sites_data.items():
 
-            i, j = self.grid[abr]
+            #i, j = self.grid[abr]
             scalers_per_site = Scaler(abr)
             self.scalers.append(scalers_per_site)
-
-            f_ind = 0
 
             for f in range(self.nf):
 
                 stScaler = StandardScaler()
-                dat = df_site.iloc[-self.ts:, f + 1]
+                #dat = df_site.iloc[-self.ts:, f + 1]
+                dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
                 stScaler.fit(dat)
                 dat = stScaler.transform(dat)
@@ -60,32 +61,33 @@ class Data:
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
 
-                if f != 1:
-                    self.inputs[:, f_ind:f_ind + self.window, i, j] = in_data
-                    f_ind += self.window
+                self.inputs[:, :, f] = in_data
                 if f == 1:
-                    self.outputs[:, :self.window, i, j] = out_data
+                    self.outputs[:, :, 0] = out_data
+                #self.inputs[:, :, -self.n_seasons:] = self.create_one_hot(df_site)
 
     def create_one_hot(self, df):
 
         months = df["Date"].dt.month
-        one_hot = torch.zeros((len(months) - self.window*2, self.n_seasons))
-        for i, m in enumerate(months):
-            if i < len(months) - self.window*2:
+        b = self.ts - self.seq_len*2
+        one_hot = torch.zeros((b, self.seq_len, self.n_seasons))
+        for i in range(b):
+            for s in range(self.seq_len):
+                m = months.iloc[i+s]
                 j = 1 if m <= 3 else 2 if m > 3 & m <= 6 else 3 if m > 6 & m <= 9 else 4
-                one_hot[i, j - 1] = 1
+                one_hot[i, s, j - 1] = 1
         return one_hot
 
     def get_window_data(self, data):
 
         ln = len(data)
-        data_2d_in = torch.zeros((self.ts - self.window*2, self.window))
-        data_out = torch.zeros((self.ts - self.window*2, self.window))
+        data_2d_in = torch.zeros((self.ts - self.seq_len, self.seq_len))
+        data_out = torch.zeros((self.ts - self.seq_len, 28))
         j = 0
         for i in range(0, ln):
-            if j < self.ts - self.window*2:
-                data_2d_in[j, :] = data[i:i+self.window]
-                data_out[j, :] = data[i+self.window:i+self.window * 2]
+            if j < self.ts - self.seq_len - 28:
+                data_2d_in[j, :] = data[i:i+self.seq_len]
+                data_out[j, :] = data[i+self.seq_len:i+self.seq_len + 28]
                 j += 1
         return data_2d_in, data_out
 
@@ -94,14 +96,17 @@ class STData:
     def __init__(self, meta_path, site_path, params):
         self.meta_path = meta_path
         self.site_path = site_path
-        self.I = 2
-        self.J = 3
+        self.I = 3
+        self.J = 6
         self.n_features = 3
-        self.site_abrs = ["BEF", "GOF", "DCF", "WHB"]
+        #self.site_abrs = ["BEF", "GOF", "DCF", 'MCQ', "WHB"]
         self.sites_data = dict()
-        self.grid = self.create_grid()
-        for abr in self.site_abrs:
+        site_dat = self.prep_data_per_site("BEF")
+        ln = len(site_dat)
+        self.sites_data["BEF"] = site_dat
 
+        #self.grid = self.create_grid()
+        '''for abr in self.site_abrs:
             self.sites_data[abr] = self.prep_data_per_site(abr)
 
         dates = self.sites_data["BEF"]["Date"].values
@@ -114,10 +119,10 @@ class STData:
         for key in self.sites_data.keys():
             site_ln = len(self.sites_data[key])
             if site_ln < self.min_len:
-                self.min_len = site_ln
+                self.min_len = site_ln'''
 
-        self.raster = Data(self.sites_data, self.grid, self.min_len,
-                           self.n_features, params.window, self.I, self.J)
+        #self.raster = Data(self.sites_data, self.grid, self.min_len, self.n_features, params.window, self.I, self.J)
+        self.raster = Data(self.sites_data, ln, self.n_features, params.seq_len)
 
     class Site:
         def __init__(self, name, abr, lat, long):
@@ -151,8 +156,7 @@ class STData:
             name = sheet_site.cell(row=row, column=1).value
             lat = sheet_site.cell(row=row, column=10).value
             long = sheet_site.cell(row=row, column=11).value
-            if abr in self.site_abrs:
-                site_list.append(self.Site(name, abr, lat, long))
+            site_list.append(self.Site(name, abr, lat, long))
 
         min_lat, min_long, max_lat, max_long = 100, 100, -100, -100
 
@@ -221,7 +225,7 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--window", type=int, default=7)
+    parser.add_argument("--seq_len", type=int, default=7)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 

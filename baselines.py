@@ -10,7 +10,7 @@ class RNConv(nn.Module):
         super(RNConv, self).__init__()
         self.n_layers = n_layers
         self.hidden_size = hidden_size
-        self.conv = [nn.Conv2d(input_size, out_channel, kernel) for _ in range(n_layers)]
+        self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
         self.encoder_lstm = nn.LSTM(out_channel, hidden_size, n_layers, dropout=d_r)
         self.decoder_lstm = nn.LSTM(out_channel, hidden_size, n_layers, dropout=d_r)
         self.encoder_gru = nn.GRU(out_channel, hidden_size, n_layers, dropout=d_r)
@@ -19,34 +19,53 @@ class RNConv(nn.Module):
         self.linear = nn.Linear(out_channel, output_size)
         self.rnn_type = rnn_type
 
-    def forward(self, X_en, X_de, hidden=None):
+    def forward(self, x_en, x_de, training=True, hidden=None):
 
-        x_en, x_de = None, None
+        x_en_out, x_de_out = None, None
+        b, seq_len, f = x_en.shape
+        b, seq_len_1, f_1 = x_de.shape
+        x_en = x_en.view(b, f, seq_len)
+        x_de = x_de.view(b, f_1, seq_len_1)
 
         for i in range(self.n_layers):
-            x_en = self.conv[i](X_en)
-            x_en = self.dropout1[i](x_en)
-            x_de = self.conv[i](X_de)
-            x_de = self.dropout1[i](x_de)
+            x_en_out = self.conv[i](x_en)
+            x_en_out = self.dropout1[i](x_en_out)
+            x_de_out = self.conv[i](x_de)
+            x_de_out = self.dropout1[i](x_de_out)
 
-        b, d, h, w = x_en.shape
-        x_en = torch.reshape(x_en, (-1, h * w, d))
-        x_de = torch.reshape(x_de, (-1, h * w, d))
-        seq_len = x_en.shape[1]
+        x_en_out = x_en_out.view(seq_len, b, -1)
+        x_de_out = x_de_out.view(seq_len_1, b, -1)
+        seq_len = x_en_out.shape[1]
+        outputs = torch.zeros(x_de_out.shape)
 
         if hidden is None:
-            hidden = torch.zeros(self.n_layers, seq_len, self.hidden_size)
+            hidden = torch.zeros(self.n_layers, b, self.hidden_size)
 
         if self.rnn_type == "LSTM":
-            en_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
+            en_out, (hidden, state) = self.encoder_lstm(x_en_out, (hidden, hidden))
 
-            outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
+            if training:
+                outputs, _ = self.decoder_lstm(x_de_out, (hidden, hidden))
+            else:
+                dec_in = x_en_out[-1, :, :]
+                dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
+                for i in range(x_de.shape[0]):
+                    dec_out, _ = self.decoder_lstm(dec_in, (hidden, hidden))
+                    dec_in = dec_out
+                    outputs[i, :, :] = dec_out
 
         else:
-            en_out, hidden = self.encoder_gru(x_en, hidden)
-            outputs, _ = self.decoder_gru(x_de, hidden)
+            if training:
+                outputs, _ = self.decoder_gru(x_de_out, hidden)
+            else:
+                dec_in = x_en_out[-1, :, :]
+                dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
+                for i in range(x_de.shape[0]):
+                    dec_out, _ = self.decoder_gru(dec_in, hidden)
+                    dec_in = dec_out
+                    outputs[i, :, :] = dec_out
 
-        outputs = self.linear(outputs)
+        outputs = self.linear(outputs).view(b, seq_len_1, -1)
 
         return outputs
 
@@ -65,26 +84,40 @@ class RNN(nn.Module):
         self.rnn_type = rnn_type
         self.linear1 = nn.Linear(input_size, hidden_size)
 
-    def forward(self, X_en, X_de, hidden=None):
+    def forward(self, X_en, X_de, training=True, hidden=None):
 
-        b, f, h, w = X_en.shape
-        x_en = X_en.reshape(-1, h * w, f)
-        x_de = X_de.reshape(-1, h * w, f)
-        x_en = self.linear1(x_en)
-        x_de = self.linear1(x_de)
+        b, seq_len, _ = X_en.shape
+        b, seq_len_1, _ = X_de.shape
+        x_en = self.linear1(X_en).view(seq_len, b, self.hidden_size)
+        x_de = self.linear1(X_de).view(seq_len_1, b, self.hidden_size)
+        outputs = torch.zeros(x_de.shape)
 
         if hidden is None:
             hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size)
 
         if self.rnn_type == "GRU":
-            enc_out, hidden = self.encoder_gru(x_en, hidden)
-            outputs, _ = self.decoder_gru(x_de, hidden)
+
+            if training:
+                outputs, _ = self.decoder_gru(x_de, hidden)
+            else:
+                dec_in = x_en[-1, :, :]
+                dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
+                for i in range(x_de.shape[0]):
+                    dec_out, _ = self.decoder_gru(dec_in, hidden)
+                    dec_in = dec_out
+                    outputs[i, :, :] = dec_out
 
         else:
+            if training:
+                outputs, _ = self.decoder_gru(x_de, hidden)
+            else:
+                dec_in = x_en[-1, :, :]
+                dec_in = dec_in.view(-1, dec_in.shape[0], dec_in.shape[1])
+                for i in range(x_de.shape[0]):
+                    dec_out, _ = self.decoder_gru(dec_in, hidden)
+                    dec_in = dec_out
+                    outputs[i, :, :] = dec_out
 
-            enc_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
-            outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
-
-        outputs = self.linear2(outputs)
+        outputs = self.linear2(outputs).view(b, seq_len_1, -1)
 
         return outputs

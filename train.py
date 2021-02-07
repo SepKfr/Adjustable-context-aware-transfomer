@@ -18,36 +18,33 @@ grid = pickle.load(open("grid.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
 max_len = min(len(inputs), 1000)
-inputs = inputs[-max_len:, :, :, :]
-outputs = outputs[-max_len:, :, :]
-trn_len = int(inputs.shape[0] * 0.8)
-tst_len = inputs.shape[0] - trn_len
+inputs = inputs[-max_len:, :, :]
+outputs = outputs[-max_len:, :]
+trn_len = inputs.shape[0] - 1
 
-train_x, train_y = inputs[:trn_len, :, :, :], outputs[:trn_len, :, :]
-test_x, test_y = inputs[-trn_len:, :, :, :], outputs[-trn_len:, :, :]
+train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
+test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 
-d_model = 512
-dff = 2048
-n_head = 8
+d_model = 8
+dff = 32
+n_head = 2
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
 n_layers = 6
-output_size = train_y.shape[1]
-input_size = train_x.shape[1]
+output_size = test_y.shape[2]
+input_size = train_x.shape[2]
 lr = 0.0001
 n_ephocs = 20
 
-en_l = int(.8 * trn_len)
-de_l = trn_len - en_l
-x_en = train_x[-en_l:-de_l, :, :, :]
-x_de = train_x[-de_l:, :, :, :]
-y_true = train_y[-de_l:, :, :]
+x_en = train_x[:, :-28, :]
+x_de = train_x[:, -28:, :]
+y_true = train_y[:, :, :]
 
-x_en_t = test_x[:-1, :, :, :]
-x_de_t = test_x[-1:, :, :, :]
-y_true_t = test_y[-1:, :, :]
+x_en_t = test_x[:, :-28, :]
+x_de_t = test_x[:, -28:, :]
+y_true_t = test_y[:, :, :]
 
 erros = dict()
 
@@ -56,38 +53,35 @@ def inverse_transform(data):
 
     n, d, hw = data.shape
     inv_data = torch.zeros(data.shape)
-    locs = list(grid.values())
-    locs_1d = [np.ravel_multi_index(loc, (2, 3)) for loc in locs]
+    '''locs = list(grid.values())
+    locs_1d = [np.ravel_multi_index(loc, (2, 3)) for loc in locs]'''
 
     for i, scalers_per_site in enumerate(scalers):
         f, scaler = list(scalers_per_site.scalers.items())[1]
-        dat = data[:, :, locs_1d[i]]
+        dat = data[:, :, 0]
         dat = dat.view(n*d)
         in_dat = scaler.inverse_transform(dat.detach().numpy().reshape(-1, 1))
         in_dat = torch.from_numpy(np.array(in_dat).flatten())
-        inv_data[:, :, locs_1d[i]] = in_dat.view(n, d)
+        inv_data[:, :, 0] = in_dat.view(n, d)
 
-    return inv_data, locs_1d
+    return inv_data
 
 
 def evaluate(model, tst_x, y_t):
 
-    y_t_in, locs = inverse_transform(y_t)
+    y_t_in = inverse_transform(y_t)
 
     model.eval()
 
     outputs = model(tst_x[0], tst_x[1])
-
-    o_s = outputs.shape
-    outputs = outputs.reshape(o_s[0], o_s[2], o_s[1])
-    outputs_in, _ = inverse_transform(outputs)
+    outputs_in = inverse_transform(outputs)
     metrics = Metrics(outputs_in, y_t_in)
     return metrics.rmse, metrics.mape
 
 
 def train(model, trn_x, y_t):
 
-    y_true_in, _ = inverse_transform(y_t)
+    y_true_in = inverse_transform(y_t)
     optimizer = Adam(model.parameters(), lr)
     criterion = nn.MSELoss()
 
@@ -98,7 +92,7 @@ def train(model, trn_x, y_t):
         output = model(trn_x[0], trn_x[1])
         o_s = output.shape
         output = output.reshape(o_s[0], o_s[2], o_s[1])
-        outputs_in, _ = inverse_transform(output)
+        outputs_in = inverse_transform(output)
         loss = criterion(outputs_in, y_true_in)
         loss = Variable(loss, requires_grad=True)
         loss.backward()
@@ -138,13 +132,13 @@ def call_atn_model(name, pos_enc, attn_type, pre_conv):
 def main():
 
     call_atn_model("attn_cs", "sincos", "multihead", False)
-    call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
-    '''call_atn_model("attn_rel", "rel", "multihead", False)
-    call_atn_model("con_attn_rel", "rel", "conmultihead", False)
+    #call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
+    call_atn_model("attn_rel", "rel", "multihead", False)
+    #call_atn_model("con_attn_rel", "rel", "conmultihead", False)
     call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
-    call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
-    call_atn_model("attn_rel_cnv", "rel", "multihead", True)
-    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)'''
+    #call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
+    call_atn_model("attn_rel_cnv", "rel", "multihead", True) 
+    #call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
 
     lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,

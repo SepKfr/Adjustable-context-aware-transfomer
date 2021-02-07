@@ -119,19 +119,18 @@ class MultiheadAttention(nn.Module):
     def forward(self, q, k, v, mask=False):
 
         if self.pos_enc == "sincos":
-
-            p_q = PositionalEncoder(self.d_model, q.shape[0])
+            p_q = PositionalEncoder(self.d_model, q.shape[1])
             q = p_q(self.w_qs(q))
-            p_k = PositionalEncoder(self.d_model, k.shape[0])
+            p_k = PositionalEncoder(self.d_model, k.shape[1])
             k = p_k(self.w_qs(k))
-            p_v = PositionalEncoder(self.d_model, v.shape[0])
+            p_v = PositionalEncoder(self.d_model, v.shape[1])
             v = p_v(self.w_qs(v))
 
-        q = q.view(q.shape[1], q.shape[2], q.shape[0], self.n_heads, self.depth)
-        k = k.view(k.shape[1], k.shape[2], k.shape[0], self.n_heads, self.depth)
-        v = v.view(v.shape[1], v.shape[2], v.shape[0], self.n_heads, self.depth)
+        q = q.view(q.shape[0], -1, self.n_heads, self.depth)
+        k = k.view(k.shape[0], -1, self.n_heads, self.depth)
+        v = v.view(v.shape[0], -1, self.n_heads, self.depth)
 
-        q, k, v = q.transpose(2, 3), k.transpose(2, 3), v.transpose(2, 3)
+        q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
 
         scaled_attn, attn_weights = self.scaled_dot_product(q, k, v, mask)
         return scaled_attn, attn_weights
@@ -139,32 +138,32 @@ class MultiheadAttention(nn.Module):
     def scaled_dot_product(self, q, k, v, mask=False):
 
         q, k, v = q, k, v
-        k_t = k.transpose(3, 4)
-        mask_kt = torch.triu(torch.ones(1, 1, 1, k_t.shape[3], k_t.shape[4]), diagonal=1) * -1e9
+        k_t = k.transpose(-1, -2)
+        mask_kt = torch.triu(torch.ones(1, self.n_heads, self.depth, k_t.shape[-1]), diagonal=1) * -1e9
         if mask:
             k_t += mask_kt
         rel_pos_q = RelativePositionalEmbed(q, k, self.depth)
 
         if self.attn_type == "multihead":
 
-            bmm_qk = einsum('hwink,hwijm->hwinm', q / math.sqrt(self.depth), k_t)
+            bmm_qk = einsum('bhtd,bhjl->bhtl', q / math.sqrt(self.depth), k_t)
             if self.pos_enc == "rel":
                 bmm_qk += rel_pos_q()
             attn_weights = self.softmax(bmm_qk)
         else:
-            bmm_qk = einsum('hwink,hwijm->hwinm', q / math.sqrt(self.depth), k_t)
+            bmm_qk = einsum('bhtd,bhjl->bhtl', q / math.sqrt(self.depth), k_t)
             if self.pos_enc == "rel":
                 bmm_qk += rel_pos_q()
             qk = self.softmax(bmm_qk)
-            qk = einsum('hwink,hwijm->hwinm', qk, k_t)
+            qk = einsum('bhtl,bhjd->bhtd', qk, k_t)
             rel_pos_k = RelativePositionalEmbed(qk, k, self.depth)
             if self.pos_enc == "rel":
                 qk += rel_pos_k()
             attn_weights = self.softmax(qk)
 
-        output = einsum('hwijk,hwikn->hwijn', attn_weights, v)
-        h, w, n_h, seq_len, d_k = output.shape
-        output = output.reshape(seq_len, h, w, n_h*d_k)
+        output = einsum('bhtl,bhjd->bhtd', attn_weights, v)
+        b, n_h, seq_len, d_k = output.shape
+        output = output.reshape(b, seq_len, d_k*n_h)
         output = self.fc(output)
         return output, attn_weights
 
@@ -177,7 +176,7 @@ class RelativePositionalEmbed(nn.Module):
         q_s = q.shape
         k_s = k.shape
         self.d_k = d_k
-        self.weights = nn.Parameter(torch.randn(1, 1, 1, q_s[4], k_s[3]), requires_grad=True)
+        self.weights = nn.Parameter(torch.randn(1, q_s[2], k_s[2]), requires_grad=True)
 
     def forward(self):
 
@@ -199,6 +198,7 @@ class PositionalEncoder(nn.Module):
     def __init__(self, d_model, max_seq_len=160):
         super(PositionalEncoder, self).__init__()
 
+        self.d_model = d_model
         self.pe = torch.zeros(max_seq_len, d_model)
         position = torch.arange(0., max_seq_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0., d_model, 2) *
@@ -209,8 +209,8 @@ class PositionalEncoder(nn.Module):
 
     def forward(self, x):
 
-        b, h, w, d = x.shape
-        self.pe = self.pe.reshape(b, 1, 1, d)
+        seq_len = x.size(1)
+        self.pe = self.pe[:, :seq_len].view(1, seq_len, self.d_model)
         x = x + self.pe
         return x
 
@@ -233,21 +233,21 @@ class DeepRelativeST(nn.Module):
         self.d_model = d_model
         self.pos_enc = pos_enc
         self.conv_pre = conv_pre
-        self.linear1 = nn.Linear(in_channel, d_model)
+        self.linear1 = nn.Linear(input_size, d_model)
 
-    def forward(self, x_en, x_de):
+    def forward(self, x_en, x_de, training=True):
 
-        b_in, n_in, h, w = x_en.shape
-        b_out, n_out, h, w = x_de.shape
+        b_in, seq_len_en, f = x_en.shape
+        b_out, seq_len_de, f = x_de.shape
 
-        if self.conv_pre:
+        '''if self.conv_pre:
             x_en = self.convs(x_en)
             x_de = self.convs(x_de)
             x_en = torch.reshape(x_en, (b_in, h, w, self.d_model))
             x_de = torch.reshape(x_de, (b_out, h, w, self.d_model))
-        else:
-            x_en = self.linear1(x_en.view(b_in, h, w, n_in))
-            x_de = self.linear1(x_de.view(b_out, h, w, n_out))
+        else:'''
+        x_en = self.linear1(x_en.view(b_in, seq_len_en, f))
+        x_de = self.linear1(x_de.view(b_out, seq_len_de, f))
 
         enc_out = None
 
@@ -257,11 +257,16 @@ class DeepRelativeST(nn.Module):
         outputs = torch.zeros(x_de.shape)
 
         for i in range(self.n_layers):
-
-            outputs = self.decoders[i](x_de, enc_out)
+            if training:
+                outputs = self.decoders[i](x_de, enc_out)
+            else:
+                dec_inp = x_en[-1, :, :]
+                dec_inp = dec_inp.view(-1, dec_inp.shape[0], dec_inp.shape[1])
+                for j in range(b_out):
+                    dec_out = self.decoders[i](dec_inp, enc_out)
+                    dec_inp = dec_out
+                    outputs[j, :, :] = dec_out
 
         output_f = self.linear2(outputs)
         output_f = self.softmax(output_f)
-        b, h, w, _ = output_f.shape
-        output_f = output_f.view(b, h*w, -1)
         return output_f
