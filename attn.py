@@ -36,7 +36,8 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
 
         seq_len = x.size(1)
-        self.pe = self.pe[:, :seq_len]
+        b = x.size(0)
+        self.pe = self.pe[:, :seq_len].repeat(b, 1, 1)
         x = x + Variable(self.pe, requires_grad=False)
         return self.dropout(x)
 
@@ -254,5 +255,4 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
-
 
