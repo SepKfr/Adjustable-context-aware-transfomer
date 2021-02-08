@@ -29,7 +29,7 @@ test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 d_model = 128
 dff = 256
-n_head = 2
+n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
@@ -142,7 +142,16 @@ def main():
                       d_ff=256,
                       d_k=64, d_v=64, n_heads=8,
                       n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'))
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel')
+    run(attn_model, "attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+
+    attn_model = Attn(src_input_size=input_size,
+                      tgt_input_size=output_size,
+                      d_model=128,
+                      d_ff=256,
+                      d_k=64, d_v=64, n_heads=8,
+                      n_layers=6, src_pad_index=0,
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos')
     run(attn_model, "attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     '''call_atn_model("attn_cs", "sincos", "multihead", False)
