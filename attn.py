@@ -49,13 +49,13 @@ class ScaledDotProductAttention(nn.Module):
         self.d_k = d_k
 
     def forward(self, Q, K, V, attn_mask):
-        scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
+        scores = torch.einsum('bhqd,bhdk->bhqk', Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
         if attn_mask is not None:
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
         attn = nn.Softmax(dim=-1)(scores)
-        context = torch.matmul(attn, V)
+        context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
         return context, attn
 
 
