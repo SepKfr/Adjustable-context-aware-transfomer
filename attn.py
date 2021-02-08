@@ -36,8 +36,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
 
         seq_len = x.size(1)
-        b = x.size(0)
-        self.pe = self.pe[:, :seq_len].repeat(b, 1, 1)
+        self.pe = self.pe[:, :seq_len]
         x = x + Variable(self.pe, requires_grad=False)
         return self.dropout(x)
 
