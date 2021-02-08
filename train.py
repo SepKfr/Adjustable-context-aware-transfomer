@@ -8,14 +8,14 @@ import torch.nn as nn
 import numpy as np
 import torch
 from torch.autograd import Variable
-from baselines import RNConv, RNN
+from baselines import RNN, CNN
+import argparse
 import json
 import os
 
 
 inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
-#grid = pickle.load(open("grid.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
 max_len = min(len(inputs), 1000)
@@ -38,14 +38,6 @@ output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
 n_ephocs = 20
-
-x_en = train_x[:, :-100, :]
-x_de = train_x[:, -100:, :]
-y_true = train_y[:, :, :]
-
-x_en_t = test_x[:, :-100, :]
-x_de_t = test_x[:, -100:, :]
-y_true_t = test_y[:, :, :]
 
 erros = dict()
 
@@ -100,11 +92,9 @@ def train(model, trn_x, y_t):
         optimizer.step()
 
 
-def run(model, name):
+def run(model, name, trn_x, tst_x, trn_y, tst_y):
 
     erros[name] = list()
-    trn_x, tst_x = [x_en, x_de], [x_en_t, x_de_t]
-    trn_y, tst_y = y_true, y_true_t
     train(model, trn_x, trn_y)
     rmses, mapes = evaluate(model, tst_x, tst_y)
     erros[name].append(float("{:.4f}".format(rmses.item())))
@@ -132,6 +122,20 @@ def call_atn_model(name, pos_enc, attn_type, pre_conv):
 
 def main():
 
+    parser = argparse.ArgumentParser(description="preprocess argument parser")
+    parser.add_argument("--seq_len", type=int, default=100)
+    params = parser.parse_args()
+
+    seq_len = params.seq_len
+
+    x_en = train_x[:, :-seq_len, :]
+    x_de = train_x[:, -seq_len:, :]
+    y_true = train_y[:, :, :]
+
+    x_en_t = test_x[:, :-seq_len, :]
+    x_de_t = test_x[:, -seq_len:, :]
+    y_true_t = test_y[:, :, :]
+
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
                       d_model=128,
@@ -139,7 +143,7 @@ def main():
                       d_k=64, d_v=64, n_heads=8,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'))
-    run(attn_model, "attn_model")
+    run(attn_model, "attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     '''call_atn_model("attn_cs", "sincos", "multihead", False)
     call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
@@ -159,7 +163,7 @@ def main():
                        rnn_type="LSTM",
                        d_r=0.1)
 
-    run(lstm_conv, "LSConv")
+    run(lstm_conv, "LSConv", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     gru_conv = RNConv(n_layers=n_layers,
                       hidden_size=out_channel,
@@ -170,7 +174,16 @@ def main():
                       rnn_type="gru",
                       d_r=0.1)
 
-    run(gru_conv, "GruConv")'''
+    run(gru_conv, "GruConv", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
+
+    cnn = CNN(input_size=input_size,
+              output_size=output_size,
+              out_channel=out_channel,
+              kernel=kernel,
+              n_layers=n_layers,
+              d_r=0.1)
+
+    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -179,7 +192,7 @@ def main():
                rnn_type="LSTM",
                d_r=0.1)
 
-    run(lstm, "lstm")
+    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -188,7 +201,7 @@ def main():
               rnn_type="GRU",
               d_r=0.1)
 
-    run(gru, "gru")
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:

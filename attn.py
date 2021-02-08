@@ -5,14 +5,6 @@ from torch.autograd import Variable
 import numpy as np
 
 
-def get_attn_pad_mask(seq_q, seq_k, pad_index):
-    batch_size, len_q, d = seq_q.size()
-    batch_size, len_k, d = seq_k.size()
-    pad_attn_mask = seq_k.data.eq(pad_index).unsqueeze(1)
-    pad_attn_mask = torch.as_tensor(pad_attn_mask, dtype=torch.int)
-    return pad_attn_mask.expand(batch_size, len_q, len_k)
-
-
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)
@@ -216,9 +208,7 @@ class Decoder(nn.Module):
         dec_outputs = self.tgt_emb(dec_inputs)
         dec_outputs = self.pos_emb(dec_outputs)
 
-        #dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs, self.pad_index)
         dec_self_attn_mask = get_attn_subsequent_mask(dec_inputs)
-        #dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask + dec_self_attn_subsequent_mask), 0)
         dec_enc_attn_mask = None
 
         dec_self_attns, dec_enc_attns = [], []

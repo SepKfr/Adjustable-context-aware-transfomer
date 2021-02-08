@@ -121,3 +121,34 @@ class RNN(nn.Module):
         outputs = self.linear2(outputs).view(b, seq_len_1, -1)
 
         return outputs
+
+
+class CNN(nn.Module):
+    def __init__(self, input_size, output_size, out_channel, kernel, n_layers, d_r):
+        super(CNN, self).__init__()
+        self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
+        self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
+        self.linear = nn.Linear(out_channel, output_size)
+        self.n_layers = n_layers
+        self.out_channel = out_channel
+
+    def forward(self, x_en, x_de):
+
+        de_seq_len = x_de.shape[1]
+        x = torch.cat((x_en, x_de), dim=1)
+        b, seq_len, f = x.shape
+        x = x.view(b, f, seq_len)
+        proj = nn.Linear(seq_len, de_seq_len)
+
+        x_out = None
+
+        for i in range(self.n_layers):
+            x_out = self.conv[i](x)
+            x_out = self.dropout1[i](x_out)
+
+        x_out = proj(x_out)
+        output = self.linear(x_out.view(b, -1, self.out_channel))
+
+        return output
+
+

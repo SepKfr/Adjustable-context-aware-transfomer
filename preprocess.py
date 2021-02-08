@@ -21,17 +21,14 @@ class Data:
 
         self.scalers = list()
         self.sites_data = site_data
-        #self.ts = time_steps
         self.ts = ts
         self.n_seasons = 4
         self.nf = n_features
         '''self.I = I
         self.J = J'''
-        #self.window = window
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
-        self.ln = int (self.ts / (self.in_seq_len + self.out_seq_len))
-        #self.grid = grid
+        self.ln = int(self.ts / (self.in_seq_len + self.out_seq_len))
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -40,21 +37,18 @@ class Data:
 
         pickle.dump(self.inputs, open("inputs.p", "wb"))
         pickle.dump(self.outputs, open("outputs.p", "wb"))
-        #pickle.dump(self.grid, open("grid.p", "wb"))
         pickle.dump(self.scalers, open("scalers.pkl", "wb"))
 
     def create_raster(self):
 
         for abr, df_site in self.sites_data.items():
 
-            #i, j = self.grid[abr]
             scalers_per_site = Scaler(abr)
             self.scalers.append(scalers_per_site)
 
             for f in range(self.nf):
 
                 stScaler = StandardScaler()
-                #dat = df_site.iloc[-self.ts:, f + 1]
                 dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
                 stScaler.fit(dat)
@@ -66,7 +60,7 @@ class Data:
                 self.inputs[:, :, f] = in_data
                 if f == 1:
                     self.outputs[:, :, 0] = out_data
-                #self.inputs[:, :, -self.n_seasons:] = self.create_one_hot(df_site)
+
 
     def create_one_hot(self, df):
 
@@ -122,7 +116,6 @@ class STData:
             if site_ln < self.min_len:
                 self.min_len = site_ln'''
 
-        #self.raster = Data(self.sites_data, self.grid, self.min_len, self.n_features, params.window, self.I, self.J)
         self.raster = Data(self.sites_data, ln, self.n_features,
                            params.in_seq_len, params.out_seq_len)
 
