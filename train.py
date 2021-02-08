@@ -176,7 +176,7 @@ def main():
 
     run(gru_conv, "GruConv", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
 
-    '''cnn = CNN(input_size=input_size,
+    cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=out_channel,
               kernel=kernel,
@@ -201,7 +201,7 @@ def main():
               rnn_type="GRU",
               d_r=0.1)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
