@@ -142,7 +142,7 @@ def main():
                       d_ff=64,
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel')
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="con")
     run(attn_model, "attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = Attn(src_input_size=input_size,
@@ -151,7 +151,7 @@ def main():
                       d_ff=64,
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos')
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn")
     run(attn_model, "attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     '''call_atn_model("attn_cs", "sincos", "multihead", False)
