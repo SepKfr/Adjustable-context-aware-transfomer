@@ -31,6 +31,7 @@ class Data:
         self.ln = int(self.ts - (self.in_seq_len + self.out_seq_len))
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
+        print(self.inputs.shape)
         self.create_raster()
         '''self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))'''
