@@ -199,9 +199,7 @@ class DecoderLayer(nn.Module):
         dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
         if self.attn_type == "con":
             dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_outputs, dec_outputs, None)
-        dec_outputs_f, dec_enc_attn = self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
-        if self.attn_type == "con":
-            dec_outputs_f, dec_enc_attn = self.dec_enc_attn(dec_outputs, dec_outputs_f, dec_outputs_f, dec_enc_attn_mask)
+        dec_outputs, dec_enc_attn = self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
         dec_outputs = self.pos_ffn(dec_outputs)
         return dec_outputs, dec_self_attn, dec_enc_attn
 
