@@ -18,7 +18,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 1000)
+max_len = min(len(inputs), 100)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = inputs.shape[0] - 1
@@ -83,8 +83,6 @@ def train(model, trn_x, y_t):
     for i in range(n_ephocs):
         optimizer.zero_grad()
         output = model(trn_x[0], trn_x[1])
-        o_s = output.shape
-        output = output.reshape(o_s[0], o_s[2], o_s[1])
         outputs_in = inverse_transform(output)
         loss = criterion(outputs_in, y_true_in)
         loss = Variable(loss, requires_grad=True)
