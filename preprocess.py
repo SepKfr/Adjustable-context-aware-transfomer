@@ -28,7 +28,7 @@ class Data:
         self.J = J'''
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
-        self.ln = int(self.ts / (self.in_seq_len + self.out_seq_len))
+        self.ln = int(self.ts - (self.in_seq_len + self.out_seq_len))
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -61,7 +61,6 @@ class Data:
                 if f == 1:
                     self.outputs[:, :, 0] = out_data
 
-
     def create_one_hot(self, df):
 
         months = df["Date"].dt.month
@@ -79,7 +78,7 @@ class Data:
         data_2d_in = torch.zeros((self.ln, self.in_seq_len))
         data_out = torch.zeros((self.ln, self.out_seq_len))
         j = 0
-        for i in range(0, self.ts, self.in_seq_len):
+        for i in range(0, self.ts):
             if j < self.ln:
                 data_2d_in[j, :] = data[i:i+self.in_seq_len]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
