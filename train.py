@@ -63,12 +63,13 @@ def inverse_transform(data):
 def evaluate(model, tst_x, y_t):
 
     y_t_in = inverse_transform(y_t)
+    b, seq_len, f = y_t_in.shape
 
     model.eval()
 
     outputs = model(tst_x[0], tst_x[1])
     outputs_in = inverse_transform(outputs)
-    metrics = Metrics(outputs_in, y_t_in)
+    metrics = Metrics(outputs_in.view(seq_len), y_t_in.view(seq_len))
     return metrics.rmse, metrics.mape
 
 
