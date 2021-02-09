@@ -68,8 +68,8 @@ class RNN(nn.Module):
 
     def forward(self, X_en, X_de, training=True, hidden=None):
 
-        seq_len, b, _ = X_en.shape
-        seq_len_1, b, _ = X_de.shape
+        b, seq_len, _ = X_en.shape
+        b, seq_len_1, _ = X_de.shape
         x_en = self.linear1(X_en).view(seq_len, b, self.hidden_size)
         x_de = self.linear1(X_de).view(seq_len_1, b, self.hidden_size)
 
@@ -102,7 +102,7 @@ class CNN(nn.Module):
 
         de_seq_len = x_de.shape[1]
         x = torch.cat((x_en, x_de), dim=1)
-        seq_len, b, f = x.shape
+        b, seq_len, f = x.shape
         x = x.view(b, f, seq_len)
         proj = nn.Linear(seq_len, de_seq_len)
 

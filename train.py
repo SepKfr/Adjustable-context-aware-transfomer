@@ -177,9 +177,9 @@ def main():
     call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
     call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
     call_atn_model("attn_rel_cnv", "rel", "multihead", True) 
-    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)'''
+    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
 
-    '''lstm_conv = RNConv(n_layers=n_layers,
+    lstm_conv = RNConv(n_layers=n_layers,
                        hidden_size=out_channel,
                        input_size=input_size,
                        output_size=output_size,
