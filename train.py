@@ -134,23 +134,23 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    attn_model = Attn(src_input_size=input_size,
+    '''attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
                       d_model=8,
                       d_ff=64,
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="con")
-    run(attn_model, "attn_model_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "attn_model_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
 
-    attn_model = Attn(src_input_size=input_size,
+    '''attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
                       d_model=8,
                       d_ff=64,
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="con")
-    run(attn_model, "attn_model_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "attn_model_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
