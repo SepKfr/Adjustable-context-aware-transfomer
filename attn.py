@@ -3,6 +3,8 @@ import torch.nn as nn
 import math
 from torch.autograd import Variable
 import numpy as np
+import seaborn as sns; sns.set_theme()
+import matplotlib.pylab as plt
 
 
 def get_attn_subsequent_mask(seq):
@@ -57,13 +59,13 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
         if self.pe == "rel":
             K += rel_pos_enc(K)
-        scores = torch.einsum('bhqd,bhdk->bhqk', Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
+        scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
         if attn_mask is not None:
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
         attn = nn.Softmax(dim=-1)(scores)
-        context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+        context = torch.matmul(attn, V)
         return context, attn
 
 
@@ -226,7 +228,7 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
 
-    def forward(self, dec_inputs, enc_inputs, enc_outputs):
+    def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
         dec_outputs = self.tgt_emb(dec_inputs)
         if self.pe != 'rel':
             dec_outputs = self.pos_emb(dec_outputs)
@@ -248,6 +250,19 @@ class Decoder(nn.Module):
 
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
+
+        if not training:
+            ax_self = sns.heatmap(dec_self_attns[0, 0, 0, :, :].detach().numpy())
+            ax_self.set_title("self attention")
+            fig_1 = ax_self.get_figure()
+            fig_1.savefig("self_attn.png")
+            fig_1.clear()
+
+            ax_enc_dec = sns.heatmap(dec_enc_attns[0, 0, 0, :, :].detach().numpy())
+            ax_enc_dec.set_title("enc-dec attention")
+            fig_2 = ax_enc_dec.get_figure()
+            fig_2.savefig("enc_dec_attn.png")
+            fig_2.clear()
 
         return dec_outputs, dec_self_attns, dec_enc_attns
 
@@ -272,9 +287,9 @@ class Attn(nn.Module):
             device=device, pe=pe, attn_type=attn_type)
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
 
-    def forward(self, enc_inputs, dec_inputs):
+    def forward(self, enc_inputs, dec_inputs, training=True):
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs, enc_outputs)
+        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs, enc_outputs, training)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 

@@ -90,7 +90,7 @@ class RNN(nn.Module):
 
 
 class CNN(nn.Module):
-    def __init__(self, input_size, output_size, out_channel, kernel, n_layers, d_r):
+    def __init__(self, input_size, output_size, out_channel, kernel, n_layers, d_r=0.0):
         super(CNN, self).__init__()
         self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
@@ -98,7 +98,7 @@ class CNN(nn.Module):
         self.n_layers = n_layers
         self.out_channel = out_channel
 
-    def forward(self, x_en, x_de):
+    def forward(self, x_en, x_de, training=True):
 
         de_seq_len = x_de.shape[1]
         x = torch.cat((x_en, x_de), dim=1)

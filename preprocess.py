@@ -208,8 +208,8 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2017-01-13"
-        end_date = "2018-01-3"
+        start_date = "2018-01-03"
+        end_date = "2018-04-03"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
@@ -220,8 +220,8 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=128)
-    parser.add_argument("--out_seq_len", type=int, default=28)
+    parser.add_argument("--in_seq_len", type=int, default=24)
+    parser.add_argument("--out_seq_len", type=int, default=12)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 

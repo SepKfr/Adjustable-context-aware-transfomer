@@ -12,6 +12,7 @@ from baselines import RNN, CNN
 import argparse
 import json
 import os
+from attnrnn import AttnRnn
 
 
 inputs = pickle.load(open("inputs.p", "rb"))
@@ -21,9 +22,9 @@ scalers = pickle.load(open("scalers.pkl", "rb"))
 max_len = min(len(inputs), 1000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
-trn_len = inputs.shape[0] - 1
+trn_len = int(inputs.shape[0] * 0.95)
 
-train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
+train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
 test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 
@@ -67,9 +68,9 @@ def evaluate(model, tst_x, y_t):
 
     model.eval()
 
-    outputs = model(tst_x[0], tst_x[1])
+    outputs = model(tst_x[0], tst_x[1], training=False)
     outputs_in = inverse_transform(outputs)
-    metrics = Metrics(outputs_in.view(seq_len), y_t_in.view(seq_len))
+    metrics = Metrics(outputs_in.view(seq_len * b), y_t_in.view(seq_len * b))
     return metrics.rmse, metrics.mae
 
 
@@ -83,7 +84,7 @@ def train(model, trn_x, y_t):
 
     for i in range(n_ephocs):
         optimizer.zero_grad()
-        output = model(trn_x[0], trn_x[1])
+        output = model(trn_x[0], trn_x[1], training=True)
         outputs_in = inverse_transform(output)
         loss = criterion(outputs_in, y_true_in)
         loss = Variable(loss, requires_grad=True)
@@ -171,6 +172,42 @@ def main():
                       tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn")
     run(attn_model, "attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", rnn_type="lstm")
+    run(attn_model, "lstm_attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", rnn_type="lstm")
+    run(attn_model, "lstm_attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", rnn_type="gru")
+    run(attn_model, "lstm_attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", rnn_type="gru")
+    run(attn_model, "lstm_attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+
     '''call_atn_model("attn_cs", "sincos", "multihead", False)
     call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
     call_atn_model("attn_rel", "rel", "multihead", False)
@@ -206,8 +243,7 @@ def main():
               output_size=output_size,
               out_channel=out_channel,
               kernel=kernel,
-              n_layers=n_layers,
-              d_r=0.1)
+              n_layers=n_layers)
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
@@ -215,8 +251,7 @@ def main():
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
-               rnn_type="LSTM",
-               d_r=0.1)
+               rnn_type="LSTM")
 
     run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
@@ -224,8 +259,7 @@ def main():
               hidden_size=d_model,
               input_size=input_size,
               output_size=output_size,
-              rnn_type="GRU",
-              d_r=0.1)
+              rnn_type="GRU")
 
     run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
