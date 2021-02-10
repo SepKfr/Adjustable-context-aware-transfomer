@@ -197,7 +197,7 @@ def main():
                          d_k=8, d_v=8, n_heads=2,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", rnn_type="gru")
-    run(attn_model, "lstm_attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "gru_attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -206,7 +206,7 @@ def main():
                          d_k=8, d_v=8, n_heads=2,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", rnn_type="gru")
-    run(attn_model, "lstm_attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "gru_attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     '''call_atn_model("attn_cs", "sincos", "multihead", False)
     call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
