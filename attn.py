@@ -3,7 +3,7 @@ import torch.nn as nn
 import math
 from torch.autograd import Variable
 import numpy as np
-import seaborn as sns; sns.set_theme()
+import seaborn as sns
 import matplotlib.pylab as plt
 
 
