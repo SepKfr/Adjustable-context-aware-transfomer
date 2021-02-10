@@ -209,7 +209,7 @@ class DecoderLayer(nn.Module):
 class Decoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v,
-                 n_heads, n_layers, pad_index, device, pe, attn_type):
+                 n_heads, n_layers, pad_index, device, pe, attn_type, name):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -227,6 +227,7 @@ class Decoder(nn.Module):
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
+        self.name = name
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
         dec_outputs = self.tgt_emb(dec_inputs)
@@ -252,16 +253,22 @@ class Decoder(nn.Module):
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
         if not training:
-            ax_self = sns.heatmap(dec_self_attns[0, 0, 0, :, :].detach().numpy())
+            dec_self_attns = torch.sum(dec_self_attns, dim=1) / dec_self_attns.shape[1]
+            dec_self_attns = torch.sum(dec_self_attns, dim=1) / dec_self_attns.shape[1]
+
+            ax_self = sns.heatmap(dec_self_attns[0, :, :].detach().numpy())
             ax_self.set_title("self attention")
             fig_1 = ax_self.get_figure()
-            fig_1.savefig("self_attn.png")
+            fig_1.savefig("self_{}.png".format(self.name))
             fig_1.clear()
 
-            ax_enc_dec = sns.heatmap(dec_enc_attns[0, 0, 0, :, :].detach().numpy())
+            dec_enc_attns = torch.sum(dec_enc_attns, dim=1) / dec_enc_attns.shape[1]
+            dec_enc_attns = torch.sum(dec_enc_attns, dim=1) / dec_self_attns.shape[1]
+
+            ax_enc_dec = sns.heatmap(dec_enc_attns[0, :, :].detach().numpy())
             ax_enc_dec.set_title("enc-dec attention")
             fig_2 = ax_enc_dec.get_figure()
-            fig_2.savefig("enc_dec_attn.png")
+            fig_2.savefig("enc_dec_{}.png".format(self.name))
             fig_2.clear()
 
         return dec_outputs, dec_self_attns, dec_enc_attns
@@ -271,7 +278,7 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, pe, attn_type):
+                 tgt_pad_index, device, pe, attn_type, name):
         super(Attn, self).__init__()
         self.encoder = Encoder(
             input_size=src_input_size,
@@ -284,7 +291,7 @@ class Attn(nn.Module):
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
-            device=device, pe=pe, attn_type=attn_type)
+            device=device, pe=pe, attn_type=attn_type, name=name)
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
 
     def forward(self, enc_inputs, dec_inputs, training=True):

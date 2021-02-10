@@ -160,8 +160,8 @@ def main():
                       d_ff=64,
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn")
-    run(attn_model, "attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", name="attn_rel")
+    run(attn_model, "attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -169,8 +169,8 @@ def main():
                       d_ff=64,
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn")
-    run(attn_model, "attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", name="attn")
+    run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -178,8 +178,9 @@ def main():
                          d_ff=64,
                          d_k=8, d_v=8, n_heads=2,
                          n_layers=6, src_pad_index=0,
-                         tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", rnn_type="lstm")
-    run(attn_model, "lstm_attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+                         tgt_pad_index=0, device=torch.device('cpu'),
+                         pe='rel', attn_type="attn", rnn_type="lstm", name="lstm_attn_rel")
+    run(attn_model, "lstm_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -187,8 +188,9 @@ def main():
                          d_ff=64,
                          d_k=8, d_v=8, n_heads=2,
                          n_layers=6, src_pad_index=0,
-                         tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", rnn_type="lstm")
-    run(attn_model, "lstm_attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+                         tgt_pad_index=0, device=torch.device('cpu'),
+                         pe='sincos', attn_type="attn", rnn_type="lstm", name="lstm_attn")
+    run(attn_model, "lstm_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -196,8 +198,9 @@ def main():
                          d_ff=64,
                          d_k=8, d_v=8, n_heads=2,
                          n_layers=6, src_pad_index=0,
-                         tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", rnn_type="gru")
-    run(attn_model, "gru_attn_model_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='rel',
+                         attn_type="attn", rnn_type="gru", name="gru_attn_rel")
+    run(attn_model, "gru_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -205,8 +208,9 @@ def main():
                          d_ff=64,
                          d_k=8, d_v=8, n_heads=2,
                          n_layers=6, src_pad_index=0,
-                         tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", rnn_type="gru")
-    run(attn_model, "gru_attn_model", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='sincos',
+                         attn_type="attn", rnn_type="gru", name="gru_attn")
+    run(attn_model, "gru_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     '''call_atn_model("attn_cs", "sincos", "multihead", False)
     call_atn_model("con_attn_cs", "sincos", "conmultihead", False)

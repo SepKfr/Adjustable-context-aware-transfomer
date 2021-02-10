@@ -5,7 +5,7 @@ from attn import Attn
 
 class AttnRnn(nn.Module):
     def __init__(self, input_size, output_size, d_model, d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, pe, attn_type, rnn_type, d_r=0.0):
+                 tgt_pad_index, device, pe, attn_type, rnn_type, name, d_r=0.0):
         super(AttnRnn, self).__init__()
         self.d_model = d_model
         self.n_layers = n_layers
@@ -16,7 +16,7 @@ class AttnRnn(nn.Module):
         self.attn = Attn(input_size, output_size,
                          d_model, d_ff, d_k, d_v,
                          n_heads, n_layers, src_pad_index,
-                         tgt_pad_index, device, pe, attn_type)
+                         tgt_pad_index, device, pe, attn_type, name)
         self.proj = nn.Linear(input_size, d_model, bias=False)
         self.proj_out = nn.Linear(d_model, input_size, bias=False)
         self.rnn_type = rnn_type
@@ -41,6 +41,7 @@ class AttnRnn(nn.Module):
 
         output = self.proj_out(torch.cat([en_out, dec_out], dim=0))
 
-        attn_output = self.attn(output[:seq_len_1, :, :].permute(1, 0, 2), output[-seq_len_1:, :, :].permute(1, 0, 2))
+        attn_output = self.attn(output[:seq_len_1, :, :].permute(1, 0, 2),
+                                output[-seq_len_1:, :, :].permute(1, 0, 2), training)
 
         return attn_output
