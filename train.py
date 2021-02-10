@@ -18,7 +18,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 1000)
+max_len = min(len(inputs), 500)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = inputs.shape[0] - 1
@@ -70,7 +70,7 @@ def evaluate(model, tst_x, y_t):
     outputs = model(tst_x[0], tst_x[1])
     outputs_in = inverse_transform(outputs)
     metrics = Metrics(outputs_in.view(seq_len), y_t_in.view(seq_len))
-    return metrics.rmse, metrics.mape
+    return metrics.rmse, metrics.mae
 
 
 def train(model, trn_x, y_t):

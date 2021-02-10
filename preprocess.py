@@ -208,8 +208,8 @@ class STData:
         df = pd.read_csv("{}/{}_WQual_Level4.csv".format(self.site_path, abr))
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
-        start_date = "2018-01-13"
-        end_date = "2019-01-3"
+        start_date = "2017-01-13"
+        end_date = "2018-01-3"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
