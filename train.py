@@ -219,7 +219,7 @@ def main():
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="con", name="attn_rel_con")
-    run(attn_model, "attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -228,7 +228,7 @@ def main():
                       d_k=8, d_v=8, n_heads=2,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="con", name="attn_con")
-    run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -238,7 +238,7 @@ def main():
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'),
                          pe='rel', attn_type="con", rnn_type="lstm", name="lstm_attn_rel_con")
-    run(attn_model, "lstm_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "lstm_attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -248,7 +248,7 @@ def main():
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'),
                          pe='sincos', attn_type="con", rnn_type="lstm", name="lstm_attn_con")
-    run(attn_model, "lstm_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "lstm_attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -258,7 +258,7 @@ def main():
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='rel',
                          attn_type="con", rnn_type="gru", name="gru_attn_rel_con")
-    run(attn_model, "gru_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "gru_attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
@@ -268,7 +268,7 @@ def main():
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='sincos',
                          attn_type="con", rnn_type="gru", name="gru_attn_con")
-    run(attn_model, "gru_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, "gru_attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,

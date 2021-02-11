@@ -214,7 +214,6 @@ class STData:
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
         df = df.ffill().bfill()
-        print(len(df))
         return df
 
 
