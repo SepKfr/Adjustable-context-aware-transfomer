@@ -5,6 +5,7 @@ from torch.autograd import Variable
 import numpy as np
 import seaborn as sns
 import matplotlib.pylab as plt
+import os
 
 
 def get_attn_subsequent_mask(seq):
@@ -259,7 +260,11 @@ class Decoder(nn.Module):
             ax_self = sns.heatmap(dec_self_attns[0, :, :].detach().numpy())
             ax_self.set_title("self attention")
             fig_1 = ax_self.get_figure()
-            fig_1.savefig("self_{}.png".format(self.name))
+
+            if not os.path.exists('heatmaps'):
+                os.makedirs("heatmaps")
+
+            fig_1.savefig("heatmaps/self_{}.png".format(self.name))
             fig_1.clear()
 
             dec_enc_attns = torch.sum(dec_enc_attns, dim=1) / dec_enc_attns.shape[1]
@@ -268,7 +273,7 @@ class Decoder(nn.Module):
             ax_enc_dec = sns.heatmap(dec_enc_attns[0, :, :].detach().numpy())
             ax_enc_dec.set_title("enc-dec attention")
             fig_2 = ax_enc_dec.get_figure()
-            fig_2.savefig("enc_dec_{}.png".format(self.name))
+            fig_2.savefig("heatmaps/enc_dec_{}.png".format(self.name))
             fig_2.clear()
 
         return dec_outputs, dec_self_attns, dec_enc_attns
