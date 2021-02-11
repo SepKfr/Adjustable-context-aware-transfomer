@@ -212,36 +212,63 @@ def main():
                          attn_type="attn", rnn_type="gru", name="gru_attn")
     run(attn_model, "gru_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    '''call_atn_model("attn_cs", "sincos", "multihead", False)
-    call_atn_model("con_attn_cs", "sincos", "conmultihead", False)
-    call_atn_model("attn_rel", "rel", "multihead", False)
-    call_atn_model("con_attn_rel", "rel", "conmultihead", False)
-    call_atn_model("attn_cs_cnv", "sincos", "multihead", True)
-    call_atn_model("con_attn_cs_cnv", "sincos", "conmultihead", True)
-    call_atn_model("attn_rel_cnv", "rel", "multihead", True) 
-    call_atn_model("con_attn_rel_cnv", "rel", "conmultihead", True)
+    attn_model = Attn(src_input_size=input_size,
+                      tgt_input_size=output_size,
+                      d_model=8,
+                      d_ff=64,
+                      d_k=8, d_v=8, n_heads=2,
+                      n_layers=6, src_pad_index=0,
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="con", name="attn_rel")
+    run(attn_model, "attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    lstm_conv = RNConv(n_layers=n_layers,
-                       hidden_size=out_channel,
-                       input_size=input_size,
-                       output_size=output_size,
-                       out_channel=out_channel,
-                       kernel=kernel,
-                       rnn_type="LSTM",
-                       d_r=0.1)
+    attn_model = Attn(src_input_size=input_size,
+                      tgt_input_size=output_size,
+                      d_model=8,
+                      d_ff=64,
+                      d_k=8, d_v=8, n_heads=2,
+                      n_layers=6, src_pad_index=0,
+                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="con", name="attn")
+    run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    run(lstm_conv, "LSConv", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'),
+                         pe='rel', attn_type="con", rnn_type="lstm", name="lstm_attn_rel")
+    run(attn_model, "lstm_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    gru_conv = RNConv(n_layers=n_layers,
-                      hidden_size=out_channel,
-                      input_size=input_size,
-                      output_size=output_size,
-                      out_channel=out_channel,
-                      kernel=kernel,
-                      rnn_type="gru",
-                      d_r=0.1)
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'),
+                         pe='sincos', attn_type="con", rnn_type="lstm", name="lstm_attn")
+    run(attn_model, "lstm_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    run(gru_conv, "GruConv", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='rel',
+                         attn_type="con", rnn_type="gru", name="gru_attn_rel")
+    run(attn_model, "gru_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=8,
+                         d_ff=64,
+                         d_k=8, d_v=8, n_heads=2,
+                         n_layers=6, src_pad_index=0,
+                         tgt_pad_index=0, device=torch.device('cpu'), pe='sincos',
+                         attn_type="con", rnn_type="gru", name="gru_attn")
+    run(attn_model, "gru_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
