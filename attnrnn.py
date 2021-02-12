@@ -43,15 +43,13 @@ class AttnRnn(nn.Module):
 
         output = torch.cat([en_out, dec_out], dim=0)
 
-        q, k, v = output[-seq_len_1:, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2),
+        q, k, v = output[-seq_len_1:, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2)
 
-        mask = get_attn_subsequent_mask(k)
-
-        attn_output, _ = self.multi_head_attn(q, k, v, mask)
+        attn_output, _ = self.multi_head_attn(q, k, v, None)
 
         if self.attn_type == "con":
 
-            attn_output, _ = self.multi_head_attn(q, attn_output, attn_output, mask)
+            attn_output, _ = self.multi_head_attn(q, attn_output, attn_output, None)
 
         output = self.proj_out(self.pff(attn_output) + q)
 
