@@ -68,7 +68,7 @@ def evaluate(model, tst_x, y_t):
 
     model.eval()
 
-    with torch.no_grad:
+    with torch.no_grad():
 
         otps = model(tst_x[0], tst_x[1], training=False)
 
