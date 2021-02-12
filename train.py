@@ -28,8 +28,8 @@ train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
 test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 
-d_model = 8
-dff = 64
+d_model = 32
+dff = 128
 n_head = 4
 in_channel = train_x.shape[1]
 out_channel = d_model
@@ -156,27 +156,27 @@ def main():
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
-                      d_model=8,
-                      d_ff=64,
-                      d_k=8, d_v=8, n_heads=2,
+                      d_model=d_model,
+                      d_ff=dff,
+                      d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", name="attn_rel")
     run(attn_model, "attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
-                      d_model=8,
-                      d_ff=64,
-                      d_k=8, d_v=8, n_heads=2,
+                      d_model=d_model,
+                      d_ff=dff,
+                      d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", name="attn")
     run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'),
                          pe='rel', attn_type="attn", rnn_type="lstm", name="lstm_attn_rel")
@@ -184,9 +184,9 @@ def main():
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'),
                          pe='sincos', attn_type="attn", rnn_type="lstm", name="lstm_attn")
@@ -194,9 +194,9 @@ def main():
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='rel',
                          attn_type="attn", rnn_type="gru", name="gru_attn_rel")
@@ -204,9 +204,9 @@ def main():
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='sincos',
                          attn_type="attn", rnn_type="gru", name="gru_attn")
@@ -214,27 +214,27 @@ def main():
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
-                      d_model=8,
-                      d_ff=64,
-                      d_k=8, d_v=8, n_heads=2,
+                      d_model=d_model,
+                      d_ff=dff,
+                      d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="con", name="attn_rel_con")
     run(attn_model, "attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
-                      d_model=8,
-                      d_ff=64,
-                      d_k=8, d_v=8, n_heads=2,
+                      d_model=d_model,
+                      d_ff=dff,
+                      d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="con", name="attn_con")
     run(attn_model, "attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'),
                          pe='rel', attn_type="con", rnn_type="lstm", name="lstm_attn_rel_con")
@@ -242,9 +242,9 @@ def main():
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'),
                          pe='sincos', attn_type="con", rnn_type="lstm", name="lstm_attn_con")
@@ -252,9 +252,9 @@ def main():
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='rel',
                          attn_type="con", rnn_type="gru", name="gru_attn_rel_con")
@@ -262,9 +262,9 @@ def main():
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
-                         d_model=8,
-                         d_ff=64,
-                         d_k=8, d_v=8, n_heads=2,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model, d_v=d_model, n_heads=n_head,
                          n_layers=6, src_pad_index=0,
                          tgt_pad_index=0, device=torch.device('cpu'), pe='sincos',
                          attn_type="con", rnn_type="gru", name="gru_attn_con")

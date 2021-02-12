@@ -23,7 +23,9 @@ class Data:
         self.sites_data = site_data
         self.ts = ts
         self.n_seasons = 4
-        self.nf = n_features
+        self.hist = 4
+
+        self.nf = n_features * self.hist
         '''self.I = I
         self.J = J'''
         self.in_seq_len = in_seq_len
@@ -31,7 +33,6 @@ class Data:
         self.ln = int(self.ts - (self.in_seq_len + self.out_seq_len))
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
-        print(self.inputs.shape)
         self.create_raster()
         '''self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
                                                     self.outputs.shape[2] * self.outputs.shape[3]))'''
@@ -47,7 +48,8 @@ class Data:
             scalers_per_site = Scaler(abr)
             self.scalers.append(scalers_per_site)
 
-            for f in range(self.nf):
+            len = int(self.nf / self.hist)
+            for f in range(len):
 
                 stScaler = StandardScaler()
                 dat = df_site.iloc[:, f + 1]
@@ -58,7 +60,7 @@ class Data:
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
 
-                self.inputs[:, :, f] = in_data
+                self.inputs[:, :, f:f+self.hist] = in_data
                 if f == 1:
                     self.outputs[:, :, 0] = out_data
 
@@ -76,15 +78,26 @@ class Data:
 
     def get_window_data(self, data):
 
-        data_2d_in = torch.zeros((self.ln, self.in_seq_len))
+        data_2d_in = torch.zeros((self.ts, self.hist))
+        data_3d_in = torch.zeros((self.ln, self.in_seq_len, self.hist))
         data_out = torch.zeros((self.ln, self.out_seq_len))
+
+        for i in range(0, self.ts):
+
+            if i < self.hist:
+                data_2d_in[i, :self.hist - i] = torch.zeros(self.hist - i)
+                data_2d_in[i, self.hist - i:] = data[0:i]
+
+            else:
+                data_2d_in[i, :] = data[i - self.hist:i]
+
         j = 0
         for i in range(0, self.ts):
             if j < self.ln:
-                data_2d_in[j, :] = data[i:i+self.in_seq_len]
+                data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
                 j += 1
-        return data_2d_in, data_out
+        return data_3d_in, data_out
 
 
 class STData:
