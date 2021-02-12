@@ -51,6 +51,6 @@ class AttnRnn(nn.Module):
 
             attn_output, _ = self.multi_head_attn(q, attn_output, attn_output, None)
 
-        output = self.proj_out(self.pff(attn_output) + q)
+        output = self.proj_out(self.pff(attn_output))
 
         return output
