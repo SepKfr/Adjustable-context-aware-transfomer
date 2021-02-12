@@ -38,7 +38,7 @@ n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 20
+n_ephocs = 10
 
 erros = dict()
 
@@ -68,9 +68,12 @@ def evaluate(model, tst_x, y_t):
 
     model.eval()
 
-    outputs = model(tst_x[0], tst_x[1], training=False)
-    outputs_in = inverse_transform(outputs)
-    metrics = Metrics(outputs_in.view(seq_len * b), y_t_in.view(seq_len * b))
+    with torch.no_grad:
+
+        otps = model(tst_x[0], tst_x[1], training=False)
+
+    otps_in = inverse_transform(otps)
+    metrics = Metrics(otps_in.view(seq_len * b), y_t_in.view(seq_len * b))
     return metrics.rmse, metrics.mae
 
 
@@ -80,9 +83,9 @@ def train(model, trn_x, y_t):
     optimizer = Adam(model.parameters(), lr)
     criterion = nn.MSELoss()
 
-    model.train()
-
     for i in range(n_ephocs):
+
+        model.train()
         optimizer.zero_grad()
         output = model(trn_x[0], trn_x[1], training=True)
         outputs_in = inverse_transform(output)
