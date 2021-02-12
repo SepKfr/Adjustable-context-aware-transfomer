@@ -1,10 +1,10 @@
 import torch.nn as nn
 import torch
-from attn import ScaledDotProductAttention, PositionalEncoding
+from attn import MultiHeadAttention, PositionalEncoding, get_attn_subsequent_mask
 
 
 class AttnRnn(nn.Module):
-    def __init__(self, input_size, output_size, d_model, d_k, n_layers, device, attn_type, rnn_type, name, d_r=0.0):
+    def __init__(self, input_size, output_size, d_model, n_heads, d_k, n_layers, device, attn_type, rnn_type, name, d_r=0.0):
 
         super(AttnRnn, self).__init__()
         self.d_model = d_model
@@ -13,12 +13,15 @@ class AttnRnn(nn.Module):
         self.decoder_lstm = nn.LSTM(d_model, d_model, n_layers, dropout=d_r)
         self.encoder_gru = nn.GRU(d_model, d_model, n_layers, dropout=d_r)
         self.decoder_gru = nn.GRU(d_model, d_model, n_layers, dropout=d_r)
-        self.multi_head_attn = ScaledDotProductAttention(d_k, device, "")
+        self.multi_head_attn = MultiHeadAttention(d_model, d_k, d_k, n_heads, device, "")
         self.pff = PositionalEncoding(d_model, d_r)
         self.proj = nn.Linear(input_size, d_model, bias=False)
         self.proj_out = nn.Linear(d_model, output_size, bias=False)
         self.rnn_type = rnn_type
         self.attn_type = attn_type
+        self.n_heads = n_heads
+        self.d_k = d_k
+        self.d_v = d_k
 
     def forward(self, x_en, x_de, training=True, hidden=None):
 
@@ -38,19 +41,18 @@ class AttnRnn(nn.Module):
             en_out, hidden = self.encoder_gru(x_en, hidden)
             dec_out, _ = self.decoder_gru(x_de, hidden)
 
-        output = self.proj_out(torch.cat([en_out, dec_out], dim=0))
+        output = torch.cat([en_out, dec_out], dim=0)
 
-        attn_output, _ = self.multi_head_attn(output[-seq_len_1:, :, :].permute(1, 0, 2),
-                                              output[:seq_len_1, :, :].permute(1, 0, 2),
-                                              output[:seq_len_1, :, :].permute(1, 0, 2),
-                                              training)
+        q, k, v = output[-seq_len_1:, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2),
+
+        mask = get_attn_subsequent_mask(k)
+
+        attn_output, _ = self.multi_head_attn(q, k, v, mask)
+
         if self.attn_type == "con":
 
-            attn_output, _ = self.multi_head_attn(output[-seq_len_1:, :, :].permute(1, 0, 2),
-                                                  attn_output,
-                                                  attn_output,
-                                                  training)
+            attn_output, _ = self.multi_head_attn(q, attn_output, attn_output, mask)
 
-        output = self.proj_out(self.pff(attn_output))
+        output = self.proj_out(self.pff(attn_output) + q)
 
         return output
