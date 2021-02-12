@@ -139,7 +139,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    '''attn_model = Attn(src_input_size=input_size,
+    attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
                       d_model=d_model,
                       d_ff=dff,
@@ -155,7 +155,7 @@ def main():
                       d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", name="attn")
-    run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
+    run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     attn_model = AttnRnn(input_size=input_size,
                          output_size=output_size,
