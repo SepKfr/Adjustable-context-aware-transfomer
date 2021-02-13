@@ -19,7 +19,7 @@ class AttnRnn(nn.Module):
                                     tgt_pad_index, device, pe, attn_type, name)
 
         self.proj = nn.Linear(input_size, d_model, bias=False)
-        self.proj_out = nn.Linear(d_model, output_size, bias=False)
+        self.proj_out = nn.Linear(d_model, input_size, bias=False)
         self.rnn_type = rnn_type
         self.attn_type = attn_type
         self.n_heads = n_heads
@@ -46,9 +46,10 @@ class AttnRnn(nn.Module):
 
         output = torch.cat([en_out, dec_out], dim=0)
 
-        attn_out = self.attn(output[-seq_len_1:, :, :].permute(1, 0, 2),
-                             output[-seq_len_1:, :, :].permute(1, 0, 2),
-                             output[-seq_len_1:, :, :].permute(1, 0, 2))
+        output = self.proj_out(output)
 
+        attn_out = self.attn(output[:seq_len_1, :, :].permute(1, 0, 2),
+                             output[-seq_len_1:, :, :].permute(1, 0, 2),
+                             training)
 
         return attn_out
