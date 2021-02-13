@@ -1,10 +1,11 @@
 import torch.nn as nn
 import torch
-from attn import MultiHeadAttention, PositionalEncoding, get_attn_subsequent_mask
+from attn import Attn
 
 
 class AttnRnn(nn.Module):
-    def __init__(self, input_size, output_size, d_model, n_heads, d_k, n_layers, device, attn_type, rnn_type, name, d_r=0.0):
+    def __init__(self, input_size, output_size, d_model, d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
+                 tgt_pad_index, device, pe, attn_type, rnn_type, name, d_r=0.0):
 
         super(AttnRnn, self).__init__()
         self.d_model = d_model
@@ -13,8 +14,10 @@ class AttnRnn(nn.Module):
         self.decoder_lstm = nn.LSTM(d_model, d_model, n_layers, dropout=d_r)
         self.encoder_gru = nn.GRU(d_model, d_model, n_layers, dropout=d_r)
         self.decoder_gru = nn.GRU(d_model, d_model, n_layers, dropout=d_r)
-        self.multi_head_attn = MultiHeadAttention(d_model, d_k, d_k, n_heads, device, "")
-        self.pff = PositionalEncoding(d_model, d_r)
+        self.attn = Attn(input_size, output_size, d_model, d_ff,
+                                    d_k, d_v, n_heads, n_layers, src_pad_index,
+                                    tgt_pad_index, device, pe, attn_type, name)
+
         self.proj = nn.Linear(input_size, d_model, bias=False)
         self.proj_out = nn.Linear(d_model, output_size, bias=False)
         self.rnn_type = rnn_type
@@ -43,14 +46,9 @@ class AttnRnn(nn.Module):
 
         output = torch.cat([en_out, dec_out], dim=0)
 
-        q, k, v = output[-seq_len_1:, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2), output[:seq_len_1, :, :].permute(1, 0, 2)
+        attn_out = self.attn(output[-seq_len_1:, :, :].permute(1, 0, 2),
+                             output[-seq_len_1:, :, :].permute(1, 0, 2),
+                             output[-seq_len_1:, :, :].permute(1, 0, 2))
 
-        attn_output, _ = self.multi_head_attn(q, k, v, None)
 
-        if self.attn_type == "con":
-
-            attn_output, _ = self.multi_head_attn(q, attn_output, attn_output, None)
-
-        output = self.proj_out(self.pff(attn_output))
-
-        return output
+        return attn_out
