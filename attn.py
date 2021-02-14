@@ -59,6 +59,7 @@ class ScaledDotProductAttention(nn.Module):
 
     def forward(self, Q, K, V, attn_mask):
 
+        elem_wise = self.pe == "rel_prod_elem" or self.pe == "stem"
         if self.pe == "rel":
 
             K += rel_pos_enc(K)
@@ -72,17 +73,22 @@ class ScaledDotProductAttention(nn.Module):
         if self.pe == "stem":
             emd = nn.Parameter(torch.randn(V.shape), requires_grad=True)
             V = V * emd
+            scores = Q * K
 
         if self.pe == "rel_prod_elem":
             K += rel_pos_enc(K)
             scores = Q * K
 
-        if attn_mask is not None:
+        if attn_mask is not None and not elem_wise:
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
+
         attn = nn.Softmax(dim=-1)(scores)
-        context = torch.matmul(attn, V)
+        if elem_wise:
+            context = torch.einsum('bhjk,bhmn->bhjk', attn, V)
+        else:
+            context = torch.matmul(attn, V)
         return context, attn
 
 
