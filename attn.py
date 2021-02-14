@@ -151,18 +151,26 @@ class EncoderLayer(nn.Module):
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model,d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe)
+        self.enc_self_attn_con = MultiHeadAttention(
+            d_model=d_model, d_k=d_k,
+            d_v=d_v, n_heads=n_heads, device=device, pe='rel')
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.attn_type = attn_type
 
     def forward(self, enc_inputs, enc_self_attn_mask):
-        enc_outputs, attn = self.enc_self_attn(
+
+        if self.attn_type == "con":
+            enc_outputs, attn = self.enc_self_attn_con(
                 Q=enc_inputs, K=enc_inputs,
                 V=enc_inputs, attn_mask=enc_self_attn_mask)
-        if self.attn_type == "con":
             enc_outputs, attn = self.enc_self_attn(
                 Q=enc_inputs, K=enc_outputs,
                 V=enc_outputs, attn_mask=enc_self_attn_mask)
+        else:
+            enc_outputs, attn = self.enc_self_attn(
+                Q=enc_inputs, K=enc_inputs,
+                V=enc_inputs, attn_mask=enc_self_attn_mask)
         enc_outputs = self.pos_ffn(enc_outputs)
         return enc_outputs, attn
 
@@ -213,17 +221,20 @@ class DecoderLayer(nn.Module):
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe)
-        self.dec_enc_attn = MultiHeadAttention(
+        self.dec_enc_attn_con = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, pe=pe)
+            d_v=d_v, n_heads=n_heads, device=device, pe='rel')
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.attn_type = attn_type
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
-        dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
+
         if self.attn_type == "con":
+            dec_outputs, dec_self_attn = self.dec_self_attn_con(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
             dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_outputs, dec_outputs, dec_self_attn_mask)
+        else:
+            dec_outputs, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
         dec_outputs, dec_enc_attn = self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
         dec_outputs = self.pos_ffn(dec_outputs)
         return dec_outputs, dec_self_attn, dec_enc_attn
