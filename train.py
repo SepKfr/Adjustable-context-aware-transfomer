@@ -176,7 +176,7 @@ def main():
 
     call_attn_rnn_model('lstm_attn_rel_prod_elem', 'rel_prod_elem', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_attn_rnn_model('lstm_stem_prod', 'stem', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_attn_rnn_model('lstm_stem', 'stem', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     call_attn_rnn_model('lstm_attn', 'sincos', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
