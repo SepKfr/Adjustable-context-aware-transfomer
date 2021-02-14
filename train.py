@@ -104,23 +104,34 @@ def run(model, name, trn_x, tst_x, trn_y, tst_y):
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
-def call_atn_model(name, pos_enc, attn_type, pre_conv):
+def call_atn_model(name, pos_enc, attn_type, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t):
 
-    atn_model = DeepRelativeST(d_model=d_model,
-                               input_size=input_size,
-                               dff=dff,
-                               n_h=n_head,
-                               in_channel=in_channel,
-                               out_channel=out_channel,
-                               kernel=kernel,
-                               n_layers=n_layers,
-                               output_size=output_size,
-                               pos_enc=pos_enc,
-                               attn_type=attn_type,
-                               conv_pre=pre_conv,
-                               d_r=0.1)
+    attn_model = Attn(src_input_size=input_size,
+                      tgt_input_size=output_size,
+                      d_model=d_model,
+                      d_ff=dff,
+                      d_k=d_model, d_v=d_model, n_heads=n_head,
+                      n_layers=6, src_pad_index=0,
+                      tgt_pad_index=0, device=torch.device('cpu'),
+                      pe=pos_enc, attn_type=attn_type, name=name)
+    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    run(atn_model, name)
+
+def call_attn_rnn_model(name, pos_enc, attn_type, rnn_type, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t):
+
+    attn_model = AttnRnn(input_size=input_size,
+                         output_size=output_size,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_model,
+                         d_v=d_model,
+                         n_heads=n_head,
+                         n_layers=6,
+                         src_pad_index=0, tgt_pad_index=0,
+                         device=torch.device('cpu'),
+                         pe=pos_enc,
+                         attn_type=attn_type, rnn_type=rnn_type, name=name)
+    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
 
 def main():
@@ -139,161 +150,41 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    attn_model = Attn(src_input_size=input_size,
-                      tgt_input_size=output_size,
-                      d_model=d_model,
-                      d_ff=dff,
-                      d_k=d_model, d_v=d_model, n_heads=n_head,
-                      n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'), pe='rel', attn_type="attn", name="attn_rel")
-    run(attn_model, "attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = Attn(src_input_size=input_size,
-                      tgt_input_size=output_size,
-                      d_model=d_model,
-                      d_ff=dff,
-                      d_k=d_model, d_v=d_model, n_heads=n_head,
-                      n_layers=6, src_pad_index=0,
-                      tgt_pad_index=0, device=torch.device('cpu'), pe='sincos', attn_type="attn", name="attn")
-    run(attn_model, "attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0,tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="rel",
-                         attn_type="attn", rnn_type="lstm", name="lstm_attn_rel")
-    run(attn_model, "lstm_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="sincos",
-                         attn_type="attn", rnn_type="lstm", name="lstm_attn")
-    run(attn_model, "lstm_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="rel",
-                         attn_type="attn", rnn_type="gru", name="gru_attn_rel")
-    run(attn_model, "gru_attn_rel", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="sincos",
-                         attn_type="attn", rnn_type="gru", name="gru_attn")
-    run(attn_model, "gru_attn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_atn_model('attn_con', 'sincos', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = Attn(src_input_size=input_size,
-                      tgt_input_size=output_size,
-                      d_model=d_model,
-                      d_ff=dff,
-                      d_k=d_model,
-                      d_v=d_model,
-                      n_heads=n_head,
-                      n_layers=6,
-                      src_pad_index=0, tgt_pad_index=0,
-                      device=torch.device('cpu'),
-                      pe="rel",
-                      attn_type="con", name="attn_rel_con")
-    run(attn_model, "attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_attn_rnn_model('lstm_attn_rel', 'rel', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = Attn(src_input_size=input_size,
-                      tgt_input_size=output_size,
-                      d_model=d_model,
-                      d_ff=dff,
-                      d_k=d_model,
-                      d_v=d_model,
-                      n_heads=n_head,
-                      n_layers=6,
-                      src_pad_index=0, tgt_pad_index=0,
-                      device=torch.device('cpu'),
-                      pe="sincos", attn_type="con", name="attn_con")
-    run(attn_model, "attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_attn_rnn_model('lstm_attn_rel_prod', 'rel_prod', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="rel", attn_type="con",
-                         rnn_type="lstm", name="lstm_attn_rel_con")
-    run(attn_model, "lstm_attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_attn_rnn_model('lstm_attn', 'sincos', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="rel", attn_type="con",
-                         rnn_type="lstm", name="lstm_attn_con")
-    run(attn_model, "lstm_attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_attn_rnn_model('gru_attn_rel', 'rel', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="rel", attn_type="con", rnn_type="gru", name="gru_attn_rel_con")
-    run(attn_model, "gru_attn_rel_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_attn_rnn_model('gru_attn_rel_prod', 'rel_prod', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe="rel", attn_type="con",
-                         rnn_type="gru", name="gru_attn_con")
-    run(attn_model, "gru_attn_con", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    call_attn_rnn_model('gru_attn', 'sincos', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('lstm_attn_rel_con', 'rel', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('lstm_attn_rel_prod_con', 'rel_prod', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('lstm_attn_con', 'sincos', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('gru_attn_rel_con', 'rel', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('gru_attn_rel_prod_con', 'rel_prod', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('gru_attn_con', 'sincos', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
