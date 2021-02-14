@@ -221,9 +221,12 @@ class DecoderLayer(nn.Module):
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe)
-        self.dec_enc_attn_con = MultiHeadAttention(
+        self.dec_self_attn_con = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe='rel')
+        self.dec_enc_attn = MultiHeadAttention(
+            d_model=d_model, d_k=d_k,
+            d_v=d_v, n_heads=n_heads, device=device, pe=pe)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.attn_type = attn_type
