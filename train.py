@@ -194,6 +194,10 @@ def main():
 
     call_attn_rnn_model('lstm_attn_rel_prod_con', 'rel_prod', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
+    call_attn_rnn_model('lstm_attn_rel_prod_elem_con', 'rel_prod_elem', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
+    call_attn_rnn_model('lstm_stem_con', 'stem', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+
     call_attn_rnn_model('lstm_attn_con', 'sincos', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     call_attn_rnn_model('gru_attn_rel_con', 'rel', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
