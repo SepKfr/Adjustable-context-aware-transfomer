@@ -190,7 +190,8 @@ class Encoder(nn.Module):
     def forward(self, x):
 
         if self.attn_type == 'con':
-            enc_outputs = self.src_emb_conv(x)
+            enc_outputs = self.src_emb_conv(x.permute(0, 2, 1))
+            enc_outputs = enc_outputs.permute(0, 2, 1)
         else:
             enc_outputs = self.src_emb(x)
 
@@ -256,7 +257,8 @@ class Decoder(nn.Module):
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == "con":
-            dec_outputs = self.tgt_emb_conv(dec_inputs)
+            dec_outputs = self.tgt_emb_conv(dec_inputs.permute(0, 2, 1))
+            dec_outputs = dec_outputs.permute(0, 2, 1)
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
         if self.pe != 'rel':
