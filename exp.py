@@ -1,8 +1,13 @@
 import numpy as np
 import json
-
+import argparse
+import math
 
 def main():
+
+    parser = argparse.ArgumentParser(description="preprocess argument parser")
+    parser.add_argument("--n", type=int, default=10)
+    params = parser.parse_args()
 
     f_erros = dict()
 
@@ -15,9 +20,9 @@ def main():
             rmse = erros[0::2]
             mape = erros[1::2]
             rmse_mean = float('{:.4f}'.format(rmse.mean()))
-            rmse_std = float('{:.4f}'.format(rmse.std()))
+            rmse_std = float('{:.4f}'.format(rmse.std() / math.sqrt(params.n)))
             mape_mean = float('{:.4f}'.format(mape.mean()))
-            mape_std = float('{:.4f}'.format(mape.std()))
+            mape_std = float('{:.4f}'.format(mape.std() / math.sqrt(params.n)))
             f_erros[key] = (rmse_mean, rmse_std, mape_mean, mape_std)
 
     with open("f_erros.json", "w") as json_file:

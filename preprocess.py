@@ -30,7 +30,7 @@ class Data:
         self.J = J'''
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
-        self.ln = int(self.ts - (self.in_seq_len + self.out_seq_len))
+        self.ln = int(self.ts / (self.in_seq_len + self.out_seq_len))
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -92,7 +92,7 @@ class Data:
                 data_2d_in[i, :] = data[i - self.hist:i]
 
         j = 0
-        for i in range(0, self.ts):
+        for i in range(0, self.ts, self.in_seq_len):
             if j < self.ln:
                 data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
