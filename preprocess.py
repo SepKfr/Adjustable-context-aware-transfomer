@@ -222,7 +222,7 @@ class STData:
         df["Date"] = pd.to_datetime(df["Date"])
         df["Date"] = df["Date"].dt.normalize()
         start_date = "2018-01-03"
-        end_date = "2018-04-03"
+        end_date = "2019-01-03"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
