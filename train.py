@@ -29,13 +29,13 @@ train_x, train_y = inputs[:-100, :, :], outputs[:-100, :, :]
 test_x, test_y = inputs[-100:, :, ], outputs[-100:, :, :]
 
 
-d_model = 512
-dff = 1024
+d_model = 64
+dff = 128
 n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 12
+n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
@@ -83,8 +83,7 @@ def train(model, trn_x, y_t):
     y_true_in = inverse_transform(y_t).clone().detach().requires_grad_(True)
     x_en, x_de = Variable(trn_x[0]), Variable(trn_x[1])
     optimizer = Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0.01)
-    num_steps = n_ephocs * len(x_en)
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
     criterion = nn.MSELoss()
     model.train()
@@ -159,15 +158,15 @@ def main():
 
     call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    '''call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     call_atn_model('attn_rel_prod_elem', 'rel_prod_elem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_stem', 'stem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_stem', 'stem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)'''
 
     call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    '''call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -215,7 +214,7 @@ def main():
 
     call_attn_rnn_model('gru_attn_stem_con', 'stem', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_attn_rnn_model('gru_attn_con', 'sincos', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_attn_rnn_model('gru_attn_con', 'sincos', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)'''
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,

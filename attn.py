@@ -95,7 +95,7 @@ class ScaledDotProductAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, d_model, d_k, d_v, n_heads, device, pe):
+    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, dr=0.5):
 
         super(MultiHeadAttention, self).__init__()
         self.WQ = nn.Linear(d_model, d_k * n_heads)
@@ -105,6 +105,8 @@ class MultiHeadAttention(nn.Module):
         self.linear = nn.Linear(n_heads * d_v, d_model)
 
         self.layer_norm = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dr)
+
         self.device = device
 
         self.d_model = d_model
@@ -126,15 +128,17 @@ class MultiHeadAttention(nn.Module):
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.linear(context)
+        output = self.dropout(output)
         return self.layer_norm(output + Q), attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff):
+    def __init__(self, d_model, d_ff, dr=0.5):
         super(PoswiseFeedForwardNet, self).__init__()
         self.l1 = nn.Linear(d_model, d_ff)
         self.l2 = nn.Linear(d_ff, d_model)
+        self.dropout = nn.Dropout(dr)
 
         self.relu = GELU()
         self.layer_norm = nn.LayerNorm(d_model)
@@ -144,6 +148,7 @@ class PoswiseFeedForwardNet(nn.Module):
         output = self.l1(inputs)
         output = self.relu(output)
         output = self.l2(output)
+        output = self.dropout(output)
         return self.layer_norm(output + residual)
 
 
