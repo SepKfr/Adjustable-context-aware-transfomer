@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 from attnrnn import AttnRnn
+import pytorch_warmup as warmup
 
 
 inputs = pickle.load(open("inputs.p", "rb"))
@@ -80,10 +81,13 @@ def evaluate(model, tst_x, y_t):
 def train(model, trn_x, y_t):
 
     y_true_in = inverse_transform(y_t).clone().detach().requires_grad_(True)
-    optimizer = Adam(model.parameters(), lr=0.00001)
+    x_en, x_de = Variable(trn_x[0]), Variable(trn_x[1])
+    optimizer = Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0.01)
+    num_steps = n_ephocs * len(x_en)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
     criterion = nn.MSELoss()
     model.train()
-    x_en, x_de = Variable(trn_x[0]), Variable(trn_x[1])
 
     for i in range(n_ephocs):
 
@@ -94,6 +98,8 @@ def train(model, trn_x, y_t):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        lr_scheduler.step()
+        warmup_scheduler.dampen()
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y):
