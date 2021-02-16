@@ -29,16 +29,16 @@ train_x, train_y = inputs[:-100, :, :], outputs[:-100, :, :]
 test_x, test_y = inputs[-100:, :, ], outputs[-100:, :, :]
 
 
-d_model = 64
-dff = 128
-n_head = 4
+d_model = 512
+dff = 1024
+n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
 n_layers = 12
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
-lr = 0.01
+lr = 0.0001
 n_ephocs = 100
 
 erros = dict()
