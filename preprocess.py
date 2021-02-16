@@ -49,6 +49,7 @@ class Data:
             self.scalers.append(scalers_per_site)
 
             len = int(self.nf / self.hist)
+            f_ind = 0
             for f in range(len):
 
                 stScaler = StandardScaler()
@@ -59,8 +60,8 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-
-                self.inputs[:, :, f:f+self.hist] = in_data
+                self.inputs[:, :, f_ind:f_ind+self.hist] = in_data
+                f_ind = f_ind + self.hist
                 if f == 1:
                     self.outputs[:, :, 0] = out_data
 
@@ -90,7 +91,6 @@ class Data:
 
             else:
                 data_2d_in[i, :] = data[i - self.hist:i]
-
         j = 0
         for i in range(0, self.ts, self.in_seq_len):
             if j < self.ln:

@@ -52,6 +52,7 @@ class PositionalEncoding(nn.Module):
 class ScaledDotProductAttention(nn.Module):
 
     def __init__(self, d_k, device, pe):
+
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
@@ -95,6 +96,7 @@ class ScaledDotProductAttention(nn.Module):
 class MultiHeadAttention(nn.Module):
 
     def __init__(self, d_model, d_k, d_v, n_heads, device, pe):
+
         super(MultiHeadAttention, self).__init__()
         self.WQ = nn.Linear(d_model, d_k * n_heads)
         self.WK = nn.Linear(d_model, d_k * n_heads)
@@ -112,6 +114,7 @@ class MultiHeadAttention(nn.Module):
         self.pe = pe
 
     def forward(self, Q, K, V, attn_mask):
+
         batch_size = Q.shape[0]
         q_s = self.WQ(Q).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
         k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)

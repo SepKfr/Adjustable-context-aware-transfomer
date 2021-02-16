@@ -28,8 +28,8 @@ train_x, train_y = inputs[:-100, :, :], outputs[:-100, :, :]
 test_x, test_y = inputs[-100:, :, ], outputs[-100:, :, :]
 
 
-d_model = 32
-dff = 128
+d_model = 512
+dff = 1024
 n_head = 4
 in_channel = train_x.shape[1]
 out_channel = d_model
@@ -37,8 +37,8 @@ kernel = 1
 n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
-lr = 0.0001
-n_ephocs = 10
+lr = 0.01
+n_ephocs = 100
 
 erros = dict()
 
@@ -73,23 +73,24 @@ def evaluate(model, tst_x, y_t):
         otps = model(tst_x[0], tst_x[1], training=False)
 
     otps_in = inverse_transform(otps)
-    metrics = Metrics(otps_in.view(seq_len * b), y_t_in.view(seq_len * b))
+    metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
     return metrics.rmse, metrics.mae
 
 
 def train(model, trn_x, y_t):
 
     y_true_in = inverse_transform(y_t)
-    optimizer = Adam(model.parameters(), lr)
+    optimizer = Adam(model.parameters(), lr=0.1)
     criterion = nn.MSELoss()
+    model.train()
 
     for i in range(n_ephocs):
 
-        model.train()
         optimizer.zero_grad()
         output = model(trn_x[0], trn_x[1], training=True)
         outputs_in = inverse_transform(output)
         loss = criterion(outputs_in, y_true_in)
+        print(loss.item())
         loss = Variable(loss, requires_grad=True)
         loss.backward()
         optimizer.step()
@@ -218,7 +219,7 @@ def main():
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    lstm = RNN(n_layers=n_layers,
+    '''lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
@@ -232,7 +233,7 @@ def main():
               output_size=output_size,
               rnn_type="GRU")
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
