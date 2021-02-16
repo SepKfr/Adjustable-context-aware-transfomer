@@ -28,8 +28,8 @@ train_x, train_y = inputs[:-100, :, :], outputs[:-100, :, :]
 test_x, test_y = inputs[-100:, :, ], outputs[-100:, :, :]
 
 
-d_model = 512
-dff = 1024
+d_model = 64
+dff = 128
 n_head = 4
 in_channel = train_x.shape[1]
 out_channel = d_model
@@ -79,19 +79,19 @@ def evaluate(model, tst_x, y_t):
 
 def train(model, trn_x, y_t):
 
-    y_true_in = inverse_transform(y_t)
-    optimizer = Adam(model.parameters(), lr=0.1)
+    y_true_in = inverse_transform(y_t).clone().detach().requires_grad_(True)
+    optimizer = Adam(model.parameters(), lr=0.00001)
     criterion = nn.MSELoss()
     model.train()
+    x_en, x_de = Variable(trn_x[0]), Variable(trn_x[1])
 
     for i in range(n_ephocs):
 
-        optimizer.zero_grad()
-        output = model(trn_x[0], trn_x[1], training=True)
+        output = model(x_en, x_de, training=True)
         outputs_in = inverse_transform(output)
-        loss = criterion(outputs_in, y_true_in)
+        loss = criterion(y_true_in, outputs_in)
         print(loss.item())
-        loss = Variable(loss, requires_grad=True)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -219,7 +219,7 @@ def main():
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    '''lstm = RNN(n_layers=n_layers,
+    lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
@@ -233,7 +233,7 @@ def main():
               output_size=output_size,
               rnn_type="GRU")
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
