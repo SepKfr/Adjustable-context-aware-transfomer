@@ -64,7 +64,7 @@ def inverse_transform(data):
 
 def evaluate(model, tst_x, y_t):
 
-    #y_t_in = inverse_transform(y_t)
+    y_t_in = inverse_transform(y_t)
     b, seq_len, f = y_t.shape
 
     model.eval()
@@ -73,8 +73,8 @@ def evaluate(model, tst_x, y_t):
 
         otps = model(tst_x[0], tst_x[1], training=False)
 
-    #otps_in = inverse_transform(otps)
-    metrics = Metrics(otps.view(seq_len * b * f), y_t.view(seq_len * b * f))
+    otps_in = inverse_transform(otps)
+    metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
     return metrics.rmse, metrics.mae
 
 

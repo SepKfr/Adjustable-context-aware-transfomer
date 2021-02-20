@@ -52,12 +52,12 @@ class Data:
             f_ind = 0
             for f in range(len):
 
-                #stScaler = StandardScaler()
+                stScaler = StandardScaler()
                 dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
-                #stScaler.fit(dat)
-                #dat = stScaler.transform(dat)
-                #scalers_per_site.add_scaler(f, stScaler)
+                stScaler.fit(dat)
+                dat = stScaler.transform(dat)
+                scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
                 self.inputs[:, :, f_ind:f_ind+self.hist] = in_data
