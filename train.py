@@ -91,7 +91,6 @@ def train(model, trn_x, y_t):
 
         output = model(x_en, x_de, training=True)
         loss = criterion(y_t, output)
-        print(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
