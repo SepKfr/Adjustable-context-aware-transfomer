@@ -97,23 +97,30 @@ class CNN(nn.Module):
         self.linear = nn.Linear(out_channel, output_size)
         self.n_layers = n_layers
         self.out_channel = out_channel
+        self.proj = nn.Linear(out_channel, input_size)
 
     def forward(self, x_en, x_de, training=True):
 
         de_seq_len = x_de.shape[1]
-        x = torch.cat((x_en, x_de), dim=1)
-        b, seq_len, f = x.shape
-        x = x.view(b, f, seq_len)
-        proj = nn.Linear(seq_len, de_seq_len)
-
-        x_out = None
+        b, seq_len, f = x_en.shape
+        x_en = x_en.view(b, f, seq_len)
+        x_de = x_de.view(b, f, de_seq_len)
+        proj2 = nn.Linear(seq_len+de_seq_len, de_seq_len)
 
         for i in range(self.n_layers):
-            x_out = self.conv[i](x)
-            x_out = self.dropout1[i](x_out)
+            x_en_out = self.conv[i](x_en)
+            x_en_out = self.dropout1[i](x_en_out)
 
-        x_out = proj(x_out)
-        output = self.linear(x_out.view(b, -1, self.out_channel))
+        x_en_out = self.proj(x_en_out.permute(0, 2, 1))
+        x_en_out = x_en_out.permute(0, 2, 1)
+        x_de = torch.cat((x_en_out, x_de), dim=2)
+
+        for i in range(self.n_layers):
+            x_de_out = self.conv[i](x_de)
+            x_de_out = self.dropout1[i](x_de_out)
+
+        x_de_out = proj2(x_de_out)
+        output = self.linear(x_de_out.view(b, -1, self.out_channel))
 
         return output
 
