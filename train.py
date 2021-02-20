@@ -152,7 +152,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    #call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     '''call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -160,7 +160,7 @@ def main():
 
     call_atn_model('attn_stem', 'stem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)'''
 
-    #call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     '''call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -220,7 +220,7 @@ def main():
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    '''lstm = RNN(n_layers=n_layers,
+    lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
@@ -234,7 +234,7 @@ def main():
               output_size=output_size,
               rnn_type="GRU")
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
