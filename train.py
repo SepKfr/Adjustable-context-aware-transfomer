@@ -25,8 +25,8 @@ inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.95)
 
-train_x, train_y = inputs[:-100, :, :], outputs[:-100, :, :]
-test_x, test_y = inputs[-100:, :, ], outputs[-100:, :, :]
+train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
+test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 
 d_model = 64
@@ -39,7 +39,7 @@ n_layers = 24
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 10
 
 erros = dict()
 
@@ -80,25 +80,20 @@ def evaluate(model, tst_x, y_t):
 
 def train(model, trn_x, y_t):
 
-    y_true_in = inverse_transform(y_t).clone().detach().requires_grad_(True)
-    x_en, x_de = Variable(trn_x[0]), Variable(trn_x[1])
-    optimizer = Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), weight_decay=0.01)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
-    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+    '''total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(total_params)'''
+    x_en, x_de = trn_x[0], trn_x[1]
+    optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
 
     for i in range(n_ephocs):
 
         output = model(x_en, x_de, training=True)
-        outputs_in = inverse_transform(output)
-        loss = criterion(y_true_in, outputs_in)
-        print(loss.item())
+        loss = criterion(y_t, output)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        lr_scheduler.step()
-        warmup_scheduler.dampen()
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y):
@@ -143,7 +138,7 @@ def call_attn_rnn_model(name, pos_enc, attn_type, rnn_type, x_en, x_de, x_en_t, 
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=100)
+    parser.add_argument("--seq_len", type=int, default=28)
     params = parser.parse_args()
 
     seq_len = params.seq_len
