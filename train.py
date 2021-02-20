@@ -64,8 +64,8 @@ def inverse_transform(data):
 
 def evaluate(model, tst_x, y_t):
 
-    y_t_in = inverse_transform(y_t)
-    b, seq_len, f = y_t_in.shape
+    #y_t_in = inverse_transform(y_t)
+    b, seq_len, f = y_t.shape
 
     model.eval()
 
@@ -73,8 +73,8 @@ def evaluate(model, tst_x, y_t):
 
         otps = model(tst_x[0], tst_x[1], training=False)
 
-    otps_in = inverse_transform(otps)
-    metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
+    #otps_in = inverse_transform(otps)
+    metrics = Metrics(otps.view(seq_len * b * f), y_t.view(seq_len * b * f))
     return metrics.rmse, metrics.mae
 
 
@@ -91,6 +91,7 @@ def train(model, trn_x, y_t):
 
         output = model(x_en, x_de, training=True)
         loss = criterion(y_t, output)
+        print(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -138,7 +139,7 @@ def call_attn_rnn_model(name, pos_enc, attn_type, rnn_type, x_en, x_de, x_en_t, 
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=28)
+    parser.add_argument("--seq_len", type=int, default=12)
     params = parser.parse_args()
 
     seq_len = params.seq_len
@@ -151,7 +152,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    #call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     '''call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -159,7 +160,7 @@ def main():
 
     call_atn_model('attn_stem', 'stem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)'''
 
-    call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    #call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     '''call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -219,7 +220,7 @@ def main():
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
-    lstm = RNN(n_layers=n_layers,
+    '''lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
@@ -233,7 +234,7 @@ def main():
               output_size=output_size,
               rnn_type="GRU")
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:

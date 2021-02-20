@@ -52,12 +52,12 @@ class Data:
             f_ind = 0
             for f in range(len):
 
-                stScaler = StandardScaler()
+                #stScaler = StandardScaler()
                 dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
-                stScaler.fit(dat)
-                dat = stScaler.transform(dat)
-                scalers_per_site.add_scaler(f, stScaler)
+                #stScaler.fit(dat)
+                #dat = stScaler.transform(dat)
+                #scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
                 self.inputs[:, :, f_ind:f_ind+self.hist] = in_data
@@ -109,9 +109,9 @@ class STData:
         self.n_features = 3
         #self.site_abrs = ["BEF", "GOF", "DCF", 'MCQ', "WHB"]
         self.sites_data = dict()
-        site_dat = self.prep_data_per_site("WHB")
+        site_dat = self.prep_data_per_site("BEF")
         ln = len(site_dat)
-        self.sites_data["WHB"] = site_dat
+        self.sites_data["BEF"] = site_dat
 
         #self.grid = self.create_grid()
         '''for abr in self.site_abrs:
