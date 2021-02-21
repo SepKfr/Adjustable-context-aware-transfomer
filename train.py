@@ -65,7 +65,6 @@ def inverse_transform(data):
 def evaluate(model, tst_x, y_t):
 
     y_t_in = inverse_transform(y_t)
-    print(y_t_in)
     b, seq_len, f = y_t.shape
 
     model.eval()
@@ -92,7 +91,6 @@ def train(model, trn_x, y_t):
 
         output = model(x_en, x_de, training=True)
         loss = criterion(y_t, output)
-        print(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
