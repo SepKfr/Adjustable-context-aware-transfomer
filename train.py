@@ -105,7 +105,7 @@ def run(model, name, trn_x, tst_x, trn_y, tst_y):
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
-def call_atn_model(name, pos_enc, attn_type, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t):
+def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t):
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -114,7 +114,8 @@ def call_atn_model(name, pos_enc, attn_type, x_en, x_de, x_en_t, x_de_t, y_true,
                       d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=6, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'),
-                      pe=pos_enc, attn_type=attn_type, name=name)
+                      pe=pos_enc, attn_type=attn_type, local=local,
+                      local_seq_len=local_seq_len, name=name)
     run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
 
@@ -138,7 +139,8 @@ def call_attn_rnn_model(name, pos_enc, attn_type, rnn_type, x_en, x_de, x_en_t, 
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=8)
+    parser.add_argument("--seq_len", type=int, default=28)
+    parser.add_argument("--loc_seq_len", type=int, default=8)
     params = parser.parse_args()
 
     seq_len = params.seq_len
@@ -151,25 +153,27 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel', 'rel', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel', 'rel', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    #call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_rel_prod_elem', 'rel_prod_elem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_stem', 'stem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn', 'sincos', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    #call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    #call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_rel_prod_elem_con', 'rel_prod_elem', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_stem_con', 'stem', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    call_atn_model('attn_con', 'sincos', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    #call_atn_model('attn_con', 'sincos', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     '''call_attn_rnn_model('lstm_attn_rel', 'rel', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
