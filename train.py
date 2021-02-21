@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = max(len(inputs), 1000)
+max_len = min(len(inputs), 200)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.95)
@@ -35,11 +35,11 @@ n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 24
+n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 2
 
 erros = dict()
 
@@ -65,6 +65,7 @@ def inverse_transform(data):
 def evaluate(model, tst_x, y_t):
 
     y_t_in = inverse_transform(y_t)
+    print(y_t_in)
     b, seq_len, f = y_t.shape
 
     model.eval()
@@ -91,6 +92,7 @@ def train(model, trn_x, y_t):
 
         output = model(x_en, x_de, training=True)
         loss = criterion(y_t, output)
+        print(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -112,7 +114,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en, x_de, x
                       d_model=d_model,
                       d_ff=dff,
                       d_k=d_model, d_v=d_model, n_heads=n_head,
-                      n_layers=6, src_pad_index=0,
+                      n_layers=2, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'),
                       pe=pos_enc, attn_type=attn_type, local=local,
                       local_seq_len=local_seq_len, name=name)

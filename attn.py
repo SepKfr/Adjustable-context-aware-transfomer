@@ -15,16 +15,16 @@ def get_attn_subsequent_mask(seq):
     return subsequent_mask
 
 
-def get_attn_local_mask(seq, local_mask):
+def get_attn_local_mask(seq_q, seq_k, local_mask):
 
-    mask = np.zeros((seq.size(1), seq.size(1)))
+    mask = np.zeros((seq_q.size(1), seq_k.size(1)))
     for i in range(mask.shape[0]):
         for j in range(mask.shape[1]):
             if i - local_mask > 0 and j < i - local_mask:
                 mask[i][j] = 1
 
     mask = torch.from_numpy(mask).int()
-    mask = mask.unsqueeze(0).repeat(seq.size(0), 1, 1)
+    mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
     return mask
 
 
@@ -229,7 +229,7 @@ class Encoder(nn.Module):
         if not self.local:
             enc_self_attn_mask = None
         else:
-            enc_self_attn_mask = get_attn_local_mask(x, self.local_seq_len)
+            enc_self_attn_mask = get_attn_local_mask(x, x, self.local_seq_len)
 
         enc_self_attns = []
         for layer in self.layers:
@@ -311,12 +311,12 @@ class Decoder(nn.Module):
         dec_self_attn_mask = get_attn_subsequent_mask(dec_inputs)
 
         if self.local:
-            dec_self_attn_mask += get_attn_local_mask(dec_inputs, self.local_seq_len)
+            dec_self_attn_mask += get_attn_local_mask(dec_inputs, dec_inputs, self.local_seq_len)
 
         if not self.local:
             dec_enc_attn_mask = None
         else:
-            dec_enc_attn_mask = get_attn_local_mask(enc_inputs, self.local_seq_len)
+            dec_enc_attn_mask = get_attn_local_mask(dec_inputs, enc_inputs, self.local_seq_len)
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
