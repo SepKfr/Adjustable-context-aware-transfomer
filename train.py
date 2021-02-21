@@ -153,7 +153,7 @@ def main():
 
     call_atn_model('attn_rel', 'rel', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    #call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_rel_prod_elem', 'rel_prod_elem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -163,7 +163,7 @@ def main():
 
     call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    #call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_rel_prod_elem_con', 'rel_prod_elem', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
