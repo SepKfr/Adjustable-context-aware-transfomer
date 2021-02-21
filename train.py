@@ -165,7 +165,8 @@ def main():
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    #call_atn_model('attn_rel_con', 'rel', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel_con', 'rel', 'con', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel_con_gl', 'rel', 'con', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     #call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
@@ -173,7 +174,8 @@ def main():
 
     #call_atn_model('attn_stem_con', 'stem', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    #call_atn_model('attn_con', 'sincos', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_con_gl', 'sincos', 'con', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     '''call_attn_rnn_model('lstm_attn_rel', 'rel', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
