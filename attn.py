@@ -264,9 +264,6 @@ class DecoderLayer(nn.Module):
                 self.dec_self_attn(dec_outputs, dec_outputs, dec_outputs, dec_self_attn_mask)
         dec_outputs, dec_enc_attn = \
             self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
-        if self.local:
-            dec_outputs, dec_enc_attn = \
-                self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
         dec_outputs = self.pos_ffn(dec_outputs)
         return dec_outputs, dec_self_attn, dec_enc_attn
 
@@ -313,10 +310,7 @@ class Decoder(nn.Module):
         if self.local:
             dec_self_attn_mask += get_attn_local_mask(dec_inputs, dec_inputs, self.local_seq_len)
 
-        if not self.local:
-            dec_enc_attn_mask = None
-        else:
-            dec_enc_attn_mask = get_attn_local_mask(dec_inputs, enc_inputs, self.local_seq_len)
+        dec_enc_attn_mask = None
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
