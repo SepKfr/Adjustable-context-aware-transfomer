@@ -77,6 +77,8 @@ class ScaledDotProductAttention(nn.Module):
         if self.pe == "rel":
 
             K += rel_pos_enc(K)
+            V += rel_pos_enc(V)
+
         scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
 
         if self.pe == "rel_prod":
