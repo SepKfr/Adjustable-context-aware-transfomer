@@ -110,9 +110,9 @@ class STData:
         self.n_features = 3
         #self.site_abrs = ["BEF", "GOF", "DCF", 'MCQ', "WHB"]
         self.sites_data = dict()
-        site_dat = self.prep_data_per_site("WHB")
+        site_dat = self.prep_data_per_site("BEF")
         ln = len(site_dat)
-        self.sites_data["WHB"] = site_dat
+        self.sites_data["BEF"] = site_dat
 
         #self.grid = self.create_grid()
         '''for abr in self.site_abrs:
