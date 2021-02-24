@@ -20,7 +20,7 @@ def get_attn_local_mask(seq_q, seq_k, local_mask):
     mask = np.zeros((seq_q.size(1), seq_k.size(1)))
     for i in range(mask.shape[0]):
         for j in range(mask.shape[1]):
-            if i - local_mask > 0 and j < i - local_mask:
+            if abs(i - j) > local_mask:
                 mask[i][j] = 1
 
     mask = torch.from_numpy(mask).int()
