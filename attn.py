@@ -108,7 +108,7 @@ class ScaledDotProductAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, dr=0.5):
+    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, dr=0.1):
 
         super(MultiHeadAttention, self).__init__()
         self.WQ = nn.Linear(d_model, d_k * n_heads)
@@ -147,7 +147,7 @@ class MultiHeadAttention(nn.Module):
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff, dr=0.5):
+    def __init__(self, d_model, d_ff, dr=0.1):
         super(PoswiseFeedForwardNet, self).__init__()
         self.l1 = nn.Linear(d_model, d_ff)
         self.l2 = nn.Linear(d_ff, d_model)
