@@ -23,7 +23,7 @@ scalers = pickle.load(open("scalers.pkl", "rb"))
 max_len = len(inputs)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
-trn_len = int(inputs.shape[0] * 0.9)
+trn_len = int(inputs.shape[0] * 0.8)
 
 train_x, train_y = inputs[:-trn_len, :, :], outputs[:-trn_len, :, :]
 test_x, test_y = inputs[-trn_len:, :, ], outputs[-trn_len:, :, :]
@@ -139,8 +139,8 @@ def call_attn_rnn_model(name, pos_enc, attn_type, rnn_type, x_en, x_de, x_en_t, 
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=28)
-    parser.add_argument("--loc_seq_len", type=int, default=8)
+    parser.add_argument("--seq_len", type=int, default=128)
+    parser.add_argument("--loc_seq_len", type=int, default=36)
     params = parser.parse_args()
 
     seq_len = params.seq_len
