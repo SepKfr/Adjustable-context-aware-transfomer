@@ -29,8 +29,9 @@ def get_attn_local_mask(seq_q, seq_k, local_mask):
 
 
 def rel_pos_enc(seq):
-    rel_weight = nn.Parameter(torch.randn(seq.shape), requires_grad=True)
-    return rel_weight
+
+    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True)
+    return rel_weight.unsqueeze(0)
 
 
 class GELU(nn.Module):
@@ -58,6 +59,7 @@ class PositionalEncoding(nn.Module):
 
         seq_len = x.size(1)
         self.pe = self.pe[:, :seq_len]
+
         x = x + Variable(self.pe, requires_grad=False)
         return self.dropout(x)
 
@@ -76,7 +78,7 @@ class ScaledDotProductAttention(nn.Module):
         elem_wise = self.pe == "rel_prod_elem" or self.pe == "stem"
         if self.pe == "rel":
 
-            K += rel_pos_enc(K)
+            K += rel_pos_enc(K).unsqueeze(0)
 
         scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
 
