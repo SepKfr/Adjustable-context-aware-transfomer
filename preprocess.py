@@ -31,7 +31,7 @@ class Data:
         self.J = J'''
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
-        self.ln = int(self.ts / (self.in_seq_len + self.out_seq_len))
+        self.ln = self.ts - (self.in_seq_len + self.out_seq_len)
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -93,7 +93,7 @@ class Data:
             else:
                 data_2d_in[i, :] = data[i - self.hist:i]
         j = 0
-        for i in range(0, self.ts, self.in_seq_len):
+        for i in range(0, self.ts):
             if j < self.ln:
                 data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
@@ -234,8 +234,8 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=512)
-    parser.add_argument("--out_seq_len", type=int, default=36)
+    parser.add_argument("--in_seq_len", type=int, default=128)
+    parser.add_argument("--out_seq_len", type=int, default=28)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
