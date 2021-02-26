@@ -136,7 +136,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       d_ff=dff,
                       d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=2, src_pad_index=0,
-                      tgt_pad_index=0, device=device),
+                      tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, local=local,
                       local_seq_len=local_seq_len, name=name).to(device)
 
