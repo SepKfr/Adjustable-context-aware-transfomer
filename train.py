@@ -140,6 +140,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       local_seq_len=local_seq_len, name=name)
 
     if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
         attn_model = nn.DataParallel(attn_type)
 
     attn_model.to(device)
