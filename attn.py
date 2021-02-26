@@ -7,12 +7,18 @@ import seaborn as sns
 import matplotlib.pylab as plt
 import os
 
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+    print("Running on GPU")
+else:
+    device = torch.device("cpu")
+    print("running on CPU")
 
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)
     subsequent_mask = torch.from_numpy(subsequent_mask).int()
-    return subsequent_mask
+    return subsequent_mask.to(device)
 
 
 def get_attn_local_mask(seq_q, seq_k, local_mask):
@@ -25,12 +31,12 @@ def get_attn_local_mask(seq_q, seq_k, local_mask):
 
     mask = torch.from_numpy(mask).int()
     mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
-    return mask
+    return mask.to(device)
 
 
 def rel_pos_enc(seq):
 
-    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True).to("cuda:0")
+    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True).to(device)
     return rel_weight.unsqueeze(0)
 
 
