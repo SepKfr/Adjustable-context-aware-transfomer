@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 5000)
+max_len = len(inputs)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
@@ -103,18 +103,18 @@ def batching(batch_size, x_en, x_de, y_t):
 
 def train(model, trn_x, y_t, batch_size):
 
-    #x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
-    x_en, x_de, y_t = trn_x[0], trn_x[1], y_t
+    x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
     optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
 
     for _ in range(n_ephocs):
-        output = model(x_en.to(device), x_de.to(device), training=True)
-        loss = criterion(y_t.to(device), output)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        for j in range(x_en.shape[0]):
+            output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+            loss = criterion(y_t[j].to(device), output)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
@@ -137,7 +137,12 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       n_layers=2, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'),
                       pe=pos_enc, attn_type=attn_type, local=local,
-                      local_seq_len=local_seq_len, name=name).to(device)
+                      local_seq_len=local_seq_len, name=name)
+
+    if torch.cuda.device_count() > 1:
+        attn_model = nn.DataParallel(attn_type)
+
+    attn_model.to(device)
 
     run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, batch_size)
 
@@ -184,7 +189,11 @@ def main():
               output_size=output_size,
               out_channel=out_channel,
               kernel=kernel,
-              n_layers=n_layers).to(device)
+              n_layers=n_layers)
+
+    if torch.cuda.device_count() > 1:
+        cnn = nn.DataParallel(cnn)
+    cnn.to(device)
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
 
@@ -192,7 +201,10 @@ def main():
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
-               rnn_type="LSTM").to(device)
+               rnn_type="LSTM")
+    if torch.cuda.device_count() > 1:
+        lstm = nn.DataParallel(lstm)
+    lstm.to(device)
 
     run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
 
@@ -200,7 +212,11 @@ def main():
               hidden_size=d_model,
               input_size=input_size,
               output_size=output_size,
-              rnn_type="GRU").to(device)
+              rnn_type="GRU")
+
+    if torch.cuda.device_count() > 1:
+        gru = nn.DataParallel(gru)
+    gru.to(device)
 
     run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
 
