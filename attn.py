@@ -30,7 +30,7 @@ def get_attn_local_mask(seq_q, seq_k, local_mask):
 
 def rel_pos_enc(seq):
 
-    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True).to(device)
+    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True)
     return rel_weight.unsqueeze(0)
 
 
@@ -78,7 +78,7 @@ class ScaledDotProductAttention(nn.Module):
         elem_wise = self.pe == "rel_prod_elem" or self.pe == "stem"
         if self.pe == "rel":
 
-            K += rel_pos_enc(K).unsqueeze(0)
+            K += rel_pos_enc(K).unsqueeze(0).to(self.device)
 
         scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
 
@@ -98,7 +98,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if attn_mask is not None and not elem_wise:
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-            attn_mask = attn_mask.to(device)
+            attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
