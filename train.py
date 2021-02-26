@@ -20,13 +20,13 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 3000)
+max_len = min(len(inputs), 4000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
-trn_len = int(inputs.shape[0] * 0.8)
+trn_len = int(inputs.shape[0] * 0.9)
 
-train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
-test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
+train_x, train_y = inputs[:-trn_len, :, :], outputs[:-trn_len, :, :]
+test_x, test_y = inputs[-trn_len:, :, ], outputs[-trn_len:, :, :]
 
 
 d_model = 64
