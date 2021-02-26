@@ -104,18 +104,18 @@ def batching(batch_size, x_en, x_de, y_t):
 
 def train(model, trn_x, y_t, batch_size):
 
-    x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
+    #x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
+    x_en, x_de, y_t = trn_x[0], trn_x[1], y_t
     optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
 
-    for i in range(n_ephocs):
-        for j in range(x_en.shape[0]):
-            output = model(x_en[j].to(device), x_de[j].to(device), training=True)
-            loss = criterion(y_t[j].to(device), output)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+    for _ in range(n_ephocs):
+        output = model(x_en.to(device), x_de.to(device), training=True)
+        loss = criterion(y_t.to(device), output)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
