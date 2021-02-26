@@ -26,7 +26,7 @@ outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
 
 train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
-test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
+test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]
 
 
 d_model = 64
@@ -85,34 +85,50 @@ def evaluate(model, tst_x, y_t):
     return metrics.rmse, metrics.mae
 
 
-def train(model, trn_x, y_t):
+def batching(batch_size, x_en, x_de, y_t):
 
-    '''total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(total_params)'''
-    x_en, x_de = trn_x[0], trn_x[1]
+    batch_n = int(x_en.shape[0] / batch_size)
+    start = x_en.shape[0] % batch_n
+    X_en = torch.zeros(batch_n, batch_size, x_en.shape[1], x_en.shape[2])
+    X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
+    Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
+
+    for i in range(0, x_en.shape[0], batch_size):
+        X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
+        X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
+        Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
+        start = start+batch_size
+
+    return X_en, X_de, Y_t
+
+
+def train(model, trn_x, y_t, batch_size):
+
+    x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
     optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
 
     for i in range(n_ephocs):
+        for j in range(x_en.shape[0]):
+            output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+            loss = criterion(y_t[j].to(device), output)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        output = model(x_en, x_de, training=True)
-        loss = criterion(y_t, output)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
 
-
-def run(model, name, trn_x, tst_x, trn_y, tst_y):
+def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
 
     erros[name] = list()
-    train(model, trn_x, trn_y)
+    train(model, trn_x, trn_y, batch_size)
     rmses, mapes = evaluate(model, tst_x, tst_y)
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
-def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t):
+def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
+                   x_de, x_en_t, x_de_t, y_true, y_true_t, batch_size):
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -124,7 +140,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en, x_de, x
                       pe=pos_enc, attn_type=attn_type, local=local,
                       local_seq_len=local_seq_len, name=name).to(device)
 
-    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, batch_size)
 
 
 def main():
@@ -132,29 +148,38 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=96)
     parser.add_argument("--loc_seq_len", type=int, default=12)
+    parser.add_argument("--batch_size", type=int, default=512)
     params = parser.parse_args()
 
     seq_len = params.seq_len
 
-    x_en = train_x[:, :-seq_len, :].to(device)
-    x_de = train_x[:, -seq_len:, :].to(device)
-    y_true = train_y[:, :, :].to(device)
+    x_en = train_x[:, :-seq_len, :]
+    x_de = train_x[:, -seq_len:, :]
+    y_true = train_y[:, :, :]
 
-    x_en_t = test_x[:, :-seq_len, :].to(device)
-    x_de_t = test_x[:, -seq_len:, :].to(device)
-    y_true_t = test_y[:, :, :].to(device)
+    x_en_t = test_x[:, :-seq_len, :]
+    x_de_t = test_x[:, -seq_len:, :]
+    y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_rel', 'rel', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-    call_atn_model('attn_rel_gl', 'rel', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true,y_true_t)
+    call_atn_model('attn_rel', 'rel', 'attn', False, 0, x_en, x_de, x_en_t,
+                   x_de_t, y_true, y_true_t, params.batch_size)
+    call_atn_model('attn_rel_gl', 'rel', 'attn', True, params.loc_seq_len, x_en,
+                   x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
-    call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-    call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
+                   x_de_t, y_true, y_true_t, params.batch_size)
+    call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
-    call_atn_model('attn_rel_con', 'rel', 'con', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-    call_atn_model('attn_rel_con_gl', 'rel', 'con', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_rel_con', 'rel', 'con', False, 0, x_en, x_de,
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
+    call_atn_model('attn_rel_con_gl', 'rel', 'con', True, params.loc_seq_len, x_en, x_de,
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
-    call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-    call_atn_model('attn_con_gl', 'sincos', 'con', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
+    call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t,
+                   x_de_t, y_true, y_true_t, params.batch_size)
+    call_atn_model('attn_con_gl', 'sincos', 'con', True, params.loc_seq_len, x_en, x_de,
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
@@ -162,7 +187,7 @@ def main():
               kernel=kernel,
               n_layers=n_layers).to(device)
 
-    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -170,7 +195,7 @@ def main():
                output_size=output_size,
                rnn_type="LSTM").to(device)
 
-    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -178,7 +203,7 @@ def main():
               output_size=output_size,
               rnn_type="GRU").to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
