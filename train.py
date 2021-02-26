@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 4000)
+max_len = len(inputs)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
@@ -93,7 +93,7 @@ def batching(batch_size, x_en, x_de, y_t):
     X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
     Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
 
-    for i in range(0, x_en.shape[0], batch_size):
+    for i in range(batch_n):
         X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
