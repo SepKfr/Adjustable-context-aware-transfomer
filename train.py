@@ -103,7 +103,11 @@ def batching(batch_size, x_en, x_de, y_t):
 
 def train(model, trn_x, y_t, batch_size):
 
-    x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
+    if device == torch.device("cuda:0"):
+        x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
+    else:
+        x_en, x_de, y_t = trn_x[0].unssqueeze(0), trn_x[1].unssqueeze(0), y_t.unssqueeze(0)
+
     optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
