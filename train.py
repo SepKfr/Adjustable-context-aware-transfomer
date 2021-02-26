@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = len(inputs)
+max_len = min(len(inputs), 5000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
@@ -97,8 +97,7 @@ def batching(batch_size, x_en, x_de, y_t):
         X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
-        start = start+batch_size
-
+        start += batch_size
     return X_en, X_de, Y_t
 
 
@@ -136,7 +135,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       d_ff=dff,
                       d_k=d_model, d_v=d_model, n_heads=n_head,
                       n_layers=2, src_pad_index=0,
-                      tgt_pad_index=0, device=device,
+                      tgt_pad_index=0, device=torch.device('cpu'),
                       pe=pos_enc, attn_type=attn_type, local=local,
                       local_seq_len=local_seq_len, name=name).to(device)
 
@@ -148,7 +147,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=96)
     parser.add_argument("--loc_seq_len", type=int, default=12)
-    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--batch_size", type=int, default=1024)
     params = parser.parse_args()
 
     seq_len = params.seq_len
