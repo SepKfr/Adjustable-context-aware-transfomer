@@ -25,8 +25,8 @@ inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
 
-train_x, train_y = inputs[:-trn_len, :, :], outputs[:-trn_len, :, :]
-test_x, test_y = inputs[-trn_len:, :, ], outputs[-trn_len:, :, :]
+train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
+test_x, test_y = inputs[-1:, :, ], outputs[-1:, :, :]
 
 
 d_model = 64
