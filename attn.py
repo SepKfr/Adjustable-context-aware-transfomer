@@ -30,7 +30,7 @@ def get_attn_local_mask(seq_q, seq_k, local_mask):
 
 def rel_pos_enc(seq):
 
-    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True)
+    rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True).to("cuda:0")
     return rel_weight.unsqueeze(0)
 
 

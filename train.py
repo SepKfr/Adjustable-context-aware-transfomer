@@ -127,23 +127,6 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en, x_de, x
     run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
 
-def call_attn_rnn_model(name, pos_enc, attn_type, rnn_type, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t):
-
-    attn_model = AttnRnn(input_size=input_size,
-                         output_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_model,
-                         d_v=d_model,
-                         n_heads=n_head,
-                         n_layers=6,
-                         src_pad_index=0, tgt_pad_index=0,
-                         device=torch.device('cpu'),
-                         pe=pos_enc,
-                         attn_type=attn_type, rnn_type=rnn_type, name=name)
-    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
-
-
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
