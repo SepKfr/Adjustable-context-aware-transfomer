@@ -43,6 +43,13 @@ n_ephocs = 150
 
 erros = dict()
 
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+    print("Running on GPU")
+else:
+    device = torch.device("cpu")
+    print("running on CPU")
+
 
 def inverse_transform(data):
 
@@ -115,7 +122,8 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en, x_de, x
                       n_layers=2, src_pad_index=0,
                       tgt_pad_index=0, device=torch.device('cpu'),
                       pe=pos_enc, attn_type=attn_type, local=local,
-                      local_seq_len=local_seq_len, name=name)
+                      local_seq_len=local_seq_len, name=name).to(device)
+
     run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
 
@@ -145,22 +153,16 @@ def main():
 
     seq_len = params.seq_len
 
-    x_en = train_x[:, :-seq_len, :]
-    x_de = train_x[:, -seq_len:, :]
-    y_true = train_y[:, :, :]
+    x_en = train_x[:, :-seq_len, :].to(device)
+    x_de = train_x[:, -seq_len:, :].to(device)
+    y_true = train_y[:, :, :].to(device)
 
-    x_en_t = test_x[:, :-seq_len, :]
-    x_de_t = test_x[:, -seq_len:, :]
-    y_true_t = test_y[:, :, :]
+    x_en_t = test_x[:, :-seq_len, :].to(device)
+    x_de_t = test_x[:, -seq_len:, :].to(device)
+    y_true_t = test_y[:, :, :].to(device)
 
     call_atn_model('attn_rel', 'rel', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
     call_atn_model('attn_rel_gl', 'rel', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true,y_true_t)
-
-    #call_atn_model('attn_rel_prod', 'rel_prod', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    #call_atn_model('attn_rel_prod_elem', 'rel_prod_elem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    #call_atn_model('attn_stem', 'stem', 'attn', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
@@ -168,60 +170,14 @@ def main():
     call_atn_model('attn_rel_con', 'rel', 'con', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
     call_atn_model('attn_rel_con_gl', 'rel', 'con', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
 
-    #call_atn_model('attn_rel_prod_con', 'rel_prod', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    #call_atn_model('attn_rel_prod_elem_con', 'rel_prod_elem', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    #call_atn_model('attn_stem_con', 'stem', 'con', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
     call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
     call_atn_model('attn_con_gl', 'sincos', 'con', True, params.loc_seq_len, x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    '''call_attn_rnn_model('lstm_attn_rel', 'rel', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn_rel_prod', 'rel_prod', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn_rel_prod_elem', 'rel_prod_elem', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_stem', 'stem', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn', 'sincos', 'attn', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_rel', 'rel', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_rel_prod', 'rel_prod', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_rel_prod_elem', 'rel_prod_elem', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_stem', 'stem', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn', 'sincos', 'attn', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn_rel_con', 'rel', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn_rel_prod_con', 'rel_prod', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn_rel_prod_elem_con', 'rel_prod_elem', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_stem_con', 'stem', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('lstm_attn_con', 'sincos', 'con', 'lstm', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_rel_con', 'rel', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_rel_prod_con', 'rel_prod', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_rel_prod_elem_con', 'rel_prod_elem', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_stem_con', 'stem', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)
-
-    call_attn_rnn_model('gru_attn_con', 'sincos', 'con', 'gru', x_en, x_de, x_en_t, x_de_t, y_true, y_true_t)'''
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=out_channel,
               kernel=kernel,
-              n_layers=n_layers)
+              n_layers=n_layers).to(device)
 
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
@@ -229,7 +185,7 @@ def main():
                hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
-               rnn_type="LSTM")
+               rnn_type="LSTM").to(device)
 
     run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
@@ -237,7 +193,7 @@ def main():
               hidden_size=d_model,
               input_size=input_size,
               output_size=output_size,
-              rnn_type="GRU")
+              rnn_type="GRU").to(device)
 
     run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t)
 
