@@ -7,18 +7,12 @@ import seaborn as sns
 import matplotlib.pylab as plt
 import os
 
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-    print("Running on GPU")
-else:
-    device = torch.device("cpu")
-    print("running on CPU")
 
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)
     subsequent_mask = torch.from_numpy(subsequent_mask).int()
-    return subsequent_mask.to(device)
+    return subsequent_mask
 
 
 def get_attn_local_mask(seq_q, seq_k, local_mask):
@@ -31,7 +25,7 @@ def get_attn_local_mask(seq_q, seq_k, local_mask):
 
     mask = torch.from_numpy(mask).int()
     mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
-    return mask.to(device)
+    return mask
 
 
 def rel_pos_enc(seq):
@@ -104,7 +98,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if attn_mask is not None and not elem_wise:
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-            attn_mask = attn_mask.to(self.device)
+            attn_mask = attn_mask.to(device)
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
