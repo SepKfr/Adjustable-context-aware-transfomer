@@ -207,7 +207,8 @@ class Encoder(nn.Module):
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=1)
+        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=7)
+        self.src_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0)
@@ -232,12 +233,14 @@ class Encoder(nn.Module):
             enc_outputs = enc_outputs.permute(0, 2, 1)
 
         elif self.attn_type == "con_attn":
-            x = self.tgt_emb(x)
+            x = self.src_emb(x)
             padding = int(self.kernel_size / 2)
-            key = F.pad(x, pad=(padding, padding, 0, 0))
-            value = F.pad(x, pad=(padding, padding, 0, 0))
+            key = F.pad(x.permute(0, 2, 1), pad=(padding, padding, 0, 0))
+            key = key.permute(0, 2, 1)
+            value = F.pad(x.permute(0, 2, 1), pad=(padding, padding, 0, 0))
+            value = value.permute(0, 2, 1)
             mask = get_con_mask(x, key, padding)
-            enc_outputs = self.tgt_emb_attn(x, key, value, mask)
+            enc_outputs, _ = self.src_emb_attn(x, key, value, mask)
 
         else:
             enc_outputs = self.src_emb(x)
@@ -323,12 +326,14 @@ class Decoder(nn.Module):
             dec_outputs = dec_outputs.permute(0, 2, 1)
 
         elif self.attn_type == "con_attn":
-            dec_inputs = self.tgt_emb(dec_inputs)
+            x = self.tgt_emb(dec_inputs)
             padding = int(self.kernel_size / 2)
-            key = F.pad(dec_inputs, pad=(padding, padding, 0, 0))
-            value = F.pad(dec_inputs, pad=(padding, padding, 0, 0))
-            mask = get_con_mask(dec_inputs, key, padding)
-            dec_outputs = self.tgt_emb_attn(dec_inputs, key, value, mask)
+            key = F.pad(x.permute(0, 2, 1), pad=(padding, padding, 0, 0))
+            key = key.permute(0, 2, 1)
+            value = F.pad(x.permute(0, 2, 1), pad=(padding, padding, 0, 0))
+            value = value.permute(0, 2, 1)
+            mask = get_con_mask(x, key, padding)
+            enc_outputs, _ = self.tgt_emb_attn(x, key, value, mask)
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
