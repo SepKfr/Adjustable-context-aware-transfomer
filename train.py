@@ -121,7 +121,7 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.step()
 
     if not os.path.exists('models'):
-        os.makedirs("models_{}".format(x_en.shape[1]))
+        os.makedirs("models_{}".format(x_en.shape[2]))
 
     torch.save(model.state_dict(), 'models')
 
