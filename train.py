@@ -39,7 +39,7 @@ n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 120
+n_ephocs = 100
 
 erros = dict()
 
@@ -120,6 +120,11 @@ def train(model, trn_x, y_t, batch_size):
             loss.backward()
             optimizer.step()
 
+    if not os.path.exists('models'):
+        os.makedirs("models_{}".format(x_en.shape[1]))
+
+    torch.save(model.state_dict(), 'models')
+
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
 
@@ -180,14 +185,14 @@ def main():
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
-    call_atn_model('attn_rel_con', 'rel', 'con', False, 0, x_en, x_de,
+    call_atn_model('attn_rel_con', 'rel', 'con_attn', False, 0, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
-    call_atn_model('attn_rel_con_gl', 'rel', 'con', True, params.loc_seq_len, x_en, x_de,
+    call_atn_model('attn_rel_con_gl', 'rel', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
-    call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params.batch_size)
-    call_atn_model('attn_con_gl', 'sincos', 'con', True, params.loc_seq_len, x_en, x_de,
+    call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
 
     cnn = CNN(input_size=input_size,

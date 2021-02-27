@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pylab as plt
 import os
+import torch.nn.functional as F
 
 
 def get_attn_subsequent_mask(seq):
@@ -17,12 +18,16 @@ def get_attn_subsequent_mask(seq):
 
 def get_attn_local_mask(seq_q, seq_k, local_mask):
 
-    mask = np.zeros((seq_q.size(1), seq_k.size(1)))
-    for i in range(mask.shape[0]):
-        for j in range(mask.shape[1]):
-            if abs(i - j) > local_mask:
-                mask[i][j] = 1
+    mask = [[1 if abs(i - j) > local_mask else 0 for j in range(seq_k.size(1))] for i in range(seq_k.size(1))]
+    mask = np.array(mask)
+    mask = torch.from_numpy(mask).int()
+    mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
+    return mask
 
+
+def get_con_mask(seq_q, seq_k, padding):
+    mask = [[1 if abs(i - j) > padding else 0 for j in range(seq_k.size(1))] for i in range(seq_q.size(1))]
+    mask = np.array(mask)
     mask = torch.from_numpy(mask).int()
     mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
     return mask
@@ -195,7 +200,8 @@ class EncoderLayer(nn.Module):
 class Encoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v, n_heads,
-                 n_layers, pad_index, device, pe, attn_type, local, local_seq_len):
+                 n_layers, pad_index, device, pe, attn_type, local,
+                 local_seq_len, kernel_size):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
@@ -217,12 +223,22 @@ class Encoder(nn.Module):
         self.pe = pe
         self.local = local
         self.local_seq_len = local_seq_len
+        self.kernel_size = kernel_size
 
     def forward(self, x):
 
-        if self.attn_type == 'con':
+        if self.attn_type == 'con_conv':
             enc_outputs = self.src_emb_conv(x.permute(0, 2, 1))
             enc_outputs = enc_outputs.permute(0, 2, 1)
+
+        elif self.attn_type == "con_attn":
+            x = self.tgt_emb(x)
+            padding = int(self.kernel_size / 2)
+            key = F.pad(x, pad=(padding, padding, 0, 0))
+            value = F.pad(x, pad=(padding, padding, 0, 0))
+            mask = get_con_mask(x, key, padding)
+            enc_outputs = self.tgt_emb_attn(x, key, value, mask)
+
         else:
             enc_outputs = self.src_emb(x)
 
@@ -275,13 +291,14 @@ class Decoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device, pe, attn_type,
-                 local, local_seq_len, name):
+                 local, local_seq_len, kernel_size, name):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
         self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=1)
+        self.tgt_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0)
@@ -297,14 +314,25 @@ class Decoder(nn.Module):
         self.local = local
         self.local_seq_len = local_seq_len
         self.name = name
+        self.kernel_size = kernel_size
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
-        if self.attn_type == "con":
+        if self.attn_type == "con_conv":
             dec_outputs = self.tgt_emb_conv(dec_inputs.permute(0, 2, 1))
             dec_outputs = dec_outputs.permute(0, 2, 1)
+
+        elif self.attn_type == "con_attn":
+            dec_inputs = self.tgt_emb(dec_inputs)
+            padding = int(self.kernel_size / 2)
+            key = F.pad(dec_inputs, pad=(padding, padding, 0, 0))
+            value = F.pad(dec_inputs, pad=(padding, padding, 0, 0))
+            mask = get_con_mask(dec_inputs, key, padding)
+            dec_outputs = self.tgt_emb_attn(dec_inputs, key, value, mask)
+
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
+
         if self.pe == 'sincos':
             dec_outputs = self.pos_emb(dec_outputs)
 
@@ -369,14 +397,14 @@ class Attn(nn.Module):
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
             device=device, pe=pe, attn_type=attn_type,
-            local=local, local_seq_len=local_seq_len)
+            local=local, local_seq_len=local_seq_len, kernel_size=7)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe, attn_type=attn_type,
-            local=local, local_seq_len=local_seq_len, name=name)
+            local=local, local_seq_len=local_seq_len, kernel_size=7, name=name)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
 
