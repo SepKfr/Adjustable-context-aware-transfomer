@@ -101,7 +101,7 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
-def train(model, trn_x, y_t, batch_size):
+def train(model, trn_x, y_t, batch_size, name):
 
     if device == torch.device("cuda:0"):
         x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
@@ -124,13 +124,13 @@ def train(model, trn_x, y_t, batch_size):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(model.state_dict(), path)
+    torch.save(model.state_dict(), '{}/name'.format(path))
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
 
     erros[name] = list()
-    train(model, trn_x, trn_y, batch_size)
+    train(model, trn_x, trn_y, batch_size, name)
     rmses, mapes = evaluate(model, tst_x, tst_y)
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
