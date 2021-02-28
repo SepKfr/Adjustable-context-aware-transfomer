@@ -333,7 +333,7 @@ class Decoder(nn.Module):
             value = F.pad(x.permute(0, 2, 1), pad=(padding, padding, 0, 0))
             value = value.permute(0, 2, 1)
             mask = get_con_mask(x, key, padding)
-            enc_outputs, _ = self.tgt_emb_attn(x, key, value, mask)
+            dec_outputs, _ = self.tgt_emb_attn(x, key, value, mask)
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
@@ -363,7 +363,7 @@ class Decoder(nn.Module):
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
-        if not training:
+        '''if not training:
             dec_self_attns = torch.sum(dec_self_attns, dim=1) / dec_self_attns.shape[1]
             dec_self_attns = torch.sum(dec_self_attns, dim=1) / dec_self_attns.shape[1]
 
@@ -384,7 +384,7 @@ class Decoder(nn.Module):
             ax_enc_dec.set_title("enc-dec attention")
             fig_2 = ax_enc_dec.get_figure()
             fig_2.savefig("heatmaps/enc_dec_{}.png".format(self.name))
-            fig_2.clear()
+            fig_2.clear()'''
 
         return dec_outputs, dec_self_attns, dec_enc_attns
 
