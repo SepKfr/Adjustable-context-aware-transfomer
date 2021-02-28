@@ -120,10 +120,11 @@ def train(model, trn_x, y_t, batch_size):
             loss.backward()
             optimizer.step()
 
-    if not os.path.exists('models'):
-        os.makedirs("models_{}".format(x_en.shape[2]))
+    path = "models_{}".format(x_en.shape[2])
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-    torch.save(model.state_dict(), 'models')
+    torch.save(model.state_dict(), path)
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
