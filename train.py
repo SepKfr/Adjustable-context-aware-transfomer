@@ -124,7 +124,7 @@ def train(model, trn_x, y_t, batch_size, name):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(model.state_dict(), '{}/name'.format(path))
+    torch.save(model.state_dict(), '{}/{}'.format(path, name))
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
@@ -161,7 +161,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=96)
+    parser.add_argument("--seq_len", type=int, default=28)
     parser.add_argument("--loc_seq_len", type=int, default=12)
     parser.add_argument("--batch_size", type=int, default=1024)
     params = parser.parse_args()
