@@ -120,7 +120,7 @@ def train(model, trn_x, y_t, batch_size, name):
             loss.backward()
             optimizer.step()
 
-    path = "models_{}".format(x_en.shape[2])
+    path = "models_{}".format(y_t.shape[2])
     if not os.path.exists(path):
         os.makedirs(path)
 
