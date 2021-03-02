@@ -164,7 +164,7 @@ def main():
     parser.add_argument("--seq_len", type=int, default=28)
     parser.add_argument("--loc_seq_len", type=int, default=12)
     parser.add_argument("--batch_size", type=int, default=1024)
-    parser.add_argument("--run_num", type=int, default=1)
+    parser.add_argument("--run_num", type=str, default=1)
     params = parser.parse_args()
 
     seq_len = params.seq_len
