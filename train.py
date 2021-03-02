@@ -101,7 +101,7 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
-def train(model, trn_x, y_t, batch_size, name):
+def train(model, trn_x, y_t, batch_size, name, run_num):
 
     if device == torch.device("cuda:0"):
         x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
@@ -124,20 +124,20 @@ def train(model, trn_x, y_t, batch_size, name):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(model.state_dict(), '{}/{}'.format(path, name))
+    torch.save(model.state_dict(), '{}/{}_{}'.format(path, name, run_num))
 
 
-def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size):
+def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size, run_num):
 
     erros[name] = list()
-    train(model, trn_x, trn_y, batch_size, name)
+    train(model, trn_x, trn_y, batch_size, name, run_num)
     rmses, mapes = evaluate(model, tst_x, tst_y)
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
 def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
-                   x_de, x_en_t, x_de_t, y_true, y_true_t, batch_size):
+                   x_de, x_en_t, x_de_t, y_true, y_true_t, batch_size, run_num):
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -155,7 +155,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
 
     attn_model.to(device)
 
-    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, batch_size)
+    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, batch_size, run_num)
 
 
 def main():
@@ -164,6 +164,7 @@ def main():
     parser.add_argument("--seq_len", type=int, default=28)
     parser.add_argument("--loc_seq_len", type=int, default=12)
     parser.add_argument("--batch_size", type=int, default=1024)
+    parser.add_argument("--run_num", type=int, default=1)
     params = parser.parse_args()
 
     seq_len = params.seq_len
@@ -182,9 +183,9 @@ def main():
                    x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size)'''
 
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params.batch_size)
+                   x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
 
     '''call_atn_model('attn_rel_con', 'rel', 'con_attn', False, 0, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
@@ -192,9 +193,9 @@ def main():
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size)'''
 
     call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params.batch_size)
+                   x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size)
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
@@ -206,7 +207,7 @@ def main():
         cnn = nn.DataParallel(cnn)
     cnn.to(device)
 
-    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
+    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size, params.run_num)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=d_model,
@@ -217,7 +218,7 @@ def main():
         lstm = nn.DataParallel(lstm)
     lstm.to(device)
 
-    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
+    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size, params.run_num)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=d_model,
@@ -229,7 +230,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size, params.run_num)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
