@@ -132,6 +132,7 @@ def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size, run_num):
     erros[name] = list()
     train(model, trn_x, trn_y, batch_size, name, run_num)
     rmses, mapes = evaluate(model, tst_x, tst_y)
+    print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
