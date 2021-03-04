@@ -177,20 +177,20 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_rel', 'rel', 'attn', False, 0, x_en, x_de, x_en_t,
+    '''call_atn_model('attn_rel', 'rel', 'attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
     call_atn_model('attn_rel_gl', 'rel', 'attn', True, params.loc_seq_len, x_en,
-                   x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
+                   x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
 
-    call_atn_model('attn_rel_con', 'rel', 'con_attn', False, 0, x_en, x_de,
+    '''call_atn_model('attn_rel_con', 'rel', 'con_attn', False, 0, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
     call_atn_model('attn_rel_con_gl', 'rel', 'con_attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
+                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
     call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
