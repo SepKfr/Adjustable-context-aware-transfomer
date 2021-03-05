@@ -244,7 +244,7 @@ class Encoder(nn.Module):
             value = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
             value = value.permute(0, 2, 1)
             mask = get_con_mask(enc_outputs, key, padding)
-            for _ in self.n_layers:
+            for _ in range(self.n_layers):
                 enc_outputs, _ = self.src_emb_attn(x, key, value, mask)
 
         else:
@@ -342,7 +342,7 @@ class Decoder(nn.Module):
             value = F.pad(dec_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
             value = value.permute(0, 2, 1)
             mask = get_con_mask(dec_outputs, key, padding)
-            for _ in self.n_layers:
+            for _ in range(self.n_layers):
                 dec_outputs, _ = self.tgt_emb_attn(x, key, value, mask)
 
         else:
