@@ -234,8 +234,8 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=128)
-    parser.add_argument("--out_seq_len", type=int, default=28)
+    parser.add_argument("--in_seq_len", type=int, default=256)
+    parser.add_argument("--out_seq_len", type=int, default=48)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
