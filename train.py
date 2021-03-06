@@ -108,7 +108,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num):
     else:
         x_en, x_de, y_t = trn_x[0].unsqueeze(0), trn_x[1].unsqueeze(0), y_t.unsqueeze(0)
 
-    optimizer = Adam(model.parameters(), lr=lr)
+    optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
     num_steps = len(trn_x) * n_ephocs
@@ -122,8 +122,6 @@ def train(model, trn_x, y_t, batch_size, name, run_num):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
 
     path = "models_{}".format(y_t.shape[2])
     if not os.path.exists(path):
