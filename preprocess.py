@@ -110,9 +110,9 @@ class STData:
         self.n_features = 3
         #self.site_abrs = ["BEF", "GOF", "DCF", 'MCQ', "WHB"]
         self.sites_data = dict()
-        site_dat = self.prep_data_per_site("WHB")
+        site_dat = self.prep_data_per_site("LMP")
         ln = len(site_dat)
-        self.sites_data["WHB"] = site_dat
+        self.sites_data["LMP"] = site_dat
 
         #self.grid = self.create_grid()
         '''for abr in self.site_abrs:
@@ -235,7 +235,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=256)
-    parser.add_argument("--out_seq_len", type=int, default=48)
+    parser.add_argument("--out_seq_len", type=int, default=28)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 

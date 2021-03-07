@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 3000)
+max_len = min(len(inputs), 1000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
@@ -101,7 +101,7 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
-def train(model, trn_x, y_t, batch_size, name, run_num):
+def train(model, trn_x, y_t, batch_size, name, run_num, site):
 
     if device == torch.device("cuda:0"):
         x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
@@ -123,17 +123,17 @@ def train(model, trn_x, y_t, batch_size, name, run_num):
             loss.backward()
             optimizer.step()
 
-    path = "models_{}".format(y_t.shape[2])
+    path = "models_{}_{}".format(site, y_t.shape[2])
     if not os.path.exists(path):
         os.makedirs(path)
 
     torch.save(model.state_dict(), '{}/{}_{}'.format(path, name, run_num))
 
 
-def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size, run_num):
+def run(model, name, trn_x, tst_x, trn_y, tst_y, params):
 
     erros[name] = list()
-    train(model, trn_x, trn_y, batch_size, name, run_num)
+    train(model, trn_x, trn_y, params.batch_size, name, params.run_num, params.site)
     rmses, mapes = evaluate(model, tst_x, tst_y)
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
@@ -141,7 +141,7 @@ def run(model, name, trn_x, tst_x, trn_y, tst_y, batch_size, run_num):
 
 
 def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
-                   x_de, x_en_t, x_de_t, y_true, y_true_t, batch_size, run_num):
+                   x_de, x_en_t, x_de_t, y_true, y_true_t, params):
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -159,7 +159,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
 
     attn_model.to(device)
 
-    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, batch_size, run_num)
+    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
 
 def main():
@@ -169,6 +169,7 @@ def main():
     parser.add_argument("--loc_seq_len", type=int, default=12)
     parser.add_argument("--batch_size", type=int, default=1024)
     parser.add_argument("--run_num", type=str, default=1)
+    parser.add_argument("--site", type=str, default="WHB")
     params = parser.parse_args()
 
     seq_len = params.seq_len
@@ -187,9 +188,9 @@ def main():
                    x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
+                   x_de_t, y_true, y_true_t, params)
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
+                   x_en_t, x_de_t, y_true, y_true_t, params)
 
     '''call_atn_model('attn_rel_con', 'rel', 'con_attn', False, 0, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
@@ -197,9 +198,9 @@ def main():
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
     call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
+                   x_de_t, y_true, y_true_t, params)
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
+                   x_en_t, x_de_t, y_true, y_true_t, params)
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
@@ -211,7 +212,7 @@ def main():
         cnn = nn.DataParallel(cnn)
     cnn.to(device)
 
-    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size, params.run_num)
+    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     lstm = RNN(n_layers=n_layers,
                hidden_size=64,
@@ -222,7 +223,7 @@ def main():
         lstm = nn.DataParallel(lstm)
     lstm.to(device)
 
-    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size, params.run_num)
+    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     gru = RNN(n_layers=n_layers,
               hidden_size=64,
@@ -234,7 +235,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params.batch_size, params.run_num)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
