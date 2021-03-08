@@ -233,9 +233,9 @@ def main():
 
     if torch.cuda.device_count() > 1:
         gru = nn.DataParallel(gru)
-    gru.to(device)'''
+    gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
