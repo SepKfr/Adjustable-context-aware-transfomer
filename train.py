@@ -78,7 +78,7 @@ def evaluate(model, tst_x, y_t):
 
     with torch.no_grad():
 
-        otps = model(tst_x[0], tst_x[1], training=False)
+        otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
 
     otps_in = inverse_transform(otps)
     metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
