@@ -243,7 +243,7 @@ class Encoder(nn.Module):
             key = key.permute(0, 2, 1)
             value = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
             value = value.permute(0, 2, 1)
-            mask = get_con_mask(enc_outputs, key, padding)
+            mask = get_con_mask(enc_outputs, key, padding).to(self.device)
             for _ in range(self.n_layers):
                 enc_outputs, _ = self.src_emb_attn(x, key, value, mask)
 
@@ -256,7 +256,7 @@ class Encoder(nn.Module):
         if not self.local:
             enc_self_attn_mask = None
         else:
-            enc_self_attn_mask = get_attn_local_mask(x, x, self.local_seq_len)
+            enc_self_attn_mask = get_attn_local_mask(x, x, self.local_seq_len).to(self.device)
 
         enc_self_attns = []
         for layer in self.layers:
