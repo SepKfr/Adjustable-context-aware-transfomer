@@ -235,8 +235,8 @@ class Encoder(nn.Module):
             enc_outputs = self.pos_emb(enc_outputs)
 
         elif self.attn_type == "con_attn":
-
-            enc_outputs = self.src_emb(x.to(self.device))
+            print(self.device)
+            enc_outputs = self.src_emb(x)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
             key = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
