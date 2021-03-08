@@ -227,8 +227,9 @@ class STData:
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
-        plt.plot(df.SpConductivity.iloc[-1000:])
-
+        plt.plot(np.arange(0, 1000), df.SpConductivity.iloc[-1000:])
+        plt.tick_params(axis="x", bottom=False, top=False)
+        plt.tick_params(axis="y", left=False, right=False)
         plt.show()
         df = df.ffill().bfill()
         return df
