@@ -241,13 +241,13 @@ class Encoder(nn.Module):
             enc_outputs = self.src_emb(x)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
-            key = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
+            '''key = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
             key = key.permute(0, 2, 1)
             value = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
-            value = value.permute(0, 2, 1)
-            mask = get_con_mask(enc_outputs, key, padding).to(self.device)
+            value = value.permute(0, 2, 1)'''
+            mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
             for _ in range(self.n_layers):
-                enc_outputs, _ = self.src_emb_attn(x, key, value, mask)
+                enc_outputs, _ = self.src_emb_attn(enc_outputs, enc_outputs, enc_outputs, mask)
 
         else:
             enc_outputs = self.src_emb(x)
