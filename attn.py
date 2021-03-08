@@ -310,7 +310,8 @@ class Decoder(nn.Module):
         self.tgt_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
-            dropout=0)
+            dropout=0,
+            device=device)
         self.layers = []
         for _ in range(n_layers):
             decoder_layer = DecoderLayer(
