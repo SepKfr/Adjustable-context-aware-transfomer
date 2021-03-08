@@ -414,14 +414,14 @@ class Attn(nn.Module):
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
             device=device, pe=pe, attn_type=attn_type,
-            local=local, local_seq_len=local_seq_len, kernel_size=7)
+            local=local, local_seq_len=local_seq_len, kernel_size=14)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe, attn_type=attn_type,
-            local=local, local_seq_len=local_seq_len, kernel_size=7, name=name)
+            local=local, local_seq_len=local_seq_len, kernel_size=14, name=name)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
 
