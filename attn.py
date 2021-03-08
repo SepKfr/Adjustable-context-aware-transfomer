@@ -139,7 +139,6 @@ class MultiHeadAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         batch_size = Q.shape[0]
-        print(Q.shape)
         q_s = self.WQ(Q).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
         k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
         v_s = self.WV(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1, 2)
