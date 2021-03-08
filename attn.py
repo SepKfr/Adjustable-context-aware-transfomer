@@ -47,7 +47,7 @@ class GELU(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model, dropout, max_seq_len=5000):
+    def __init__(self, d_model, dropout, device, max_seq_len=5000):
         super(PositionalEncoding, self).__init__()
 
         self.d_model = d_model
@@ -58,7 +58,7 @@ class PositionalEncoding(nn.Module):
                              -(math.log(10000.0) / d_model))
         self.pe[:, 0::2] = torch.sin(position * div_term)
         self.pe[:, 1::2] = torch.cos(position * div_term)
-        self.pe = self.pe.unsqueeze(0)
+        self.pe = self.pe.unsqueeze(0).to(device)
 
     def forward(self, x):
 
@@ -211,7 +211,8 @@ class Encoder(nn.Module):
         self.src_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
-            dropout=0)
+            dropout=0,
+            device=device)
 
         self.n_layers = n_layers
         self.layers = []
@@ -235,7 +236,7 @@ class Encoder(nn.Module):
             enc_outputs = self.pos_emb(enc_outputs)
 
         elif self.attn_type == "con_attn":
-            print(self.device)
+
             enc_outputs = self.src_emb(x)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
