@@ -103,10 +103,12 @@ def batching(batch_size, x_en, x_de, y_t):
 
 def train(model, trn_x, y_t, batch_size, name, run_num, site):
 
-    if device == torch.device("cuda:0"):
+    '''if device == torch.device("cuda:0"):
         x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
     else:
-        x_en, x_de, y_t = trn_x[0].unsqueeze(0), trn_x[1].unsqueeze(0), y_t.unsqueeze(0)
+        x_en, x_de, y_t = trn_x[0].unsqueeze(0), trn_x[1].unsqueeze(0), y_t.unsqueeze(0)'''
+
+    x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
 
     optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
@@ -187,7 +189,7 @@ def main():
     call_atn_model('attn_rel_gl', 'rel', 'attn', True, params.loc_seq_len, x_en,
                    x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
-    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
+    '''call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)
@@ -195,16 +197,16 @@ def main():
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
     call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)
+                   x_en_t, x_de_t, y_true, y_true_t, params)'''
 
     '''call_atn_model('attn_rel_con', 'rel', 'con_attn', False, 0, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)
     call_atn_model('attn_rel_con_gl', 'rel', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
-    '''cnn = CNN(input_size=input_size,
+    cnn = CNN(input_size=input_size,
               output_size=output_size,
-              out_channel=64,
+              out_channel=d_model,
               kernel=kernel,
               n_layers=n_layers)
 
@@ -215,7 +217,7 @@ def main():
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     lstm = RNN(n_layers=n_layers,
-               hidden_size=64,
+               hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
                rnn_type="LSTM")
@@ -226,7 +228,7 @@ def main():
     run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     gru = RNN(n_layers=n_layers,
-              hidden_size=64,
+              hidden_size=d_model,
               input_size=input_size,
               output_size=output_size,
               rnn_type="GRU")
@@ -235,7 +237,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
