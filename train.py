@@ -206,7 +206,7 @@ def main():
 
     cnn = CNN(input_size=input_size,
               output_size=output_size,
-              out_channel=d_model,
+              out_channel=64,
               kernel=kernel,
               n_layers=n_layers)
 
@@ -217,7 +217,7 @@ def main():
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     lstm = RNN(n_layers=n_layers,
-               hidden_size=d_model,
+               hidden_size=64,
                input_size=input_size,
                output_size=output_size,
                rnn_type="LSTM")
@@ -228,7 +228,7 @@ def main():
     run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     gru = RNN(n_layers=n_layers,
-              hidden_size=d_model,
+              hidden_size=64,
               input_size=input_size,
               output_size=output_size,
               rnn_type="GRU")
