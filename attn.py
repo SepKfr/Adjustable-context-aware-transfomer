@@ -97,8 +97,8 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         if self.attn_type == "con":
-            Q_centerd = get_con_vecs(Q)
-            V_centerd = get_con_vecs(V)
+            Q_centerd = get_con_vecs(Q).to(self.device)
+            V_centerd = get_con_vecs(V).to(self.device)
             scores = torch.mul(Q_centerd, V_centerd)
             scores = torch.sum(scores, dim=3)
 
