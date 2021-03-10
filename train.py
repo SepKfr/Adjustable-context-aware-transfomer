@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 1500)
+max_len = min(len(inputs), 100)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
@@ -169,7 +169,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=28)
     parser.add_argument("--loc_seq_len", type=int, default=12)
-    parser.add_argument("--batch_size", type=int, default=1024)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
     params = parser.parse_args()
@@ -189,9 +189,9 @@ def main():
     call_atn_model('attn_rel_gl', 'rel', 'attn', True, params.loc_seq_len, x_en,
                    x_de, x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
-    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
-    call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
+    call_atn_model('attn_con_gl', 'sincos', 'con', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
@@ -204,7 +204,7 @@ def main():
     call_atn_model('attn_rel_con_gl', 'rel', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params.batch_size, params.run_num)'''
 
-    cnn = CNN(input_size=input_size,
+    '''cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=64,
               kernel=kernel,
@@ -237,7 +237,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
