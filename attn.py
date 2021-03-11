@@ -41,9 +41,8 @@ def get_con_vecs(seq):
     seq_pad = F.pad(seq_pad.permute(0, 1, 3, 2), pad=(0, seq_len, 0, 0))
     seq_pad = seq_pad.permute(0, 1, 3, 2)
     new_seq = torch.zeros(batch_size, seq_len, seq_len*2, n_h*d_k)
-    for i in range(batch_size):
-        for j in range(seq_len):
-            new_seq[i, j, :, :] = torch.roll(seq_pad[i, j, :, :], seq_len - j, 0)
+    for j in range(seq_len):
+        new_seq[:, j, :, :] = torch.roll(seq_pad[:, j, :, :], seq_len - j, 0)
 
     return new_seq.reshape(batch_size, n_h, seq_len, seq_len*2, d_k)
 
