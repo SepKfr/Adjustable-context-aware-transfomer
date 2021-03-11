@@ -118,15 +118,12 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
     for _ in range(n_ephocs):
-        tot_loss = 0
         for j in range(x_en.shape[0]):
             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
             loss = criterion(y_t[j].to(device), output)
-            tot_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        print(tot_loss)
 
     path = "models_{}_{}".format(site, y_t.shape[2])
     if not os.path.exists(path):
