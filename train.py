@@ -39,7 +39,7 @@ n_layers = 3
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 150
+n_ephocs = 200
 
 erros = dict()
 
@@ -193,13 +193,7 @@ def main():
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
-    call_atn_model('attn_con_conv_gl', 'sincos', 'con_conv', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)
-
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)
-
-    call_atn_model('attn', 'sincos', 'attn', True, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
     '''cnn = CNN(input_size=input_size,
