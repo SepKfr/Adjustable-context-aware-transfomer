@@ -39,7 +39,7 @@ n_layers = 3
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 150
 
 erros = dict()
 
