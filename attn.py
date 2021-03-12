@@ -244,19 +244,13 @@ class Encoder(nn.Module):
             enc_outputs = self.src_emb(x)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
-            '''key = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
-            key = key.permute(0, 2, 1)
-            value = F.pad(enc_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
-            value = value.permute(0, 2, 1)'''
             mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
             for _ in range(self.n_layers):
                 enc_outputs, _ = self.src_emb_attn(enc_outputs, enc_outputs, enc_outputs, mask)
 
         else:
             enc_outputs = self.src_emb(x)
-
-        '''if self.pe == 'sincos':
-            enc_outputs = self.pos_emb(enc_outputs)'''
+            enc_outputs = self.pos_emb(enc_outputs)
 
         if not self.local:
             enc_self_attn_mask = None
@@ -340,23 +334,16 @@ class Decoder(nn.Module):
 
         elif self.attn_type == "con_attn":
 
-            x = self.tgt_emb(dec_inputs)
-            dec_outputs = self.pos_emb(x)
+            dec_outputs = self.tgt_emb(dec_inputs)
             dec_outputs = self.pos_emb(dec_outputs)
             padding = int(self.kernel_size / 2)
-            key = F.pad(dec_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
-            key = key.permute(0, 2, 1)
-            value = F.pad(dec_outputs.permute(0, 2, 1), pad=(padding, padding, 0, 0))
-            value = value.permute(0, 2, 1)
-            mask = get_con_mask(dec_outputs, key, padding)
+            mask = get_con_mask(dec_outputs, dec_outputs, padding)
             for _ in range(self.n_layers):
-                dec_outputs, _ = self.tgt_emb_attn(x, key, value, mask)
+                dec_outputs, _ = self.tgt_emb_attn(dec_outputs, dec_outputs, dec_outputs, mask)
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
-
-        '''if self.pe == 'sincos':
-            dec_outputs = self.pos_emb(dec_outputs)'''
+            enc_outputs = self.pos_emb(enc_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_inputs)
 
