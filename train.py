@@ -98,7 +98,7 @@ def batching(batch_size, x_en, x_de, y_t):
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
         start += batch_size
-    print(Y_t.shape)
+
     return X_en, X_de, Y_t
 
 
