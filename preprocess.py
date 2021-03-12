@@ -227,9 +227,10 @@ class STData:
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
-        plt.plot(np.arange(0, 1500), df.SpConductivity.iloc[-1500:])
+        plt.plot(np.arange(0, 3000), df.SpConductivity.iloc[-3000:], color='k')
         plt.tick_params(axis="x", bottom=False, top=False)
         plt.tick_params(axis="y", left=False, right=False)
+        plt.axis('off')
         plt.show()
         df = df.ffill().bfill()
         return df
@@ -240,7 +241,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=128)
     parser.add_argument("--out_seq_len", type=int, default=36)
-    parser.add_argument("--site", type=str, default="WHB")
+    parser.add_argument("--site", type=str, default="BDC")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 

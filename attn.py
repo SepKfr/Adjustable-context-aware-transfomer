@@ -236,6 +236,7 @@ class Encoder(nn.Module):
     def forward(self, x):
 
         if self.attn_type == 'con_conv':
+
             enc_outputs = self.src_emb_conv(x.permute(0, 2, 1))
             enc_outputs = enc_outputs.permute(0, 2, 1)
             enc_outputs = self.pos_emb(enc_outputs)
