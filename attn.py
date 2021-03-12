@@ -102,7 +102,6 @@ class ScaledDotProductAttention(nn.Module):
 
         else:
             scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
-            print(scores.shape)
 
         if attn_mask is not None and self.attn_type != 'con':
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
@@ -212,7 +211,8 @@ class Encoder(nn.Module):
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=kernel_size)
+        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
+                                      kernel_size=1)
         self.src_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -256,7 +256,7 @@ class Encoder(nn.Module):
         if not self.local:
             enc_self_attn_mask = None
         else:
-            enc_self_attn_mask = get_attn_local_mask(x, x, self.local_seq_len).to(self.device)
+            enc_self_attn_mask = get_attn_local_mask(enc_outputs, enc_outputs, self.local_seq_len).to(self.device)
 
         enc_self_attns = []
         for layer in self.layers:
@@ -305,7 +305,7 @@ class Decoder(nn.Module):
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=kernel_size)
+        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=1)
         self.tgt_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -346,10 +346,10 @@ class Decoder(nn.Module):
             dec_outputs = self.tgt_emb(dec_inputs)
             enc_outputs = self.pos_emb(enc_outputs)
 
-        dec_self_attn_mask = get_attn_subsequent_mask(dec_inputs)
+        dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
         if self.local:
-            dec_self_attn_mask += get_attn_local_mask(dec_inputs, dec_inputs, self.local_seq_len)
+            dec_self_attn_mask += get_attn_local_mask(dec_outputs, dec_outputs, self.local_seq_len)
 
         dec_enc_attn_mask = None
 
