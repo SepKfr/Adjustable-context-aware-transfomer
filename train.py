@@ -185,8 +185,8 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)
+    '''call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
+                   x_de_t, y_true, y_true_t, params)'''
 
     call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
