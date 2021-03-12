@@ -70,3 +70,5 @@ def main():
     print('{:.3f}'.format(mae))
 
 
+if __name__ == '__main__':
+    main()
