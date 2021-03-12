@@ -39,14 +39,14 @@ def inverse_transform(data):
     return inv_data
 
 
-def evaluate(site, seq_ln):
+def evaluate(site, seq_ln, name):
 
     y_t_in = inverse_transform(test_y)
     b, seq_len, f = test_y.shape
 
     tst_x, tst_y = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :]
 
-    model = torch.load('models_{}_{}'.format(site, seq_ln))
+    model = torch.load('models_{}_{}/{}'.format(site, seq_ln, name))
     model.eval()
 
     outputs = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
@@ -61,9 +61,10 @@ def main():
     parser = argparse.ArgumentParser(description="evaluation")
     parser.add_argument("--seq_len", type=int, default=28)
     parser.add_argument("--site", type=str, default="WHB")
+    parser.add_argument("--name", type=str, required=True)
     params = parser.parse_args()
 
-    rmse, mae = evaluate(params.site, params.seq_len)
+    rmse, mae = evaluate(params.site, params.seq_len, params.name)
 
     print('{:.3f}'.format(rmse))
     print('{:.3f}'.format(mae))
