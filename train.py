@@ -184,7 +184,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
+    '''call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
@@ -200,11 +200,11 @@ def main():
                    x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn', 'sincos', 'attn', True, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)
+                   x_de_t, y_true, y_true_t, params)'''
 
-    '''cnn = CNN(input_size=input_size,
+    cnn = CNN(input_size=input_size,
               output_size=output_size,
-              out_channel=64,
+              out_channel=d_model,
               kernel=kernel,
               n_layers=n_layers)
 
@@ -215,7 +215,7 @@ def main():
     run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     lstm = RNN(n_layers=n_layers,
-               hidden_size=64,
+               hidden_size=d_model,
                input_size=input_size,
                output_size=output_size,
                rnn_type="LSTM")
@@ -226,7 +226,7 @@ def main():
     run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     gru = RNN(n_layers=n_layers,
-              hidden_size=64,
+              hidden_size=d_model,
               input_size=input_size,
               output_size=output_size,
               rnn_type="GRU")
@@ -235,7 +235,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
