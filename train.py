@@ -39,7 +39,7 @@ n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 200
+n_ephocs = 10
 
 erros = dict()
 
@@ -98,6 +98,7 @@ def batching(batch_size, x_en, x_de, y_t):
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
         start += batch_size
+    print(Y_t.shape)
     return X_en, X_de, Y_t
 
 
@@ -167,7 +168,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=28)
+    parser.add_argument("--seq_len", type=int, default=36)
     parser.add_argument("--loc_seq_len", type=int, default=12)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
