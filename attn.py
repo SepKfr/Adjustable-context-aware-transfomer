@@ -102,6 +102,7 @@ class ScaledDotProductAttention(nn.Module):
 
         else:
             scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
+            print(scores.shape)
 
         if attn_mask is not None and self.attn_type != 'con':
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
