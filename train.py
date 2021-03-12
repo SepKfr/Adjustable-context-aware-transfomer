@@ -129,7 +129,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(model.state_dict(), '{}/{}_{}'.format(path, name, run_num))
+    torch.save(model, '{}/{}_{}'.format(path, name, run_num))
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, params):
