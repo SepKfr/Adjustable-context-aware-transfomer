@@ -184,17 +184,23 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
-    '''call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
+    call_atn_model('attn_con_conv_gl', 'sincos', 'con_conv', True, params.loc_seq_len, x_en, x_de,
+                   x_en_t, x_de_t, y_true, y_true_t, params)
+
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)'''
+                   x_de_t, y_true, y_true_t, params)
+
+    call_atn_model('attn', 'sincos', 'attn', True, 0, x_en, x_de, x_en_t,
+                   x_de_t, y_true, y_true_t, params)
 
     '''cnn = CNN(input_size=input_size,
               output_size=output_size,
