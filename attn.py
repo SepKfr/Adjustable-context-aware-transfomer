@@ -239,7 +239,7 @@ class Encoder(nn.Module):
 
             enc_input = self.src_emb(enc_input)
             for _ in range(self.n_layers):
-                enc_outputs = self.tgt_emb_conv(enc_input.permute(0, 2, 1))
+                enc_outputs = self.src_emb_conv(enc_input.permute(0, 2, 1))
             enc_outputs = enc_outputs.permute(0, 2, 1)
             enc_outputs = self.pos_emb(enc_outputs)
 
