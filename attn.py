@@ -237,9 +237,10 @@ class Encoder(nn.Module):
 
         if self.attn_type == 'con_conv':
 
-            enc_outputs = self.src_emb(enc_input)
+            enc_input = self.src_emb(enc_input)
+            enc_input = enc_input.permute(0, 2, 1)
             for _ in range(self.n_layers):
-                enc_outputs = self.src_emb_conv(enc_outputs.permute(0, 2, 1))
+                enc_outputs = self.src_emb_conv(enc_input)
             enc_outputs = enc_outputs.permute(0, 2, 1)
             enc_outputs = self.pos_emb(enc_outputs)
 
@@ -335,9 +336,10 @@ class Decoder(nn.Module):
 
         if self.attn_type == "con_conv":
 
-            dec_outputs = self.tgt_emb(dec_inputs)
+            dec_inputs = self.tgt_emb(dec_inputs)
+            dec_inputs = dec_inputs.permute(0, 2, 1)
             for _ in range(self.n_layers):
-                dec_outputs = self.tgt_emb_conv(dec_outputs.permute(0, 2, 1))
+                dec_outputs = self.tgt_emb_conv(dec_inputs)
             dec_outputs = dec_outputs.permute(0, 2, 1)
             dec_outputs = self.pos_emb(dec_outputs)
 
