@@ -309,7 +309,7 @@ class Decoder(nn.Module):
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_ff,
+        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
                                       kernel_size=1)
         self.tgt_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
