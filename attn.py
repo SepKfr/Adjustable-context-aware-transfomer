@@ -233,18 +233,18 @@ class Encoder(nn.Module):
         self.local_seq_len = local_seq_len
         self.kernel_size = kernel_size
 
-    def forward(self, dec_input):
+    def forward(self, enc_input):
 
         if self.attn_type == 'con_conv':
 
-            enc_outputs = self.src_emb(dec_input)
+            enc_outputs = self.src_emb(enc_input)
             enc_outputs = self.src_emb_conv(enc_outputs.permute(0, 2, 1))
             enc_outputs = enc_outputs.permute(0, 2, 1)
             enc_outputs = self.pos_emb(enc_outputs)
 
         elif self.attn_type == "con_attn":
 
-            enc_outputs = self.src_emb(dec_input)
+            enc_outputs = self.src_emb(enc_input)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
             mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
@@ -252,7 +252,7 @@ class Encoder(nn.Module):
                 enc_outputs, _ = self.src_emb_attn(enc_outputs, enc_outputs, enc_outputs, mask)
 
         else:
-            enc_outputs = self.src_emb(x)
+            enc_outputs = self.src_emb(enc_input)
             enc_outputs = self.pos_emb(enc_outputs)
 
         if not self.local:
@@ -333,7 +333,9 @@ class Decoder(nn.Module):
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == "con_conv":
-            dec_outputs = self.tgt_emb_conv(dec_inputs.permute(0, 2, 1))
+
+            dec_outputs = self.tgt_emb(dec_inputs)
+            dec_outputs = self.tgt_emb_conv(dec_outputs.permute(0, 2, 1))
             dec_outputs = dec_outputs.permute(0, 2, 1)
             dec_outputs = self.pos_emb(dec_outputs)
 
