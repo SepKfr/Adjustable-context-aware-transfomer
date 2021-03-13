@@ -75,7 +75,7 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
 
-        print(x.shap)
+        print(x.shape)
         seq_len = x.size(1)
         self.pe = self.pe[:, :seq_len]
 
