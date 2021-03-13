@@ -339,6 +339,7 @@ class Decoder(nn.Module):
             for _ in range(self.n_layers):
                 dec_outputs = self.tgt_emb_conv(dec_inputs)
             dec_outputs = dec_outputs.permute(0, 2, 1)
+            print(dec_outputs.shape)
             dec_outputs = self.pos_emb(dec_outputs)
 
         elif self.attn_type == "con_attn":
