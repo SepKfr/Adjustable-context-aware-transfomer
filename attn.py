@@ -211,7 +211,7 @@ class Encoder(nn.Module):
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
+        self.src_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_ff,
                                       kernel_size=1)
         self.src_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
@@ -233,17 +233,18 @@ class Encoder(nn.Module):
         self.local_seq_len = local_seq_len
         self.kernel_size = kernel_size
 
-    def forward(self, x):
+    def forward(self, dec_input):
 
         if self.attn_type == 'con_conv':
 
-            enc_outputs = self.src_emb_conv(x.permute(0, 2, 1))
+            enc_outputs = self.src_emb(dec_input)
+            enc_outputs = self.src_emb_conv(enc_outputs.permute(0, 2, 1))
             enc_outputs = enc_outputs.permute(0, 2, 1)
             enc_outputs = self.pos_emb(enc_outputs)
 
         elif self.attn_type == "con_attn":
 
-            enc_outputs = self.src_emb(x)
+            enc_outputs = self.src_emb(dec_input)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
             mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
@@ -257,7 +258,8 @@ class Encoder(nn.Module):
         if not self.local:
             enc_self_attn_mask = None
         else:
-            enc_self_attn_mask = get_attn_local_mask(enc_outputs, enc_outputs, self.local_seq_len).to(self.device)
+            enc_self_attn_mask = get_attn_local_mask(x, x,
+                                                     self.local_seq_len).to(self.device)
 
         enc_self_attns = []
         for layer in self.layers:
@@ -306,7 +308,8 @@ class Decoder(nn.Module):
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=1)
+        self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_ff,
+                                      kernel_size=1)
         self.tgt_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -345,12 +348,12 @@ class Decoder(nn.Module):
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
-            enc_outputs = self.pos_emb(enc_outputs)
+            dec_outputs = self.pos_emb(dec_outputs)
 
-        dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
+        dec_self_attn_mask = get_attn_subsequent_mask(dec_inputs)
 
         if self.local:
-            dec_self_attn_mask += get_attn_local_mask(dec_outputs, dec_outputs, self.local_seq_len)
+            dec_self_attn_mask += get_attn_local_mask(dec_inputs, dec_inputs, self.local_seq_len)
 
         dec_enc_attn_mask = None
 
@@ -409,14 +412,14 @@ class Attn(nn.Module):
             n_layers=n_layers, pad_index=src_pad_index,
             device=device, pe=pe,
             local=local, local_seq_len=local_seq_len,
-            kernel_size=14, attn_type=attn_type)
+            kernel_size=16, attn_type=attn_type)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe,
-            local=local, local_seq_len=local_seq_len, kernel_size=14,
+            local=local, local_seq_len=local_seq_len, kernel_size=16,
             attn_type=attn_type, name=name)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
@@ -424,7 +427,8 @@ class Attn(nn.Module):
     def forward(self, enc_inputs, dec_inputs, training=True):
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs, enc_outputs, training)
+        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
+                                                                  enc_outputs, training)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 

@@ -186,7 +186,7 @@ def main():
     y_true_t = test_y[:, :, :]
 
     '''call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)
+                   x_de_t, y_true, y_true_t, params)'''
 
     call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
@@ -195,9 +195,9 @@ def main():
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)'''
+                   x_de_t, y_true, y_true_t, params)
 
-    cnn = CNN(input_size=input_size,
+    '''cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=d_model,
               kernel=kernel,
@@ -218,7 +218,7 @@ def main():
         lstm = nn.DataParallel(lstm)
     lstm.to(device)
 
-    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     '''gru = RNN(n_layers=n_layers,
               hidden_size=64,
