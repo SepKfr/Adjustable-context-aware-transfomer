@@ -237,7 +237,7 @@ class Encoder(nn.Module):
 
         if self.attn_type == 'con_conv':
 
-            enc_input = self.tgt_emb(enc_input)
+            enc_input = self.src_emb_conv(enc_input)
             for _ in range(self.n_layers):
                 enc_outputs = self.tgt_emb_conv(enc_input.permute(0, 2, 1))
             enc_outputs = enc_outputs.permute(0, 2, 1)
