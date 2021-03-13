@@ -259,7 +259,7 @@ class Encoder(nn.Module):
         if not self.local:
             enc_self_attn_mask = None
         else:
-            enc_self_attn_mask = get_attn_local_mask(x, x,
+            enc_self_attn_mask = get_attn_local_mask(enc_outputs, enc_outputs,
                                                      self.local_seq_len).to(self.device)
 
         enc_self_attns = []
@@ -339,7 +339,6 @@ class Decoder(nn.Module):
             for _ in range(self.n_layers):
                 dec_outputs = self.tgt_emb_conv(dec_inputs)
             dec_outputs = dec_outputs.permute(0, 2, 1)
-            print(dec_outputs.shape)
             dec_outputs = self.pos_emb(dec_outputs)
 
         elif self.attn_type == "con_attn":
@@ -355,7 +354,7 @@ class Decoder(nn.Module):
             dec_outputs = self.tgt_emb(dec_inputs)
             dec_outputs = self.pos_emb(dec_outputs)
 
-        dec_self_attn_mask = get_attn_subsequent_mask(dec_inputs)
+        dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
         if self.local:
             dec_self_attn_mask += get_attn_local_mask(dec_inputs, dec_inputs, self.local_seq_len)
