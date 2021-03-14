@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 1500)
+max_len = min(len(inputs), 2000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.9)
@@ -29,9 +29,9 @@ train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
 test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]
 
 
-d_model = 64
-dff = 128
-n_head = 4
+d_model = 512
+dff = 1024
+n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
@@ -152,7 +152,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       tgt_input_size=output_size,
                       d_model=d_model,
                       d_ff=dff,
-                      d_k=16, d_v=16, n_heads=n_head,
+                      d_k=64, d_v=64, n_heads=n_head,
                       n_layers=n_layers, src_pad_index=0,
                       tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, local=local,
@@ -187,7 +187,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    '''call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
@@ -196,7 +196,7 @@ def main():
     call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
-    call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
+    '''call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
@@ -205,7 +205,7 @@ def main():
     '''call_atn_model('attn_con_conv_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)'''
 
-    cnn = CNN(input_size=input_size,
+    '''cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=d_model,
               kernel=kernel,
@@ -238,7 +238,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
