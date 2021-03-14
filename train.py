@@ -205,7 +205,7 @@ def main():
     '''call_atn_model('attn_con_conv_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)'''
 
-    cnn = CNN(input_size=input_size,
+    '''cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=d_model,
               kernel=kernel,
@@ -238,7 +238,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
