@@ -39,7 +39,7 @@ n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 200
 
 erros = dict()
 
@@ -185,7 +185,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    '''call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
@@ -201,9 +201,9 @@ def main():
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con_conv_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)'''
+                   x_en_t, x_de_t, y_true, y_true_t, params)
 
-    cnn = CNN(input_size=input_size,
+    '''cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=d_model,
               kernel=kernel,
@@ -236,7 +236,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
