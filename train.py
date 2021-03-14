@@ -130,7 +130,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(model, '{}/{}_{}'.format(path, name, run_num))
+    torch.save(model.to(''), '{}/{}_{}'.format(path, name, run_num))
 
 
 def run(model, name, trn_x, tst_x, trn_y, tst_y, params):
@@ -185,7 +185,7 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    '''call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
+    call_atn_model('attn', 'sincos', 'con', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
@@ -194,16 +194,16 @@ def main():
     call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
                    x_de_t, y_true, y_true_t, params)
 
-    call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
+    '''call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)
 
     call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)
-
-    call_atn_model('attn_con_conv_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
                    x_en_t, x_de_t, y_true, y_true_t, params)'''
 
-    cnn = CNN(input_size=input_size,
+    '''call_atn_model('attn_con_conv_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
+                   x_en_t, x_de_t, y_true, y_true_t, params)'''
+
+    '''cnn = CNN(input_size=input_size,
               output_size=output_size,
               out_channel=d_model,
               kernel=kernel,
@@ -236,7 +236,7 @@ def main():
         gru = nn.DataParallel(gru)
     gru.to(device)
 
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)'''
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:

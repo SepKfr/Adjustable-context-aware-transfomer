@@ -49,7 +49,7 @@ def evaluate(site, seq_ln, name):
     model = torch.load('models_{}_{}/{}'.format(site, seq_ln, name))
     model.eval()
 
-    outputs = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
+    outputs = model(tst_x.to(device), tst_y.to(device), training=False)
 
     outputs_in = inverse_transform(outputs)
     metrics = Metrics(outputs_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
