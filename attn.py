@@ -248,7 +248,7 @@ class Encoder(nn.Module):
             enc_outputs = self.src_emb(enc_input)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
-            mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
+            mask = None
             for _ in range(self.n_layers):
                 enc_outputs, _ = self.src_emb_attn(enc_outputs, enc_outputs, enc_outputs, mask)
 
@@ -346,7 +346,7 @@ class Decoder(nn.Module):
             dec_outputs = self.tgt_emb(dec_inputs)
             dec_outputs = self.pos_emb(dec_outputs)
             padding = int(self.kernel_size / 2)
-            mask = get_con_mask(dec_outputs, dec_outputs, padding)
+            mask = None
             for _ in range(self.n_layers):
                 dec_outputs, _ = self.tgt_emb_attn(dec_outputs, dec_outputs, dec_outputs, mask)
 
