@@ -13,6 +13,7 @@ max_len = min(len(inputs), 1500)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 
+
 test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]
 
 if torch.cuda.is_available():

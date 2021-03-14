@@ -23,10 +23,10 @@ scalers = pickle.load(open("scalers.pkl", "rb"))
 max_len = min(len(inputs), 2000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
-trn_len = int(inputs.shape[0] * 0.9)
+trn_len = int(inputs.shape[0] * 0.8)
 
-train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
-test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]
+train_x, train_y = inputs[:-trn_len, :, :], outputs[:-trn_len, :, :]
+test_x, test_y = inputs[-trn_len:, :, :], outputs[-trn_len:, :, :]
 
 
 d_model = 128
@@ -125,8 +125,8 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            '''lr_scheduler.step()
-            warmup_scheduler.dampen()'''
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
 
     path = "models_{}_{}".format(site, y_t.shape[2])
     if not os.path.exists(path):
