@@ -29,8 +29,8 @@ train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
 test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]
 
 
-d_model = 256
-dff = 512
+d_model = 32
+dff = 64
 n_head = 4
 in_channel = train_x.shape[1]
 out_channel = d_model
@@ -39,7 +39,7 @@ n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
-n_ephocs = 200
+n_ephocs = 100
 
 erros = dict()
 
@@ -150,7 +150,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       tgt_input_size=output_size,
                       d_model=d_model,
                       d_ff=dff,
-                      d_k=64, d_v=64, n_heads=n_head,
+                      d_k=8, d_v=8, n_heads=n_head,
                       n_layers=n_layers, src_pad_index=0,
                       tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, local=local,

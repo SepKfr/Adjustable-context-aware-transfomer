@@ -24,7 +24,7 @@ class Data:
         self.sites_data = site_data
         self.ts = ts
         self.n_seasons = 4
-        self.hist = 4
+        self.hist = 1
 
         self.nf = n_features * self.hist
         '''self.I = I
@@ -241,7 +241,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=128)
     parser.add_argument("--out_seq_len", type=int, default=36)
-    parser.add_argument("--site", type=str, default="BDC")
+    parser.add_argument("--site", type=str, default="WHB")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
