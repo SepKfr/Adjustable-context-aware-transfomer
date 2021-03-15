@@ -29,8 +29,8 @@ train_x, train_y = inputs[:-trn_len, :, :], outputs[:-trn_len, :, :]
 test_x, test_y = inputs[-trn_len:, :, :], outputs[-trn_len:, :, :]
 
 
-d_model = 128
-dff = 256
+d_model = 512
+dff = 1024
 n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
@@ -111,7 +111,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
 
     x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
 
-    optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
+    optimizer = Adam(model.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
     model.train()
     num_steps = len(trn_x) * n_ephocs
@@ -152,7 +152,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                       tgt_input_size=output_size,
                       d_model=d_model,
                       d_ff=dff,
-                      d_k=16, d_v=16, n_heads=n_head,
+                      d_k=64, d_v=64, n_heads=n_head,
                       n_layers=n_layers, src_pad_index=0,
                       tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, local=local,

@@ -5,7 +5,7 @@ import torch
 class RNConv(nn.Module):
 
     def __init__(self, n_layers, hidden_size, input_size, output_size,
-                 out_channel, kernel, rnn_type, d_r=0.1):
+                 out_channel, kernel, rnn_type, d_r=0.5):
 
         super(RNConv, self).__init__()
         self.n_layers = n_layers
@@ -53,7 +53,7 @@ class RNConv(nn.Module):
 
 
 class RNN(nn.Module):
-    def __init__(self, n_layers, hidden_size, input_size, output_size, rnn_type, d_r=0.1):
+    def __init__(self, n_layers, hidden_size, input_size, output_size, rnn_type, d_r=0.5):
 
         super(RNN, self).__init__()
         self.encoder_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
@@ -90,7 +90,7 @@ class RNN(nn.Module):
 
 
 class CNN(nn.Module):
-    def __init__(self, input_size, output_size, out_channel, kernel, n_layers, d_r=0.1):
+    def __init__(self, input_size, output_size, out_channel, kernel, n_layers, d_r=0.5):
         super(CNN, self).__init__()
         self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
