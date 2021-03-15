@@ -248,7 +248,13 @@ class Encoder(nn.Module):
 
         elif self.attn_type == "con_attn":
 
-            enc_outputs = self.src_emb(enc_input)
+            enc_input = enc_input.permute(0, 2, 1)
+            padding = (self.kernel_size - 1) * self.dilation
+            enc_input = F.pad(enc_input, (padding, 0))
+            for _ in range(self.n_layers):
+                enc_outputs = self.src_emb_conv(enc_input)
+            enc_outputs = enc_outputs.permute(0, 2, 1)
+
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
             mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
@@ -349,8 +355,14 @@ class Decoder(nn.Module):
 
         elif self.attn_type == "con_attn":
 
-            dec_outputs = self.tgt_emb(dec_inputs)
+            dec_inputs = dec_inputs.permute(0, 2, 1)
+            padding = (self.kernel_size - 1) * self.dilation
+            dec_inputs = F.pad(dec_inputs, (padding, 0))
+            for _ in range(self.n_layers):
+                dec_outputs = self.tgt_emb_conv(dec_inputs)
+            dec_outputs = dec_outputs.permute(0, 2, 1)
             dec_outputs = self.pos_emb(dec_outputs)
+
             padding = int(self.kernel_size / 2)
             mask = get_con_mask(dec_outputs, dec_outputs, padding)
             for _ in range(self.n_layers):
