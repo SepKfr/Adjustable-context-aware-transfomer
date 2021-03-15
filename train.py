@@ -111,7 +111,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
 
     x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
 
-    optimizer = Adam(model.parameters(), lr=0.001, weight_decay=0.0005)
+    optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.0005)
     criterion = nn.MSELoss()
     model.train()
     num_steps = len(trn_x) * n_ephocs
