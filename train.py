@@ -175,6 +175,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
+    parser.add_argument("--server", type=str, default="c01")
     params = parser.parse_args()
 
     seq_len = params.seq_len
@@ -187,58 +188,51 @@ def main():
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
-    '''call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)
+    if params.server == 'c01':
+        call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
+                       x_de_t, y_true, y_true_t, params)
 
-    call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)
+        call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
+                       x_de_t, y_true, y_true_t, params)
 
-    call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
-                   x_de_t, y_true, y_true_t, params)'''
+        call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
+                       x_de_t, y_true, y_true_t, params)
 
-    '''call_atn_model('attn_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)
+    elif params.server == 'jelly':
+        cnn = CNN(input_size=input_size,
+                  output_size=output_size,
+                  out_channel=d_model,
+                  kernel=kernel,
+                  n_layers=n_layers)
 
-    call_atn_model('attn_con_gl', 'sincos', 'con_attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)'''
+        if torch.cuda.device_count() > 1:
+            cnn = nn.DataParallel(cnn)
+        cnn.to(device)
 
-    '''call_atn_model('attn_con_conv_gl', 'sincos', 'attn', True, params.loc_seq_len, x_en, x_de,
-                   x_en_t, x_de_t, y_true, y_true_t, params)'''
+        run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
-    cnn = CNN(input_size=input_size,
-              output_size=output_size,
-              out_channel=d_model,
-              kernel=kernel,
-              n_layers=n_layers)
+        lstm = RNN(n_layers=n_layers,
+                   hidden_size=d_model,
+                   input_size=input_size,
+                   output_size=output_size,
+                   rnn_type="LSTM")
+        if torch.cuda.device_count() > 1:
+            lstm = nn.DataParallel(lstm)
+        lstm.to(device)
 
-    if torch.cuda.device_count() > 1:
-        cnn = nn.DataParallel(cnn)
-    cnn.to(device)
+        run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
-    run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+        gru = RNN(n_layers=n_layers,
+                  hidden_size=d_model,
+                  input_size=input_size,
+                  output_size=output_size,
+                  rnn_type="GRU")
 
-    lstm = RNN(n_layers=n_layers,
-               hidden_size=d_model,
-               input_size=input_size,
-               output_size=output_size,
-               rnn_type="LSTM")
-    if torch.cuda.device_count() > 1:
-        lstm = nn.DataParallel(lstm)
-    lstm.to(device)
+        if torch.cuda.device_count() > 1:
+            gru = nn.DataParallel(gru)
+        gru.to(device)
 
-    run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
-
-    gru = RNN(n_layers=n_layers,
-              hidden_size=d_model,
-              input_size=input_size,
-              output_size=output_size,
-              rnn_type="GRU")
-
-    if torch.cuda.device_count() > 1:
-        gru = nn.DataParallel(gru)
-    gru.to(device)
-
-    run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+        run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
