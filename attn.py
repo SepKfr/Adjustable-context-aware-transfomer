@@ -248,7 +248,7 @@ class Encoder(nn.Module):
             enc_outputs = self.src_emb(enc_input)
             enc_outputs = self.pos_emb(enc_outputs)
             padding = int(self.kernel_size / 2)
-            mask = None
+            mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
             for _ in range(self.n_layers):
                 enc_outputs, _ = self.src_emb_attn(enc_outputs, enc_outputs, enc_outputs, mask)
 
@@ -346,7 +346,7 @@ class Decoder(nn.Module):
             dec_outputs = self.tgt_emb(dec_inputs)
             dec_outputs = self.pos_emb(dec_outputs)
             padding = int(self.kernel_size / 2)
-            mask = None
+            mask = get_con_mask(dec_outputs, dec_outputs, padding)
             for _ in range(self.n_layers):
                 dec_outputs, _ = self.tgt_emb_attn(dec_outputs, dec_outputs, dec_outputs, mask)
 
@@ -416,14 +416,14 @@ class Attn(nn.Module):
             n_layers=n_layers, pad_index=src_pad_index,
             device=device, pe=pe,
             local=local, local_seq_len=local_seq_len,
-            kernel_size=16, attn_type=attn_type)
+            kernel_size=7, attn_type=attn_type)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe,
-            local=local, local_seq_len=local_seq_len, kernel_size=16,
+            local=local, local_seq_len=local_seq_len, kernel_size=7,
             attn_type=attn_type, name=name)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
