@@ -30,7 +30,7 @@ test_x, test_y = inputs[-trn_len:, :, :], outputs[-trn_len:, :, :]
 
 
 d_model = 512
-dff = 1024
+dff = 2048
 n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
@@ -125,8 +125,8 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            '''lr_scheduler.step()
-            warmup_scheduler.dampen()'''
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
 
     path = "models_{}_{}".format(site, y_t.shape[2])
     if not os.path.exists(path):
