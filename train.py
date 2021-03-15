@@ -24,9 +24,12 @@ max_len = min(len(inputs), 2000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.8)
+valid_len = int(inputs.shape[0] * 0.9)
 
-train_x, train_y = inputs[:-trn_len, :, :], outputs[:-trn_len, :, :]
-test_x, test_y = inputs[-trn_len:, :, :], outputs[-trn_len:, :, :]
+
+train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
+valid_x, valid_y = inputs[trn_len:valid_len, :, :], outputs[trn_len:valid_len, :, :]
+test_x, test_y = inputs[valid_len:, :, :], outputs[valid_len:, :, :]
 
 
 d_model = 512
@@ -104,11 +107,6 @@ def batching(batch_size, x_en, x_de, y_t):
 
 def train(model, trn_x, y_t, batch_size, name, run_num, site):
 
-    '''if device == torch.device("cuda:0"):
-        x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
-    else:
-        x_en, x_de, y_t = trn_x[0].unsqueeze(0), trn_x[1].unsqueeze(0), y_t.unsqueeze(0)'''
-
     x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
 
     optimizer = Adam(model.parameters(), lr=0.0001)
@@ -128,50 +126,72 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
-    path = "models_{}_{}".format(site, y_t.shape[2])
-    if not os.path.exists(path):
-        os.makedirs(path)
 
-    torch.save(model, '{}/{}_{}'.format(path, name, run_num))
-
-
-def run(model, name, trn_x, tst_x, trn_y, tst_y, params):
+def run(model, name, trn_x, valid_v, tst_v, trn_y, params):
 
     erros[name] = list()
     train(model, trn_x, trn_y, params.batch_size, name, params.run_num, params.site)
-    rmses, mapes = evaluate(model, tst_x, tst_y)
+    rmses_val, mapes_val = evaluate(model, valid_v, tst_v)
+    return model, rmses_val
+
+
+def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
+                   x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
+                   y_true_v, y_true_t, kernel_size, params):
+
+    rmse = 1e9
+    best_model = None
+    for k in kernel_size:
+        attn_model = Attn(src_input_size=input_size,
+                          tgt_input_size=output_size,
+                          d_model=d_model,
+                          d_ff=dff,
+                          d_k=64, d_v=64, n_heads=n_head,
+                          n_layers=n_layers, src_pad_index=0,
+                          tgt_pad_index=0, device=device,
+                          pe=pos_enc, attn_type=attn_type, local=local,
+                          local_seq_len=local_seq_len,
+                          kernel_size=k, name=name)
+
+        attn_model.to(device)
+
+        model, rmse_v = run(attn_model, name, [x_en, x_de],
+                     [x_en_v, x_de_v], y_true, y_true_v, params)
+
+        if rmse_v < rmse:
+
+            best_model = model
+
+            path = "models_{}_{}".format(params.site, y_true.shape[2])
+            if not os.path.exists(path):
+                os.makedirs(path)
+
+            torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
+
+    rmses, mapes = evaluate(best_model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
-def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
-                   x_de, x_en_t, x_de_t, y_true, y_true_t, params):
+def call_rnn_model(model, name, x_en,
+                   x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
+                   y_true_v, y_true_t, params):
 
-    attn_model = Attn(src_input_size=input_size,
-                      tgt_input_size=output_size,
-                      d_model=d_model,
-                      d_ff=dff,
-                      d_k=64, d_v=64, n_heads=n_head,
-                      n_layers=n_layers, src_pad_index=0,
-                      tgt_pad_index=0, device=device,
-                      pe=pos_enc, attn_type=attn_type, local=local,
-                      local_seq_len=local_seq_len, name=name)
+    model, rmse_val = run(model, name, [x_en, x_de], [x_en_v, x_de_v],
+                          y_true, y_true_v, params)
 
-    if torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
-        attn_model = nn.DataParallel(attn_type)
-
-    attn_model.to(device)
-
-    run(attn_model, name, [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
-
+    rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    print('{} : {}'.format(name, rmses.item()))
+    erros[name].append(float("{:.4f}".format(rmses.item())))
+    erros[name].append(float("{:.4f}".format(mapes.item())))
 
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=36)
     parser.add_argument("--loc_seq_len", type=int, default=12)
+    parser.add_argument("--kernel_size", type=list, default=[7, 15, 21, 33])
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
@@ -184,19 +204,29 @@ def main():
     x_de = train_x[:, -seq_len:, :]
     y_true = train_y[:, :, :]
 
+    x_en_v = valid_x[:, :-seq_len, :]
+    x_de_v =valid_x[:, -seq_len:, :]
+    y_true_v = valid_y[:, :, :]
+
     x_en_t = test_x[:, :-seq_len, :]
     x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
     if params.server == 'c01':
-        call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de, x_en_t,
-                       x_de_t, y_true, y_true_t, params)
+        call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, [1], params)
 
-        call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de, x_en_t,
-                       x_de_t, y_true, y_true_t, params)
+        call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, params.kernel_size, params)
 
-        call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de, x_en_t,
-                       x_de_t, y_true, y_true_t, params)
+        call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, params.kernel_size, params)
 
     elif params.server == 'jelly':
         cnn = CNN(input_size=input_size,
@@ -209,7 +239,10 @@ def main():
             cnn = nn.DataParallel(cnn)
         cnn.to(device)
 
-        run(cnn, "cnn", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+        call_rnn_model(cnn, "cnn", x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, params)
 
         lstm = RNN(n_layers=n_layers,
                    hidden_size=d_model,
@@ -220,7 +253,10 @@ def main():
             lstm = nn.DataParallel(lstm)
         lstm.to(device)
 
-        run(lstm, "lstm", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+        call_rnn_model(lstm, "lstm", x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, params)
 
         gru = RNN(n_layers=n_layers,
                   hidden_size=d_model,
@@ -232,7 +268,10 @@ def main():
             gru = nn.DataParallel(gru)
         gru.to(device)
 
-        run(gru, "gru", [x_en, x_de], [x_en_t, x_de_t], y_true, y_true_t, params)
+        call_rnn_model(gru, "gru", x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, params)
 
     if os.path.exists("erros.json"):
         with open("erros.json") as json_file:
