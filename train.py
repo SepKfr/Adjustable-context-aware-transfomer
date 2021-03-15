@@ -162,11 +162,11 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
 
             best_model = model
 
-            path = "models_{}_{}".format(params.site, y_true.shape[2])
-            if not os.path.exists(path):
-                os.makedirs(path)
+    path = "models_{}_{}".format(params.site, y_true.shape[2])
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-            torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
+    torch.save(best_model, '{}/{}_{}'.format(path, name, params.run_num))
 
     rmses, mapes = evaluate(best_model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
@@ -192,7 +192,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=36)
     parser.add_argument("--loc_seq_len", type=int, default=12)
-    parser.add_argument("--kernel_size", type=list, default=[3, 7, 15])
+    parser.add_argument("--kernel_size", type=list, default=[3, 7, 15, 33])
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
