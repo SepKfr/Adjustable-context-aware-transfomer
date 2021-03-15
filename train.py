@@ -127,11 +127,11 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             warmup_scheduler.dampen()
 
 
-def run(model, name, trn_x, valid_v, tst_v, trn_y, params):
+def run(model, name, trn_x, valid_x, trn_y, tst_v, params):
 
     erros[name] = list()
     train(model, trn_x, trn_y, params.batch_size, name, params.run_num, params.site)
-    rmses_val, mapes_val = evaluate(model, valid_v, tst_v)
+    rmses_val, mapes_val = evaluate(model, valid_x, tst_v)
     return model, rmses_val
 
 
