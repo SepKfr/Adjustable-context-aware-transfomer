@@ -340,7 +340,6 @@ class Decoder(nn.Module):
         if self.attn_type == "con_conv":
 
             dec_inputs = dec_inputs.permute(0, 2, 1)
-            dec_inputs = dec_inputs.permute(0, 2, 1)
             padding = (self.kernel_size - 1) * self.dilation
             dec_inputs = F.pad(dec_inputs, (padding, 0))
             for _ in range(self.n_layers):

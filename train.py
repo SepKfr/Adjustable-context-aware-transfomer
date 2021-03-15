@@ -186,6 +186,7 @@ def call_rnn_model(model, name, x_en,
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
+
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
