@@ -192,7 +192,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=36)
     parser.add_argument("--loc_seq_len", type=int, default=12)
-    parser.add_argument("--kernel_size", type=list, default=[7, 15, 21, 33])
+    parser.add_argument("--kernel_size", type=list, default=[7, 15, 21])
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
