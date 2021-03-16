@@ -32,9 +32,9 @@ valid_x, valid_y = inputs[trn_len:valid_len, :, :], outputs[trn_len:valid_len, :
 test_x, test_y = inputs[valid_len:, :, :], outputs[valid_len:, :, :]
 
 
-d_model = 512
-dff = 2048
-n_head = 8
+d_model = 32
+dff = 64
+n_head = 2
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
@@ -219,15 +219,15 @@ def main():
                        x_de_t, y_true, y_true_v,
                        y_true_t, [1], params)
 
-        call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de,
+        call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de,
                        x_en_v, x_de_v, x_en_t,
                        x_de_t, y_true, y_true_v,
                        y_true_t, params.kernel_size, params)
 
-        call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
+        '''call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
                        x_en_v, x_de_v, x_en_t,
                        x_de_t, y_true, y_true_v,
-                       y_true_t, params.kernel_size, params)
+                       y_true_t, params.kernel_size, params)'''
 
     elif params.server == 'jelly':
         cnn = CNN(input_size=input_size,
