@@ -33,19 +33,6 @@ def get_con_mask(seq_q, seq_k, padding):
     return mask
 
 
-def get_con_vecs(seq):
-
-    batch_size, n_h, seq_len, d_k = seq.shape
-    seq = seq.reshape(batch_size, seq_len, n_h * d_k)
-    seq_pad = seq.unsqueeze(1).repeat(1, seq_len, 1, 1)
-    seq_pad = F.pad(seq_pad.permute(0, 1, 3, 2), pad=(0, seq_len, 0, 0))
-    seq_pad = seq_pad.permute(0, 1, 3, 2)
-    new_seq = torch.zeros(batch_size, seq_len, seq_len*2, n_h*d_k)
-    for j in range(seq_len):
-        new_seq[:, j, :, :] = torch.roll(seq_pad[:, j, :, :], seq_len - j, 1)
-    return new_seq.reshape(batch_size, n_h, seq_len, seq_len*2, d_k)
-
-
 def rel_pos_enc(seq):
 
     rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True)
@@ -60,7 +47,7 @@ class GELU(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model, dropout, device, max_seq_len=5000):
+    def __init__(self, d_model, dropout, device, max_seq_len=50000):
         super(PositionalEncoding, self).__init__()
 
         self.d_model = d_model
@@ -95,10 +82,15 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         if self.attn_type == "con":
-            Q_centerd = get_con_vecs(Q).to(self.device)
-            V_centerd = get_con_vecs(V).to(self.device)
-            scores = torch.mul(Q_centerd, V_centerd)
-            scores = torch.sum(scores, dim=3)
+            batch_size, n_h, seq_q, d_k = Q.shape
+            batch_size, n_h, seq_k, d_k = K.shape
+            seq_q_in = int(np.sqrt(seq_q / 2))
+            seq_k_in = int(np.sqrt(seq_k / 2))
+            Q_centered = Q.reshape(batch_size, n_h, seq_q_in, seq_q_in*2, d_k)
+            K_centered = K.reshape(batch_size, n_h, seq_k_in, seq_k_in*2, d_k)
+            V = V.reshape(batch_size, n_h, seq_k_in, seq_k_in*2, d_k)
+            scores = torch.mul(Q_centered, K_centered)
+            q = Q_centered[:, :, :, seq_q_in, :].squeeze(2).reshape(batch_size, seq_q_in, d_k*n_h)
 
         else:
             scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
@@ -111,9 +103,10 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
         if self.attn_type == "con":
             context = torch.mul(attn, V)
+            context = torch.sum(context, dim=3)
         else:
             context = torch.matmul(attn, V)
-        return context, attn
+        return context, attn, q
 
 
 class MultiHeadAttention(nn.Module):
@@ -148,13 +141,13 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
-        context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
+        context, attn, q = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
                                                   attn_type=self.attn_type)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.linear(context)
         output = self.dropout(output)
-        return self.layer_norm(output + Q), attn
+        return self.layer_norm(output + q), attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
