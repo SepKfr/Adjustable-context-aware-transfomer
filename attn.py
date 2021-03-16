@@ -106,7 +106,7 @@ class ScaledDotProductAttention(nn.Module):
             context = torch.sum(context, dim=3)
         else:
             context = torch.matmul(attn, V)
-        return context, attn, q
+        return context, torch.sum(attn, dim=3), q
 
 
 class MultiHeadAttention(nn.Module):
