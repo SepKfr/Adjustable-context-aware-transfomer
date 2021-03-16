@@ -34,7 +34,7 @@ test_x, test_y = inputs[valid_len:, :, :], outputs[valid_len:, :, :]
 
 d_model = 32
 dff = 64
-n_head = 2
+n_head = 4
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
@@ -146,7 +146,7 @@ def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                           tgt_input_size=output_size,
                           d_model=d_model,
                           d_ff=dff,
-                          d_k=64, d_v=64, n_heads=n_head,
+                          d_k=8, d_v=8, n_heads=n_head,
                           n_layers=n_layers, src_pad_index=0,
                           tgt_pad_index=0, device=device,
                           pe=pos_enc, attn_type=attn_type, local=local,
@@ -192,7 +192,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len", type=int, default=36)
     parser.add_argument("--loc_seq_len", type=int, default=12)
-    parser.add_argument("--kernel_size", type=list, default=[3, 7, 15, 33])
+    parser.add_argument("--kernel_size", type=list, default=[1])
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
@@ -214,15 +214,16 @@ def main():
     y_true_t = test_y[:, :, :]
 
     if params.server == 'c01':
-        call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
-                       y_true_t, [1], params)
 
         call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de,
                        x_en_v, x_de_v, x_en_t,
                        x_de_t, y_true, y_true_v,
-                       y_true_t, params.kernel_size, params)
+                       y_true_t, [1], params)
+
+        call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, [1], params)
 
         '''call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
                        x_en_v, x_de_v, x_en_t,
