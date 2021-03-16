@@ -117,14 +117,17 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
     for _ in range(n_ephocs):
+        total_loss = 0
         for j in range(x_en.shape[0]):
             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
             loss = criterion(y_t[j].to(device), output)
+            total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
+        print(total_loss)
 
 
 def run(model, name, trn_x, valid_x, trn_y, tst_v, params):
