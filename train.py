@@ -14,7 +14,6 @@ import json
 import os
 from attnrnn import AttnRnn
 import pytorch_warmup as warmup
-import torch.nn.functional as F
 
 
 inputs = pickle.load(open("inputs.p", "rb"))
@@ -39,7 +38,7 @@ n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 1
+n_layers = 3
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
@@ -106,29 +105,9 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
-def get_con_vecs(seq):
-
-    n_batch, batch_size, seq_len, in_size = seq.shape
-    seq = seq.reshape(n_batch * batch_size, seq_len, in_size)
-    seq_pad = seq.unsqueeze(1).repeat(1, seq_len, 1, 1)
-    seq_pad = F.pad(seq_pad.permute(0, 1, 3, 2), pad=(0, seq_len, 0, 0))
-    seq_pad = seq_pad.permute(0, 1, 3, 2)
-    new_seq = torch.zeros(n_batch * batch_size, seq_len, seq_len*2, input_size)
-    for j in range(seq_len):
-        new_seq[:, j, :, :] = torch.roll(seq_pad[:, j, :, :], seq_len - j, 1)
-
-    return new_seq
-
-
-def train(model, trn_x, y_t, batch_size, neighbor_attention):
+def train(model, trn_x, y_t, batch_size, name, run_num, site):
 
     x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
-
-    if neighbor_attention:
-        x_en, x_de, y_t = get_con_vecs(x_en), get_con_vecs(x_de), get_con_vecs(y_t)
-        x_en = torch.reshape(x_en, (-1, batch_size, x_en.shape[1]*x_en.shape[2], x_en.shape[3]))
-        x_de = torch.reshape(x_de, (-1, batch_size, x_de.shape[1]*x_de.shape[2], x_en.shape[3]))
-        y_t = torch.reshape(y_t, (-1, batch_size, y_t.shape[1]*y_t.shape[2], x_en.shape[3]))
 
     optimizer = Adam(model.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
@@ -138,66 +117,69 @@ def train(model, trn_x, y_t, batch_size, neighbor_attention):
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
     for _ in range(n_ephocs):
-        total_loss = 0
         for j in range(x_en.shape[0]):
             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
             loss = criterion(y_t[j].to(device), output)
-            total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
-        print(total_loss)
 
 
-def run(model, name, trn_x, valid_x, trn_y, tst_v, params, neighbor_attention):
+def run(model, name, trn_x, valid_x, trn_y, tst_v, params):
 
     erros[name] = list()
-    train(model, trn_x, trn_y, params.batch_size, neighbor_attention)
+    train(model, trn_x, trn_y, params.batch_size, name, params.run_num, params.site)
     rmses_val, mapes_val = evaluate(model, valid_x, tst_v)
     return model, rmses_val
 
 
 def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
                    x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
-                   y_true_v, y_true_t, params, neighbor_attention):
+                   y_true_v, y_true_t, kernel_size, params):
 
-    attn_model = Attn(src_input_size=input_size,
-                      tgt_input_size=output_size,
-                      d_model=d_model,
-                      d_ff=dff,
-                      d_k=64, d_v=64, n_heads=n_head,
-                      n_layers=n_layers, src_pad_index=0,
-                      tgt_pad_index=0, device=device,
-                      pe=pos_enc, attn_type=attn_type, local=local,
-                      local_seq_len=local_seq_len,
-                      kernel_size=1, name=name)
+    rmse = 1e9
+    best_model = None
+    for k in kernel_size:
+        attn_model = Attn(src_input_size=input_size,
+                          tgt_input_size=output_size,
+                          d_model=d_model,
+                          d_ff=dff,
+                          d_k=64, d_v=64, n_heads=n_head,
+                          n_layers=n_layers, src_pad_index=0,
+                          tgt_pad_index=0, device=device,
+                          pe=pos_enc, attn_type=attn_type, local=local,
+                          local_seq_len=local_seq_len,
+                          kernel_size=k, name=name)
 
-    attn_model.to(device)
+        attn_model.to(device)
 
-    model, rmse_v = run(attn_model, name, [x_en, x_de],
-                        [x_en_v, x_de_v], y_true, y_true_v,
-                        params, neighbor_attention)
+        model, rmse_v = run(attn_model, name, [x_en, x_de],
+                     [x_en_v, x_de_v], y_true, y_true_v, params)
+
+        if rmse_v < rmse:
+
+            best_model = model
 
     path = "models_{}_{}".format(params.site, y_true.shape[2])
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
+    torch.save(best_model, '{}/{}_{}'.format(path, name, params.run_num))
 
-    rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    rmses, mapes = evaluate(best_model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
 def call_rnn_model(model, name, x_en,
-               x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
-               y_true_v, y_true_t, params):
+                   x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
+                   y_true_v, y_true_t, params):
 
     model, rmse_val = run(model, name, [x_en, x_de], [x_en_v, x_de_v],
-                          y_true, y_true_v, params, False)
+                          y_true, y_true_v, params)
 
     rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
@@ -232,21 +214,20 @@ def main():
     y_true_t = test_y[:, :, :]
 
     if params.server == 'c01':
-
-        call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
-                       y_true_t, params, True)
-
         call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de,
                        x_en_v, x_de_v, x_en_t,
                        x_de_t, y_true, y_true_v,
-                       y_true_t, params, False)
+                       y_true_t, [1], params)
 
-        '''call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
+        call_atn_model('attn_con', 'sincos', 'con_attn', False, 0, x_en, x_de,
                        x_en_v, x_de_v, x_en_t,
                        x_de_t, y_true, y_true_v,
-                       y_true_t, params.kernel_size, params)'''
+                       y_true_t, params.kernel_size, params)
+
+        call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true, y_true_v,
+                       y_true_t, params.kernel_size, params)
 
     elif params.server == 'jelly':
         cnn = CNN(input_size=input_size,

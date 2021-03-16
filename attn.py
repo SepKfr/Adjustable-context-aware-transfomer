@@ -106,7 +106,7 @@ class ScaledDotProductAttention(nn.Module):
             context = torch.sum(context, dim=3)
         else:
             context = torch.matmul(attn, V)
-        return context, torch.sum(attn, dim=3), q
+        return context, attn
 
 
 class MultiHeadAttention(nn.Module):
@@ -141,13 +141,13 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
-        context, attn, q = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
+        context, attn= ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
                                                   attn_type=self.attn_type)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.linear(context)
         output = self.dropout(output)
-        return self.layer_norm(output + q), attn
+        return self.layer_norm(output + Q), attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
