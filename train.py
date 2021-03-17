@@ -123,7 +123,6 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
-        print(loss)
 
 
 def run(model, name, trn_x, trn_y, params):
@@ -214,7 +213,7 @@ def main():
                   kernel=kernel,
                   n_layers=n_layers,
                   seq_len=seq_len,
-                  seq_pred_len=params.seq_pred_len)
+                  seq_pred_len=params.seq_len_pred)
 
         if torch.cuda.device_count() > 1:
             cnn = nn.DataParallel(cnn)
@@ -230,7 +229,7 @@ def main():
                    output_size=output_size,
                    rnn_type="LSTM",
                    seq_len=seq_len,
-                   seq_pred_len=params.seq_pred_len
+                   seq_pred_len=params.seq_len_pred
                    )
 
         if torch.cuda.device_count() > 1:
@@ -247,7 +246,7 @@ def main():
                   output_size=output_size,
                   rnn_type="GRU",
                   seq_len=seq_len,
-                  seq_pred_len=params.seq_pred_len
+                  seq_pred_len=params.seq_len_pred
                   )
 
         if torch.cuda.device_count() > 1:
