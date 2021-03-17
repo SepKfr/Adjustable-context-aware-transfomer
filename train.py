@@ -165,7 +165,7 @@ def call_rnn_model(model, name, x_en,
                    x_de,  x_en_t, x_de_t, y_true,
                     y_true_t, params):
 
-    model, rmse_val = run(model, name, [x_en, x_de],
+    model = run(model, name, [x_en, x_de],
                           y_true, params)
 
     rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
