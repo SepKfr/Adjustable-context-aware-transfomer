@@ -256,7 +256,6 @@ class DecoderLayer(nn.Module):
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
 
-
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
 
         dec_outputs, dec_self_attn = \

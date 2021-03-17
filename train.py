@@ -149,7 +149,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
 
     attn_model.to(device)
 
-    model, rmse_v = run(attn_model, name, [x_en, x_de], y_true, params)
+    model = run(attn_model, name, [x_en, x_de], y_true, params)
 
     path = "models_{}_{}".format(params.site, seq_len_pred)
     if not os.path.exists(path):
