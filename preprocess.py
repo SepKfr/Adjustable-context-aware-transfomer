@@ -56,8 +56,8 @@ class Data:
                 stScaler = StandardScaler()
                 dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
-                stScaler.fit(dat)
-                dat = stScaler.transform(dat)
+                '''stScaler.fit(dat)
+                dat = stScaler.transform(dat)'''
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
@@ -227,10 +227,10 @@ class STData:
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
-        plt.plot(np.arange(0, 3000), df.SpConductivity.iloc[-3000:], color='k')
+        plt.plot(np.arange(0, 1500), df.SpConductivity.iloc[-1500:], color='k')
         plt.tick_params(axis="x", bottom=False, top=False)
         plt.tick_params(axis="y", left=False, right=False)
-        plt.axis('off')
+        #plt.axis('off')
         plt.show()
         df = df.ffill().bfill()
         return df
