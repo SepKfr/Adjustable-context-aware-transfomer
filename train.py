@@ -58,8 +58,6 @@ def inverse_transform(data):
 
     n, d, hw = data.shape
     inv_data = torch.zeros(data.shape)
-    '''locs = list(grid.values())
-    locs_1d = [np.ravel_multi_index(loc, (2, 3)) for loc in locs]'''
 
     for i, scalers_per_site in enumerate(scalers):
         f, scaler = list(scalers_per_site.scalers.items())[1]
@@ -129,59 +127,48 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             warmup_scheduler.dampen()
 
 
-def run(model, name, trn_x, valid_x, trn_y, tst_v, params):
+def run(model, name, trn_x, trn_y, params):
 
     erros[name] = list()
     train(model, trn_x, trn_y, params.batch_size, name, params.run_num, params.site)
-    rmses_val, mapes_val = evaluate(model, valid_x, tst_v)
-    return model, rmses_val
+    return model
 
 
-def call_atn_model(name, pos_enc, attn_type, local, local_seq_len, x_en,
-                   x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
-                   y_true_v, y_true_t, kernel_size, params):
+def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
+                   x_de, x_en_t, x_de_t, y_true, y_true_t, seq_len_pred, params):
 
-    rmse = 1e9
-    best_model = None
-    for k in kernel_size:
-        attn_model = Attn(src_input_size=input_size,
-                          tgt_input_size=output_size,
-                          d_model=d_model,
-                          d_ff=dff,
-                          d_k=8, d_v=8, n_heads=n_head,
-                          n_layers=n_layers, src_pad_index=0,
-                          tgt_pad_index=0, device=device,
-                          pe=pos_enc, attn_type=attn_type, local=local,
-                          local_seq_len=local_seq_len,
-                          kernel_size=k, name=name)
+    attn_model = Attn(src_input_size=input_size,
+                      tgt_input_size=output_size,
+                      d_model=d_model,
+                      d_ff=dff,
+                      d_k=8, d_v=8, n_heads=n_head,
+                      n_layers=n_layers, src_pad_index=0,
+                      tgt_pad_index=0, device=device,
+                      pe=pos_enc, attn_type=attn_type, seq_len=seq_len,
+                      seq_len_pred=seq_len_pred, name=name)
 
-        attn_model.to(device)
+    attn_model.to(device)
 
-        model, rmse_v = run(attn_model, name, [x_en, x_de],
-                     [x_en_v, x_de_v], y_true, y_true_v, params)
-
-        if rmse_v < rmse:
-
-            best_model = model
+    model, rmse_v = run(attn_model, name, [x_en, x_de], y_true, params)
 
     path = "models_{}_{}".format(params.site, y_true.shape[2])
     if not os.path.exists(path):
         os.makedirs(path)
 
-    torch.save(best_model, '{}/{}_{}'.format(path, name, params.run_num))
+    torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
 
-    rmses, mapes = evaluate(best_model, [x_en_t, x_de_t], y_true_t)
+    rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
 def call_rnn_model(model, name, x_en,
-                   x_de, x_en_v, x_de_v, x_en_t, x_de_t, y_true,
-                   y_true_v, y_true_t, params):
+                   x_de,  x_en_t, x_de_t, y_true,
+                    y_true_t, params):
 
-    model, rmse_val = run(model, name, [x_en, x_de], [x_en_v, x_de_v],
-                          y_true, y_true_v, params)
+    model, rmse_val = run(model, name, [x_en, x_de],
+                          y_true, params)
 
     rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
@@ -192,89 +179,85 @@ def call_rnn_model(model, name, x_en,
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len", type=int, default=36)
-    parser.add_argument("--loc_seq_len", type=int, default=12)
-    parser.add_argument("--kernel_size", type=list, default=[1])
+    parser.add_argument("--seq_len_pred", type=int, default=36)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--run_num", type=str, default=1)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     params = parser.parse_args()
 
-    seq_len = params.seq_len
+    seq_len = train_x.shape[1]
+    enc_seq = int(seq_len / 2)
 
-    x_en = train_x[:, :-seq_len, :]
-    x_de = train_x[:, -seq_len:, :]
+    x_en = train_x[:, :-enc_seq, :]
+    x_de = train_x[:, -enc_seq:, :]
     y_true = train_y[:, :, :]
 
-    x_en_v = valid_x[:, :-seq_len, :]
-    x_de_v =valid_x[:, -seq_len:, :]
-    y_true_v = valid_y[:, :, :]
-
-    x_en_t = test_x[:, :-seq_len, :]
-    x_de_t = test_x[:, -seq_len:, :]
+    x_en_t = test_x[:, :-enc_seq, :]
+    x_de_t = test_x[:, -enc_seq:, :]
     y_true_t = test_y[:, :, :]
 
     if params.server == 'c01':
 
-        call_atn_model('attn_con', 'sincos', 'con', False, 0, x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
-                       y_true_t, [1], params)
+        call_atn_model('attn_con', 'sincos', 'con',
+                       seq_len, x_en, x_de, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params.seq_len_pred, params)
 
-        call_atn_model('attn', 'sincos', 'attn', False, 0, x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
-                       y_true_t, [1], params)
-
-        '''call_atn_model('attn_con_conv', 'sincos', 'con_conv', False, 0, x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
-                       y_true_t, params.kernel_size, params)'''
+        call_atn_model('attn', 'sincos', 'attn',
+                       seq_len, x_en, x_de, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params.seq_len_pred, params)
 
     elif params.server == 'jelly':
         cnn = CNN(input_size=input_size,
                   output_size=output_size,
                   out_channel=d_model,
                   kernel=kernel,
-                  n_layers=n_layers)
+                  n_layers=n_layers,
+                  seq_len=seq_len,
+                  seq_pred_len=params.seq_pred_len)
 
         if torch.cuda.device_count() > 1:
             cnn = nn.DataParallel(cnn)
         cnn.to(device)
 
-        call_rnn_model(cnn, "cnn", x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
+        call_rnn_model(cnn, "cnn", x_en, x_de, x_en_t,
+                       x_de_t, y_true,
                        y_true_t, params)
 
         lstm = RNN(n_layers=n_layers,
                    hidden_size=d_model,
                    input_size=input_size,
                    output_size=output_size,
-                   rnn_type="LSTM")
+                   rnn_type="LSTM",
+                   seq_len=seq_len,
+                   seq_pred_len=params.seq_pred_len
+                   )
+
         if torch.cuda.device_count() > 1:
             lstm = nn.DataParallel(lstm)
         lstm.to(device)
 
-        call_rnn_model(lstm, "lstm", x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
+        call_rnn_model(lstm, "lstm", x_en, x_de, x_en_t,
+                       x_de_t, y_true,
                        y_true_t, params)
 
         gru = RNN(n_layers=n_layers,
                   hidden_size=d_model,
                   input_size=input_size,
                   output_size=output_size,
-                  rnn_type="GRU")
+                  rnn_type="GRU",
+                  seq_len=seq_len,
+                  seq_pred_len=params.seq_pred_len
+                  )
 
         if torch.cuda.device_count() > 1:
             gru = nn.DataParallel(gru)
         gru.to(device)
 
-        call_rnn_model(gru, "gru", x_en, x_de,
-                       x_en_v, x_de_v, x_en_t,
-                       x_de_t, y_true, y_true_v,
+        call_rnn_model(gru, "gru", x_en, x_de, x_en_t,
+                       x_de_t, y_true,
                        y_true_t, params)
 
     if os.path.exists("erros.json"):

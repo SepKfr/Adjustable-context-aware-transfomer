@@ -5,7 +5,7 @@ import torch
 class RNConv(nn.Module):
 
     def __init__(self, n_layers, hidden_size, input_size, output_size,
-                 out_channel, kernel, rnn_type, d_r=0.5):
+                 out_channel, kernel, rnn_type, seq_len, seq_pred_len, d_r=0.5):
 
         super(RNConv, self).__init__()
         self.n_layers = n_layers
@@ -53,7 +53,9 @@ class RNConv(nn.Module):
 
 
 class RNN(nn.Module):
-    def __init__(self, n_layers, hidden_size, input_size, output_size, rnn_type, d_r=0.5):
+    def __init__(self, n_layers, hidden_size,
+                 input_size, output_size,
+                 rnn_type, seq_len, seq_pred_len, d_r=0.5):
 
         super(RNN, self).__init__()
         self.encoder_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
@@ -65,6 +67,7 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.linear1 = nn.Linear(input_size, hidden_size)
+        self.proj_out = nn.Linear(seq_len, seq_pred_len)
 
     def forward(self, X_en, X_de, training=True, hidden=None):
 
@@ -84,13 +87,15 @@ class RNN(nn.Module):
             en_out, hidden = self.encoder_gru(x_en, hidden)
             outputs, _ = self.decoder_gru(x_de, hidden)
 
+        outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
         outputs = self.linear2(outputs).view(b, seq_len_1, -1)
 
         return outputs
 
 
 class CNN(nn.Module):
-    def __init__(self, input_size, output_size, out_channel, kernel, n_layers, d_r=0.5):
+    def __init__(self, input_size, output_size,
+                 out_channel, kernel, n_layers, seq_len, seq_pred_len, d_r=0.5):
         super(CNN, self).__init__()
         self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
@@ -98,6 +103,7 @@ class CNN(nn.Module):
         self.n_layers = n_layers
         self.out_channel = out_channel
         self.proj = nn.Linear(out_channel, input_size)
+        self.proj_out = nn.Linear(seq_len, seq_pred_len)
 
     def forward(self, x_en, x_de, training=True):
 
@@ -120,6 +126,7 @@ class CNN(nn.Module):
             x_de_out = self.dropout1[i](x_de_out)
 
         x_de_out = proj2(x_de_out)
+        x_de_out = self.proj_out(x_de_out)
         output = self.linear(x_de_out.view(b, -1, self.out_channel))
 
         return output

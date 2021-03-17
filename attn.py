@@ -184,41 +184,32 @@ class PoswiseFeedForwardNet(nn.Module):
 
 class EncoderLayer(nn.Module):
 
-    def __init__(self, d_model, d_ff, d_k, d_v, n_heads, device, pe, attn_type, local):
+    def __init__(self, d_model, d_ff, d_k, d_v, n_heads, device, pe, attn_type):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
-        self.local = local
 
     def forward(self, enc_inputs, enc_self_attn_mask):
 
         enc_outputs, attn = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
             V=enc_inputs, attn_mask=enc_self_attn_mask)
-        if self.local:
-            enc_outputs, attn = self.enc_self_attn(
-                Q=enc_outputs, K=enc_outputs,
-                V=enc_outputs, attn_mask=enc_self_attn_mask)
-        enc_outputs = self.pos_ffn(enc_outputs)
+
         return enc_outputs, attn
 
 
 class Encoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v, n_heads,
-                 n_layers, pad_index, device, pe, local,
-                 local_seq_len, kernel_size, attn_type):
+                 n_layers, pad_index, device, pe, attn_type):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
-                                      kernel_size=kernel_size)
-        self.src_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -230,51 +221,17 @@ class Encoder(nn.Module):
             encoder_layer = EncoderLayer(
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v, n_heads=n_heads,
-                device=device, pe=pe, local=local, attn_type=attn_type)
+                device=device, pe=pe, attn_type=attn_type)
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
-        self.local = local
-        self.local_seq_len = local_seq_len
-        self.kernel_size = kernel_size
-        self.dilation = 1
 
     def forward(self, enc_input):
 
-        if self.attn_type == 'con_conv':
+        enc_outputs = self.src_emb(enc_input)
+        enc_outputs = self.pos_emb(enc_outputs)
 
-            enc_input = enc_input.permute(0, 2, 1)
-            padding = (self.kernel_size - 1) * self.dilation
-            enc_input = F.pad(enc_input, (padding, 0))
-            for _ in range(self.n_layers):
-                enc_outputs = self.src_emb_conv(enc_input)
-            enc_outputs = enc_outputs.permute(0, 2, 1)
-            enc_outputs = self.pos_emb(enc_outputs)
-
-        elif self.attn_type == "con_attn":
-
-            enc_input = enc_input.permute(0, 2, 1)
-            padding = (self.kernel_size - 1) * self.dilation
-            enc_input = F.pad(enc_input, (padding, 0))
-            for _ in range(self.n_layers):
-                enc_outputs = self.src_emb_conv(enc_input)
-            enc_outputs = enc_outputs.permute(0, 2, 1)
-
-            enc_outputs = self.pos_emb(enc_outputs)
-            padding = int(self.kernel_size / 2)
-            mask = get_con_mask(enc_outputs, enc_outputs, padding).to(self.device)
-            for _ in range(self.n_layers):
-                enc_outputs, _ = self.src_emb_attn(enc_outputs, enc_outputs, enc_outputs, mask)
-
-        else:
-            enc_outputs = self.src_emb(enc_input)
-            enc_outputs = self.pos_emb(enc_outputs)
-
-        if not self.local:
-            enc_self_attn_mask = None
-        else:
-            enc_self_attn_mask = get_attn_local_mask(enc_outputs, enc_outputs,
-                                                     self.local_seq_len).to(self.device)
+        enc_self_attn_mask = None
 
         enc_self_attns = []
         for layer in self.layers:
@@ -288,7 +245,7 @@ class Encoder(nn.Module):
 
 class DecoderLayer(nn.Module):
 
-    def __init__(self, d_model, d_ff, d_k, d_v, n_heads, device, pe, local, attn_type):
+    def __init__(self, d_model, d_ff, d_k, d_v, n_heads, device, pe, attn_type):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
@@ -298,15 +255,13 @@ class DecoderLayer(nn.Module):
             d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
-        self.local = local
+
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
 
         dec_outputs, dec_self_attn = \
             self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
-        if self.local:
-            dec_outputs, dec_self_attn = \
-                self.dec_self_attn(dec_outputs, dec_outputs, dec_outputs, dec_self_attn_mask)
+
         dec_outputs, dec_enc_attn = \
             self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
         dec_outputs = self.pos_ffn(dec_outputs)
@@ -316,16 +271,12 @@ class DecoderLayer(nn.Module):
 class Decoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v,
-                 n_heads, n_layers, pad_index, device, pe,
-                 local, local_seq_len, kernel_size, attn_type, name):
+                 n_heads, n_layers, pad_index, device, pe, attn_type, name):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
-                                      kernel_size=kernel_size)
-        self.tgt_emb_attn = MultiHeadAttention(d_model, d_k, d_v, n_heads, device, pe, attn_type)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -335,47 +286,17 @@ class Decoder(nn.Module):
             decoder_layer = DecoderLayer(
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
-                n_heads=n_heads, device=device, pe=pe, local=local, attn_type=attn_type)
+                n_heads=n_heads, device=device, pe=pe, attn_type=attn_type)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
-        self.local = local
-        self.local_seq_len = local_seq_len
         self.name = name
-        self.kernel_size = kernel_size
-        self.dilation = 1
         self.n_layers = n_layers
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
-        if self.attn_type == "con_conv":
-
-            dec_inputs = dec_inputs.permute(0, 2, 1)
-            padding = (self.kernel_size - 1) * self.dilation
-            dec_inputs = F.pad(dec_inputs, (padding, 0))
-            for _ in range(self.n_layers):
-                dec_outputs = self.tgt_emb_conv(dec_inputs)
-            dec_outputs = dec_outputs.permute(0, 2, 1)
-            dec_outputs = self.pos_emb(dec_outputs)
-
-        elif self.attn_type == "con_attn":
-
-            dec_inputs = dec_inputs.permute(0, 2, 1)
-            padding = (self.kernel_size - 1) * self.dilation
-            dec_inputs = F.pad(dec_inputs, (padding, 0))
-            for _ in range(self.n_layers):
-                dec_outputs = self.tgt_emb_conv(dec_inputs)
-            dec_outputs = dec_outputs.permute(0, 2, 1)
-            dec_outputs = self.pos_emb(dec_outputs)
-
-            padding = int(self.kernel_size / 2)
-            mask = get_con_mask(dec_outputs, dec_outputs, padding)
-            for _ in range(self.n_layers):
-                dec_outputs, _ = self.tgt_emb_attn(dec_outputs, dec_outputs, dec_outputs, mask)
-
-        else:
-            dec_outputs = self.tgt_emb(dec_inputs)
-            dec_outputs = self.pos_emb(dec_outputs)
+        dec_outputs = self.tgt_emb(dec_inputs)
+        dec_outputs = self.pos_emb(dec_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
@@ -429,8 +350,8 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, pe, attn_type, local,
-                 local_seq_len, kernel_size, name):
+                 tgt_pad_index, device, pe, attn_type,
+                 seq_len, seq_len_pred, name):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -438,25 +359,24 @@ class Attn(nn.Module):
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
-            device=device, pe=pe,
-            local=local, local_seq_len=local_seq_len,
-            kernel_size=kernel_size, attn_type=attn_type)
+            device=device, pe=pe, attn_type=attn_type)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe,
-            local=local, local_seq_len=local_seq_len, kernel_size=kernel_size,
             attn_type=attn_type, name=name)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
+        self.linear = nn.Linear(seq_len, seq_len_pred)
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
+        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
