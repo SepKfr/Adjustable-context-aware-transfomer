@@ -123,7 +123,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
-        print(loss)
+        print(total_loss)
 
 
 def run(model, name, trn_x, trn_y, params):
