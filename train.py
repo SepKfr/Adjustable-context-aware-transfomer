@@ -186,15 +186,14 @@ def main():
     parser.add_argument("--server", type=str, default="c01")
     params = parser.parse_args()
 
-    seq_len = train_x.shape[1]
-    enc_seq = int(seq_len / 2)
+    seq_len = int(train_x.shape[1] / 2)
 
-    x_en = train_x[:, :-enc_seq, :]
-    x_de = train_x[:, -enc_seq:, :]
+    x_en = train_x[:, :-seq_len, :]
+    x_de = train_x[:, -seq_len:, :]
     y_true = train_y[:, :, :]
 
-    x_en_t = test_x[:, :-enc_seq, :]
-    x_de_t = test_x[:, -enc_seq:, :]
+    x_en_t = test_x[:, :-seq_len, :]
+    x_de_t = test_x[:, -seq_len:, :]
     y_true_t = test_y[:, :, :]
 
     if params.server == 'c01':
