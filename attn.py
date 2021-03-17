@@ -300,9 +300,6 @@ class Decoder(nn.Module):
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
-        if self.local:
-            dec_self_attn_mask += get_attn_local_mask(dec_inputs, dec_inputs, self.local_seq_len)
-
         dec_enc_attn_mask = None
 
         dec_self_attns, dec_enc_attns = [], []
