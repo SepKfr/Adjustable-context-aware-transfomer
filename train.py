@@ -30,13 +30,13 @@ train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
 test_x, test_y = inputs[trn_len:, :, :], outputs[trn_len:, :, :]
 
 
-d_model = 32
-dff = 64
-n_head = 4
+d_model = 64
+dff = 128
+n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 3
+n_layers = 6
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
