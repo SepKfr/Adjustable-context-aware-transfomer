@@ -20,10 +20,10 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 3000)
+max_len = min(len(inputs), 2500)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
-trn_len = int(inputs.shape[0] * 0.8)
+trn_len = int(inputs.shape[0] * 0.85)
 
 train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
 test_x, test_y = inputs[trn_len:, :, :], outputs[trn_len:, :, :]
@@ -34,7 +34,7 @@ n_head = 8
 in_channel = train_x.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 6
+n_layers = 3
 output_size = test_y.shape[2]
 input_size = train_x.shape[2]
 lr = 0.0001
@@ -200,6 +200,11 @@ def main():
                        y_true_t, params.seq_len_pred, params)
 
         call_atn_model('attn', 'sincos', 'attn',
+                       seq_len, x_en, x_de, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params.seq_len_pred, params)
+
+        call_atn_model('attn', 'sincos', 'attn_conv',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
