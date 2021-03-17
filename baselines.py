@@ -68,6 +68,7 @@ class RNN(nn.Module):
         self.rnn_type = rnn_type
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.proj_out = nn.Linear(seq_len, seq_pred_len)
+        self.pred_seq_len = seq_pred_len
 
     def forward(self, X_en, X_de, training=True, hidden=None):
 
@@ -88,7 +89,7 @@ class RNN(nn.Module):
             outputs, _ = self.decoder_gru(x_de, hidden)
 
         outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
-        outputs = self.linear2(outputs).view(b, seq_len_1, -1)
+        outputs = self.linear2(outputs).view(b, self.pred_seq_len, -1)
 
         return outputs
 
