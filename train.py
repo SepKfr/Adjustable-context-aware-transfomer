@@ -58,7 +58,6 @@ else:
 def inverse_transform(data):
 
     n, d, hw = data.shape
-    print(data.shape)
     inv_data = torch.zeros(data.shape)
 
     for i, scalers_per_site in enumerate(scalers):
@@ -74,18 +73,23 @@ def inverse_transform(data):
 
 def evaluate(model, tst_x, y_t):
 
-    y_t_in = inverse_transform(y_t)
-    b, seq_len, f = y_t.shape
+    rmse, mse = 0, 0
 
-    model.eval()
+    for b in range(y_t.shape[0]):
+        y_t_in = inverse_transform(y_t[b])
+        b, seq_len, f = y_t[b].shape
 
-    with torch.no_grad():
+        model.eval()
 
-        otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
+        with torch.no_grad():
 
-    otps_in = inverse_transform(otps)
-    metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
-    return metrics.rmse, metrics.mae
+            otps = model(tst_x[0][b].to(device), tst_x[1][b].to(device), training=False)
+
+        otps_in = inverse_transform(otps)
+        metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
+        rmse += metrics.rmse
+        mse += metrics.mae
+    return rmse, mse
 
 
 def batching(batch_size, x_en, x_de, y_t):
