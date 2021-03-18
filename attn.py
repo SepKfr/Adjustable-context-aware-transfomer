@@ -103,9 +103,7 @@ class ScaledDotProductAttention(nn.Module):
 
             Q_centerd = get_con_vecs(Q).to(self.device)
             K_centerd = get_con_vecs(K).to(self.device)
-            Q_centerd = Q_centerd.unsqueeze(2).repeat(1, 1, Q.shape[2], 1, 1, 1)
-            K_centerd = K_centerd.unsqueeze(2).repeat(1, 1, K.shape[2], 1, 1, 1)
-            scores = torch.einsum('bhqred,bhkuwd->bhqk', Q_centerd, K_centerd)
+            scores = torch.einsum('bhqrd,bhknd->bhqk', Q_centerd, K_centerd)
 
         else:
             scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
