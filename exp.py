@@ -3,6 +3,7 @@ import json
 import argparse
 import math
 
+
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")

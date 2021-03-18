@@ -185,13 +185,15 @@ def main():
     x_en, x_de, y_true = batching(params.batch_size, inputs[:, :-seq_len, :],
                       inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    x_en_t = x_en[-1, :, :, :]
-    x_de_t = x_de[-1, :, :, :]
-    y_true_t = y_true[-1, :, :, :]
+    batch_size = x_en.shape[0]
+    trn_len = int(0.8 * batch_size)
+    x_en_t = x_en[:trn_len, :, :, :]
+    x_de_t = x_de[:trn_len, :, :, :]
+    y_true_t = y_true[:trn_len, :, :, :]
 
-    x_en = x_en[:-1, :, :, :]
-    x_de = x_de[:-1, :, :, :]
-    y_true = y_true[:-1, :, :, :]
+    x_en = x_en[trn_len:, :, :, :]
+    x_de = x_de[trn_len:, :, :, :]
+    y_true = y_true[trn_len:, :, :, :]
 
     if params.server == 'c01':
 
