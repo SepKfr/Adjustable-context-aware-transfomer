@@ -58,6 +58,7 @@ else:
 def inverse_transform(data):
 
     n, d, hw = data.shape
+    print(data.shape)
     inv_data = torch.zeros(data.shape)
 
     for i, scalers_per_site in enumerate(scalers):
