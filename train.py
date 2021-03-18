@@ -20,7 +20,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 3000)
+max_len = min(len(inputs), 2000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 trn_len = int(inputs.shape[0] * 0.8)
@@ -121,6 +121,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
+        print(total_loss)
 
 
 def run(model, name, trn_x, trn_y, params):

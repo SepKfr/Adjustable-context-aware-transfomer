@@ -117,6 +117,7 @@ class ScaledDotProductAttention(nn.Module):
             V_centered = get_con_vecs(V)
             context = torch.mul(attn, V_centered)
             context = torch.sum(context, dim=3)
+            attn = torch.sum(attn, dim=3)
         else:
             context = torch.matmul(attn, V)
         return context, attn
