@@ -42,7 +42,7 @@ n_layers = 3
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 125
 
 erros = dict()
 
@@ -203,7 +203,7 @@ def main():
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
 
-        call_atn_model('attn', 'sincos', 'attn_conv',
+        call_atn_model('attn_con_conv', 'sincos', 'attn_conv',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
