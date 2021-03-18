@@ -73,23 +73,18 @@ def inverse_transform(data):
 
 def evaluate(model, tst_x, y_t):
 
-    rmse, mse = 0, 0
+    y_t_in = inverse_transform(y_t)
+    b, seq_len, f = y_t.shape
 
-    for b in range(y_t.shape[0]):
-        y_t_in = inverse_transform(y_t[b])
-        b, seq_len, f = y_t[b].shape
+    model.eval()
 
-        model.eval()
+    with torch.no_grad():
 
-        with torch.no_grad():
+        otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
 
-            otps = model(tst_x[0][b].to(device), tst_x[1][b].to(device), training=False)
-
-        otps_in = inverse_transform(otps)
-        metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
-        rmse += metrics.rmse
-        mse += metrics.mae
-    return rmse, mse
+    otps_in = inverse_transform(otps)
+    metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
+    return metrics.rmse, metrics.mae
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -189,15 +184,13 @@ def main():
     x_en, x_de, y_true = batching(params.batch_size, inputs[:, :-seq_len, :],
                       inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    batch_size = x_en.shape[0]
-    trn_len = int(0.9 * batch_size)
-    x_en_t = x_en[:trn_len, :, :, :]
-    x_de_t = x_de[:trn_len, :, :, :]
-    y_true_t = y_true[:trn_len, :, :, :]
+    x_en_t = x_en[:-1, :, :, :]
+    x_de_t = x_de[:-1, :, :, :]
+    y_true_t = y_true[:-1, :, :, :]
 
-    x_en = x_en[trn_len:, :, :, :]
-    x_de = x_de[trn_len:, :, :, :]
-    y_true = y_true[trn_len:, :, :, :]
+    x_en = x_en[-1:, :, :, :]
+    x_de = x_de[-1:, :, :, :]
+    y_true = y_true[-1:, :, :, :]
 
     if params.server == 'c01':
 
