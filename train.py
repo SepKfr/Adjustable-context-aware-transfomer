@@ -190,7 +190,7 @@ def main():
                       inputs[:, -seq_len:, :], outputs[:, :, :])
 
     batch_size = x_en.shape[0]
-    trn_len = int(0.8 * batch_size)
+    trn_len = int(0.9 * batch_size)
     x_en_t = x_en[:trn_len, :, :, :]
     x_de_t = x_de[:trn_len, :, :, :]
     y_true_t = y_true[:trn_len, :, :, :]
