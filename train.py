@@ -19,6 +19,7 @@ import pytorch_warmup as warmup
 parser = argparse.ArgumentParser(description="preprocess argument parser")
 parser.add_argument("--seq_len_pred", type=int, default=36)
 parser.add_argument("--batch_size", type=int, default=32)
+parser.add_argument("--cutoff", type=int, default=4)
 parser.add_argument("--run_num", type=str, default=1)
 parser.add_argument("--site", type=str, default="WHB")
 parser.add_argument("--server", type=str, default="c01")
@@ -145,7 +146,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                       n_layers=n_layers, src_pad_index=0,
                       tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, seq_len=seq_len,
-                      seq_len_pred=seq_len_pred, name=name)
+                      seq_len_pred=seq_len_pred, cutoff=params.cutoff, name=name)
 
     attn_model.to(device)
 
