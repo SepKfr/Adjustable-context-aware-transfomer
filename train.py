@@ -33,13 +33,13 @@ max_len = min(len(inputs), 2000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 
-d_model = 64
-dff = 128
-n_head = 8
+d_model = 32
+dff = 64
+n_head = 4
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 3
+n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
@@ -124,8 +124,8 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            '''lr_scheduler.step()
-            warmup_scheduler.dampen()'''
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
         print(total_loss)
 
 
