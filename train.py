@@ -16,6 +16,14 @@ from attnrnn import AttnRnn
 import pytorch_warmup as warmup
 
 
+parser = argparse.ArgumentParser(description="preprocess argument parser")
+parser.add_argument("--seq_len_pred", type=int, default=36)
+parser.add_argument("--batch_size", type=int, default=32)
+parser.add_argument("--run_num", type=str, default=1)
+parser.add_argument("--site", type=str, default="WHB")
+parser.add_argument("--server", type=str, default="c01")
+params = parser.parse_args()
+
 inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
@@ -23,20 +31,16 @@ scalers = pickle.load(open("scalers.pkl", "rb"))
 max_len = min(len(inputs), 2000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
-trn_len = int(inputs.shape[0] * 0.8)
-
-train_x, train_y = inputs[:trn_len, :, :], outputs[:trn_len, :, :]
-test_x, test_y = inputs[trn_len:, :, :], outputs[trn_len:, :, :]
 
 d_model = 64
 dff = 128
 n_head = 8
-in_channel = train_x.shape[1]
+in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
 n_layers = 3
-output_size = test_y.shape[2]
-input_size = train_x.shape[2]
+output_size = outputs.shape[2]
+input_size = inputs.shape[2]
 lr = 0.0001
 n_ephocs = 100
 
@@ -99,9 +103,9 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
-def train(model, trn_x, y_t, batch_size, name, run_num, site):
+def train(model, trn_x, y_t, batch_size):
 
-    x_en, x_de, y_t = batching(batch_size, trn_x[0], trn_x[1], y_t)
+    x_en, x_de, y_t = trn_x[0], trn_x[1], y_t
 
     optimizer = Adam(model.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
@@ -127,7 +131,7 @@ def train(model, trn_x, y_t, batch_size, name, run_num, site):
 def run(model, name, trn_x, trn_y, params):
 
     erros[name] = list()
-    train(model, trn_x, trn_y, params.batch_size, name, params.run_num, params.site)
+    train(model, trn_x, trn_y, params.batch_size)
     return model
 
 
@@ -175,23 +179,18 @@ def call_rnn_model(model, name, x_en,
 
 def main():
 
-    parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=36)
-    parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--run_num", type=str, default=1)
-    parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--server", type=str, default="c01")
-    params = parser.parse_args()
+    seq_len = int(inputs.shape[1] / 2)
 
-    seq_len = int(train_x.shape[1] / 2)
+    x_en, x_de, y_true = batching(params.batch_size, inputs[:, :-seq_len, :],
+                      inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    x_en = train_x[:, :-seq_len, :]
-    x_de = train_x[:, -seq_len:, :]
-    y_true = train_y[:, :, :]
+    x_en_t = x_en[-1, :, :, :]
+    x_de_t = x_de[-1, :, :, :]
+    y_true_t = y_true[-1, :, :, :]
 
-    x_en_t = test_x[:, :-seq_len, :]
-    x_de_t = test_x[:, -seq_len:, :]
-    y_true_t = test_y[:, :, :]
+    x_en = x_en[:-1, :, :, :]
+    x_de = x_de[:-1, :, :, :]
+    y_true = y_true[:-1, :, :, :]
 
     if params.server == 'c01':
 
