@@ -42,7 +42,7 @@ n_layers = 3
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 125
+n_ephocs = 100
 
 erros = dict()
 
