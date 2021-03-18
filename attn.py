@@ -100,6 +100,7 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         if self.attn_type == "con":
+
             Q_centerd = get_con_vecs(Q).to(self.device)
             K_centerd = get_con_vecs(K).to(self.device)
             scores = torch.mul(Q_centerd, K_centerd)
@@ -384,7 +385,6 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
