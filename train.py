@@ -195,6 +195,11 @@ def main():
 
     if params.server == 'c01':
 
+        call_atn_model('attn', 'sincos', 'attn',
+                       seq_len, x_en, x_de, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params.seq_len_pred, params)
+
         call_atn_model('attn_con', 'sincos', 'con',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
