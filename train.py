@@ -138,6 +138,8 @@ def run(model, name, trn_x, trn_y, params):
 def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                    x_de, x_en_t, x_de_t, y_true, y_true_t, seq_len_pred, params):
 
+    path = "models_{}_{}".format(params.site, seq_len_pred)
+
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
                       d_model=d_model,
@@ -152,7 +154,6 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
 
     model = run(attn_model, name, [x_en, x_de], y_true, params)
 
-    path = "models_{}_{}".format(params.site, seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -260,18 +261,20 @@ def main():
                        x_de_t, y_true,
                        y_true_t, params)
 
-    if os.path.exists("erros.json"):
-        with open("erros.json") as json_file:
+    error_path = "errors_{}_{}.json".format(params.site, params.seq_len_pred)
+
+    if os.path.exists(error_path):
+        with open(error_path) as json_file:
             json_dat = json.load(json_file)
 
         for key, value in erros.items():
             json_dat[key].append(value[0])
             json_dat[key].append(value[1])
 
-        with open("erros.json", "w") as json_file:
+        with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
     else:
-        with open("erros.json", "w") as json_file:
+        with open(error_path, "w") as json_file:
             json.dump(erros, json_file)
 
 

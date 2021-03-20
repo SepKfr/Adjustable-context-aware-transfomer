@@ -8,11 +8,16 @@ def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--n", type=int, default=10)
+    parser.add_argument("--seq_len_pred", type=int, default=36)
+    parser.add_argument("--site", type=str, default="WHB")
     params = parser.parse_args()
 
     f_erros = dict()
 
-    with open("erros.json") as json_file:
+    error_path = "errors_{}_{}.json".format(params.site, params.seq_len_pred)
+    f_error_path = "f_errors_{}_{}.json".format(params.site, params.seq_len_pred)
+
+    with open(error_path) as json_file:
 
         json_dat = json.load(json_file)
         for key, values in json_dat.items():
@@ -26,7 +31,7 @@ def main():
             mape_std = float('{:.3f}'.format(mape.std() / math.sqrt(params.n)))
             f_erros[key] = (rmse_mean, rmse_std, mape_mean, mape_std)
 
-    with open("f_erros.json", "w") as json_file:
+    with open(f_error_path, "w") as json_file:
         json.dump(f_erros, json_file)
 
 
