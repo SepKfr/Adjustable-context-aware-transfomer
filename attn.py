@@ -122,8 +122,6 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
         if self.attn_type == "con":
             context = torch.mul(attn, V)
-            context = torch.sum(context, dim=4)
-            context = torch.sum(context, dim=3)
         else:
             context = torch.matmul(attn, V)
         return context, attn
