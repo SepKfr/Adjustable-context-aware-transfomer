@@ -29,7 +29,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 4000)
+max_len = min(len(inputs), 5000)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 
@@ -39,7 +39,7 @@ n_head = 4
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 1
+n_layers = 2
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
@@ -185,13 +185,13 @@ def main():
     x_en, x_de, y_true = batching(params.batch_size, inputs[:, :-seq_len, :],
                       inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    x_en_t = x_en[-1, :, :, :]
-    x_de_t = x_de[-1, :, :, :]
-    y_true_t = y_true[-1, :, :, :]
+    x_en_t = x_en[-3, :, :, :]
+    x_de_t = x_de[-3, :, :, :]
+    y_true_t = y_true[-3, :, :, :]
 
-    x_en = x_en[:-1, :, :, :]
-    x_de = x_de[:-1, :, :, :]
-    y_true = y_true[:-1, :, :, :]
+    x_en = x_en[:-3, :, :, :]
+    x_de = x_de[:-3, :, :, :]
+    y_true = y_true[:-3, :, :, :]
 
     if params.server == 'c01':
 
