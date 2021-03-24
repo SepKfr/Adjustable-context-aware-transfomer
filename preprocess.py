@@ -24,7 +24,7 @@ class Data:
         self.sites_data = site_data
         self.ts = ts
         self.n_seasons = 4
-        self.hist = 4
+        self.hist = 8
 
         self.nf = n_features * self.hist
         '''self.I = I
