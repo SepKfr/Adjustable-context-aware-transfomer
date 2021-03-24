@@ -195,17 +195,17 @@ def main():
 
     if params.server == 'c01':
 
-        call_atn_model('attn', 'sincos', 'attn',
+        call_atn_model('attn_hist', 'sincos', 'attn',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
 
-        call_atn_model('attn_con', 'sincos', 'con',
+        call_atn_model('attn_con_hist', 'sincos', 'con',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
 
-        call_atn_model('attn_con_conv', 'sincos', 'attn_conv',
+        call_atn_model('attn_con_conv_hist', 'sincos', 'attn_conv',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
@@ -223,7 +223,7 @@ def main():
             cnn = nn.DataParallel(cnn)
         cnn.to(device)
 
-        call_rnn_model(cnn, "cnn", x_en, x_de, x_en_t,
+        call_rnn_model(cnn, "cnn_hist", x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params)
 
@@ -240,7 +240,7 @@ def main():
             lstm = nn.DataParallel(lstm)
         lstm.to(device)
 
-        call_rnn_model(lstm, "lstm", x_en, x_de, x_en_t,
+        call_rnn_model(lstm, "lstm_hist", x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params)
 
@@ -257,7 +257,7 @@ def main():
             gru = nn.DataParallel(gru)
         gru.to(device)
 
-        call_rnn_model(gru, "gru", x_en, x_de, x_en_t,
+        call_rnn_model(gru, "gru_hist", x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params)
 
