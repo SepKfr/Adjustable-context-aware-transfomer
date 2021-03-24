@@ -268,7 +268,7 @@ def main():
                        x_de_t, y_true,
                        y_true_t, params)
 
-    error_path = "errors_{}_{}.json".format(params.site, params.seq_len_pred)
+    error_path = "errors_{}_{}_hist.json".format(params.site, params.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
