@@ -172,6 +172,13 @@ def call_rnn_model(model, name, x_en,
     model = run(model, name, [x_en, x_de],
                           y_true, params)
 
+    path = "models_{}_{}".format(params.site, params.seq_len_pred)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
+
     rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
