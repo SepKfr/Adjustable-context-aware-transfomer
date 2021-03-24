@@ -43,7 +43,7 @@ n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 150
 
 erros = dict()
 
@@ -124,8 +124,6 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
 
 
 def run(model, name, trn_x, trn_y, params):
