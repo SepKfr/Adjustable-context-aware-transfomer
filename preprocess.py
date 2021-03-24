@@ -24,7 +24,7 @@ class Data:
         self.sites_data = site_data
         self.ts = ts
         self.n_seasons = 4
-        self.hist = 8
+        self.hist = 4
 
         self.nf = n_features * self.hist
         '''self.I = I
@@ -32,6 +32,7 @@ class Data:
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
         self.ln = self.ts - (self.in_seq_len + self.out_seq_len)
+        self.ln = int(self.ln / self.hist)
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -84,7 +85,7 @@ class Data:
         data_3d_in = torch.zeros((self.ln, self.in_seq_len, self.hist))
         data_out = torch.zeros((self.ln, self.out_seq_len))
 
-        for i in range(0, self.ts):
+        for i in range(0, self.ts, self.hist):
 
             if i < self.hist:
                 data_2d_in[i, :self.hist - i] = torch.zeros(self.hist - i)

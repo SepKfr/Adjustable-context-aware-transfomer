@@ -138,7 +138,7 @@ def run(model, name, trn_x, trn_y, params):
 def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                    x_de, x_en_t, x_de_t, y_true, y_true_t, seq_len_pred, params):
 
-    path = "models_{}_{}_hist".format(params.site, seq_len_pred)
+    path = "models_{}_{}".format(params.site, seq_len_pred)
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
