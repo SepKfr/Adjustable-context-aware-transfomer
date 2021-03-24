@@ -39,11 +39,11 @@ n_head = 4
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 2
+n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 150
 
 erros = dict()
 
