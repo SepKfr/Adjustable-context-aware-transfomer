@@ -24,7 +24,7 @@ class Data:
         self.sites_data = site_data
         self.ts = ts
         self.n_seasons = 4
-        self.hist = 1
+        self.hist = 4
 
         self.nf = n_features * self.hist
         '''self.I = I
@@ -32,6 +32,7 @@ class Data:
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
         self.ln = self.ts - (self.in_seq_len + self.out_seq_len)
+        self.ln = int(self.ln / self.hist)
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -93,7 +94,7 @@ class Data:
             else:
                 data_2d_in[i, :] = data[i - self.hist:i]
         j = 0
-        for i in range(0, self.ts):
+        for i in range(0, self.ts, self.hist):
             if j < self.ln:
                 data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
@@ -227,11 +228,11 @@ class STData:
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
         df = df[["Date", "TempC", "SpConductivity", "Q"]]
-        plt.plot(np.arange(0, 1500), df.SpConductivity.iloc[-1500:], color='k')
+        '''plt.plot(np.arange(0, 1500), df.SpConductivity.iloc[-1500:], color='k')
         plt.tick_params(axis="x", bottom=False, top=False)
         plt.tick_params(axis="y", left=False, right=False)
         #plt.axis('off')
-        plt.show()
+        plt.show()'''
         df = df.ffill().bfill()
         return df
 
