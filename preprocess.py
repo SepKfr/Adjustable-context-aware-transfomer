@@ -85,7 +85,7 @@ class Data:
         data_3d_in = torch.zeros((self.ln, self.in_seq_len, self.hist))
         data_out = torch.zeros((self.ln, self.out_seq_len))
 
-        for i in range(0, self.ts, self.hist):
+        for i in range(0, self.ts):
 
             if i < self.hist:
                 data_2d_in[i, :self.hist - i] = torch.zeros(self.hist - i)
@@ -94,7 +94,7 @@ class Data:
             else:
                 data_2d_in[i, :] = data[i - self.hist:i]
         j = 0
-        for i in range(0, self.ts):
+        for i in range(0, self.ts, self.hist):
             if j < self.ln:
                 data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
