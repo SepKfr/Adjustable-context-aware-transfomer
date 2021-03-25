@@ -234,7 +234,6 @@ class Encoder(nn.Module):
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
 
-
     def forward(self, enc_input):
 
         if self.attn_type == 'attn_conv':
@@ -243,7 +242,8 @@ class Encoder(nn.Module):
         else:
             enc_outputs = self.src_emb(enc_input)
 
-        enc_outputs = self.pos_emb(enc_outputs)
+        if self.attn_type != 'con':
+            enc_outputs = self.pos_emb(enc_outputs)
 
         enc_self_attn_mask = None
 
@@ -315,7 +315,8 @@ class Decoder(nn.Module):
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
 
-        dec_outputs = self.pos_emb(dec_outputs)
+        if self.attn_type != 'con':
+            dec_outputs = self.pos_emb(dec_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
