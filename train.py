@@ -33,13 +33,13 @@ max_len = min(len(inputs), 512)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 
-d_model = 32
-dff = 64
+d_model = 64
+dff = 128
 n_head = 4
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = 3
+n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
@@ -144,7 +144,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                       tgt_input_size=output_size,
                       d_model=d_model,
                       d_ff=dff,
-                      d_k=8, d_v=8, n_heads=n_head,
+                      d_k=16, d_v=16, n_heads=n_head,
                       n_layers=n_layers, src_pad_index=0,
                       tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, seq_len=seq_len,
@@ -202,12 +202,12 @@ def main():
 
     if params.server == 'c01':
 
-        call_atn_model('attn_hist', 'sincos', 'attn',
+        call_atn_model('attn_con_hist', 'sincos', 'con',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
 
-        call_atn_model('attn_con_hist', 'sincos', 'con',
+        call_atn_model('attn_hist', 'sincos', 'attn',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
