@@ -32,6 +32,8 @@ scalers = pickle.load(open("scalers.pkl", "rb"))
 max_len = min(len(inputs), 512)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
+train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
+test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]
 
 d_model = 32
 dff = 64
@@ -189,16 +191,11 @@ def main():
 
     seq_len = int(inputs.shape[1] / 2)
 
-    x_en, x_de, y_true = batching(params.batch_size, inputs[:, :-seq_len, :],
-                      inputs[:, -seq_len:, :], outputs[:, :, :])
+    x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
+                      train_x[:, -seq_len:, :], train_y[:, :, :])
 
-    x_en_t = x_en[-1, :, :, :]
-    x_de_t = x_de[-1, :, :, :]
-    y_true_t = y_true[-1, :, :, :]
-
-    x_en = x_en[:-1, :, :, :]
-    x_de = x_de[:-1, :, :, :]
-    y_true = y_true[:-1, :, :, :]
+    x_en_t, x_de_t, y_true_t = batching(params.batch_size, test_x[:, :-seq_len, :],
+                                  test_x[:, -seq_len:, :], test_y[:, :, :])
 
     if params.server == 'c01':
 
