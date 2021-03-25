@@ -41,11 +41,15 @@ class RNConv(nn.Module):
 
         if self.rnn_type == "LSTM":
             en_out, (hidden, state) = self.encoder_lstm(x_en_out, (hidden, hidden))
+            en_out += x_en_out
             outputs, _ = self.decoder_lstm(x_de_out, (hidden, hidden))
+            outputs += x_de_out
 
         else:
             en_out, hidden = self.encoder_gru(x_en_out, hidden)
+            en_out += x_en_out
             outputs, _ = self.decoder_gru(x_de_out, hidden)
+            outputs += x_de_out
 
         outputs = self.linear(outputs).view(b, seq_len_1, -1)
 
@@ -82,11 +86,15 @@ class RNN(nn.Module):
 
         if self.rnn_type == "LSTM":
             en_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
+            en_out += x_en
             outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
+            outputs += x_de
 
         else:
             en_out, hidden = self.encoder_gru(x_en, hidden)
+            en_out += x_en
             outputs, _ = self.decoder_gru(x_de, hidden)
+            outputs += x_de
 
         outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
         outputs = self.linear2(outputs.permute(0, 2, 1)).view(b, self.pred_seq_len, -1)
@@ -126,7 +134,7 @@ class CNN(nn.Module):
             x_de_out = self.conv[i](x_de)
             x_de_out = self.dropout1[i](x_de_out)
 
-        x_de_out = proj2(x_de_out)
+        x_de_out = proj2(x_de_out + x_de)
         x_de_out = self.proj_out(x_de_out)
         output = self.linear(x_de_out.view(b, -1, self.out_channel))
 

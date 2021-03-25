@@ -244,7 +244,7 @@ class Encoder(nn.Module):
         else:
             enc_outputs = self.src_emb(enc_input)
 
-        hidden = torch.zeros(self.n_layers, enc_input.shape[0], self.d_model)
+        hidden = torch.zeros(self.n_layers, enc_input.shape[0], self.d_model).to(self.device)
         enc_outputs, hidden = self.gru(enc_outputs.permute(1, 0, 2), hidden)
         enc_outputs = enc_outputs.permute(1, 0, 2)
 
@@ -323,7 +323,7 @@ class Decoder(nn.Module):
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
 
-        hidden = torch.zeros(self.n_layers, dec_inputs.shape[0], self.d_model)
+        hidden = torch.zeros(self.n_layers, dec_inputs.shape[0], self.d_model).to(self.device)
         dec_outputs, hidden = self.gru(dec_outputs.permute(1, 0, 2), hidden)
         dec_outputs = dec_outputs.permute(1, 0, 2)
 
