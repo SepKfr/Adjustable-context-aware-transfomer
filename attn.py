@@ -314,7 +314,6 @@ class Decoder(nn.Module):
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
 
-
         dec_outputs = self.pos_emb(dec_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
