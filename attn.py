@@ -242,8 +242,7 @@ class Encoder(nn.Module):
         else:
             enc_outputs = self.src_emb(enc_input)
 
-        if self.attn_type != 'con':
-            enc_outputs = self.pos_emb(enc_outputs)
+        enc_outputs = self.pos_emb(enc_outputs)
 
         enc_self_attn_mask = None
 
@@ -315,8 +314,8 @@ class Decoder(nn.Module):
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
 
-        if self.attn_type != 'con':
-            dec_outputs = self.pos_emb(dec_outputs)
+
+        dec_outputs = self.pos_emb(dec_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
