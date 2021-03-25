@@ -29,7 +29,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 560)
+max_len = min(len(inputs), 1024)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 
