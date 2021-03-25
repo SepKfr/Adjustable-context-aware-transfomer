@@ -29,12 +29,12 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 512)
+max_len = min(len(inputs), 1024)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 
-d_model = 64
-dff = 128
+d_model = 32
+dff = 64
 n_head = 4
 in_channel = inputs.shape[1]
 out_channel = d_model
@@ -144,7 +144,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                       tgt_input_size=output_size,
                       d_model=d_model,
                       d_ff=dff,
-                      d_k=16, d_v=16, n_heads=n_head,
+                      d_k=8, d_v=8, n_heads=n_head,
                       n_layers=n_layers, src_pad_index=0,
                       tgt_pad_index=0, device=device,
                       pe=pos_enc, attn_type=attn_type, seq_len=seq_len,
