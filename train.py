@@ -194,7 +194,7 @@ def main():
     x_en, x_de, y_true = batching(params.batch_size, inputs[:, :-seq_len, :],
                       inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    x_en_t, x_de_t, y_true_t = x_en[-1:, :, :, :], x_en[-1:, :, :, :], y_true[-1:, :, :, :]
+    x_en_t, x_de_t, y_true_t = x_en[-1, :, :, :], x_en[-1, :, :, :], y_true[-1, :, :, :]
     x_en, x_de, y_true = x_en[:-1, :, :, :], x_en[:-1, :, :, :], y_true[:-1, :, :, :]
 
     if params.server == 'c01':
