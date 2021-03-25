@@ -233,8 +233,7 @@ class Encoder(nn.Module):
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
-        self.gru = nn.GRU(d_model, d_model, n_layers)
-        self.d_model = d_model
+
 
     def forward(self, enc_input):
 
@@ -306,9 +305,6 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.name = name
-        self.n_layers = n_layers
-        self.gru = nn.GRU(d_model, d_model, n_layers)
-        self.d_model= d_model
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
@@ -390,10 +386,6 @@ class Attn(nn.Module):
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred)
-        self.n_layers = n_layers
-        self.d_model = d_model
-        self.device = device
-        self.gru = nn.GRU(d_model, d_model, n_layers)
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 
