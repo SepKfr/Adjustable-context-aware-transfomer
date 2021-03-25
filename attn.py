@@ -233,6 +233,8 @@ class Encoder(nn.Module):
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
+        self.gru = nn.GRU(d_model, d_model, n_layers)
+        self.d_model = d_model
 
     def forward(self, enc_input):
 
