@@ -244,11 +244,7 @@ class Encoder(nn.Module):
         else:
             enc_outputs = self.src_emb(enc_input)
 
-        hidden = torch.zeros(self.n_layers, enc_input.shape[0], self.d_model).to(self.device)
-        output, hidden = self.gru(enc_outputs.permute(1, 0, 2), hidden)
-        output = output.permute(1, 0, 2)
-        enc_outputs += output
-        #enc_outputs = self.pos_emb(enc_outputs)
+        enc_outputs = self.pos_emb(enc_outputs)
 
         enc_self_attn_mask = None
 
@@ -323,12 +319,7 @@ class Decoder(nn.Module):
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
 
-        hidden = torch.zeros(self.n_layers, dec_inputs.shape[0], self.d_model).to(self.device)
-        output, hidden = self.gru(dec_outputs.permute(1, 0, 2), hidden)
-        output = output.permute(1, 0, 2)
-        dec_outputs += output
-
-        #dec_outputs = self.pos_emb(dec_outputs)
+        dec_outputs = self.pos_emb(dec_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
@@ -399,6 +390,10 @@ class Attn(nn.Module):
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred)
+        self.n_layers = n_layers
+        self.d_model = d_model
+        self.device = device
+        self.gru = nn.GRU(d_model, d_model, n_layers)
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 
