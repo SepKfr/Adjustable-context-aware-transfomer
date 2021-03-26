@@ -126,8 +126,8 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            '''lr_scheduler.step()
-            warmup_scheduler.dampen()'''
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
 
 
 def run(model, name, trn_x, trn_y, params):
