@@ -45,7 +45,7 @@ n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 50
 
 erros = dict()
 
@@ -126,8 +126,8 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
+            '''lr_scheduler.step()
+            warmup_scheduler.dampen()'''
 
 
 def run(model, name, trn_x, trn_y, params):
@@ -199,12 +199,12 @@ def main():
 
     if params.server == 'c01':
 
-        call_atn_model('attn_hist', 'sincos', 'attn',
+        call_atn_model('attn_con_hist', 'sincos', 'con',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
 
-        call_atn_model('attn_con_hist', 'sincos', 'con',
+        call_atn_model('attn_hist', 'sincos', 'attn',
                        seq_len, x_en, x_de, x_en_t,
                        x_de_t, y_true,
                        y_true_t, params.seq_len_pred, params)
