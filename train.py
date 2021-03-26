@@ -29,7 +29,7 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 512)
+max_len = min(len(inputs), 1024)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 '''train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
@@ -84,9 +84,8 @@ def evaluate(model, tst_x, y_t):
 
         otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
 
-
     #otps_in = inverse_transform(otps)
-    metrics = Metrics(otps.view(seq_len * b * f), y_t.view(seq_len * b * f))
+    metrics = Metrics(otps.view(seq_len * b * f), y_t.to(device).view(seq_len * b * f))
     return metrics.rmse, metrics.mae
 
 
