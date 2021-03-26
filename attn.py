@@ -16,6 +16,13 @@ def get_attn_subsequent_mask(seq):
     return subsequent_mask
 
 
+def get_con_attn_subsequent_mask(seq, cutoff, d_k):
+    attn_shape = [seq.size(1), seq.size(1), cutoff, d_k]
+    subsequent_mask = np.tril(np.ones(attn_shape), k=1)
+    subsequent_mask = torch.from_numpy(subsequent_mask).int()
+    return subsequent_mask
+
+
 def get_attn_local_mask(seq_q, seq_k, local_mask):
 
     mask = [[1 if abs(i - j) > local_mask else 0 for j in range(seq_k.size(1))] for i in range(seq_k.size(1))]
@@ -107,6 +114,10 @@ class ScaledDotProductAttention(nn.Module):
             K = get_con_vecs(K, self.cutoff).to(self.device)
             Q = Q.unsqueeze(2).repeat(1, 1, Q.shape[2], 1, 1, 1)
             K = K.unsqueeze(2).repeat(1, 1, K.shape[2], 1, 1, 1)
+            if attn_mask is not None:
+                attn_mask = attn_mask.unsqueeze(0).repeat(Q.shape[0], 1, 1, 1, 1)
+                attn_mask = attn_mask.unsqueeze(1).repeat(1, Q.shape[1], 1, 1, 1, 1)
+                K = torch.mul(K, attn_mask)
             scores = torch.mul(Q, K)
             scores = torch.sum(scores, dim=4)
             scores = torch.sum(scores, dim=3)
@@ -158,7 +169,7 @@ class MultiHeadAttention(nn.Module):
         k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
         v_s = self.WV(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1, 2)
 
-        if attn_mask is not None:
+        if attn_mask is not None and self.attn_type != 'con':
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
                                                   attn_type=self.attn_type, cutoff=self.cutoff)(
@@ -304,6 +315,8 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.name = name
+        self.cutoff = cutoff
+        self.d_k = d_k
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
@@ -316,7 +329,10 @@ class Decoder(nn.Module):
 
         dec_outputs = self.pos_emb(dec_outputs)
 
-        dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
+        if self.attn_type == 'con':
+            dec_self_attn_mask = get_con_attn_subsequent_mask(dec_outputs, self.cutoff*2, self.d_k)
+        else:
+            dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
         dec_enc_attn_mask = None
 
@@ -334,29 +350,6 @@ class Decoder(nn.Module):
 
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
-
-        '''if not training:
-            dec_self_attns = torch.sum(dec_self_attns, dim=1) / dec_self_attns.shape[1]
-            dec_self_attns = torch.sum(dec_self_attns, dim=1) / dec_self_attns.shape[1]
-
-            ax_self = sns.heatmap(dec_self_attns[0, :, :].detach().numpy())
-            ax_self.set_title("self attention")
-            fig_1 = ax_self.get_figure()
-
-            if not os.path.exists('heatmaps'):
-                os.makedirs("heatmaps")
-
-            fig_1.savefig("heatmaps/self_{}.png".format(self.name))
-            fig_1.clear()
-
-            dec_enc_attns = torch.sum(dec_enc_attns, dim=1) / dec_enc_attns.shape[1]
-            dec_enc_attns = torch.sum(dec_enc_attns, dim=1) / dec_self_attns.shape[1]
-
-            ax_enc_dec = sns.heatmap(dec_enc_attns[0, :, :].detach().numpy())
-            ax_enc_dec.set_title("enc-dec attention")
-            fig_2 = ax_enc_dec.get_figure()
-            fig_2.savefig("heatmaps/enc_dec_{}.png".format(self.name))
-            fig_2.clear()'''
 
         return dec_outputs, dec_self_attns, dec_enc_attns
 
