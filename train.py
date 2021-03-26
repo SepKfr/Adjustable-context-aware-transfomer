@@ -113,9 +113,7 @@ def train(model, trn_x, y_t, batch_size):
     optimizer = Adam(model.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
     model.train()
-    num_steps = len(trn_x) * n_ephocs
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 
     for _ in range(n_ephocs):
         total_loss = 0
@@ -126,8 +124,7 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
+            scheduler.step()
 
 
 def run(model, name, trn_x, trn_y, params):
