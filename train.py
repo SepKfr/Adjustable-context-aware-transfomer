@@ -124,7 +124,6 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            scheduler.step()
 
 
 def run(model, name, trn_x, trn_y, params):
