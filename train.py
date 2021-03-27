@@ -14,7 +14,7 @@ import json
 import os
 from attnrnn import AttnRnn
 import pytorch_warmup as warmup
-import time
+import datetime
 
 
 parser = argparse.ArgumentParser(description="preprocess argument parser")
@@ -119,7 +119,7 @@ def train(model, trn_x, y_t, batch_size):
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    start_time = time.time()
+    start_time = datetime.time().minute
 
     for _ in range(n_ephocs):
         total_loss = 0
@@ -133,7 +133,7 @@ def train(model, trn_x, y_t, batch_size):
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
-    end_time = time.time()
+    end_time = datetime.time().minute
     print('time : {}'.format(end_time - start_time))
 
 
