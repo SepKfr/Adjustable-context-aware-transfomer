@@ -119,7 +119,7 @@ def train(model, trn_x, y_t, batch_size):
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    start_time = time.time() / 1000
+    start_time = time.time()
 
     for _ in range(n_ephocs):
         total_loss = 0
@@ -133,7 +133,7 @@ def train(model, trn_x, y_t, batch_size):
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
-    end_time = time.time() / 1000
+    end_time = time.time()
     print('time : {}'.format(end_time - start_time))
 
 
