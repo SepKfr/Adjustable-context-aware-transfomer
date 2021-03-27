@@ -119,6 +119,8 @@ def train(model, trn_x, y_t, batch_size):
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
+    start_time = time.time() / 1000
+
     for _ in range(n_ephocs):
         total_loss = 0
         for j in range(x_en.shape[0]):
@@ -131,6 +133,9 @@ def train(model, trn_x, y_t, batch_size):
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
+    end_time = time.time() / 1000
+    print('time : {}'.format(end_time - start_time))
+
 
 def run(model, name, trn_x, trn_y, params):
 
@@ -142,7 +147,6 @@ def run(model, name, trn_x, trn_y, params):
 def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                    x_de, x_en_t, x_de_t, y_true, y_true_t, seq_len_pred, params):
 
-    start_time = time.time() / 1000
     path = "models_{}_{}".format(params.site, seq_len_pred)
     path_to_pred = "predictions_{}_{}".format(params.site, seq_len_pred)
 
@@ -158,8 +162,6 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
 
     attn_model.to(device)
 
-    end_time = time.time() / 1000
-
     model = run(attn_model, name, [x_en, x_de], y_true, params)
 
     if not os.path.exists(path):
@@ -174,7 +176,6 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
     pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
 
     print('{} : {}'.format(name, rmses.item()))
-    print('time : {}'.format(end_time - start_time))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
 
