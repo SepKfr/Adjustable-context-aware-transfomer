@@ -44,7 +44,8 @@ def inverse_transform(data):
 def evaluate(site, seq_ln, name):
 
     y_t_in = inverse_transform(test_y)
-    b, seq_len, f = test_y.shape
+    b, _, f = test_y.shape
+    seq_len = int(test_x.shape[1] / 2)
 
     tst_x, tst_y = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :]
 
