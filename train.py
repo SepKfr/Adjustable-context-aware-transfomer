@@ -87,7 +87,7 @@ def evaluate(model, tst_x, y_t):
     otps_in = inverse_transform(otps)
     metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
 
-    return metrics.rmse, metrics.mae
+    return metrics.rmse, metrics.mae, otps_in
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -142,6 +142,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
                    x_de, x_en_t, x_de_t, y_true, y_true_t, seq_len_pred, params):
 
     path = "models_{}_{}".format(params.site, seq_len_pred)
+    path_to_pred = "predictions_{}_{}".format(params.site, seq_len_pred)
 
     attn_model = Attn(src_input_size=input_size,
                       tgt_input_size=output_size,
@@ -160,9 +161,14 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, x_en,
     if not os.path.exists(path):
         os.makedirs(path)
 
+    if not os.path.exists(path_to_pred):
+        os.makedirs(path_to_pred)
+
     torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
 
-    rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    rmses, mapes, predictions = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
+
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
@@ -176,13 +182,18 @@ def call_rnn_model(model, name, x_en,
                           y_true, params)
 
     path = "models_{}_{}".format(params.site, params.seq_len_pred)
+    path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
     if not os.path.exists(path):
         os.makedirs(path)
 
+    if not os.path.exists(path_to_pred):
+        os.makedirs(path_to_pred)
+
     torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
 
-    rmses, mapes = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    rmses, mapes, predictions = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
     print('{} : {}'.format(name, rmses.item()))
     erros[name].append(float("{:.4f}".format(rmses.item())))
     erros[name].append(float("{:.4f}".format(mapes.item())))
