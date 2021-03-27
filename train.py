@@ -29,15 +29,15 @@ inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 scalers = pickle.load(open("scalers.pkl", "rb"))
 
-max_len = min(len(inputs), 1000)
+max_len = min(len(inputs), 512)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 '''train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
 test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]'''
 
-d_model = 32
-dff = 64
-n_head = 4
+d_model = 16
+dff = 32
+n_head = 2
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
