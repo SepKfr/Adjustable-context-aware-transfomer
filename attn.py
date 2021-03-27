@@ -114,10 +114,10 @@ class ScaledDotProductAttention(nn.Module):
             K = get_con_vecs(K, self.cutoff).to(self.device)
             Q = Q.unsqueeze(2).repeat(1, 1, Q.shape[2], 1, 1, 1)
             K = K.unsqueeze(2).repeat(1, 1, K.shape[2], 1, 1, 1)
-            '''if attn_mask is not None:
+            if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(0).repeat(Q.shape[0], 1, 1, 1, 1)
                 attn_mask = attn_mask.unsqueeze(1).repeat(1, Q.shape[1], 1, 1, 1, 1).to(self.device)
-                K = torch.mul(K, attn_mask)'''
+                K = torch.mul(K, attn_mask)
             scores = torch.mul(Q, K)
             scores = torch.sum(scores, dim=4)
             scores = torch.sum(scores, dim=3)
