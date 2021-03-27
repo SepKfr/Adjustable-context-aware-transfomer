@@ -44,19 +44,10 @@ def inverse_transform(data):
 def evaluate(site, seq_ln, name):
 
     y_t_in = inverse_transform(test_y)
-    b, _, f = test_y.shape
-    seq_len = int(test_x.shape[1] / 2)
-
-    tst_x, tst_y = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :]
-
-    model = torch.load('models_{}_{}/{}'.format(site, seq_ln, name))
-    model.eval()
-
-    outputs = model(tst_x.to(device), tst_y.to(device), training=False)
-
-    outputs_in = inverse_transform(outputs)
-    metrics = Metrics(outputs_in.view(seq_ln * b * f), y_t_in.view(seq_ln * b * f))
-    return metrics.rmse, metrics.mae
+    preds = pickle.load(open('{}_{}_{}/{}'.format('predictions', site, seq_ln, name), 'rb'))
+    metrics = Metrics(y_t_in, preds)
+    print('rmse : {} : {}'.format(name, metrics.rmse.item()))
+    print('mae : {} : {}'.format(name, metrics.mae.item()))
 
 
 def main():
