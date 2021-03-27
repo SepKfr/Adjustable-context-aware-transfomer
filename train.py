@@ -86,6 +86,7 @@ def evaluate(model, tst_x, y_t):
 
     otps_in = inverse_transform(otps)
     metrics = Metrics(otps_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
+
     return metrics.rmse, metrics.mae
 
 
