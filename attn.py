@@ -16,8 +16,8 @@ def get_attn_subsequent_mask(seq):
     return subsequent_mask
 
 
-def get_con_attn_subsequent_mask(seq, cutoff):
-    attn_shape = [seq.size(1), seq.size(1), cutoff]
+def get_con_attn_subsequent_mask(seq, cutoff, d_k):
+    attn_shape = [seq.size(1), seq.size(1), cutoff, d_k]
     subsequent_mask = np.tril(np.ones(attn_shape))
     subsequent_mask = torch.from_numpy(subsequent_mask).int()
     return subsequent_mask
@@ -114,10 +114,10 @@ class ScaledDotProductAttention(nn.Module):
             K = get_con_vecs(K, self.cutoff).to(self.device)
             Q = Q.unsqueeze(2).repeat(1, 1, Q.shape[2], 1, 1, 1)
             K = K.unsqueeze(2).repeat(1, 1, K.shape[2], 1, 1, 1)
-            '''if attn_mask is not None:
+            if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(0).repeat(Q.shape[0], 1, 1, 1, 1)
                 attn_mask = attn_mask.unsqueeze(1).repeat(1, Q.shape[1], 1, 1, 1, 1)
-                K = torch.mul(K, attn_mask)'''
+                K = torch.mul(K, attn_mask)
             scores = torch.mul(Q, K)
             scores = torch.sum(scores, dim=4)
             scores = torch.sum(scores, dim=3)
@@ -316,6 +316,7 @@ class Decoder(nn.Module):
         self.pe = pe
         self.name = name
         self.cutoff = cutoff
+        self.d_k = d_k
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
@@ -329,7 +330,7 @@ class Decoder(nn.Module):
         dec_outputs = self.pos_emb(dec_outputs)
 
         if self.attn_type == 'con':
-            dec_self_attn_mask = get_con_attn_subsequent_mask(dec_outputs, self.cutoff*2)
+            dec_self_attn_mask = get_con_attn_subsequent_mask(dec_outputs, self.cutoff*2, self.d_k)
         else:
             dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
