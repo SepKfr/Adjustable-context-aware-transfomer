@@ -55,7 +55,7 @@ def evaluate(site, seq_ln, name):
     outputs = model(tst_x.to(device), tst_y.to(device), training=False)
 
     outputs_in = inverse_transform(outputs)
-    metrics = Metrics(outputs_in.view(seq_len * b * f), y_t_in.view(seq_len * b * f))
+    metrics = Metrics(outputs_in.view(seq_ln * b * f), y_t_in.view(seq_ln * b * f))
     return metrics.rmse, metrics.mae
 
 
