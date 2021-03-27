@@ -114,12 +114,13 @@ class ScaledDotProductAttention(nn.Module):
             K = get_con_vecs(K, self.cutoff).to(self.device)
             Q = Q.unsqueeze(2).repeat(1, 1, Q.shape[2], 1, 1, 1)
             K = K.unsqueeze(2).repeat(1, 1, K.shape[2], 1, 1, 1)
-            V = K
-            '''if attn_mask is not None:
+            if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(0).repeat(Q.shape[0], 1, 1, 1, 1)
                 attn_mask = attn_mask.unsqueeze(1).repeat(1, Q.shape[1], 1, 1, 1, 1)
-                K = torch.mul(K, attn_mask)'''
+                K = torch.mul(K, attn_mask)
             scores = torch.mul(Q, K)
+            scores = torch.sum(scores, dim=4)
+            scores = torch.sum(scores, dim=3)
 
         else:
             scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
@@ -132,10 +133,6 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
         if self.attn_type == "con":
             context = torch.mul(attn, V)
-            context = torch.sum(context, dim=4)
-            context = torch.sum(context, dim=3)
-            attn = torch.sum(attn, dim=4)
-            attn = torch.sum(attn, dim=3)
         else:
             context = torch.matmul(attn, V)
         return context, attn
@@ -332,7 +329,7 @@ class Decoder(nn.Module):
         dec_outputs = self.pos_emb(dec_outputs)
 
         if self.attn_type == 'con':
-            dec_self_attn_mask = None
+            dec_self_attn_mask = get_con_attn_subsequent_mask(dec_outputs, self.cutoff*2)
         else:
             dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
