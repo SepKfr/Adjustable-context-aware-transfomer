@@ -35,9 +35,9 @@ outputs = outputs[-max_len:, :]
 '''train_x, train_y = inputs[:-1, :, :], outputs[:-1, :, :]
 test_x, test_y = inputs[-1:, :, :], outputs[-1:, :, :]'''
 
-d_model = 16
-dff = 32
-n_head = 2
+d_model = 64
+dff = 128
+n_head = 8
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
