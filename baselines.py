@@ -88,8 +88,8 @@ class RNN(nn.Module):
             en_out, hidden = self.encoder_gru(x_en, hidden)
             outputs, _ = self.decoder_gru(x_de, hidden)
 
-        #outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
-        outputs = self.linear2(outputs.permute(0, 1, 2)).view(b, seq_len_1, -1)
+        outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
+        outputs = self.linear2(outputs.permute(0, 2, 1)).view(b, self.pred_seq_len, -1)
 
         return outputs
 
@@ -127,6 +127,7 @@ class CNN(nn.Module):
             x_de_out = self.dropout1[i](x_de_out)
 
         x_de_out = proj2(x_de_out)
+        x_de_out = self.proj_out(x_de_out)
         output = self.linear(x_de_out.view(b, -1, self.out_channel))
 
         return output

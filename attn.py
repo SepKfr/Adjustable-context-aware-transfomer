@@ -43,7 +43,6 @@ def get_con_mask(seq_q, seq_k, padding):
 def get_con_vecs(seq, cutoff):
 
     batch_size, n_h, seq_len, d_k = seq.shape
-    cutoff = seq_len if seq_len < cutoff else cutoff
     seq = seq.reshape(batch_size, seq_len, n_h * d_k)
 
     up_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
@@ -386,7 +385,7 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        #dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
