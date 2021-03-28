@@ -239,9 +239,9 @@ def main():
             cnn = nn.DataParallel(cnn)
         cnn.to(device)
 
-        call_rnn_model(cnn, "cnn_hist", x_en, x_de, x_en_t,
+        '''call_rnn_model(cnn, "cnn_hist", x_en, x_de, x_en_t,
                        x_de_t, y_true,
-                       y_true_t, params)
+                       y_true_t, params)'''
 
         lstm = RNN(n_layers=n_layers,
                    hidden_size=d_model,
