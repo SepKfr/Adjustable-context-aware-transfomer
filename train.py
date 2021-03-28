@@ -23,7 +23,7 @@ parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--cutoff", type=int, default=4)
 parser.add_argument("--run_num", type=str, default=1)
 parser.add_argument("--site", type=str, default="WHB")
-parser.add_argument("--server", type=str, default="c01")
+parser.add_argument("--server", type=str, default="jelly")
 params = parser.parse_args()
 
 inputs = pickle.load(open("inputs.p", "rb"))
@@ -123,15 +123,15 @@ def train(model, trn_x, y_t, batch_size):
         total_loss = 0
         for j in range(x_en.shape[0]):
             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+            print(y_t[j].shape)
             loss = criterion(y_t[j].to(device), output)
+            print(output.shape)
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
-
-    end_time = datetime.time().minute
 
 
 def run(model, name, trn_x, trn_y, params):

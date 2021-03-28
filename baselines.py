@@ -104,7 +104,7 @@ class CNN(nn.Module):
         self.n_layers = n_layers
         self.out_channel = out_channel
         self.proj = nn.Linear(out_channel, input_size)
-        self.proj_out = nn.Linear(seq_len, int(seq_len / 2))
+        self.proj_out = nn.Linear(seq_len, seq_pred_len)
 
     def forward(self, x_en, x_de, training=True):
 
@@ -127,7 +127,6 @@ class CNN(nn.Module):
             x_de_out = self.dropout1[i](x_de_out)
 
         x_de_out = proj2(x_de_out)
-        x_de_out = self.proj_out(x_de_out)
         output = self.linear(x_de_out.view(b, -1, self.out_channel))
 
         return output
