@@ -89,8 +89,7 @@ class RNN(nn.Module):
             outputs, _ = self.decoder_gru(x_de, hidden)
 
         #outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
-        print(outputs.shape)
-        outputs = self.linear2(outputs.permute(0, 2, 1)).view(b, seq_len_1, -1)
+        outputs = self.linear2(outputs.permute(0, 1, 2)).view(b, seq_len_1, -1)
 
         return outputs
 
