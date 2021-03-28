@@ -123,9 +123,7 @@ def train(model, trn_x, y_t, batch_size):
         total_loss = 0
         for j in range(x_en.shape[0]):
             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
-            print(y_t[j].shape)
             loss = criterion(y_t[j].to(device), output)
-            print(output.shape)
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
