@@ -18,7 +18,7 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, ts, n_features, in_seq_len):
+    def __init__(self, site_data, ts, n_features, in_seq_len, out_seq_len):
 
         self.scalers = list()
         self.sites_data = site_data
@@ -132,7 +132,7 @@ class STData:
                 self.min_len = site_ln'''
 
         self.raster = Data(self.sites_data, ln, self.n_features,
-                           params.in_seq_len)
+                           params.in_seq_len, params.out_seq_len)
 
     class Site:
         def __init__(self, name, abr, lat, long):
