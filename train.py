@@ -119,8 +119,6 @@ def train(model, trn_x, y_t, batch_size):
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    start_time = datetime.time().minute
-
     for _ in range(n_ephocs):
         total_loss = 0
         for j in range(x_en.shape[0]):
@@ -134,7 +132,6 @@ def train(model, trn_x, y_t, batch_size):
             warmup_scheduler.dampen()
 
     end_time = datetime.time().minute
-    print('time : {}'.format(end_time - start_time))
 
 
 def run(model, name, trn_x, trn_y, params):
