@@ -30,7 +30,7 @@ class Data:
         '''self.I = I
         self.J = J'''
         self.in_seq_len = in_seq_len
-        self.out_seq_len = int (in_seq_len / 2)
+        self.out_seq_len = out_seq_len
         self.ln = self.ts - (self.in_seq_len + self.out_seq_len)
         self.ln = int(self.ln / self.hist)
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
@@ -241,6 +241,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=128)
+    parser.add_argument("--out_seq_len", type=int, default=36)
     parser.add_argument("--site", type=str, default="WHB")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
