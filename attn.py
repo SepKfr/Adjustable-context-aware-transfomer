@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
-from train import inverse_transform
+from utils import inverse_transform
 
 
 def get_attn_subsequent_mask(seq):

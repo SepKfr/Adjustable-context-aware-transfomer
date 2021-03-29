@@ -1,18 +1,16 @@
 import pickle
 from preprocess import Scaler
 from utils import Metrics
-from model import DeepRelativeST
 from attn import Attn
 from torch.optim import Adam
 import torch.nn as nn
 import numpy as np
 import torch
-from torch.autograd import Variable
+from utils import inverse_transform
 from baselines import RNN, CNN
 import argparse
 import json
 import os
-from attnrnn import AttnRnn
 import pytorch_warmup as warmup
 import datetime
 
@@ -23,12 +21,11 @@ parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--cutoff", type=int, default=4)
 parser.add_argument("--run_num", type=str, default=1)
 parser.add_argument("--site", type=str, default="WHB")
-parser.add_argument("--server", type=str, default="jelly")
+parser.add_argument("--server", type=str, default="c01")
 params = parser.parse_args()
 
 inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
-scalers = pickle.load(open("scalers.pkl", "rb"))
 
 max_len = min(len(inputs), 512)
 inputs = inputs[-max_len:, :, :]
@@ -56,22 +53,6 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
     print("running on CPU")
-
-
-def inverse_transform(data):
-
-    n, d, hw = data.shape
-    inv_data = torch.zeros(data.shape)
-
-    for i, scalers_per_site in enumerate(scalers):
-        f, scaler = list(scalers_per_site.scalers.items())[1]
-        dat = data[:, :, 0]
-        dat = dat.view(n*d)
-        in_dat = scaler.inverse_transform(dat.cpu().detach().numpy().reshape(-1, 1))
-        in_dat = torch.from_numpy(np.array(in_dat).flatten())
-        inv_data[:, :, 0] = in_dat.view(n, d)
-
-    return inv_data
 
 
 def evaluate(model, tst_x, y_t):
@@ -207,7 +188,7 @@ def main():
     x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
                       train_x[:, -seq_len:, :], train_y[:, :, :])
 
-    x_en_t, x_de_t, y_true_t = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :], test_y
+    x_en_t, x_de_t, y_true_t = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :], inverse_transform(test_y)
 
     if params.server == 'c01':
 
