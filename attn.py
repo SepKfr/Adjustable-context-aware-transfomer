@@ -7,7 +7,6 @@ import seaborn as sns
 import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
-from utils import inverse_transform
 
 
 def get_attn_subsequent_mask(seq):
@@ -379,7 +378,6 @@ class Attn(nn.Module):
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred)
-        self.device = device
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 
@@ -389,6 +387,5 @@ class Attn(nn.Module):
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
-        dec_logits = Variable(inverse_transform(dec_logits).to(self.device), requires_grad=True)
         return dec_logits
 
