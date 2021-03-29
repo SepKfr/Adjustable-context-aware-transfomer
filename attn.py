@@ -44,18 +44,18 @@ def get_con_vecs(seq, cutoff):
 
     batch_size, n_h, seq_len, d_k = seq.shape
     seq = seq.reshape(batch_size, seq_len, n_h * d_k)
+    cutoff = seq_len if cutoff >= seq_len else cutoff
 
     up_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
     low_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
     up_t = torch.triu(up_t)
     up_t = torch.flip(up_t, dims=[2])
     up_t = F.pad(up_t, pad=(0, 0, 1, 0))[:, :, :-1, :]
-    up_t = up_t[:, :, seq_len-cutoff:seq_len+2*cutoff, :]
     low_t = torch.tril(low_t)
     low_t = torch.flip(low_t, dims=[2])
-    low_t = low_t[:, :, seq_len-cutoff:seq_len+2*cutoff, :]
     mtx = torch.cat((up_t, low_t), dim=-1).permute(0, 2, 3, 1)
-    mtx = mtx.reshape(batch_size, n_h, seq_len, cutoff*2, d_k)
+    mtx = mtx.reshape(batch_size, n_h, seq_len, seq_len*2, d_k)
+    mtx = mtx[:, :, :, seq_len - cutoff:seq_len + cutoff, :]
     return mtx
 
 
@@ -109,17 +109,9 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         if self.attn_type == "con":
-
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
-            Q = Q.unsqueeze(2).repeat(1, 1, Q.shape[2], 1, 1, 1)
-            K = K.unsqueeze(2).repeat(1, 1, K.shape[2], 1, 1, 1)
-            if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(0).repeat(Q.shape[0], 1, 1, 1, 1)
-                attn_mask = attn_mask.unsqueeze(1).repeat(1, Q.shape[1], 1, 1, 1, 1).to(self.device)
-                K = torch.mul(K, attn_mask)
-            scores = torch.mul(Q, K)
-            scores = torch.sum(scores, dim=4)
+            scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
             scores = torch.sum(scores, dim=3)
 
         else:
