@@ -389,6 +389,6 @@ class Attn(nn.Module):
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
-        dec_logits = inverse_transform(dec_logits).to(self.device)
+        dec_logits = Variable(inverse_transform(dec_logits).to(self.device), requires_grad=True)
         return dec_logits
 
