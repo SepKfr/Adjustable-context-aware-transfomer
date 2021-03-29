@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description="preprocess argument parser")
 parser.add_argument("--seq_len_pred", type=int, default=36)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--cutoff", type=int, default=16)
+parser.add_argument("--n_ephocs", type=int, default=300)
 parser.add_argument("--run_num", type=str, default=1)
 parser.add_argument("--site", type=str, default="WHB")
 parser.add_argument("--server", type=str, default="c01")
@@ -43,7 +44,6 @@ n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 300
 
 erros = dict()
 
@@ -96,11 +96,11 @@ def train(model, trn_x, y_t, batch_size):
     optimizer = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
     model.train()
-    num_steps = len(trn_x) * n_ephocs
+    num_steps = len(trn_x) * params.n_ephocs
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    for _ in range(n_ephocs):
+    for _ in range(params.n_ephocs):
         total_loss = 0
         for j in range(x_en.shape[0]):
             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
