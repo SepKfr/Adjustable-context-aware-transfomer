@@ -57,8 +57,8 @@ class Data:
                 stScaler = StandardScaler()
                 dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
-                '''stScaler.fit(dat)
-                dat = stScaler.transform(dat)'''
+                stScaler.fit(dat)
+                dat = stScaler.transform(dat)
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
