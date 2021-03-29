@@ -111,8 +111,7 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "con":
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
-            scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
-            scores = torch.sum(scores, dim=3)
+            scores = torch.einsum('bhqcd,bhkld->bhqk', Q, K)
 
         else:
             scores = torch.matmul(Q, K.transpose(-1, -2) / np.sqrt(self.d_k))
@@ -124,7 +123,7 @@ class ScaledDotProductAttention(nn.Module):
 
         attn = nn.Softmax(dim=-1)(scores)
         if self.attn_type == "con":
-            context = torch.mul(attn, V)
+            context = torch.matmul(attn, V)
         else:
             context = torch.matmul(attn, V)
         return context, attn
