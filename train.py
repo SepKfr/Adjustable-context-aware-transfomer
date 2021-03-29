@@ -109,8 +109,8 @@ def train(model, trn_x, y_t, batch_size):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            '''lr_scheduler.step()
-            warmup_scheduler.dampen()'''
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
         print(total_loss)
 
 
