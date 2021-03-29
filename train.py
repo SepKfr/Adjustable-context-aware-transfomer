@@ -189,7 +189,7 @@ def main():
     x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
                       train_x[:, -seq_len:, :], train_y[:, :, :])
 
-    x_en_t, x_de_t, y_true_t = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :], inverse_transform(test_y)
+    x_en_t, x_de_t, y_true_t = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :], test_y
 
     if params.server == 'c01':
 
