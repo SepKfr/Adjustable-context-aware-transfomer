@@ -43,7 +43,7 @@ n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 200
+n_ephocs = 350
 
 erros = dict()
 
@@ -112,6 +112,7 @@ def train(model, trn_x, y_t, batch_size):
             lr_scheduler.step()
             warmup_scheduler.dampen()
         print(total_loss)
+
 
 def run(model, name, trn_x, trn_y, params):
 
