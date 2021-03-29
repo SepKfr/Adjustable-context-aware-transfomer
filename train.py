@@ -43,7 +43,7 @@ n_layers = 1
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 lr = 0.0001
-n_ephocs = 100
+n_ephocs = 10
 
 erros = dict()
 
@@ -190,7 +190,7 @@ def main():
                       train_x[:, -seq_len:, :], train_y[:, :, :])
 
     x_en_t, x_de_t, y_true_t = test_x[:, :-seq_len, :], test_x[:, -seq_len:, :], test_y
-    x_en, x_de_t, y_true = x_en[:-1, :, :, :], x_de[:-1, :, :, :], y_true[:-1, :, :, :]
+    x_en, x_de, y_true = x_en[:-1, :, :, :], x_de[:-1, :, :, :], y_true[:-1, :, :, :]
 
     if params.server == 'c01':
 
