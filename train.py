@@ -141,8 +141,7 @@ def train_attn(config):
                             lr_scheduler.step()
                             warmup_scheduler.dampen()
 
-                            if j % 50 == 0:
-                                print("loss: {:.3f}".format(total_loss))
+                        print("loss: {:.3f}".format(total_loss))
 
                         # validation
                         valid_loss = 0
