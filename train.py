@@ -87,7 +87,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def evaluate(model, tst_x, y_t):
 
-    y_t = inverse_transform(y_t)
+    #y_t = inverse_transform(y_t)
     b, seq_len, f = y_t.shape
 
     model.eval()
@@ -96,7 +96,7 @@ def evaluate(model, tst_x, y_t):
 
         otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
 
-    otps = inverse_transform(otps)
+    #otps = inverse_transform(otps)
     metrics = Metrics(otps.view(seq_len * b * f), y_t.to(device).view(seq_len * b * f))
 
     return metrics.rmse, metrics.mae, otps
@@ -152,9 +152,7 @@ def train_attn(pos_enc, attn_type, path):
                         for j in range(x_en_v.shape[0]):
 
                             output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
-                            y_t_v = inverse_transform(y_true_v[j].to(device))
-                            output_v = inverse_transform(output)
-                            loss = criterion(y_t_v, output_v)
+                            loss = criterion(y_true_v[j].to(device), output)
                             valid_loss += loss.item()
 
                         if valid_loss < val_loss_inner:
