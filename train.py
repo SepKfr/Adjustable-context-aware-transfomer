@@ -14,7 +14,7 @@ import os
 import pytorch_warmup as warmup
 import datetime
 from ray import tune
-
+from functools import partial
 
 parser = argparse.ArgumentParser(description="preprocess argument parser")
 parser.add_argument("--seq_len_pred", type=int, default=36)
@@ -110,8 +110,8 @@ def train_attn(config, checkpoint_dir=None):
                  d_k=8, d_v=8, n_heads=config["n_heads"],
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
-                 pe="sincos", attn_type='con',
-                 seq_len=seq_len, seq_len_pred=params.seq_len_pred,
+                 pe=config["pos_enc"], attn_type=config["attn_type"],
+                 seq_len=config["seq_len"], seq_len_pred=params.seq_len_pred,
                  cutoff=params.cutoff).to(device)
 
     optimizer = Adam(model.parameters(), lr=config["lr"])
@@ -166,10 +166,14 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         "n_heads": tune.choice(n_heads),
         "n_layers": tune.choice(n_layers),
         "lr": tune.choice(lr),
-        "dropout_rate": tune.choice(dropout_rate)
+        "dropout_rate": tune.choice(dropout_rate),
+        "pos_enc": pos_enc,
+        "attn_type": attn_type,
+        "seq_len": seq_len,
+        "seq_len_pred": params.seq_len_pred
     }
 
-    result = tune.run(train_attn, config=config)
+    result = tune.run(partial(train_attn), config=config)
 
     best_trial = result.get_best_trial("loss", "min", "last")
     print('best trial config: {}'.format(best_trial.config))
