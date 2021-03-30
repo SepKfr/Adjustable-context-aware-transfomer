@@ -106,6 +106,7 @@ def train_attn(config):
 
     val_loss = 1e5
     best_model = None
+    e = 0
     for head in config["n_heads"]:
         for layer in config["n_layers"]:
             for dr in config["dr"]:
@@ -145,7 +146,6 @@ def train_attn(config):
 
                         # validation
                         valid_loss = 0
-                        val_step = 0
                         model.eval()
                         for j in range(x_en_v.shape[0]):
                             output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
@@ -154,12 +154,14 @@ def train_attn(config):
                             optimizer.zero_grad()
                             loss.backward()
                             optimizer.step()
-                            val_step += 1
                         if valid_loss < val_loss:
                             config = head, layer, dr, lr
                             val_loss = valid_loss
+                            e = epoch
                             print('validation loss:{:.3f}'.format(val_loss))
                             best_model = model
+                        elif epoch - e >= 20:
+                            break
 
     print("Finished Training")
     return best_model, config
