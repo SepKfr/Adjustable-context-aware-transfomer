@@ -112,7 +112,9 @@ def train_attn(config, checkpoint_dir=None):
                  tgt_pad_index=0, device=device,
                  pe=config["pos_enc"], attn_type=config["attn_type"],
                  seq_len=config["seq_len"], seq_len_pred=params.seq_len_pred,
-                 cutoff=params.cutoff).to(device)
+                 cutoff=params.cutoff)
+
+    model = model.to(device)
 
     optimizer = Adam(model.parameters(), lr=config["lr"])
     criterion = nn.MSELoss()
@@ -173,7 +175,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         "seq_len_pred": params.seq_len_pred
     }
 
-    result = tune.run(partial(train_attn), config=config)
+    result = tune.run(train_attn, config=config)
 
     best_trial = result.get_best_trial("loss", "min", "last")
     print('best trial config: {}'.format(best_trial.config))
