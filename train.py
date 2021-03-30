@@ -196,13 +196,8 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     checkpoint = torch.load(path)
     best_trained_model.load_state_dict(checkpoint['model_state_dict'])
 
-    if not os.path.exists(path):
-        os.makedirs(path)
-
     if not os.path.exists(path_to_pred):
         os.makedirs(path_to_pred)
-
-    torch.save(best_trained_model, '{}/{}_{}'.format(path, name, params.run_num))
 
     rmses, mapes, predictions = evaluate(best_trained_model, [x_en_t, x_de_t], y_true_t)
     pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
