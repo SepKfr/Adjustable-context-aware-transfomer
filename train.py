@@ -157,7 +157,7 @@ def train_attn(config, checkpoint_dir=None):
     print("Finished Training")
 
 
-def call_atn_model(name, pos_enc, attn_type, seq_len, seq_len_pred, params):
+def call_atn_model(name, pos_enc, attn_type, seq_len, params):
 
     path = "models_{}_{}".format(params.site, seq_len_pred)
     path_to_pred = "predictions_{}_{}".format(params.site, seq_len_pred)
@@ -243,13 +243,13 @@ def main():
     if params.server == 'c01':
 
         call_atn_model('attn_con_hist', 'sincos', 'con',
-                       seq_len, x_en, x_de)
+                       seq_len, params)
 
         call_atn_model('attn_hist', 'sincos', 'attn',
-                       seq_len, x_en, x_de)
+                       seq_len, params)
 
         call_atn_model('attn_con_conv_hist', 'sincos', 'attn_conv',
-                       seq_len, x_en, x_de)
+                       seq_len, params)
 
     elif params.server == 'jelly':
         '''cnn = CNN(input_size=input_size,
