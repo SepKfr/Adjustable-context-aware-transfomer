@@ -177,6 +177,10 @@ def train_attn(pos_enc, attn_type, path):
 def call_atn_model(name, pos_enc, attn_type, seq_len, params):
 
     path = "models_{}_{}".format(params.site, params.seq_len_pred)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     model_path = os.path.join(path, name)
     path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
