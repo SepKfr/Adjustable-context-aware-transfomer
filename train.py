@@ -159,8 +159,8 @@ def train_attn(config, checkpoint_dir=None):
 
 def call_atn_model(name, pos_enc, attn_type, seq_len, params):
 
-    path = "models_{}_{}".format(params.site, seq_len_pred)
-    path_to_pred = "predictions_{}_{}".format(params.site, seq_len_pred)
+    path = "models_{}_{}".format(params.site, params.seq_len_pred)
+    path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
     config = {
         "n_heads": tune.choice(n_heads),
@@ -170,7 +170,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         "pos_enc": pos_enc,
         "attn_type": attn_type,
         "seq_len": seq_len,
-        "seq_len_pred": seq_len_pred
+        "seq_len_pred": params.seq_len_pred
     }
 
     result = tune.run(train_attn, config=config)
