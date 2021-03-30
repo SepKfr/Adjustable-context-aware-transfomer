@@ -162,7 +162,7 @@ def train_attn(config, pos_enc, attn_type):
                                 config = head, layer, dr, lr
                                 val_loss = val_loss_inner
                             e = epoch
-                            print('validation loss:{:.3f}'.format(val_loss))
+                            print('validation loss:{:.3f}'.format(valid_loss))
                             best_model = model
                         elif epoch - e >= 20:
                             break
