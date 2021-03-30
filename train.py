@@ -124,12 +124,12 @@ def train_attn(config):
                     model = model.to(device)
                     optimizer = Adam(model.parameters(), lr=lr)
                     criterion = nn.MSELoss()
-                    model.train()
                     num_steps = len(train_x) * params.n_ephocs
                     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
                     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
                     for epoch in range(params.n_ephocs):
+                        model.train()
                         total_loss = 0
                         for j in range(x_en.shape[0]):
                             output = model(x_en[j].to(device), x_de[j].to(device), training=True)
@@ -147,15 +147,15 @@ def train_attn(config):
                         # validation
                         valid_loss = 0
                         val_step = 0
+                        model.eval()
                         for j in range(x_en_v.shape[0]):
-                            with torch.no_grad:
-                                output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
-                                loss = criterion(y_true_v[j].to(device), output)
-                                valid_loss += loss.item()
-                                optimizer.zero_grad()
-                                loss.backward()
-                                optimizer.step()
-                                val_step += 1
+                            output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
+                            loss = criterion(y_true_v[j].to(device), output)
+                            valid_loss += loss.item()
+                            optimizer.zero_grad()
+                            loss.backward()
+                            optimizer.step()
+                            val_step += 1
                         if valid_loss < loss:
                             config = head, layer, dr, lr
                             valid_loss = loss
