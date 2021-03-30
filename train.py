@@ -175,7 +175,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         "n_heads": n_heads,
         "n_layers": n_layers,
         "lr": lr_s,
-        "dropout_rate": dropout_rate,
+        "dr": dropout_rate,
     }
 
     model, config = train_attn(config)
