@@ -84,7 +84,8 @@ class PositionalEncoding(nn.Module):
                              -(math.log(10000.0) / d_model))
         self.pe[:, 0::2] = torch.sin(position * div_term)
         self.pe[:, 1::2] = torch.cos(position * div_term)
-        self.pe = self.pe.unsqueeze(0).to(device)
+        self.pe = self.pe.unsqueeze(0)
+
 
     def forward(self, x):
 
@@ -109,8 +110,8 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         if self.attn_type == "con":
-            Q = get_con_vecs(Q, self.cutoff).to(self.device)
-            K = get_con_vecs(K, self.cutoff).to(self.device)
+            Q = get_con_vecs(Q, self.cutoff)
+            K = get_con_vecs(K, self.cutoff)
             scores = torch.einsum('bhqcd,bhkld->bhqk', Q, K) / np.sqrt(self.d_k)
 
         else:
@@ -118,7 +119,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if attn_mask is not None and self.attn_type != 'con':
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-            attn_mask = attn_mask.to(self.device)
+            attn_mask = attn_mask
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
