@@ -106,6 +106,7 @@ def train_attn(pos_enc, attn_type):
 
     val_loss = 1e5
     best_model = None
+    config = None
 
     for head in n_heads:
         for layer in n_layers:
