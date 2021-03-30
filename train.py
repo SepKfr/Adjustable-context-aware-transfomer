@@ -157,8 +157,8 @@ def train_attn(config):
                             val_step += 1
                         if valid_loss < val_loss:
                             config = head, layer, dr, lr
-                            valid_loss = loss
-                            print('validation loss:{:.3f}'.format(valid_loss))
+                            val_loss = valid_loss
+                            print('validation loss:{:.3f}'.format(val_loss))
                             best_model = model
 
     print("Finished Training")
