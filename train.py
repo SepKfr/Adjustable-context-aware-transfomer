@@ -104,6 +104,9 @@ def evaluate(model, tst_x, y_t):
 
 def train_attn(config, pos_enc, attn_type):
 
+    val_loss = 1e5
+    best_model = None
+
     for head in config["n_heads"]:
         for layer in config["n_layers"]:
             for dr in config["dr"]:
@@ -126,10 +129,8 @@ def train_attn(config, pos_enc, attn_type):
                     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
                     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-                    val_loss = 1e5
-                    best_model = None
                     e = 0
-
+                    val_loss_inner = 1e5
                     for epoch in range(params.n_ephocs):
                         model.train()
                         total_loss = 0
@@ -155,9 +156,11 @@ def train_attn(config, pos_enc, attn_type):
                             optimizer.zero_grad()
                             loss.backward()
                             optimizer.step()
-                        if valid_loss < val_loss:
-                            config = head, layer, dr, lr
-                            val_loss = valid_loss
+                        if valid_loss < val_loss_inner:
+                            val_loss_inner = valid_loss
+                            if val_loss_inner < val_loss:
+                                config = head, layer, dr, lr
+                                val_loss = val_loss_inner
                             e = epoch
                             print('validation loss:{:.3f}'.format(val_loss))
                             best_model = model
