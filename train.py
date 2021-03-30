@@ -102,7 +102,7 @@ def evaluate(model, tst_x, y_t):
     return metrics.rmse, metrics.mae, otps
 
 
-def train_attn(pos_enc, attn_type):
+def train_attn(pos_enc, attn_type, path):
 
     val_loss = 1e5
     best_model = None
@@ -162,14 +162,17 @@ def train_attn(pos_enc, attn_type):
                             if val_loss_inner < val_loss:
                                 config = head, layer, dr, lr
                                 val_loss = val_loss_inner
+                                torch.save({
+                                    'model_state_dict': model.state_dict(),
+                                    'optimizer_state_dict': optimizer.state_dict()}, path)
                             e = epoch
                             print('validation loss:{:.3f}'.format(valid_loss))
-                            best_model = model
+
                         elif epoch - e >= 20:
                             break
 
     print("Finished Training")
-    return best_model, config
+    return config
 
 
 def call_atn_model(name, pos_enc, attn_type, seq_len, params):
@@ -177,7 +180,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     path = "models_{}_{}".format(params.site, params.seq_len_pred)
     path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
-    model, best_config = train_attn(pos_enc, attn_type)
+    best_config = train_attn(pos_enc, attn_type, path)
     head, layer, dr, lr = best_config
 
     best_trained_model = Attn(src_input_size=input_size,
@@ -190,6 +193,8 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
                               pe=pos_enc, attn_type=attn_type,
                               seq_len=seq_len, seq_len_pred=params.seq_len_pred,
                               cutoff=params.cutoff, dr=dr).to(device)
+    checkpoint = torch.load(path)
+    best_trained_model.load_state_dict(checkpoint['model_state_dict'])
 
     if not os.path.exists(path):
         os.makedirs(path)
