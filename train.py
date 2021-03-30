@@ -104,7 +104,7 @@ def evaluate(model, tst_x, y_t):
 
 def train_attn(config):
 
-    loss = 1e5
+    val_loss = 1e5
     best_model = None
     for head in config["n_heads"]:
         for layer in config["n_layers"]:
@@ -155,7 +155,7 @@ def train_attn(config):
                             loss.backward()
                             optimizer.step()
                             val_step += 1
-                        if valid_loss < loss:
+                        if valid_loss < val_loss:
                             config = head, layer, dr, lr
                             valid_loss = loss
                             print('validation loss:{:.3f}'.format(valid_loss))
