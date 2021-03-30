@@ -83,6 +83,8 @@ else:
     device = torch.device("cpu")
     print("running on CPU")
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 def evaluate(model, tst_x, y_t):
 
