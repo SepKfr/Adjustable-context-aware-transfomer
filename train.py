@@ -177,9 +177,10 @@ def train_attn(pos_enc, attn_type, path):
 def call_atn_model(name, pos_enc, attn_type, seq_len, params):
 
     path = "models_{}_{}".format(params.site, params.seq_len_pred)
+    model_path = os.path.join(path, name)
     path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
-    best_config = train_attn(pos_enc, attn_type, path)
+    best_config = train_attn(pos_enc, attn_type, model_path)
     head, layer, dr, lr = best_config
 
     best_trained_model = Attn(src_input_size=input_size,
@@ -192,7 +193,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
                               pe=pos_enc, attn_type=attn_type,
                               seq_len=seq_len, seq_len_pred=params.seq_len_pred,
                               cutoff=params.cutoff, dr=dr).to(device)
-    checkpoint = torch.load(path)
+    checkpoint = torch.load(model_path)
     best_trained_model.load_state_dict(checkpoint['model_state_dict'])
 
     if not os.path.exists(path_to_pred):
