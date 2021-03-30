@@ -102,7 +102,7 @@ def evaluate(model, tst_x, y_t):
     return metrics.rmse, metrics.mae, otps
 
 
-def train_attn(config):
+def train_attn(config, pos_enc, attn_type):
 
     val_loss = 1e5
     best_model = None
@@ -118,8 +118,8 @@ def train_attn(config):
                                  d_k=8, d_v=8, n_heads=head,
                                  n_layers=layer, src_pad_index=0,
                                  tgt_pad_index=0, device=device,
-                                 pe=config["pos_enc"], attn_type=config["attn_type"],
-                                 seq_len=config["seq_len"], seq_len_pred=params.seq_len_pred,
+                                 pe=pos_enc, attn_type=attn_type,
+                                 seq_len=seq_len, seq_len_pred=params.seq_len_pred,
                                  cutoff=params.cutoff, dr=dr)
 
                     model = model.to(device)
@@ -176,14 +176,11 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         "n_heads": n_heads,
         "n_layers": n_layers,
         "lr": lr_s,
-        "dr": dropout_rate,
-        "pos_enc": pos_enc,
-        "attn_type": attn_type,
-        "seq_len": seq_len
+        "dr": dropout_rate
     }
 
-    model, config = train_attn(config)
-    head, layer, dr, lr = config
+    model, best_config = train_attn(config, pos_enc, attn_type)
+    head, layer, dr, lr = best_config
 
     best_trained_model = Attn(src_input_size=input_size,
                               tgt_input_size=output_size,
