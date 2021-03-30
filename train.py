@@ -105,7 +105,6 @@ def evaluate(model, tst_x, y_t):
 def train_attn(pos_enc, attn_type, path):
 
     val_loss = 1e5
-    best_model = None
     config = None
 
     for head in n_heads:
@@ -151,12 +150,13 @@ def train_attn(pos_enc, attn_type, path):
                         valid_loss = 0
                         model.eval()
                         for j in range(x_en_v.shape[0]):
+
                             output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
-                            loss = criterion(y_true_v[j].to(device), output)
+                            y_t_v = inverse_transform(y_true_v[j].to(device))
+                            output_v = inverse_transform(output)
+                            loss = criterion(y_t_v, output_v)
                             valid_loss += loss.item()
-                            optimizer.zero_grad()
-                            loss.backward()
-                            optimizer.step()
+
                         if valid_loss < val_loss_inner:
                             val_loss_inner = valid_loss
                             if val_loss_inner < val_loss:
