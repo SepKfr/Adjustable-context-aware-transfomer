@@ -13,8 +13,7 @@ import json
 import os
 import pytorch_warmup as warmup
 import datetime
-from ray import tune
-from functools import partial
+
 
 parser = argparse.ArgumentParser(description="preprocess argument parser")
 parser.add_argument("--seq_len_pred", type=int, default=36)
@@ -45,7 +44,7 @@ n_layers = [1, 3]
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 dropout_rate = [0.1, 0.5]
-lr = [0.0001, 0.001, 0.01]
+lr_s = [0.0001, 0.001, 0.01]
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -103,62 +102,68 @@ def evaluate(model, tst_x, y_t):
     return metrics.rmse, metrics.mae, otps
 
 
-def train_attn(config, checkpoint_dir=None):
+def train_attn(config):
 
-    model = Attn(src_input_size=input_size,
-                 tgt_input_size=output_size,
-                 d_model=d_model,
-                 d_ff=dff,
-                 d_k=8, d_v=8, n_heads=config["n_heads"],
-                 n_layers=n_layers, src_pad_index=0,
-                 tgt_pad_index=0, device=device,
-                 pe=config["pos_enc"], attn_type=config["attn_type"],
-                 seq_len=config["seq_len"], seq_len_pred=params.seq_len_pred,
-                 cutoff=params.cutoff)
+    loss = 1e5
+    best_model = None
+    for head in config["n_heads"]:
+        for layer in config["n_layers"]:
+            for dr in config["dr"]:
+                for lr in config["lr"]:
+                    model = Attn(src_input_size=input_size,
+                                 tgt_input_size=output_size,
+                                 d_model=d_model,
+                                 d_ff=dff,
+                                 d_k=8, d_v=8, n_heads=head,
+                                 n_layers=layer, src_pad_index=0,
+                                 tgt_pad_index=0, device=device,
+                                 pe=config["pos_enc"], attn_type=config["attn_type"],
+                                 seq_len=config["seq_len"], seq_len_pred=params.seq_len_pred,
+                                 cutoff=params.cutoff, dr=dr)
 
-    model = model.to(device)
+                    model = model.to(device)
+                    optimizer = Adam(model.parameters(), lr=lr)
+                    criterion = nn.MSELoss()
+                    model.train()
+                    num_steps = len(train_x) * params.n_ephocs
+                    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+                    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    optimizer = Adam(model.parameters(), lr=config["lr"])
-    criterion = nn.MSELoss()
+                    for epoch in range(params.n_ephocs):
+                        total_loss = 0
+                        for j in range(x_en.shape[0]):
+                            output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+                            loss = criterion(y_true[j].to(device), output)
+                            total_loss += loss.item()
+                            optimizer.zero_grad()
+                            loss.backward()
+                            optimizer.step()
+                            lr_scheduler.step()
+                            warmup_scheduler.dampen()
 
-    if checkpoint_dir:
-        model_state, optimizer_state = torch.load(
-            os.path.join(checkpoint_dir, "checkpoint"))
-        model.load_state_dict(model_state)
-        optimizer.load_state_dict(optimizer_state)
+                            if j % 50 == 0:
+                                print("loss: {:.3f}".format(total_loss))
 
-    # training
-    for epoch in range(params.n_ephocs):
-        total_loss = 0
-        for j in range(x_en.shape[0]):
-            output = model(x_en[j].to(device), x_de[j].to(device), training=True)
-            loss = criterion(y_true[j].to(device), output)
-            total_loss += loss.item()
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            if j % 50 == 0:
-                print("loss: {:.3f}".format(total_loss))
+                        # validation
+                        valid_loss = 0
+                        val_step = 0
+                        for j in range(x_en_v.shape[0]):
+                            with torch.no_grad:
+                                output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
+                                loss = criterion(y_true_v[j].to(device), output)
+                                valid_loss += loss.item()
+                                optimizer.zero_grad()
+                                loss.backward()
+                                optimizer.step()
+                                val_step += 1
+                        if valid_loss < loss:
+                            config = head, layer, dr, lr
+                            valid_loss = loss
+                            print('validation loss:{:.3f}'.format(valid_loss))
+                            best_model = model
 
-        # validation
-        valid_loss = 0
-        val_step = 0
-        for j in range(x_en_v.shape[0]):
-            with torch.no_grad:
-                output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
-                loss = criterion(y_true_v[j].to(device), output)
-                valid_loss += loss.item()
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                val_step += 1
-
-        with tune.checkpoint_dir(epoch) as checkpoint_dir:
-            path = os.path.join(checkpoint_dir, "checkpoint")
-            torch.save((model.state_dict(), optimizer.state_dict()), path)
-
-        tune.report(loss=(valid_loss / val_step))
     print("Finished Training")
+    return best_model, config
 
 
 def call_atn_model(name, pos_enc, attn_type, seq_len, params):
@@ -167,38 +172,25 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
     config = {
-        "n_heads": tune.choice(n_heads),
-        "n_layers": tune.choice(n_layers),
-        "lr": tune.choice(lr),
-        "dropout_rate": tune.choice(dropout_rate),
-        "pos_enc": pos_enc,
-        "attn_type": attn_type,
-        "seq_len": seq_len,
-        "seq_len_pred": params.seq_len_pred
+        "n_heads": n_heads,
+        "n_layers": n_layers,
+        "lr": lr_s,
+        "dropout_rate": dropout_rate,
     }
 
-    result = tune.run(train_attn, config=config)
-
-    best_trial = result.get_best_trial("loss", "min", "last")
-    print('best trial config: {}'.format(best_trial.config))
-    print("Best trial final validation loss: {}".format(
-        best_trial.last_result["loss"]))
+    model, config = train_attn(config)
+    head, layer, dr, lr = config
 
     best_trained_model = Attn(src_input_size=input_size,
                               tgt_input_size=output_size,
                               d_model=d_model,
                               d_ff=dff,
-                              d_k=8, d_v=8, n_heads=best_trial.config["n_heads"],
+                              d_k=8, d_v=8, n_heads=head,
                               n_layers=n_layers, src_pad_index=0,
                               tgt_pad_index=0, device=device,
-                              pe=best_trial.config["pos_enc"], attn_type=best_trial.config["attn_type"],
-                              seq_len=best_trial.config["seq_len"], seq_len_pred=params.seq_len_pred,
-                              cutoff=params.cutoff).to(device)
-
-    best_checkpoint_dir = best_trial.checkpoint.value
-    model_state, optimizer_state = torch.load(os.path.join(
-        best_checkpoint_dir, "checkpoint"))
-    best_trained_model.load_state_dict(model_state)
+                              pe=pos_enc, attn_type=attn_type,
+                              seq_len=seq_len, seq_len_pred=params.seq_len_pred,
+                              cutoff=params.cutoff, dr=dr).to(device)
 
     if not os.path.exists(path):
         os.makedirs(path)
