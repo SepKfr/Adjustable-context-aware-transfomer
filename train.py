@@ -104,9 +104,6 @@ def evaluate(model, tst_x, y_t):
 
 def train_attn(config, pos_enc, attn_type):
 
-    val_loss = 1e5
-    best_model = None
-    e = 0
     for head in config["n_heads"]:
         for layer in config["n_layers"]:
             for dr in config["dr"]:
@@ -128,6 +125,10 @@ def train_attn(config, pos_enc, attn_type):
                     num_steps = len(train_x) * params.n_ephocs
                     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
                     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+
+                    val_loss = 1e5
+                    best_model = None
+                    e = 0
 
                     for epoch in range(params.n_ephocs):
                         model.train()
