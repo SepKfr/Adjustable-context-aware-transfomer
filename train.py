@@ -110,8 +110,8 @@ def train_attn(config, checkpoint_dir=None):
                  d_k=8, d_v=8, n_heads=config["n_heads"],
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
-                 pe=config["pos_enc"], attn_type=config["attn_type"],
-                 seq_len=config["seq_len"], seq_len_pred=params.seq_len_pred,
+                 pe="sincos", attn_type='con',
+                 seq_len=seq_len, seq_len_pred=params.seq_len_pred,
                  cutoff=params.cutoff).to(device)
 
     optimizer = Adam(model.parameters(), lr=config["lr"])
@@ -166,11 +166,7 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         "n_heads": tune.choice(n_heads),
         "n_layers": tune.choice(n_layers),
         "lr": tune.choice(lr),
-        "dropout_rate": tune.choice(dropout_rate),
-        "pos_enc": pos_enc,
-        "attn_type": attn_type,
-        "seq_len": seq_len,
-        "seq_len_pred": params.seq_len_pred
+        "dropout_rate": tune.choice(dropout_rate)
     }
 
     result = tune.run(train_attn, config=config)
