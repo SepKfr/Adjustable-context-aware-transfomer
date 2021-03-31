@@ -36,15 +36,15 @@ train_x, train_y = inputs[:, :, :], outputs[:, :, :]
 
 d_model = 32
 dff = 64
-n_heads = [1]
+n_heads = [1, 3]
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = [1]
+n_layers = [1, 3]
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 dropout_rate = 0.5
-lr_s = 0.0001
+lr_s = [0.0001, 0.001]
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -69,9 +69,9 @@ seq_len = int(inputs.shape[1] / 2)
 x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
                               train_x[:, -seq_len:, :], train_y[:, :, :])
 
-x_en_t, x_de_t, y_true_t = x_en[-4:, :, :, :], x_de[-4:, :, :, :], y_true[-4:, :, :, :]
-x_en_v, x_de_v, y_true_v = x_en[-8:-4, :, :, :], x_de[-8:-4, :, :, :], y_true[-8:-4, :, :, :]
-x_en, x_de, y_true = x_en[:-8, :, :, :], x_de[:-8, :, :, :], y_true[:-8, :, :, :]
+x_en_t, x_de_t, y_true_t = x_en[-1:, :, :, :], x_de[-1:, :, :, :], y_true[-1:, :, :, :]
+x_en_v, x_de_v, y_true_v = x_en[-5:-1, :, :, :], x_de[-5:-1, :, :, :], y_true[-5:-1, :, :, :]
+x_en, x_de, y_true = x_en[:-5, :, :, :], x_de[:-5, :, :, :], y_true[:-5, :, :, :]
 
 
 erros = dict()
@@ -115,66 +115,69 @@ def train_attn(pos_enc, attn_type, path):
 
     for head in n_heads:
         for layer in n_layers:
-            d_k = int(d_model / head)
-            model = Attn(src_input_size=input_size,
-                         tgt_input_size=output_size,
-                         d_model=d_model,
-                         d_ff=dff,
-                         d_k=d_k, d_v=d_k, n_heads=head,
-                         n_layers=layer, src_pad_index=0,
-                         tgt_pad_index=0, device=device,
-                         pe=pos_enc, attn_type=attn_type,
-                         seq_len=seq_len, seq_len_pred=params.seq_len_pred,
-                         cutoff=params.cutoff, dr=dropout_rate)
+            for lr in lr_s:
+                d_k = int(d_model / head)
+                model = Attn(src_input_size=input_size,
+                             tgt_input_size=output_size,
+                             d_model=d_model,
+                             d_ff=dff,
+                             d_k=d_k, d_v=d_k, n_heads=head,
+                             n_layers=layer, src_pad_index=0,
+                             tgt_pad_index=0, device=device,
+                             pe=pos_enc, attn_type=attn_type,
+                             seq_len=seq_len, seq_len_pred=params.seq_len_pred,
+                             cutoff=params.cutoff, dr=dropout_rate)
 
-            model = model.to(device)
-            optimizer = Adam(model.parameters(), lr=lr_s)
-            criterion = nn.MSELoss()
-            num_steps = len(train_x) * params.n_ephocs
-            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-            warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+                model = model.to(device)
+                optimizer = Adam(model.parameters(), lr=lr)
+                criterion = nn.MSELoss()
+                num_steps = len(train_x) * params.n_ephocs
+                lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+                warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-            e = 0
-            val_loss_inner = 1e5
-            for epoch in range(params.n_ephocs):
-                model.train()
-                total_loss = 0
-                for j in range(x_en.shape[0]):
-                    output = model(x_en[j].to(device), x_de[j].to(device), training=True)
-                    loss = criterion(y_true[j].to(device), output)
-                    total_loss += loss.item()
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                    lr_scheduler.step()
-                    warmup_scheduler.dampen()
+                e = 0
+                val_loss_inner = 1e5
+                for epoch in range(params.n_ephocs):
+                    model.train()
+                    total_loss = 0
+                    for j in range(x_en.shape[0]):
+                        output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+                        loss = criterion(y_true[j].to(device), output)
+                        total_loss += loss.item()
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
+                        lr_scheduler.step()
+                        warmup_scheduler.dampen()
 
-                print("loss: {:.3f}".format(total_loss))
+                    print("loss: {:.3f}".format(total_loss))
 
-                # validation
-                valid_loss = 0
-                model.eval()
-                for j in range(x_en_v.shape[0]):
+                    # validation
+                    valid_loss = 0
+                    model.eval()
+                    for j in range(x_en_v.shape[0]):
 
-                    output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
-                    loss = criterion(y_true_v[j].to(device), output)
-                    valid_loss += loss.item()
+                        output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
+                        loss = criterion(y_true_v[j].to(device), output)
+                        valid_loss += loss.item()
 
-                if valid_loss < val_loss_inner:
-                    val_loss_inner = valid_loss
-                    if val_loss_inner < val_loss:
-                        config = head, layer
-                        val_loss = val_loss_inner
-                        torch.save({
-                            'model_state_dict': model.state_dict(),
-                            'optimizer_state_dict': optimizer.state_dict()}, path)
-                    e = epoch
-                    print('validation loss:{:.3f}'.format(valid_loss))
+                    if valid_loss < val_loss_inner:
+                        val_loss_inner = valid_loss
+                        if val_loss_inner < val_loss:
+                            config = head, layer, lr
+                            val_loss = val_loss_inner
+                            torch.save({
+                                'model_state_dict': model.state_dict(),
+                                'optimizer_state_dict': optimizer.state_dict()}, path)
+                        e = epoch
+                        print('validation loss:{:.3f}'.format(valid_loss))
 
-                elif epoch - e >= 20:
-                    break
+                    elif epoch - e >= 20:
+                        break
 
-    print("Finished Training")
+    print("Finished Training, best config n_heads:{}, n_layers:{}, lr:{}".format(config[0],
+                                                                                 config[1],
+                                                                                 config[2]))
     return config
 
 
