@@ -207,8 +207,12 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
 
     print('{} : {}'.format(name, rmses.item()))
-    erros[name].append(float("{:.4f}".format(rmses.item())))
-    erros[name].append(float("{:.4f}".format(mapes.item())))
+    if erros[name] is None:
+        erros[name] = float("{:.4f}".format(rmses.item()))
+        erros[name].append(float("{:.4f}".format(mapes.item())))
+    else:
+        erros[name].append(float("{:.4f}".format(rmses.item())))
+        erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
 '''def call_rnn_model(model, name, x_en,
