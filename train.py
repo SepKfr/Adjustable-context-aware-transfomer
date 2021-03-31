@@ -94,13 +94,13 @@ def evaluate(model, tst_x, y_t):
 
     rmse = 0
     mae = 0
-    for b in range(n_b):
+    for i in range(n_b):
         with torch.no_grad():
 
-            otps = model(tst_x[0][b].to(device), tst_x[1][b].to(device), training=False)
+            otps = model(tst_x[0][i].to(device), tst_x[1][i].to(device), training=False)
 
         otps = inverse_transform(otps).to(device)
-        y_t_in = inverse_transform(y_t[b])
+        y_t_in = inverse_transform(y_t[i])
         metrics = Metrics(otps.view(seq_len * b * f), y_t_in.to(device).view(seq_len * b * f))
         rmse += metrics.rmse
         mae += metrics.mae
