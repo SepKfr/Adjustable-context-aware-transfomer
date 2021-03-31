@@ -43,8 +43,8 @@ kernel = 1
 n_layers = [1, 3]
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
-dropout_rate = [0.1, 0.5]
-lr_s = [0.0001, 0.001, 0.01]
+dropout_rate = 0.5
+lr_s = 0.0001
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -110,65 +110,64 @@ def train_attn(pos_enc, attn_type, path):
 
     for head in n_heads:
         for layer in n_layers:
-            for dr in dropout_rate:
-                for lr in lr_s:
-                    model = Attn(src_input_size=input_size,
-                                 tgt_input_size=output_size,
-                                 d_model=d_model,
-                                 d_ff=dff,
-                                 d_k=8, d_v=8, n_heads=head,
-                                 n_layers=layer, src_pad_index=0,
-                                 tgt_pad_index=0, device=device,
-                                 pe=pos_enc, attn_type=attn_type,
-                                 seq_len=seq_len, seq_len_pred=params.seq_len_pred,
-                                 cutoff=params.cutoff, dr=dr)
 
-                    model = model.to(device)
-                    optimizer = Adam(model.parameters(), lr=lr)
-                    criterion = nn.MSELoss()
-                    num_steps = len(train_x) * params.n_ephocs
-                    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-                    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+            model = Attn(src_input_size=input_size,
+                         tgt_input_size=output_size,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=8, d_v=8, n_heads=head,
+                         n_layers=layer, src_pad_index=0,
+                         tgt_pad_index=0, device=device,
+                         pe=pos_enc, attn_type=attn_type,
+                         seq_len=seq_len, seq_len_pred=params.seq_len_pred,
+                         cutoff=params.cutoff, dr=dropout_rate)
 
-                    e = 0
-                    val_loss_inner = 1e5
-                    for epoch in range(params.n_ephocs):
-                        model.train()
-                        total_loss = 0
-                        for j in range(x_en.shape[0]):
-                            output = model(x_en[j].to(device), x_de[j].to(device), training=True)
-                            loss = criterion(y_true[j].to(device), output)
-                            total_loss += loss.item()
-                            optimizer.zero_grad()
-                            loss.backward()
-                            optimizer.step()
-                            lr_scheduler.step()
-                            warmup_scheduler.dampen()
+            model = model.to(device)
+            optimizer = Adam(model.parameters(), lr=lr_s)
+            criterion = nn.MSELoss()
+            num_steps = len(train_x) * params.n_ephocs
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+            warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-                        print("loss: {:.3f}".format(total_loss))
+            e = 0
+            val_loss_inner = 1e5
+            for epoch in range(params.n_ephocs):
+                model.train()
+                total_loss = 0
+                for j in range(x_en.shape[0]):
+                    output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+                    loss = criterion(y_true[j].to(device), output)
+                    total_loss += loss.item()
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+                    lr_scheduler.step()
+                    warmup_scheduler.dampen()
 
-                        # validation
-                        valid_loss = 0
-                        model.eval()
-                        for j in range(x_en_v.shape[0]):
+                print("loss: {:.3f}".format(total_loss))
 
-                            output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
-                            loss = criterion(y_true_v[j].to(device), output)
-                            valid_loss += loss.item()
+                # validation
+                valid_loss = 0
+                model.eval()
+                for j in range(x_en_v.shape[0]):
 
-                        if valid_loss < val_loss_inner:
-                            val_loss_inner = valid_loss
-                            if val_loss_inner < val_loss:
-                                config = head, layer, dr, lr
-                                val_loss = val_loss_inner
-                                torch.save({
-                                    'model_state_dict': model.state_dict(),
-                                    'optimizer_state_dict': optimizer.state_dict()}, path)
-                            e = epoch
-                            print('validation loss:{:.3f}'.format(valid_loss))
+                    output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
+                    loss = criterion(y_true_v[j].to(device), output)
+                    valid_loss += loss.item()
 
-                        elif epoch - e >= 20:
-                            break
+                if valid_loss < val_loss_inner:
+                    val_loss_inner = valid_loss
+                    if val_loss_inner < val_loss:
+                        config = head, layer
+                        val_loss = val_loss_inner
+                        torch.save({
+                            'model_state_dict': model.state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict()}, path)
+                    e = epoch
+                    print('validation loss:{:.3f}'.format(valid_loss))
+
+                elif epoch - e >= 20:
+                    break
 
     print("Finished Training")
     return config
@@ -185,18 +184,19 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
     best_config = train_attn(pos_enc, attn_type, model_path)
-    head, layer, dr, lr = best_config
+    head, layer = best_config
 
     best_trained_model = Attn(src_input_size=input_size,
                               tgt_input_size=output_size,
                               d_model=d_model,
                               d_ff=dff,
                               d_k=8, d_v=8, n_heads=head,
-                              n_layers=n_layers, src_pad_index=0,
+                              n_layers=layer, src_pad_index=0,
                               tgt_pad_index=0, device=device,
                               pe=pos_enc, attn_type=attn_type,
                               seq_len=seq_len, seq_len_pred=params.seq_len_pred,
-                              cutoff=params.cutoff, dr=dr).to(device)
+                              cutoff=params.cutoff, dr=dropout_rate).to(device)
+
     checkpoint = torch.load(model_path)
     best_trained_model.load_state_dict(checkpoint['model_state_dict'])
 
