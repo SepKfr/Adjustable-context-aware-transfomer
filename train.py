@@ -176,6 +176,7 @@ def train_attn(pos_enc, attn_type, path):
 def call_atn_model(name, pos_enc, attn_type, seq_len, params):
 
     path = "models_{}_{}".format(params.site, params.seq_len_pred)
+    erros[name] = list()
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -207,12 +208,8 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
 
     print('{} : {}'.format(name, rmses.item()))
-    if erros[name] is None:
-        erros[name] = float("{:.4f}".format(rmses.item()))
-        erros[name].append(float("{:.4f}".format(mapes.item())))
-    else:
-        erros[name].append(float("{:.4f}".format(rmses.item())))
-        erros[name].append(float("{:.4f}".format(mapes.item())))
+    erros[name].append(float("{:.4f}".format(rmses.item())))
+    erros[name].append(float("{:.4f}".format(mapes.item())))
 
 
 '''def call_rnn_model(model, name, x_en,
