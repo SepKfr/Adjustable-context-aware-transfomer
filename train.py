@@ -36,11 +36,11 @@ train_x, train_y = inputs[:, :, :], outputs[:, :, :]
 
 d_model = 32
 dff = 64
-n_heads = [1, 4]
+n_heads = [4]
 in_channel = inputs.shape[1]
 out_channel = d_model
 kernel = 1
-n_layers = [1, 3]
+n_layers = [1]
 output_size = outputs.shape[2]
 input_size = inputs.shape[2]
 dropout_rate = 0.5
