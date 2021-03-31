@@ -93,14 +93,19 @@ def evaluate(model, tst_x, y_t):
 
     model.eval()
 
-    with torch.no_grad():
+    rmse = 0
+    mae = 0
+    for b in range(n_b):
+        with torch.no_grad():
 
-        otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
+            otps = model(tst_x[0][b].to(device), tst_x[1][b].to(device), training=False)
 
-    otps = inverse_transform(otps).to(device)
-    metrics = Metrics(otps.view(seq_len * b * f * n_b), y_t.to(device).view(seq_len * b * f * n_b))
+        otps = inverse_transform(otps).to(device)
+        metrics = Metrics(otps.view(seq_len * b * f), y_t[b].to(device).view(seq_len * b * f))
+        rmse += metrics.rmse
+        mae += metrics.mae
 
-    return metrics.rmse, metrics.mae, otps
+    return rmse, mae
 
 
 def train_attn(pos_enc, attn_type, path):
@@ -182,7 +187,6 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
         os.makedirs(path)
 
     model_path = os.path.join(path, name)
-    path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
 
     best_config = train_attn(pos_enc, attn_type, model_path)
     head, layer = best_config
@@ -202,15 +206,11 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
     checkpoint = torch.load(model_path)
     best_trained_model.load_state_dict(checkpoint['model_state_dict'])
 
-    if not os.path.exists(path_to_pred):
-        os.makedirs(path_to_pred)
+    rmses, mapes = evaluate(best_trained_model, [x_en_t, x_de_t], y_true_t)
 
-    rmses, mapes, predictions = evaluate(best_trained_model, [x_en_t, x_de_t], y_true_t)
-    pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
-
-    print('{} : {}'.format(name, rmses.item()))
-    erros[name].append(float("{:.4f}".format(rmses.item())))
-    erros[name].append(float("{:.4f}".format(mapes.item())))
+    print('{} : {}'.format(name, rmses))
+    erros[name].append(float("{:.4f}".format(rmses)))
+    erros[name].append(float("{:.4f}".format(mapes)))
 
 
 '''def call_rnn_model(model, name, x_en,
