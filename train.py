@@ -70,8 +70,8 @@ x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
                               train_x[:, -seq_len:, :], train_y[:, :, :])
 
 x_en_t, x_de_t, y_true_t = x_en[-1, :, :, :], x_de[-1, :, :, :], y_true[-1, :, :, :]
-x_en_v, x_de_v, y_true_v = x_en[-2:-1, :, :, :], x_de[-2:-1, :, :, :], y_true[-2:-1, :, :, :]
-x_en, x_de, y_true = x_en[:-2, :, :, :], x_de[:-2, :, :, :], y_true[:-2, :, :, :]
+x_en_v, x_de_v, y_true_v = x_en[-8:-4, :, :, :], x_de[-8:-4, :, :, :], y_true[-8:-4, :, :, :]
+x_en, x_de, y_true = x_en[:-4, :, :, :], x_de[:-4, :, :, :], y_true[:-4, :, :, :]
 
 
 erros = dict()
