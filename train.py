@@ -97,7 +97,7 @@ def evaluate(model, tst_x, y_t):
 
         otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
 
-    otps = inverse_transform(otps)
+    otps = inverse_transform(otps).to(device)
     metrics = Metrics(otps.view(seq_len * b * f), y_t.to(device).view(seq_len * b * f))
 
     return metrics.rmse, metrics.mae, otps
