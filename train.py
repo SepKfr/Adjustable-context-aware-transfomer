@@ -88,7 +88,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def evaluate(model, tst_x, y_t):
 
-    y_t = inverse_transform(y_t)
     n_b, b, seq_len, f = y_t.shape
 
     model.eval()
@@ -101,7 +100,8 @@ def evaluate(model, tst_x, y_t):
             otps = model(tst_x[0][b].to(device), tst_x[1][b].to(device), training=False)
 
         otps = inverse_transform(otps).to(device)
-        metrics = Metrics(otps.view(seq_len * b * f), y_t[b].to(device).view(seq_len * b * f))
+        y_t_in = inverse_transform(y_t[b])
+        metrics = Metrics(otps.view(seq_len * b * f), y_t_in.to(device).view(seq_len * b * f))
         rmse += metrics.rmse
         mae += metrics.mae
 
