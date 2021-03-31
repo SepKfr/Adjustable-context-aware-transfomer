@@ -19,7 +19,7 @@ def inverse_transform(data):
     b_n, n, d, hw = data.shape
     inv_data = torch.zeros(data.shape)
 
-    for b in b_n:
+    for b in range(b_n):
         for i, scalers_per_site in enumerate(scalers):
             f, scaler = list(scalers_per_site.scalers.items())[1]
             dat = data[b, :, :, 0]
