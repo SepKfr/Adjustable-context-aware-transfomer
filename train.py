@@ -28,7 +28,7 @@ params = parser.parse_args()
 inputs = pickle.load(open("inputs.p", "rb"))
 outputs = pickle.load(open("outputs.p", "rb"))
 
-max_len = min(len(inputs), 512)
+max_len = min(len(inputs), 1024)
 inputs = inputs[-max_len:, :, :]
 outputs = outputs[-max_len:, :]
 train_x, train_y = inputs[:, :, :], outputs[:, :, :]
@@ -243,10 +243,10 @@ def main():
 
     if params.server == 'c01':
 
-        call_atn_model('attn_con_hist', 'sincos', 'con',
+        call_atn_model('attn_hist', 'sincos', 'attn',
                        seq_len, params)
 
-        call_atn_model('attn_hist', 'sincos', 'attn',
+        call_atn_model('attn_con_hist', 'sincos', 'con',
                        seq_len, params)
 
         call_atn_model('attn_con_conv_hist', 'sincos', 'attn_conv',
