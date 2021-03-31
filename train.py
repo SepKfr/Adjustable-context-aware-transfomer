@@ -69,9 +69,9 @@ seq_len = int(inputs.shape[1] / 2)
 x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
                               train_x[:, -seq_len:, :], train_y[:, :, :])
 
-x_en_t, x_de_t, y_true_t = x_en[-1, :, :, :], x_de[-1, :, :, :], y_true[-1, :, :, :]
+x_en_t, x_de_t, y_true_t = x_en[-4:, :, :, :], x_de[-4:, :, :, :], y_true[-4:, :, :, :]
 x_en_v, x_de_v, y_true_v = x_en[-8:-4, :, :, :], x_de[-8:-4, :, :, :], y_true[-8:-4, :, :, :]
-x_en, x_de, y_true = x_en[:-4, :, :, :], x_de[:-4, :, :, :], y_true[:-4, :, :, :]
+x_en, x_de, y_true = x_en[:-8, :, :, :], x_de[:-8, :, :, :], y_true[:-8, :, :, :]
 
 
 erros = dict()
@@ -89,7 +89,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def evaluate(model, tst_x, y_t):
 
     y_t = inverse_transform(y_t)
-    b, seq_len, f = y_t.shape
+    n_b, b, seq_len, f = y_t.shape
 
     model.eval()
 
@@ -98,7 +98,7 @@ def evaluate(model, tst_x, y_t):
         otps = model(tst_x[0].to(device), tst_x[1].to(device), training=False)
 
     otps = inverse_transform(otps).to(device)
-    metrics = Metrics(otps.view(seq_len * b * f), y_t.to(device).view(seq_len * b * f))
+    metrics = Metrics(otps.view(seq_len * b * f * n_b), y_t.to(device).view(seq_len * b * f * n_b))
 
     return metrics.rmse, metrics.mae, otps
 
