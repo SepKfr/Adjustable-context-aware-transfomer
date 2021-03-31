@@ -186,12 +186,13 @@ def call_atn_model(name, pos_enc, attn_type, seq_len, params):
 
     best_config = train_attn(pos_enc, attn_type, model_path)
     head, layer = best_config
+    d_k = int(d_model / head)
 
     best_trained_model = Attn(src_input_size=input_size,
                               tgt_input_size=output_size,
                               d_model=d_model,
                               d_ff=dff,
-                              d_k=8, d_v=8, n_heads=head,
+                              d_k=d_k, d_v=d_k, n_heads=head,
                               n_layers=layer, src_pad_index=0,
                               tgt_pad_index=0, device=device,
                               pe=pos_enc, attn_type=attn_type,
