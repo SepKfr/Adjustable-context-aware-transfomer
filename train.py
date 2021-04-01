@@ -51,16 +51,17 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
     for epoch in range(args.n_epochs):
+
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            optimizer.zero_grad()
             output = model(train_en[batch_id], train_de[batch_id], training=True)
             loss = criterion(output, train_y[batch_id])
-            total_loss += loss.item()
             loss.backward()
             optimizer.step()
-
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
+            total_loss += loss.item()
 
         Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
@@ -82,7 +83,7 @@ def main():
     task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=36)
+    parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=16)
     parser.add_argument("--d_model", type=int, default=32)
