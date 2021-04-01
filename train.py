@@ -115,9 +115,6 @@ def main():
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
 
-    inputs = inputs.to(device)
-    outputs = outputs.to(device)
-
     data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
                                   inputs[:, -seq_len:, :], outputs[:, :, :])
 
@@ -136,7 +133,8 @@ def main():
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                  cutoff=args.cutoff, dr=args.dr).to(device)
 
-    train(args, model, train_en, train_de, train_y, test_en, test_de, test_y)
+    train(args, model, train_en.to(device), train_de.to(device),
+          train_y.to(device), test_en.to(device), test_de.to(device), test_y.to(device))
 
     torch.save(model.state_dict(), os.path.join(path, args.name))
 
