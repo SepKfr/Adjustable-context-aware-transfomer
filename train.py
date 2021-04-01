@@ -131,7 +131,7 @@ def train_attn(pos_enc, attn_type, path):
                 model = model.to(device)
                 optimizer = Adam(model.parameters(), lr=lr)
                 criterion = nn.MSELoss()
-                num_steps = len(train_x) * params.n_ephocs
+                num_steps = len(train_x) * params.n_epochs
                 lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
                 warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
