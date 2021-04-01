@@ -137,7 +137,7 @@ def main():
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                  cutoff=args.cutoff, dr=args.dr).to(device)
 
-    train(model, train_en, train_de, train_y, test_en, test_de, test_y)
+    train(args, model, train_en, train_de, train_y, test_en, test_de, test_y)
 
     torch.save(model.state_dict(), os.path.join(path, args.name))
 
