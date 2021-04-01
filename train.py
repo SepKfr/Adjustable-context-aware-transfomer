@@ -143,6 +143,7 @@ def train_attn(pos_enc, attn_type, path):
                     for j in range(x_en.shape[0]):
                         output = model(x_en[j].to(device), x_de[j].to(device), training=True)
                         loss = criterion(y_true[j].to(device), output)
+                        print(loss.grad)
                         total_loss += loss.item()
                         optimizer.zero_grad()
                         loss.backward()
