@@ -54,13 +54,13 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            output = model(train_en[batch_id].to(device), train_de[batch_id].to(device), training=True)
-            loss = criterion(train_y[batch_id].to(device), output)
+            optimizer.zero_grad()
+            output = model(train_en[batch_id], train_de[batch_id], training=True)
+            loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
+
 
         Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
@@ -114,6 +114,9 @@ def main():
     inputs = inputs[-max_len:, :, :]
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
+
+    inputs = inputs.to(device)
+    outputs = outputs.to(device)
 
     data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
                                   inputs[:, -seq_len:, :], outputs[:, :, :])
