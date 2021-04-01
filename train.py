@@ -50,7 +50,7 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    for epoch in args.n_epochs:
+    for epoch in range(args.n_epochs):
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
