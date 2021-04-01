@@ -59,8 +59,8 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             total_loss += loss.item()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
+            '''lr_scheduler.step()
+            warmup_scheduler.dampen()'''
 
         Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
