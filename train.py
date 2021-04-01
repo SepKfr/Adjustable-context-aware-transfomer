@@ -115,18 +115,14 @@ def main():
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
 
-    train_len = int(max_len * 0.95)
-    train_x, train_y = inputs[:train_len, :, :], outputs[:train_len, :, :]
-    test_x, test_y = inputs[train_len:, :, :], outputs[train_len:, :, :]
+    data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
+                                  inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
-                                  train_x[:, -seq_len:, :], train_y[:, :, :])
-
-    test_en, test_de, test_y = batching(args.batch_size, test_x[:, :-seq_len, :],
-                                      test_x[:, -seq_len:, :], test_y[:, :, :])
+    test_en, test_de, test_y = data_en[-4:, :, :, :], data_de[-4:, :, :, :], data_y[-4:, :, :, :]
+    train_en, train_de, train_y = data_en[:-4, :, :, :], data_de[:-4, :, :, :], data_y[:-4, :, :, :]
 
     d_k = int(args.d_model / args.n_heads)
-    model = Attn(src_input_size=train_x.shape[2],
+    model = Attn(src_input_size=train_en.shape[3],
                  tgt_input_size=train_y.shape[3],
                  d_model=args.d_model,
                  d_ff=args.dff,
