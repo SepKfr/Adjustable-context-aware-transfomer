@@ -50,7 +50,6 @@ def train(model, criterion, optimizer, lr_scheduler,
     for batch_id in range(train_en.shape[0]):
         output = model(train_en[batch_id].to(device), train_de[batch_id].to(device), training=True)
         loss = criterion(train_y[batch_id].to(device), output)
-        print(loss.retain_grad())
         total_loss += loss.item()
         loss.backward()
         optimizer.step()
