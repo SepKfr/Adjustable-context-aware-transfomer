@@ -68,7 +68,7 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
         Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
-        '''model.eval()
+        model.eval()
         test_loss = 0
         for j in range(test_en.shape[0]):
             output = model(test_en[j].to(device), test_de[j].to(device), training=True)
@@ -77,7 +77,7 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
 
         test_loss = test_loss / test_en.shape[0]
         Logger.current_logger().report_scalar("test", "loss", iteration=epoch, value=test_loss)
-        print("Average loss: {:.3f}".format(test_loss))'''
+        print("Average loss: {:.3f}".format(test_loss))
 
 
 def main():
