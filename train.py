@@ -137,7 +137,7 @@ def main():
 
     test_en, test_de, test_y = data_en[-4:, :, :, :], data_de[-4:, :, :, :], data_y[-4:, :, :, :]
     valid_en, valid_de, valid_y = data_en[-8:-4, :, :, :], data_de[-8:-4, :, :, :], data_y[-8:-4, :, :, :]
-    train_en, train_de, train_y = data_en[:-4, :, :, :], data_de[:-4, :, :, :], data_y[:-4, :, :, :]
+    train_en, train_de, train_y = data_en[:-8, :, :, :], data_de[:-8, :, :, :], data_y[:-8, :, :, :]
     criterion = nn.MSELoss()
 
     val_loss = 1e5
