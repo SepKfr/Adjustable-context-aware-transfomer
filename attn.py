@@ -73,7 +73,7 @@ class GELU(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model, dropout, device, max_seq_len=5000):
+    def __init__(self, d_model, dropout, device, max_seq_len=500):
         super(PositionalEncoding, self).__init__()
 
         self.d_model = d_model
