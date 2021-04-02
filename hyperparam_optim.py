@@ -58,7 +58,7 @@ def run_hyperparam_optim(project_name, task_name, task_id):
         max_iteration_per_job=10000
     )
 
-    an_optimizer.set_report_period(2.2)
+    an_optimizer.set_report_period(1.0)
 
     an_optimizer.start(job_complete_callback=job_complete_callback)
 
