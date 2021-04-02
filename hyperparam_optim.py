@@ -53,7 +53,7 @@ def run_hyperparam_optim(project_name, task_name, task_id):
         optimizer_class=search_strategy,
         execution_queue='default',
         time_limit_per_job=60.,
-        total_max_job=10,
+        total_max_jobs=10,
         min_iteration_per_job=100,
         max_iteration_per_job=10000
     )
