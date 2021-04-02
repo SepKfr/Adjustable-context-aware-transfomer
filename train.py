@@ -127,7 +127,7 @@ def main():
                'server': args.server}
     configs = task.connect(configs)
 
-    path = "models_{}_{}".format(configs.get('site'), configs.seq_len_pred)
+    path = "models_{}_{}".format(configs.get('site'), configs.get("seq_len_pred"))
     if not os.path.exists(path):
         os.makedirs(path)
 
