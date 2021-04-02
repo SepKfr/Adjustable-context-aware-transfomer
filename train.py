@@ -32,16 +32,6 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
-seq_len = int(inputs.shape[1] / 2)
-
-x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
-                              train_x[:, -seq_len:, :], train_y[:, :, :])
-
-x_en_t, x_de_t, y_true_t = x_en[-4:, :, :, :], x_de[-4:, :, :, :], y_true[-4:, :, :, :]
-x_en_v, x_de_v, y_true_v = x_en[-8:-4, :, :, :], x_de[-8:-4, :, :, :], y_true[-8:-4, :, :, :]
-x_en, x_de, y_true = x_en[:-8, :, :, :], x_de[:-8, :, :, :], y_true[:-8, :, :, :]
-
-
 erros = dict()
 
 if torch.cuda.is_available():
