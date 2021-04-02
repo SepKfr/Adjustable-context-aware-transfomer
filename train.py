@@ -12,7 +12,39 @@ import argparse
 import json
 import os
 import pytorch_warmup as warmup
-from clearml import Task, Logger
+import datetime
+
+
+parser = argparse.ArgumentParser(description="preprocess argument parser")
+parser.add_argument("--seq_len_pred", type=int, default=36)
+parser.add_argument("--batch_size", type=int, default=16)
+parser.add_argument("--cutoff", type=int, default=16)
+parser.add_argument("--n_epochs", type=int, default=300)
+parser.add_argument("--run_num", type=str, default=1)
+parser.add_argument("--site", type=str, default="WHB")
+parser.add_argument("--server", type=str, default="c01")
+params = parser.parse_args()
+
+inputs = pickle.load(open("inputs.p", "rb"))
+outputs = pickle.load(open("outputs.p", "rb"))
+
+max_len = min(len(inputs), 1024)
+inputs = inputs[-max_len:, :, :]
+outputs = outputs[-max_len:, :]
+train_x, train_y = inputs[:, :, :], outputs[:, :, :]
+
+
+d_model = 32
+dff = 64
+n_heads = [1]
+in_channel = inputs.shape[1]
+out_channel = d_model
+kernel = 1
+n_layers = [1]
+output_size = outputs.shape[2]
+input_size = inputs.shape[2]
+dropout_rate = 0.5
+lr_s = 0.0001
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -32,6 +64,16 @@ def batching(batch_size, x_en, x_de, y_t):
     return X_en, X_de, Y_t
 
 
+seq_len = int(inputs.shape[1] / 2)
+
+x_en, x_de, y_true = batching(params.batch_size, train_x[:, :-seq_len, :],
+                              train_x[:, -seq_len:, :], train_y[:, :, :])
+
+x_en_t, x_de_t, y_true_t = x_en[-4:, :, :, :], x_de[-4:, :, :, :], y_true[-4:, :, :, :]
+x_en_v, x_de_v, y_true_v = x_en[-8:-4, :, :, :], x_de[-8:-4, :, :, :], y_true[-8:-4, :, :, :]
+x_en, x_de, y_true = x_en[:-8, :, :, :], x_de[:-8, :, :, :], y_true[:-8, :, :, :]
+
+
 erros = dict()
 
 if torch.cuda.is_available():
@@ -41,149 +83,230 @@ else:
     device = torch.device("cpu")
     print("running on CPU")
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, lr, val_loss,
-          config, best_config, path, criterion):
 
-    val_inner_loss = 1e5
-    e = 0
-    optimizer = Adam(model.parameters(), lr=lr)
-    num_steps = len(train_en) * args.n_epochs
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+def evaluate(model, tst_x, y_t):
 
-    for epoch in range(args.n_epochs):
+    n_b, b, seq_len, f = y_t.shape
 
-        model.train()
-        total_loss = 0
-        for batch_id in range(train_en.shape[0]):
-            output = model(train_en[batch_id], train_de[batch_id], training=True)
-            loss = criterion(output, train_y[batch_id])
-            total_loss += loss.item()
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
-            total_loss += loss.item()
+    model.eval()
 
-        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+    rmse = 0
+    mae = 0
+    for i in range(n_b):
+        with torch.no_grad():
 
-        model.eval()
-        test_loss = 0
-        for j in range(test_en.shape[0]):
-            output = model(test_en[j].to(device), test_de[j].to(device), training=True)
-            loss = criterion(test_y[j].to(device), output)
-            test_loss += loss.item()
+            otps = model(tst_x[0][i].to(device), tst_x[1][i].to(device), training=False)
 
-        test_loss = test_loss / test_en.shape[0]
+        otps = inverse_transform(otps).to(device)
+        y_t_in = inverse_transform(y_t[i])
+        metrics = Metrics(otps.view(seq_len * b * f), y_t_in.to(device).view(seq_len * b * f))
+        rmse += metrics.rmse
+        mae += metrics.mae
 
-        if test_loss < val_inner_loss:
-            val_inner_loss = test_loss
-            if val_inner_loss < val_loss:
-                best_config = config
-                torch.save(model.state_dict(), os.path.join(path, args.name))
-            e = epoch
+    return rmse, mae
 
-        elif epoch - e > 20:
-            break
 
-        print("Average loss: {:.3f}".format(test_loss))
-        return best_config, val_loss
+def train_attn(pos_enc, attn_type, path):
 
-def main():
+    val_loss = 1e5
+    config = None
 
-    #task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
+    for head in n_heads:
+        for layer in n_layers:
+            d_k = int(d_model / head)
+            model = Attn(src_input_size=input_size,
+                         tgt_input_size=output_size,
+                         d_model=d_model,
+                         d_ff=dff,
+                         d_k=d_k, d_v=d_k, n_heads=head,
+                         n_layers=layer, src_pad_index=0,
+                         tgt_pad_index=0, device=device,
+                         pe=pos_enc, attn_type=attn_type,
+                         seq_len=seq_len, seq_len_pred=params.seq_len_pred,
+                         cutoff=params.cutoff, dr=dropout_rate)
 
-    parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=64)
-    parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--cutoff", type=int, default=16)
-    parser.add_argument("--d_model", type=int, default=32)
-    parser.add_argument("--dff", type=int, default=64)
-    parser.add_argument("--n_heads", type=list, default=[1, 4])
-    parser.add_argument("--n_layers", type=list, default=[1, 3])
-    parser.add_argument("--kernel", type=int, default=1)
-    parser.add_argument("--out_channel", type=int, default=32)
-    parser.add_argument("--dr", type=list, default=[0.1, 0.5])
-    parser.add_argument("--lr", type=list, default=[0.0001, 0.001, 0.01])
-    parser.add_argument("--n_epochs", type=int, default=100)
-    parser.add_argument("--run_num", type=int, default=1)
-    parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='attn')
-    parser.add_argument("--name", type=str, default='attn')
-    parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--server", type=str, default="c01")
-    args = parser.parse_args()
-    #args = task.connect(args)
+            model = model.to(device)
+            optimizer = Adam(model.parameters(), lr=lr_s)
+            criterion = nn.MSELoss()
+            num_steps = len(train_x) * params.n_epochs
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+            warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    path = "models_{}_{}".format(args.site, args.seq_len_pred)
+            e = 0
+            val_loss_inner = 1e5
+            for epoch in range(params.n_epochs):
+                model.train()
+                total_loss = 0
+                for j in range(x_en.shape[0]):
+                    output = model(x_en[j].to(device), x_de[j].to(device), training=True)
+                    loss = criterion(y_true[j].to(device), output)
+                    total_loss += loss.item()
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+                    lr_scheduler.step()
+                    warmup_scheduler.dampen()
+
+                print("loss: {:.3f}".format(total_loss))
+
+                # validation
+                valid_loss = 0
+                model.eval()
+                for j in range(x_en_v.shape[0]):
+
+                    output = model(x_en_v[j].to(device), x_de_v[j].to(device), training=True)
+                    loss = criterion(y_true_v[j].to(device), output)
+                    valid_loss += loss.item()
+
+                if valid_loss < val_loss_inner:
+                    val_loss_inner = valid_loss
+                    if val_loss_inner < val_loss:
+                        config = head, layer
+                        val_loss = val_loss_inner
+                        torch.save({
+                            'model_state_dict': model.state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict()}, path)
+                    e = epoch
+                    print('validation loss:{:.3f}'.format(valid_loss))
+
+                elif epoch - e >= 20:
+                    break
+
+    print("Finished Training")
+    return config
+
+
+def call_atn_model(name, pos_enc, attn_type, seq_len, params):
+
+    path = "models_{}_{}".format(params.site, params.seq_len_pred)
+    erros[name] = list()
+
     if not os.path.exists(path):
         os.makedirs(path)
 
-    inputs = pickle.load(open("inputs.p", "rb"))
-    outputs = pickle.load(open("outputs.p", "rb"))
+    model_path = os.path.join(path, name)
 
-    max_len = min(len(inputs), 1024)
-    inputs = inputs[-max_len:, :, :]
-    outputs = outputs[-max_len:, :]
-    seq_len = int(inputs.shape[1] / 2)
+    best_config = train_attn(pos_enc, attn_type, model_path)
+    head, layer = best_config
+    d_k = int(d_model / head)
 
-    data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
-                                  inputs[:, -seq_len:, :], outputs[:, :, :])
+    best_trained_model = Attn(src_input_size=input_size,
+                              tgt_input_size=output_size,
+                              d_model=d_model,
+                              d_ff=dff,
+                              d_k=d_k, d_v=d_k, n_heads=head,
+                              n_layers=layer, src_pad_index=0,
+                              tgt_pad_index=0, device=device,
+                              pe=pos_enc, attn_type=attn_type,
+                              seq_len=seq_len, seq_len_pred=params.seq_len_pred,
+                              cutoff=params.cutoff, dr=dropout_rate).to(device)
 
-    test_en, test_de, test_y = data_en[-4:, :, :, :], data_de[-4:, :, :, :], data_y[-4:, :, :, :]
-    valid_en, valid_de, valid_y = data_en[-8:-4, :, :, :], data_de[-8:-4, :, :, :], data_y[-8:-4, :, :, :]
-    train_en, train_de, train_y = data_en[:-4, :, :, :], data_de[:-4, :, :, :], data_y[:-4, :, :, :]
-    criterion = nn.MSELoss()
+    checkpoint = torch.load(model_path)
+    best_trained_model.load_state_dict(checkpoint['model_state_dict'])
 
-    val_loss = 1e5
-    best_config = None
-    for layers in args.n_layers:
-        for heads in args.n_heads:
-            for lr in args.lr:
-                for dr in args.dr:
-                    d_k = int(args.d_model / heads)
-                    model = Attn(src_input_size=train_en.shape[3],
-                                 tgt_input_size=train_y.shape[3],
-                                 d_model=args.d_model,
-                                 d_ff=args.dff,
-                                 d_k=d_k, d_v=d_k, n_heads=heads,
-                                 n_layers=layers, src_pad_index=0,
-                                 tgt_pad_index=0, device=device,
-                                 pe=args.pos_enc, attn_type=args.attn_type,
-                                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                                 cutoff=args.cutoff, dr=dr).to(device)
-                    config = layers, heads, lr, dr
-                    best_config, val_loss = train(args, model, train_en.to(device), train_de.to(device),
-                          train_y.to(device), valid_en.to(device), valid_de.to(device), valid_y.to(device)
-                          , lr, val_loss, config, best_config, path, criterion)
+    rmses, mapes = evaluate(best_trained_model, [x_en_t, x_de_t], y_true_t)
 
-    layers, heads, lr, dr = best_config
-    d_k = int(args.d_model / heads)
+    print('{} : {}'.format(name, rmses))
+    erros[name].append(float("{:.4f}".format(rmses)))
+    erros[name].append(float("{:.4f}".format(mapes)))
 
-    model = Attn(src_input_size=train_en.shape[3],
-                 tgt_input_size=train_y.shape[3],
-                 d_model=args.d_model,
-                 d_ff=args.dff,
-                 d_k=d_k, d_v=d_k, n_heads=args.n_heads,
-                 n_layers=layers, src_pad_index=0,
-                 tgt_pad_index=0, device=device,
-                 pe=args.pos_enc, attn_type=args.attn_type,
-                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=args.cutoff, dr=dr).to(device)
-    model.load_state_dict(torch.load(os.path.join(path, args.name)))
-    model.eval()
 
-    test_loss = 0
-    for j in range(test_en.shape[0]):
-        output = model(test_en[j].to(device), test_de[j].to(device), training=True)
-        loss = criterion(test_y[j].to(device), output)
-        test_loss += loss.item()
+'''def call_rnn_model(model, name, x_en,
+                   x_de, x_en_v, x_de_v,
+                   x_en_t, x_de_t,
+                   y_true, y_true_t, params):
 
-    erros[args.name] = "{:.3f}".format(test_loss / test_en.shape[0])
-    error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
+    model = run(model, name, [x_en, x_de],
+                          y_true, params)
+
+    path = "models_{}_{}".format(params.site, params.seq_len_pred)
+    path_to_pred = "predictions_{}_{}".format(params.site, params.seq_len_pred)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    if not os.path.exists(path_to_pred):
+        os.makedirs(path_to_pred)
+
+    torch.save(model, '{}/{}_{}'.format(path, name, params.run_num))
+
+    rmses, mapes, predictions = evaluate(model, [x_en_t, x_de_t], y_true_t)
+    pickle.dump(predictions, open('{}/{}_{}'.format(path_to_pred, name, params.run_num), "wb"))
+    print('{} : {}'.format(name, rmses.item()))
+    erros[name].append(float("{:.4f}".format(rmses.item())))
+    erros[name].append(float("{:.4f}".format(mapes.item())))'''
+
+
+def main():
+
+    if params.server == 'c01':
+
+        call_atn_model('attn_hist', 'sincos', 'attn',
+                       seq_len, params)
+
+        call_atn_model('attn_con_hist', 'sincos', 'con',
+                       seq_len, params)
+
+        call_atn_model('attn_con_conv_hist', 'sincos', 'attn_conv',
+                       seq_len, params)
+
+    elif params.server == 'jelly':
+        '''cnn = CNN(input_size=input_size,
+                  output_size=output_size,
+                  out_channel=d_model,
+                  kernel=kernel,
+                  n_layers=n_layers,
+                  seq_len=seq_len,
+                  seq_pred_len=params.seq_len_pred)
+
+        if torch.cuda.device_count() > 1:
+            cnn = nn.DataParallel(cnn)
+        cnn.to(device)
+
+        call_rnn_model(cnn, "cnn_hist", x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params)
+
+        lstm = RNN(n_layers=n_layers,
+                   hidden_size=d_model,
+                   input_size=input_size,
+                   output_size=output_size,
+                   rnn_type="LSTM",
+                   seq_len=seq_len,
+                   seq_pred_len=params.seq_len_pred
+                   )
+
+        if torch.cuda.device_count() > 1:
+            lstm = nn.DataParallel(lstm)
+        lstm.to(device)
+
+        call_rnn_model(lstm, "lstm_hist", x_en, x_de
+                       ,x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params)
+
+        gru = RNN(n_layers=n_layers,
+                  hidden_size=d_model,
+                  input_size=input_size,
+                  output_size=output_size,
+                  rnn_type="GRU",
+                  seq_len=seq_len,
+                  seq_pred_len=params.seq_len_pred
+                  )
+
+        if torch.cuda.device_count() > 1:
+            gru = nn.DataParallel(gru)
+        gru.to(device)
+
+        call_rnn_model(gru, "gru_hist", x_en, x_de,
+                       x_en_v, x_de_v, x_en_t,
+                       x_de_t, y_true,
+                       y_true_t, params)'''
+
+    error_path = "errors_{}_{}.json".format(params.site, params.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
