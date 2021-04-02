@@ -112,7 +112,7 @@ def main():
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='attn')
-    parser.add_argument("--model_name", type=str, default='attn')
+    parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     args = parser.parse_args()
