@@ -84,7 +84,10 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
+            e = i
 
+        elif i - e > 20:
+            break
         if i % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
     return best_config, val_loss
