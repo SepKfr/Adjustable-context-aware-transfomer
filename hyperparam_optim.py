@@ -41,13 +41,13 @@ def run_hyperparam_optim(project_name, task_name, task_id):
     an_optimizer = HyperParameterOptimizer(
         base_task_id=args['template_task_id'],
         hyper_parameters=[
-            DiscreteParameterRange('n_heads', [1, 4]),
-            DiscreteParameterRange('n_layers', [1, 3]),
-            DiscreteParameterRange('lr', [0.0001, 0.001, 0.01]),
-            DiscreteParameterRange('dr', [0.1, 0.5])
+            DiscreteParameterRange('args/n_heads', [1, 4]),
+            DiscreteParameterRange('args/n_layers', [1, 3]),
+            DiscreteParameterRange('args/lr', [0.0001, 0.001, 0.01]),
+            DiscreteParameterRange('args.dr', [0.1, 0.5])
         ],
-        objective_metric_title='epoch_MSELoss',
-        objective_metric_series='epoch_MSELoss',
+        objective_metric_title='loss',
+        objective_metric_series='loss',
         objective_metric_sign='max',
         max_number_of_concurrent_tasks=2,
         optimizer_class=search_strategy,
