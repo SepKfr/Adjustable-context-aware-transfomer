@@ -53,7 +53,7 @@ def train(args, model, train_en, train_de, train_y,
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-    for epoch in range(args.n_epochs):
+    for i in range(args.n_epochs):
 
         model.train()
         total_loss = 0
@@ -67,7 +67,7 @@ def train(args, model, train_en, train_de, train_y,
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
-        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        print("Train epoch: {}, loss: {:.4f}".format(i, total_loss))
 
         model.eval()
         test_loss = 0
@@ -83,13 +83,13 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
-            e = epoch
+            e = i
 
-        elif epoch - e > 20:
+        elif i - e > 20:
             break
 
         print("Average loss: {:.3f}".format(test_loss))
-        return best_config, val_loss
+    return best_config, val_loss
 
 def main():
 
@@ -106,7 +106,7 @@ def main():
     parser.add_argument("--kernel", type=int, default=1)
     parser.add_argument("--out_channel", type=int, default=32)
     parser.add_argument("--dr", type=list, default=[0.1, 0.5])
-    parser.add_argument("--lr", type=list, default=[0.0001, 0.001, 0.01])
+    parser.add_argument("--lr", type=list, default=[0.0001, 0.001])
     parser.add_argument("--n_epochs", type=int, default=100)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
@@ -155,6 +155,7 @@ def main():
                                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                                  cutoff=args.cutoff, dr=dr).to(device)
                     config = layers, heads, lr, dr
+
                     best_config, val_loss = train(args, model, train_en.to(device), train_de.to(device),
                           train_y.to(device), valid_en.to(device), valid_de.to(device), valid_y.to(device)
                           , lr, val_loss, config, best_config, path, criterion)
@@ -166,7 +167,7 @@ def main():
                  tgt_input_size=train_y.shape[3],
                  d_model=args.d_model,
                  d_ff=args.dff,
-                 d_k=d_k, d_v=d_k, n_heads=args.n_heads,
+                 d_k=d_k, d_v=d_k, n_heads=heads,
                  n_layers=layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
@@ -181,20 +182,12 @@ def main():
         loss = criterion(test_y[j].to(device), output)
         test_loss += loss.item()
 
-    erros[args.name] = "{:.3f}".format(test_loss / test_en.shape[0])
+    erros[args.name] = list()
+    erros[args.name].append("{:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
-        with open(error_path) as json_file:
-            json_dat = json.load(json_file)
 
-        for key, value in erros.items():
-            json_dat[key].append(value[0])
-            json_dat[key].append(value[1])
-
-        with open(error_path, "w") as json_file:
-            json.dump(json_dat, json_file)
-    else:
         with open(error_path, "w") as json_file:
             json.dump(erros, json_file)
 
