@@ -65,8 +65,9 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             warmup_scheduler.dampen()
             total_loss += loss.item()
 
-        Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
-        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        if epoch % 20 == 0:
+            Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
+            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
         test_loss = 0
@@ -76,13 +77,14 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             test_loss += loss.item()
 
         test_loss = test_loss / test_en.shape[0]
-        Logger.current_logger().report_scalar("test", "loss", iteration=epoch, value=test_loss)
-        print("Average loss: {:.3f}".format(test_loss))
+        if epoch % 20 == 0:
+            Logger.current_logger().report_scalar("test", "loss", iteration=epoch, value=test_loss)
+            print("Average loss: {:.3f}".format(test_loss))
 
 
 def main():
 
-    task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
+    task = Task.init(project_name='watershed', task_name='watershed training')
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=64)
@@ -140,6 +142,8 @@ def main():
           train_y.to(device), test_en.to(device), test_de.to(device), test_y.to(device))
 
     torch.save(model.state_dict(), os.path.join(path, args.name))
+
+    print('Task ID number is: {}'.format(task.id))
 
 
 if __name__ == '__main__':
