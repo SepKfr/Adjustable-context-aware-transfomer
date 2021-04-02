@@ -46,7 +46,7 @@ def run_hyperparam_optim(project_name, task_name, task_id):
             DiscreteParameterRange('lr', values=[0.0001, 0.001, 0.01]),
             DiscreteParameterRange('dr', values=[0.1, 0.5])
         ],
-        objective_metric_title='loss',
+        objective_metric_title='evaluate',
         objective_metric_series='loss',
         objective_metric_sign='max',
         max_number_of_concurrent_tasks=2,
