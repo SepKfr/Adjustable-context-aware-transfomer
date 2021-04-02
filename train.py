@@ -149,7 +149,7 @@ def main():
                                  tgt_input_size=train_y.shape[3],
                                  d_model=args.d_model,
                                  d_ff=args.dff,
-                                 d_k=d_k, d_v=d_k, n_heads=args.n_heads,
+                                 d_k=d_k, d_v=d_k, n_heads=heads,
                                  n_layers=layers, src_pad_index=0,
                                  tgt_pad_index=0, device=device,
                                  pe=args.pos_enc, attn_type=args.attn_type,
