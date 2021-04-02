@@ -155,7 +155,7 @@ def main():
                  tgt_pad_index=0, device=device,
                  pe=configs.get("pos_enc"), attn_type=configs.get("attn_type"),
                  seq_len=seq_len, seq_len_pred=configs.get("seq_len_pred"),
-                 cutoff=configs.get("cutoff"), dr=args.get("dr")).to(device)
+                 cutoff=configs.get("cutoff"), dr=configs.get("dr")).to(device)
 
     train(args, model, train_en.to(device), train_de.to(device),
           train_y.to(device), test_en.to(device), test_de.to(device), test_y.to(device))
