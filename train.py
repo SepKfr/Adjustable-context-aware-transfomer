@@ -67,7 +67,8 @@ def train(args, model, train_en, train_de, train_y,
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
-        print("Train epoch: {}, loss: {:.4f}".format(i, total_loss))
+        if i % 20 == 0:
+            print("Train epoch: {}, loss: {:.4f}".format(i, total_loss))
 
         model.eval()
         test_loss = 0
@@ -87,8 +88,8 @@ def train(args, model, train_en, train_de, train_y,
 
         elif i - e > 20:
             break
-
-        print("Average loss: {:.3f}".format(test_loss))
+        if i % 20 == 0:
+            print("Average loss: {:.3f}".format(test_loss))
     return best_config, val_loss
 
 
