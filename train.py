@@ -107,27 +107,9 @@ def main():
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     args = parser.parse_args()
-    configs = {'n_heads': 4,
-               'n_layers': 1,
-               'dr': 0.5,
-               'lr': 0.0001,
-               'seq_len_pred': args.seq_len_pred,
-               'batch_size': args.batch_size,
-               'cutoff': args.cutoff,
-               'd_model': args.d_model,
-               'dff': args.dff,
-               'kernel': args.kernel,
-               'out_channel': args.out_channel,
-               'n_epochs': args.n_epochs,
-               'run_num': args.run_num,
-               'pos_enc': args.pos_enc,
-               'attn_type': args.attn_type,
-               'name': args.name,
-               'site': args.site,
-               'server': args.server}
-    configs = task.connect(configs)
+    args = task.connect(args)
 
-    path = "models_{}_{}".format(configs.get('site'), configs.get("seq_len_pred"))
+    path = "models_{}_{}".format(args.site, args.seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -139,28 +121,28 @@ def main():
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
 
-    data_en, data_de, data_y = batching(configs.get("batch_size"), inputs[:, :-seq_len, :],
+    data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
                                   inputs[:, -seq_len:, :], outputs[:, :, :])
 
     test_en, test_de, test_y = data_en[-4:, :, :, :], data_de[-4:, :, :, :], data_y[-4:, :, :, :]
     train_en, train_de, train_y = data_en[:-4, :, :, :], data_de[:-4, :, :, :], data_y[:-4, :, :, :]
 
-    d_k = int(configs.get("d_model") / configs.get("n_heads"))
+    d_k = int(args.d_model / args.n_heads)
     model = Attn(src_input_size=train_en.shape[3],
                  tgt_input_size=train_y.shape[3],
-                 d_model=configs.get("d_model"),
-                 d_ff=configs.get("dff"),
-                 d_k=d_k, d_v=d_k, n_heads=configs.get("n_heads"),
-                 n_layers=configs.get("n_layers"), src_pad_index=0,
+                 d_model=args.d_model,
+                 d_ff=args.dff,
+                 d_k=d_k, d_v=d_k, n_heads=args.n_heads,
+                 n_layers=args.n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
-                 pe=configs.get("pos_enc"), attn_type=configs.get("attn_type"),
-                 seq_len=seq_len, seq_len_pred=configs.get("seq_len_pred"),
-                 cutoff=configs.get("cutoff"), dr=configs.get("dr")).to(device)
+                 pe=args.pos_enc, attn_type=args.attn_type,
+                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
+                 cutoff=args.cutoff, dr=args.dr).to(device)
 
     train(args, model, train_en.to(device), train_de.to(device),
           train_y.to(device), test_en.to(device), test_de.to(device), test_y.to(device))
 
-    torch.save(model.state_dict(), os.path.join(path, configs.get("name")))
+    torch.save(model.state_dict(), os.path.join(path, args.name))
 
     print('Task ID number is: {}'.format(task.id))
 
