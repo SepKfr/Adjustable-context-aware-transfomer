@@ -163,6 +163,7 @@ def main():
                           , lr, val_loss, config, best_config, path, criterion)
 
     layers, heads, lr, dr = best_config
+
     d_k = int(args.d_model / heads)
 
     model = Attn(src_input_size=train_en.shape[3],
