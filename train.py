@@ -91,6 +91,7 @@ def train(args, model, train_en, train_de, train_y,
         print("Average loss: {:.3f}".format(test_loss))
     return best_config, val_loss
 
+
 def main():
 
     #task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
@@ -107,7 +108,7 @@ def main():
     parser.add_argument("--out_channel", type=int, default=32)
     parser.add_argument("--dr", type=list, default=[0.1, 0.5])
     parser.add_argument("--lr", type=list, default=[0.0001, 0.001])
-    parser.add_argument("--n_epochs", type=int, default=100)
+    parser.add_argument("--n_epochs", type=int, default=5)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='attn')
@@ -183,11 +184,20 @@ def main():
         test_loss += loss.item()
 
     erros[args.name] = list()
-    erros[args.name].append("{:.3f}".format(test_loss / test_en.shape[0]))
+    erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
+        with open(error_path) as json_file:
+            json_dat = json.load(json_file)
 
+        for key, value in erros.items():
+            json_dat[key].append(value[0])
+            json_dat[key].append(value[1])
+
+        with open(error_path, "w") as json_file:
+            json.dump(json_dat, json_file)
+    else:
         with open(error_path, "w") as json_file:
             json.dump(erros, json_file)
 
