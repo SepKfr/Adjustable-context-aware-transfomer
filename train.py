@@ -42,10 +42,13 @@ else:
     print("running on CPU")
 
 
-def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
+def train(args, model, train_en, train_de, train_y,
+          test_en, test_de, test_y, lr, val_loss,
+          config, best_config, path, criterion):
 
-    optimizer = Adam(model.parameters(), lr=args.lr)
-    criterion = nn.MSELoss()
+    val_inner_loss = 1e5
+    e = 0
+    optimizer = Adam(model.parameters(), lr=lr)
     num_steps = len(train_en) * args.n_epochs
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
     warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
@@ -65,9 +68,7 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             warmup_scheduler.dampen()
             total_loss += loss.item()
 
-        Logger.current_logger().report_scalar(title="evaluate", series="loss", iteration=epoch, value=total_loss)
-        if epoch % 20 == 0:
-            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
         test_loss = 0
@@ -77,15 +78,23 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             test_loss += loss.item()
 
         test_loss = test_loss / test_en.shape[0]
-        Logger.current_logger().report_scalar(title="evaluate", series="loss", iteration=epoch, value=test_loss)
-        if epoch % 20 == 0:
 
-            print("Average loss: {:.3f}".format(test_loss))
+        if test_loss < val_inner_loss:
+            val_inner_loss = test_loss
+            if val_inner_loss < val_loss:
+                best_config = config
+                torch.save(model.state_dict(), os.path.join(path, args.name))
+            e = epoch
 
+        elif epoch - e > 20:
+            break
+
+        print("Average loss: {:.3f}".format(test_loss))
+        return best_config, val_loss
 
 def main():
 
-    task = Task.init(project_name='watershed', task_name='watershed training')
+    #task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=64)
@@ -93,21 +102,21 @@ def main():
     parser.add_argument("--cutoff", type=int, default=16)
     parser.add_argument("--d_model", type=int, default=32)
     parser.add_argument("--dff", type=int, default=64)
-    parser.add_argument("--n_heads", type=int, default=4)
-    parser.add_argument("--n_layers", type=int, default=1)
+    parser.add_argument("--n_heads", type=list, default=[1, 4])
+    parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--kernel", type=int, default=1)
     parser.add_argument("--out_channel", type=int, default=32)
-    parser.add_argument("--dr", type=float, default=0.5)
-    parser.add_argument("--lr", type=float, default=0.0001)
-    parser.add_argument("--n_epochs", type=int, default=300)
+    parser.add_argument("--dr", type=list, default=[0.1, 0.5])
+    parser.add_argument("--lr", type=list, default=[0.0001, 0.001, 0.01])
+    parser.add_argument("--n_epochs", type=int, default=100)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='attn')
-    parser.add_argument("--name", type=str, default='attn')
+    parser.add_argument("--model_name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     args = parser.parse_args()
-    args = task.connect(args)
+    #args = task.connect(args)
 
     path = "models_{}_{}".format(args.site, args.seq_len_pred)
     if not os.path.exists(path):
@@ -125,26 +134,70 @@ def main():
                                   inputs[:, -seq_len:, :], outputs[:, :, :])
 
     test_en, test_de, test_y = data_en[-4:, :, :, :], data_de[-4:, :, :, :], data_y[-4:, :, :, :]
+    valid_en, valid_de, valid_y = data_en[-8:-4, :, :, :], data_de[-8:-4, :, :, :], data_y[-8:-4, :, :, :]
     train_en, train_de, train_y = data_en[:-4, :, :, :], data_de[:-4, :, :, :], data_y[:-4, :, :, :]
+    criterion = nn.MSELoss()
 
-    d_k = int(args.d_model / args.n_heads)
+    val_loss = 1e5
+    best_config = None
+    for layers in args.n_layers:
+        for heads in args.n_heads:
+            for lr in args.lr:
+                for dr in args.dr:
+                    d_k = int(args.d_model / heads)
+                    model = Attn(src_input_size=train_en.shape[3],
+                                 tgt_input_size=train_y.shape[3],
+                                 d_model=args.d_model,
+                                 d_ff=args.dff,
+                                 d_k=d_k, d_v=d_k, n_heads=args.n_heads,
+                                 n_layers=layers, src_pad_index=0,
+                                 tgt_pad_index=0, device=device,
+                                 pe=args.pos_enc, attn_type=args.attn_type,
+                                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
+                                 cutoff=args.cutoff, dr=dr).to(device)
+                    config = layers, heads, lr, dr
+                    best_config, val_loss = train(args, model, train_en.to(device), train_de.to(device),
+                          train_y.to(device), valid_en.to(device), valid_de.to(device), valid_y.to(device)
+                          , lr, val_loss, config, best_config, path, criterion)
+
+    layers, heads, lr, dr = best_config
+    d_k = int(args.d_model / heads)
+
     model = Attn(src_input_size=train_en.shape[3],
                  tgt_input_size=train_y.shape[3],
                  d_model=args.d_model,
                  d_ff=args.dff,
                  d_k=d_k, d_v=d_k, n_heads=args.n_heads,
-                 n_layers=args.n_layers, src_pad_index=0,
+                 n_layers=layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=args.cutoff, dr=args.dr).to(device)
+                 cutoff=args.cutoff, dr=dr).to(device)
+    model.load_state_dict(torch.load(os.path.join(path, args.name)))
+    model.eval()
 
-    train(args, model, train_en.to(device), train_de.to(device),
-          train_y.to(device), test_en.to(device), test_de.to(device), test_y.to(device))
+    test_loss = 0
+    for j in range(test_en.shape[0]):
+        output = model(test_en[j].to(device), test_de[j].to(device), training=True)
+        loss = criterion(test_y[j].to(device), output)
+        test_loss += loss.item()
 
-    torch.save(model.state_dict(), os.path.join(path, args.name))
+    erros[args.name] = "{:.3f}".format(test_loss / test_en.shape[0])
+    error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
-    print('Task ID number is: {}'.format(task.id))
+    if os.path.exists(error_path):
+        with open(error_path) as json_file:
+            json_dat = json.load(json_file)
+
+        for key, value in erros.items():
+            json_dat[key].append(value[0])
+            json_dat[key].append(value[1])
+
+        with open(error_path, "w") as json_file:
+            json.dump(json_dat, json_file)
+    else:
+        with open(error_path, "w") as json_file:
+            json.dump(erros, json_file)
 
 
 if __name__ == '__main__':
