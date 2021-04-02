@@ -65,8 +65,8 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             warmup_scheduler.dampen()
             total_loss += loss.item()
 
+        Logger.current_logger().report_scalar(title="evaluate", series="loss", iteration=epoch, value=total_loss)
         if epoch % 20 == 0:
-            Logger.current_logger().report_scalar("train", "loss", iteration=epoch, value=total_loss)
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
@@ -77,8 +77,9 @@ def train(args, model, train_en, train_de, train_y, test_en, test_de, test_y):
             test_loss += loss.item()
 
         test_loss = test_loss / test_en.shape[0]
+        Logger.current_logger().report_scalar(title="evaluate", series="loss", iteration=epoch, value=test_loss)
         if epoch % 20 == 0:
-            Logger.current_logger().report_scalar("test", "loss", iteration=epoch, value=test_loss)
+
             print("Average loss: {:.3f}".format(test_loss))
 
 

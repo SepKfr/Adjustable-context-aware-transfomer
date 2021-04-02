@@ -41,10 +41,10 @@ def run_hyperparam_optim(project_name, task_name, task_id):
     an_optimizer = HyperParameterOptimizer(
         base_task_id=args['template_task_id'],
         hyper_parameters=[
-            DiscreteParameterRange('args/n_heads', [1, 4]),
-            DiscreteParameterRange('args/n_layers', [1, 3]),
-            DiscreteParameterRange('args/lr', [0.0001, 0.001, 0.01]),
-            DiscreteParameterRange('args.dr', [0.1, 0.5])
+            DiscreteParameterRange('n_heads', values=[1, 4]),
+            DiscreteParameterRange('n_layers', values=[1, 3]),
+            DiscreteParameterRange('lr', values=[0.0001, 0.001, 0.01]),
+            DiscreteParameterRange('dr', values=[0.1, 0.5])
         ],
         objective_metric_title='loss',
         objective_metric_series='loss',
