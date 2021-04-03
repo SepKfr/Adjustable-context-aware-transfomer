@@ -164,6 +164,7 @@ def main():
                           , lr, val_loss, config, best_config, path, criterion)
 
     layers, heads, lr, dr = best_config
+    print(best_config)
 
     d_k = int(args.d_model / heads)
 
