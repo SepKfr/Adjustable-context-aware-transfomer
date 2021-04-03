@@ -138,6 +138,7 @@ def main():
     test_en, test_de, test_y = inputs[-1:, :-seq_len, :].unsqueeze(0), \
                                inputs[-1:, -seq_len:, :].unsqueeze(0), \
                                outputs[-1:, :, :].unsqueeze(0)
+    print(valid_y.shape)
     train_en, train_de, train_y = batching(args.batch_size, inputs[:-2, :-seq_len, :],
                                   inputs[:-2, -seq_len:, :], outputs[:, :, :])
 
