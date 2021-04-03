@@ -178,7 +178,7 @@ def main():
         print(best_config)
 
     else:
-        print("here")
+
         layers, heads, d_model, dr = args.n_layers_best, args.n_heads_best, \
                                      args.d_model_best, args.dr_best
     d_k = int(d_model / heads)
