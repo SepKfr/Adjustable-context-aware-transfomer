@@ -105,7 +105,7 @@ def main():
     parser.add_argument("--d_model", type=int, default=32)
     parser.add_argument("--dff", type=int, default=64)
     parser.add_argument("--n_heads", type=list, default=[1])
-    parser.add_argument("--n_layers", type=list, default=[1])
+    parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--kernel", type=int, default=1)
     parser.add_argument("--out_channel", type=int, default=32)
     parser.add_argument("--dr", type=list, default=[0.1])
@@ -190,6 +190,7 @@ def main():
 
     erros[args.name] = list()
     erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
+    print("test error {:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
@@ -198,7 +199,6 @@ def main():
 
         for key, value in erros.items():
             json_dat[key].append(value[0])
-            json_dat[key].append(value[1])
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
