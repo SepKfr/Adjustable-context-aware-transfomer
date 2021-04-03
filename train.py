@@ -191,6 +191,10 @@ def main():
 
     erros[args.name] = list()
     erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
+    erros[args.name].append(layers)
+    erros[args.name].append(heads)
+    erros[args.name].append(d_model)
+    erros[args.name].append(dr)
     print("test error {:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
@@ -200,6 +204,10 @@ def main():
 
         for key, value in erros.items():
             json_dat[key].append(value[0])
+            erros[args.name].append(layers)
+            erros[args.name].append(heads)
+            erros[args.name].append(d_model)
+            erros[args.name].append(dr)
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
