@@ -108,8 +108,8 @@ def main():
     parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--kernel", type=int, default=1)
     parser.add_argument("--out_channel", type=int, default=32)
-    parser.add_argument("--dr", type=list, default=[0.1])
-    parser.add_argument("--lr", type=list, default=[0.0001])
+    parser.add_argument("--dr", type=list, default=[0.1, 0.5])
+    parser.add_argument("--lr", type=list, default=0.0001)
     parser.add_argument("--n_epochs", type=int, default=5)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
@@ -149,7 +149,7 @@ def main():
                     d_k = int(args.d_model / heads)
                     model = Attn(src_input_size=train_en.shape[3],
                                  tgt_input_size=train_y.shape[3],
-                                 d_model=args.d_model,
+                                 d_model=d_model,
                                  d_ff=d_model*2,
                                  d_k=d_k, d_v=d_k, n_heads=heads,
                                  n_layers=layers, src_pad_index=0,
