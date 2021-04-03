@@ -127,7 +127,7 @@ def main():
     inputs = pickle.load(open("inputs.p", "rb"))
     outputs = pickle.load(open("outputs.p", "rb"))
 
-    max_len = min(len(inputs), 1024)
+    max_len = min(len(inputs), 512)
     inputs = inputs[-max_len:, :, :]
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
@@ -135,9 +135,9 @@ def main():
     data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
                                   inputs[:, -seq_len:, :], outputs[:, :, :])
 
-    test_en, test_de, test_y = data_en[-4:, :, :, :], data_de[-4:, :, :, :], data_y[-4:, :, :, :]
-    valid_en, valid_de, valid_y = data_en[-8:-4, :, :, :], data_de[-8:-4, :, :, :], data_y[-8:-4, :, :, :]
-    train_en, train_de, train_y = data_en[:-8, :, :, :], data_de[:-8, :, :, :], data_y[:-8, :, :, :]
+    test_en, test_de, test_y = data_en[-1:, :, :, :], data_de[-1:, :, :, :], data_y[-1:, :, :, :]
+    valid_en, valid_de, valid_y = data_en[-2:-1, :, :, :], data_de[-2:-1, :, :, :], data_y[-2:-1, :, :, :]
+    train_en, train_de, train_y = data_en[:-2, :, :, :], data_de[:-2, :, :, :], data_y[:-2, :, :, :]
     criterion = nn.MSELoss()
 
     val_loss = 1e5
