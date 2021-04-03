@@ -146,7 +146,7 @@ def main():
         for heads in args.n_heads:
             for d_model in args.d_model:
                 for dr in args.dr:
-                    d_k = int(args.d_model / heads)
+                    d_k = int(d_model / heads)
                     model = Attn(src_input_size=train_en.shape[3],
                                  tgt_input_size=train_y.shape[3],
                                  d_model=d_model,
