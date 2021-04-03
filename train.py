@@ -132,12 +132,15 @@ def main():
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
 
-    data_en, data_de, data_y = batching(args.batch_size, inputs[:, :-seq_len, :],
-                                  inputs[:, -seq_len:, :], outputs[:, :, :])
+    valid_en, valid_de, valid_y = inputs[-2:-1, :-seq_len, :].unsqueeze(0), \
+                                  inputs[-2:-1, -seq_len:, :].unsqueeze(0), \
+                                  outputs[-2:-1, :, :].unsqueeze(0)
+    test_en, test_de, test_y = inputs[-1:, :-seq_len, :].unsqueeze(0), \
+                               inputs[-1:, -seq_len:, :].unsqueeze(0), \
+                               outputs[-1:, :, :].unsqueeze(0)
+    train_en, train_de, train_y = batching(args.batch_size, inputs[:-2, :-seq_len, :],
+                                  inputs[:-2, -seq_len:, :], outputs[:, :, :])
 
-    test_en, test_de, test_y = data_en[-1:, :, :, :], data_de[-1:, :, :, :], data_y[-1:, :, :, :]
-    valid_en, valid_de, valid_y = data_en[-2:-1, :, :, :], data_de[-2:-1, :, :, :], data_y[-2:-1, :, :, :]
-    train_en, train_de, train_y = data_en[:-2, :, :, :], data_de[:-2, :, :, :], data_y[:-2, :, :, :]
     criterion = nn.MSELoss()
 
     val_loss = 1e5
