@@ -121,7 +121,7 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--training", type=bool, default=True)
+    parser.add_argument("--training", type=str, default="True")
     args = parser.parse_args()
     #args = task.connect(args)
 
@@ -148,8 +148,9 @@ def main():
                                   inputs[:-2, -seq_len:, :], outputs[:, :, :])
 
     criterion = nn.MSELoss()
+    training = True if args.training == "True" else False
 
-    if args.training:
+    if training:
         val_loss = 1e5
         best_config = None
         for layers in args.n_layers:
