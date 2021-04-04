@@ -127,7 +127,7 @@ class ScaledDotProductAttention(nn.Module):
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
 
         else:
-            context = torch.matmul(attn, V)
+            context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
 
 
