@@ -255,17 +255,9 @@ def main():
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
-        with open(error_path) as json_file:
-            json_dat = json.load(json_file)
-
-        for key, value in erros.items():
-            json_dat[key].append(value[0])
-            erros[args.name].append(layers)
-            erros[args.name].append(heads)
-            erros[args.name].append(d_model)
 
         with open(error_path, "w") as json_file:
-            json.dump(json_dat, json_file)
+            json.dump(erros, json_file)
     else:
         with open(error_path, "w") as json_file:
             json.dump(erros, json_file)
