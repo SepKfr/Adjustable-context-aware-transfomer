@@ -113,7 +113,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--cutoff", type=int, default=16)
+    parser.add_argument("--cutoff", type=int, default=[3, 6, 9])
     parser.add_argument("--d_model", type=int, default=[32, 64])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
@@ -163,7 +163,7 @@ def main():
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
     continue_train = True if args.continue_train == "True" else False
-    hyper_param = list([args.n_layers, args.n_heads, args.d_model])
+    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff])
     configs = create_config(hyper_param)
 
     if training:
@@ -179,7 +179,7 @@ def main():
 
         for i, conf in enumerate(configs, config_num):
 
-            n_layers, n_heads, d_model = conf
+            n_layers, n_heads, d_model, cutoff = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
@@ -190,7 +190,7 @@ def main():
                          tgt_pad_index=0, device=device,
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         cutoff=args.cutoff, dr=args.dr).to(device)
+                         cutoff=cutoff, dr=args.dr).to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr)
             epoch_start = 0
@@ -217,13 +217,13 @@ def main():
                 if stop:
                     break
 
-        layers, heads, d_model = best_config
+        layers, heads, d_model, cutoff = best_config
         print(best_config)
 
     else:
 
-        layers, heads, d_model, dr = args.n_layers_best, args.n_heads_best, \
-                                     args.d_model_best, args.dr_best
+        layers, heads, d_model, cutoff = args.n_layers_best, args.n_heads_best, \
+                                     args.d_model_best, args.cutoff
     d_k = int(d_model / heads)
 
     model = Attn(src_input_size=train_en.shape[3],
@@ -235,7 +235,7 @@ def main():
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=args.cutoff, dr=args.dr).to(device)
+                 cutoff=cutoff, dr=args.dr).to(device)
     model.load_state_dict(torch.load(os.path.join(path, args.name)))
     model.eval()
 
