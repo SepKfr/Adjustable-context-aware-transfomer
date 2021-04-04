@@ -117,11 +117,13 @@ class ScaledDotProductAttention(nn.Module):
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
         if attn_mask is not None:
+
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
+
         if self.attn_type == "con":
             context = torch.einsum('bhqk,bhvd->bhvd', attn, V)
         else:
@@ -160,7 +162,7 @@ class MultiHeadAttention(nn.Module):
         k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
         v_s = self.WV(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1, 2)
 
-        if attn_mask is not None and self.attn_type != 'con':
+        if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
                                                   attn_type=self.attn_type, cutoff=self.cutoff)(
