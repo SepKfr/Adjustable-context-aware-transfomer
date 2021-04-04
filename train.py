@@ -170,7 +170,6 @@ def main():
         val_loss = 1e5
         best_config = configs[0]
         config_num = 0
-        epoch_start = 0
         checkpoint = None
 
         if continue_train:
@@ -194,6 +193,7 @@ def main():
                          cutoff=args.cutoff, dr=args.dr).to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr)
+            epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
                 optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
