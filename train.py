@@ -94,7 +94,8 @@ def train(args, model, train_en, train_de, train_y,
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-            'config_num': config_num
+            'config_num': config_num,
+            'best_config': best_config
         }, os.path.join(path, args.name))
 
     return best_config, val_loss, stop
@@ -196,6 +197,7 @@ def main():
                 model.load_state_dict(checkpoint["model_state_dict"])
                 optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 epoch_start = checkpoint["epoch"]
+                best_config = checkpoint["best_config"]
 
             num_steps = len(train_en) * args.n_epochs
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
