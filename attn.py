@@ -116,7 +116,7 @@ class ScaledDotProductAttention(nn.Module):
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
-        if attn_mask is not None and self.attn_type != 'con':
+        if attn_mask is not None:
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
@@ -321,10 +321,8 @@ class Decoder(nn.Module):
 
         dec_outputs = self.pos_emb(dec_outputs)
 
-        if self.attn_type == 'con':
-            dec_self_attn_mask = get_con_attn_subsequent_mask(dec_outputs, self.cutoff*2, self.d_k)
-        else:
-            dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
+
+        dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
         dec_enc_attn_mask = None
 
