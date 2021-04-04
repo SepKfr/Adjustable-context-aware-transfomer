@@ -14,6 +14,7 @@ import os
 import pytorch_warmup as warmup
 from clearml import Task, Logger
 from utils import inverse_transform
+import itertools
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -44,18 +45,14 @@ else:
 
 
 def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, lr, val_loss,
-          config, best_config, path, criterion):
+          test_en, test_de, test_y, epoch, val_loss,
+          optimizer, lr_scheduler, warmup_scheduler,
+          config, config_num, best_config, path, criterion):
 
     val_inner_loss = 1e5
     e = 0
-    optimizer = Adam(model.parameters(), lr=lr)
-    num_steps = len(train_en) * args.n_epochs
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-    warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
-
-    for i in range(args.n_epochs):
-
+    stop = False
+    try:
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
@@ -68,8 +65,8 @@ def train(args, model, train_en, train_de, train_y,
             lr_scheduler.step()
             warmup_scheduler.dampen()
 
-        if i % 20 == 0:
-            print("Train epoch: {}, loss: {:.4f}".format(i, total_loss))
+        if epoch % 20 == 0:
+            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
         test_loss = 0
@@ -85,13 +82,26 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
-            e = i
+            e = epoch
 
-        elif i - e > 50:
-            break
-        if i % 20 == 0:
+        elif epoch - e > 50:
+            stop = True
+        if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
-    return best_config, val_loss
+
+    except KeyboardInterrupt:
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'config_num': config_num
+        }, os.path.join(path, args.name))
+
+    return best_config, val_loss, stop
+
+
+def create_config(hyper_parameters):
+    return list(itertools.product(*hyper_parameters))
 
 
 def main():
@@ -111,7 +121,7 @@ def main():
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=1)
     parser.add_argument("--out_channel", type=int, default=32)
-    parser.add_argument("--dr", type=list, default=[0.1, 0.5])
+    parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--dr_best", type=float)
     parser.add_argument("--lr", type=list, default=0.0001)
     parser.add_argument("--n_epochs", type=int, default=5)
@@ -122,6 +132,7 @@ def main():
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--training", type=str, default="True")
+    parser.add_argument("--continue_train", type=str, default="False")
     args = parser.parse_args()
     #args = task.connect(args)
 
@@ -149,32 +160,60 @@ def main():
 
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
+    continue_train = True if args.continue_train == "True" else False
+    hyper_param = list([args.n_layers, args.n_heads, args.d_model])
+    configs = create_config(hyper_param)
 
     if training:
         val_loss = 1e5
-        best_config = None
-        for layers in args.n_layers:
-            for heads in args.n_heads:
-                for d_model in args.d_model:
-                    for dr in args.dr:
-                        d_k = int(d_model / heads)
-                        model = Attn(src_input_size=train_en.shape[3],
-                                     tgt_input_size=train_y.shape[3],
-                                     d_model=d_model,
-                                     d_ff=d_model*2,
-                                     d_k=d_k, d_v=d_k, n_heads=heads,
-                                     n_layers=layers, src_pad_index=0,
-                                     tgt_pad_index=0, device=device,
-                                     pe=args.pos_enc, attn_type=args.attn_type,
-                                     seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                                     cutoff=args.cutoff, dr=dr).to(device)
-                        config = layers, heads, d_model, dr
+        best_config = configs[0]
+        config_num = 0
+        epoch_start = 0
+        checkpoint = None
 
-                        best_config, val_loss = train(args, model, train_en.to(device), train_de.to(device),
-                              train_y.to(device), valid_en.to(device), valid_de.to(device), valid_y.to(device)
-                              , args.lr, val_loss, config, best_config, path, criterion)
+        if continue_train:
 
-        layers, heads, d_model, dr = best_config
+            checkpoint = torch.load(os.path.join(path, args.name))
+            config_num = checkpoint["config_num"]
+
+        for i, conf in enumerate(configs, config_num):
+
+            n_layers, n_heads, d_model = conf
+            d_k = int(d_model / n_heads)
+            model = Attn(src_input_size=train_en.shape[3],
+                         tgt_input_size=train_y.shape[3],
+                         d_model=d_model,
+                         d_ff=d_model*2,
+                         d_k=d_k, d_v=d_k, n_heads=n_heads,
+                         n_layers=n_layers, src_pad_index=0,
+                         tgt_pad_index=0, device=device,
+                         pe=args.pos_enc, attn_type=args.attn_type,
+                         seq_len=seq_len, seq_len_pred=args.seq_len_pred,
+                         cutoff=args.cutoff, dr=args.dr).to(device)
+
+            optimizer = Adam(model.parameters(), lr=args.lr)
+            if continue_train:
+                model.load_state_dict(checkpoint["model_state_dict"])
+                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                epoch_start = checkpoint["epoch"]
+
+            num_steps = len(train_en) * args.n_epochs
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
+            warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
+
+            for epoch in range(epoch_start, args.n_epochs, 1):
+
+                best_config, val_loss, stop = \
+                    train(args, model, train_en.to(device), train_de.to(device),
+                    train_y.to(device), valid_en.to(device), valid_de.to(device),
+                    valid_y.to(device), epoch, val_loss,
+                    optimizer, lr_scheduler, warmup_scheduler,
+                    conf, i, best_config, path, criterion)
+
+                if stop:
+                    break
+
+        layers, heads, d_model = best_config
         print(best_config)
 
     else:
@@ -192,7 +231,7 @@ def main():
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=args.cutoff, dr=dr).to(device)
+                 cutoff=args.cutoff, dr=args.dr).to(device)
     model.load_state_dict(torch.load(os.path.join(path, args.name)))
     model.eval()
 
@@ -209,7 +248,7 @@ def main():
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
-    erros[args.name].append(dr)
+
     print("test error {:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
@@ -222,7 +261,6 @@ def main():
             erros[args.name].append(layers)
             erros[args.name].append(heads)
             erros[args.name].append(d_model)
-            erros[args.name].append(dr)
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
