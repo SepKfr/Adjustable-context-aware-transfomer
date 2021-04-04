@@ -50,7 +50,6 @@ def train(args, model, train_en, train_de, train_y,
           config, config_num, best_config, path, criterion):
 
     val_inner_loss = 1e5
-    e = 0
     stop = False
     try:
         model.train()
@@ -84,7 +83,7 @@ def train(args, model, train_en, train_de, train_y,
                 torch.save(model.state_dict(), os.path.join(path, args.name))
             e = epoch
 
-        elif epoch - e > 20:
+        if epoch - e > 20:
             stop = True
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
