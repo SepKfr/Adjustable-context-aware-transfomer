@@ -15,7 +15,7 @@ import pytorch_warmup as warmup
 from clearml import Task, Logger
 from utils import inverse_transform
 import itertools
-
+import sys
 
 def batching(batch_size, x_en, x_de, y_t):
 
@@ -97,6 +97,7 @@ def train(args, model, train_en, train_de, train_y,
             'config_num': config_num,
             'best_config': best_config
         }, os.path.join(path, args.name))
+        sys.exit(0)
 
     return best_config, val_loss, stop
 
