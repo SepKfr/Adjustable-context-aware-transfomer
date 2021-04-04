@@ -96,7 +96,7 @@ def train(args, model, train_en, train_de, train_y,
             'optimizer_state_dict': optimizer.state_dict(),
             'config_num': config_num,
             'best_config': best_config
-        }, os.path.join(path, args.name))
+        }, os.path.join(path, "{}_continue".format(args.name)))
         sys.exit(0)
 
     return best_config, val_loss, stop
@@ -175,7 +175,7 @@ def main():
 
         if continue_train:
 
-            checkpoint = torch.load(os.path.join(path, args.name))
+            checkpoint = torch.load(os.path.join(path, "{}_continue".format(args.name)))
             config_num = checkpoint["config_num"]
 
         for i, conf in enumerate(configs, config_num):
