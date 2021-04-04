@@ -79,6 +79,7 @@ def train(args, model, train_en, train_de, train_y,
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
             if val_inner_loss < val_loss:
+                val_loss = val_inner_loss
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
             e = epoch
