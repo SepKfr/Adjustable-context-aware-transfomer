@@ -144,7 +144,7 @@ def main():
     inputs = pickle.load(open("inputs.p", "rb"))
     outputs = pickle.load(open("outputs.p", "rb"))
 
-    max_len = min(len(inputs), 256)
+    max_len = min(len(inputs), 512)
     inputs = inputs[-max_len:, :, :]
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
