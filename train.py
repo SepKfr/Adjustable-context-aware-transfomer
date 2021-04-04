@@ -199,6 +199,7 @@ def main():
                 optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 epoch_start = checkpoint["epoch"]
                 best_config = checkpoint["best_config"]
+                continue_train = False
 
             num_steps = len(train_en) * args.n_epochs
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
