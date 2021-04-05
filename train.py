@@ -81,6 +81,7 @@ def train(args, model, train_en, train_de, train_y,
                 val_loss = val_inner_loss
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
+            e = epoch
 
         elif epoch - e > 40:
             stop = True
