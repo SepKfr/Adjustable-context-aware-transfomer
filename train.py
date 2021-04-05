@@ -45,7 +45,7 @@ else:
 
 
 def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch, val_loss,
+          test_en, test_de, test_y, epoch, e, val_loss,
           val_inner_loss, optimizer, lr_scheduler, warmup_scheduler,
           config, config_num, best_config, path, criterion):
 
@@ -98,7 +98,7 @@ def train(args, model, train_en, train_de, train_y,
         }, os.path.join(path, "{}_continue".format(args.name)))
         sys.exit(0)
 
-    return best_config, val_loss, stop
+    return best_config, val_loss, val_inner_loss, e, stop
 
 
 def create_config(hyper_parameters):
@@ -128,7 +128,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=5)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='con')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
@@ -205,12 +205,13 @@ def main():
             warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
             val_inner_loss = 1e5
+            e = 0
             for epoch in range(epoch_start, args.n_epochs, 1):
 
-                best_config, val_loss, stop = \
+                best_config, val_loss, val_inner_loss, stop, e = \
                     train(args, model, train_en.to(device), train_de.to(device),
                     train_y.to(device), valid_en.to(device), valid_de.to(device),
-                    valid_y.to(device), epoch, val_loss, val_inner_loss,
+                    valid_y.to(device), epoch, e, val_loss, val_inner_loss,
                     optimizer, lr_scheduler, warmup_scheduler,
                     conf, i, best_config, path, criterion)
 
