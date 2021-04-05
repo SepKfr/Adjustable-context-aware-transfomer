@@ -111,12 +111,13 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "con":
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
-            scores = torch.einsum('bhqcd,bhkld->bhqk', Q, K) / np.sqrt(self.d_k)
+            V = K
+            scores = torch.einsum('bhqcd,bhkld->bhqkc', Q, K)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
-        if attn_mask is not None:
+        if attn_mask is not None and self.attn_type != "con":
 
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
@@ -125,7 +126,8 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
 
         if self.attn_type == "con":
-            context = torch.einsum('bhqk,bhvd->bhvd', attn, V)
+            context = torch.einsum('bhqkc,bhvcd-> bhqd', attn, V)
+            attn = torch.einsum('bhqkc->bhqk', attn)
         else:
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
