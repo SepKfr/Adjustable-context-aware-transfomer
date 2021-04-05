@@ -112,7 +112,7 @@ class ScaledDotProductAttention(nn.Module):
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             V = K
-            scores = torch.einsum('bhqcd,bhqcd->bhqkc', Q, K) / np.sqrt(self.d_k)
+            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / np.sqrt(self.d_k)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
