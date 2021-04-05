@@ -125,7 +125,7 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
 
         if self.attn_type == "con":
-            context = torch.einsum('bhqk,bhv-> bhqd', attn, V)
+            context = torch.einsum('bhqk,bhvd-> bhqd', attn, V)
         else:
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
