@@ -178,7 +178,7 @@ def main():
             config_num = checkpoint["config_num"]
 
         for i, conf in enumerate(configs, config_num):
-
+            print('config: {}'.format(conf))
             n_layers, n_heads, d_model, cutoff = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
