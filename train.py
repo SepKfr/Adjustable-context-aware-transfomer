@@ -165,6 +165,8 @@ def main():
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
     continue_train = True if args.continue_train == "True" else False
+    if args.attn_type != "con":
+        args.cutoff = [1]
     hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff])
     configs = create_config(hyper_param)
 
@@ -181,9 +183,8 @@ def main():
 
         for i, conf in enumerate(configs, config_num):
             print('config: {}'.format(conf))
+
             n_layers, n_heads, d_model, cutoff = conf
-            if args.attn_type != "con":
-                cutoff = []
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
