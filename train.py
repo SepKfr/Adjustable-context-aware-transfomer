@@ -82,7 +82,7 @@ def train(args, model, train_en, train_de, train_y,
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
 
-        elif epoch - e > 50:
+        elif epoch - e > 40:
             stop = True
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
