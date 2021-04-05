@@ -73,7 +73,7 @@ def train(args, model, train_en, train_de, train_y,
             loss = criterion(test_y[j].to(device), output)
             test_loss += loss.item()
 
-        test_loss = test_loss / test_en.shape[0]
+        test_loss = test_loss / test_en.shape[1]
 
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
@@ -112,11 +112,11 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--cutoff", type=int, default=[15])
+    parser.add_argument("--cutoff", type=int, default=[9])
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
-    parser.add_argument("--n_heads", type=list, default=[4, 1])
+    parser.add_argument("--n_heads", type=list, default=[4])
     parser.add_argument("--n_heads_best", type=int)
     parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
@@ -149,12 +149,15 @@ def main():
     outputs = outputs[-max_len:, :]
     seq_len = int(inputs.shape[1] / 2)
 
-    valid_en, valid_de, valid_y = inputs[-2:-1, :-seq_len, :].unsqueeze(0), \
-                                  inputs[-2:-1, -seq_len:, :].unsqueeze(0), \
-                                  outputs[-2:-1, :, :].unsqueeze(0)
-    test_en, test_de, test_y = inputs[-1:, :-seq_len, :].unsqueeze(0), \
-                               inputs[-1:, -seq_len:, :].unsqueeze(0), \
-                               outputs[-1:, :, :].unsqueeze(0)
+    test_len = int(max_len * 0.1)
+    val_len = int(test_len / 2)
+
+    valid_en, valid_de, valid_y = inputs[-test_len:-val_len, :-seq_len, :].unsqueeze(0), \
+                                  inputs[-test_len:-val_len, -seq_len:, :].unsqueeze(0), \
+                                  outputs[-test_len:-val_len, :, :].unsqueeze(0)
+    test_en, test_de, test_y = inputs[-val_len:, :-seq_len, :].unsqueeze(0), \
+                               inputs[-val_len:, -seq_len:, :].unsqueeze(0), \
+                               outputs[-val_len:, :, :].unsqueeze(0)
 
     train_en, train_de, train_y = batching(args.batch_size, inputs[:-2, :-seq_len, :],
                                   inputs[:-2, -seq_len:, :], outputs[:, :, :])
@@ -249,7 +252,7 @@ def main():
         test_loss += loss.item()
 
     erros[args.name] = list()
-    erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
+    erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[1])))
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
