@@ -46,10 +46,9 @@ else:
 
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, val_loss,
-          optimizer, lr_scheduler, warmup_scheduler,
+          val_inner_loss, optimizer, lr_scheduler, warmup_scheduler,
           config, config_num, best_config, path, criterion):
 
-    val_inner_loss = 1e5
     stop = False
     try:
         model.train()
@@ -205,12 +204,13 @@ def main():
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
             warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
+            val_inner_loss = 1e5
             for epoch in range(epoch_start, args.n_epochs, 1):
 
                 best_config, val_loss, stop = \
                     train(args, model, train_en.to(device), train_de.to(device),
                     train_y.to(device), valid_en.to(device), valid_de.to(device),
-                    valid_y.to(device), epoch, val_loss,
+                    valid_y.to(device), epoch, val_loss, val_inner_loss,
                     optimizer, lr_scheduler, warmup_scheduler,
                     conf, i, best_config, path, criterion)
 
