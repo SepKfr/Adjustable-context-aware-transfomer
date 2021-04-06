@@ -226,13 +226,13 @@ def main():
                 if stop:
                     break
 
-        layers, heads, d_model, cutoff = best_config
+        layers, heads, d_model, cutoff, kernel = best_config
         print(best_config)
 
     else:
 
-        layers, heads, d_model, cutoff = args.n_layers_best, args.n_heads_best, \
-                                     args.d_model_best, args.cutoff
+        layers, heads, d_model, cutoff, kernel = args.n_layers_best, args.n_heads_best, \
+                                     args.d_model_best, args.cutoff, args.kernel
     d_k = int(d_model / heads)
 
     model = Attn(src_input_size=train_en.shape[3],
@@ -244,15 +244,16 @@ def main():
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=cutoff, dr=args.dr).to(device)
+                 cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
     model.load_state_dict(torch.load(os.path.join(path, args.name)))
     model.eval()
 
     test_loss = 0
     for j in range(test_en.shape[0]):
         output = model(test_en[j].to(device), test_de[j].to(device), training=True)
-        output = inverse_transform(output).to(device)
-        y_true = inverse_transform(test_y[j]).to(device)
+        #output = inverse_transform(output).to(device)
+        #y_true = inverse_transform(test_y[j]).to(device)
+        y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
         test_loss += loss.item()
 
