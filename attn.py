@@ -118,7 +118,8 @@ class ScaledDotProductAttention(nn.Module):
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
         if attn_mask is not None:
-
+            if self.attn_type == 'con':
+                attn_mask = attn_mask.unsqueeze(3).repeat(1, 1, 1, self.cutoff)
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
