@@ -270,7 +270,6 @@ def main():
     if os.path.exists(error_path):
         with open(error_path) as json_file:
             json_dat = json.load(json_file)
-            json_dat[args.name] = list()
             json_dat[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
             json_dat[args.name].append(layers)
             json_dat[args.name].append(heads)
