@@ -112,15 +112,15 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--cutoff", type=int, default=[9])
-    parser.add_argument("--d_model", type=int, default=[64])
+    parser.add_argument("--cutoff", type=int, default=[1, 3, 6, 9])
+    parser.add_argument("--d_model", type=int, default=[32, 64])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
-    parser.add_argument("--n_heads", type=list, default=[1])
+    parser.add_argument("--n_heads", type=list, default=[1, 4])
     parser.add_argument("--n_heads_best", type=int)
-    parser.add_argument("--n_layers", type=list, default=[3])
+    parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--n_layers_best", type=int)
-    parser.add_argument("--kernel", type=int, default=1)
+    parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--out_channel", type=int, default=32)
     parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--dr_best", type=float)
@@ -128,7 +128,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=5)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='attn')
+    parser.add_argument("--attn_type", type=str, default='attn_conv')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
@@ -167,7 +167,9 @@ def main():
     continue_train = True if args.continue_train == "True" else False
     if args.attn_type != "con":
         args.cutoff = [1]
-    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff])
+    if args.attn_type != "attn_conv":
+        args.kernel = [1]
+    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff, args.kernel])
     configs = create_config(hyper_param)
 
     if training:
@@ -184,7 +186,7 @@ def main():
         for i, conf in enumerate(configs, config_num):
             print('config: {}'.format(conf))
 
-            n_layers, n_heads, d_model, cutoff = conf
+            n_layers, n_heads, d_model, cutoff, kernel = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
@@ -195,7 +197,7 @@ def main():
                          tgt_pad_index=0, device=device,
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         cutoff=cutoff, dr=args.dr).to(device)
+                         cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr)
             epoch_start = 0

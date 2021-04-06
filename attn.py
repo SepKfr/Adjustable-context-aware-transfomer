@@ -216,13 +216,14 @@ class EncoderLayer(nn.Module):
 class Encoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v, n_heads,
-                 n_layers, pad_index, device, pe, attn_type, cutoff, dr):
+                 n_layers, pad_index, device, pe, attn_type, cutoff, kernel, dr):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=1)
+        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
+                                      kernel_size=kernel)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -238,11 +239,16 @@ class Encoder(nn.Module):
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
+        self.kernel_size = kernel
+        self.dilation = 1
 
     def forward(self, enc_input):
 
         if self.attn_type == 'attn_conv':
-            enc_outputs = self.src_emb_conv(enc_input.permute(0, 2, 1))
+            padding = (self.kernel_size - 1) * self.dilation
+            enc_input = enc_input.permute(0, 2, 1)
+            enc_input = F.pad(enc_input, (padding, 0))
+            enc_outputs = self.src_emb_conv(enc_input)
             enc_outputs = enc_outputs.permute(0, 2, 1)
         else:
             enc_outputs = self.src_emb(enc_input)
@@ -289,13 +295,14 @@ class Decoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device, pe,
-                 attn_type, cutoff, dr):
+                 attn_type, cutoff, kernel, dr):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model, kernel_size=1)
+        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
+                                      kernel_size=kernel)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -312,18 +319,22 @@ class Decoder(nn.Module):
         self.pe = pe
         self.cutoff = cutoff
         self.d_k = d_k
+        self.kernel_size = kernel
+        self.dilation = 1
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == 'attn_conv':
-            dec_outputs = self.tgt_emb_conv(dec_inputs.permute(0, 2, 1))
+            padding = (self.kernel_size - 1) * self.dilation
+            dec_inputs = dec_inputs.permute(0, 2, 1)
+            dec_inputs = F.pad(dec_inputs, (padding, 0))
+            dec_outputs = self.tgt_emb_conv(dec_inputs)
             dec_outputs = dec_outputs.permute(0, 2, 1)
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
 
         dec_outputs = self.pos_emb(dec_outputs)
-
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
@@ -353,7 +364,7 @@ class Attn(nn.Module):
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, cutoff, dr):
+                 seq_len, seq_len_pred, cutoff, kernel, dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -361,14 +372,15 @@ class Attn(nn.Module):
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
-            device=device, pe=pe, attn_type=attn_type, cutoff=cutoff, dr=dr)
+            device=device, pe=pe, attn_type=attn_type,
+            cutoff=cutoff, kernel=kernel, dr=dr)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, dr=dr)
+            attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred)
@@ -379,7 +391,7 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        #dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
