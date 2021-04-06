@@ -80,7 +80,7 @@ def train(args, model, train_en, train_de, train_y,
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
             rand_n = random.uniform(0, 1)
-            if val_inner_loss < val_loss and rand_n > 0.2:
+            if val_inner_loss < val_loss and rand_n >= 0.5:
                 val_loss = val_inner_loss
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
