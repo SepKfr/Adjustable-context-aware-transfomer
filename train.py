@@ -75,12 +75,10 @@ def train(args, model, train_en, train_de, train_y,
             loss = criterion(test_y[j].to(device), output)
             test_loss += loss.item()
 
-        test_loss = test_loss / test_en.shape[1]
-
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
             rand_n = random.uniform(0, 1)
-            if val_inner_loss < val_loss and rand_n >= 0.5:
+            if val_inner_loss < val_loss and rand_n >= 0.25:
                 val_loss = val_inner_loss
                 best_config = config
                 torch.save(model.state_dict(), os.path.join(path, args.name))
@@ -136,6 +134,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
         test_loss += loss.item()
+
     return test_loss
 
 
