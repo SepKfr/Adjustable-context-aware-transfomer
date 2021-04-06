@@ -16,6 +16,8 @@ from clearml import Task, Logger
 from utils import inverse_transform
 import itertools
 import sys
+import random
+
 
 def batching(batch_size, x_en, x_de, y_t):
 
@@ -77,9 +79,12 @@ def train(args, model, train_en, train_de, train_y,
 
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
-            if val_inner_loss < val_loss:
+            rand_n = random.uniform(0, 1)
+            if val_inner_loss < val_loss and rand_n > 0.2:
                 val_loss = val_inner_loss
                 best_config = config
+                torch.save(model.state_dict(), os.path.join(path, args.name))
+            else:
                 torch.save(model.state_dict(), os.path.join(path, args.name))
             e = epoch
 
