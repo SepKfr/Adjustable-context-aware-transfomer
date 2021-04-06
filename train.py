@@ -105,6 +105,35 @@ def create_config(hyper_parameters):
     return list(itertools.product(*hyper_parameters))
 
 
+def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
+
+    n_layers, n_heads, d_model, cutoff, kernel = config
+    d_k = int(d_model / n_heads)
+
+    model = Attn(src_input_size=test_en.shape[3],
+                 tgt_input_size=test_y.shape[3],
+                 d_model=d_model,
+                 d_ff=d_model * 2,
+                 d_k=d_k, d_v=d_k, n_heads=n_heads,
+                 n_layers=n_layers, src_pad_index=0,
+                 tgt_pad_index=0, device=device,
+                 pe=args.pos_enc, attn_type=args.attn_type,
+                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
+                 cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
+    model.load_state_dict(torch.load(os.path.join(path, args.name)))
+    model.eval()
+
+    test_loss = 0
+    for j in range(test_en.shape[0]):
+        output = model(test_en[j].to(device), test_de[j].to(device), training=True)
+        # output = inverse_transform(output).to(device)
+        # y_true = inverse_transform(test_y[j]).to(device)
+        y_true = test_y[j].to(device)
+        loss = criterion(y_true, output)
+        test_loss += loss.item()
+    return test_loss
+
+
 def main():
 
     #task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
@@ -222,40 +251,23 @@ def main():
                     valid_y.to(device), epoch, e, val_loss, val_inner_loss,
                     optimizer, lr_scheduler, warmup_scheduler,
                     conf, i, best_config, path, criterion)
-
                 if stop:
                     break
 
+            test_loss = evaluate(best_config, args, test_en, test_de, test_y,
+                                 criterion, seq_len, path)
+            print("test error {:.3f}".format(test_loss / test_en.shape[0]))
+
         layers, heads, d_model, cutoff, kernel = best_config
-        print(best_config)
+        print("best_config: {}".format(best_config))
 
     else:
 
         layers, heads, d_model, cutoff, kernel = args.n_layers_best, args.n_heads_best, \
                                      args.d_model_best, args.cutoff, args.kernel
-    d_k = int(d_model / heads)
+        best_config = layers, heads, d_model, cutoff, kernel
 
-    model = Attn(src_input_size=train_en.shape[3],
-                 tgt_input_size=train_y.shape[3],
-                 d_model=d_model,
-                 d_ff=d_model*2,
-                 d_k=d_k, d_v=d_k, n_heads=heads,
-                 n_layers=layers, src_pad_index=0,
-                 tgt_pad_index=0, device=device,
-                 pe=args.pos_enc, attn_type=args.attn_type,
-                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
-    model.load_state_dict(torch.load(os.path.join(path, args.name)))
-    model.eval()
-
-    test_loss = 0
-    for j in range(test_en.shape[0]):
-        output = model(test_en[j].to(device), test_de[j].to(device), training=True)
-        #output = inverse_transform(output).to(device)
-        #y_true = inverse_transform(test_y[j]).to(device)
-        y_true = test_y[j].to(device)
-        loss = criterion(y_true, output)
-        test_loss += loss.item()
+    test_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
     erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[1])))
@@ -264,7 +276,7 @@ def main():
     erros[args.name].append(d_model)
     erros[args.name].append(cutoff)
 
-    print("test error {:.3f}".format(test_loss / test_en.shape[0]))
+    print("test error for best config {:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
