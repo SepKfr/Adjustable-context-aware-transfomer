@@ -259,6 +259,7 @@ def main():
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
+    erros[args.name].append(cutoff)
 
     print("test error {:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
