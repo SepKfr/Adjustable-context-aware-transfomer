@@ -275,6 +275,7 @@ def main():
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
             json_dat[args.name].append(cutoff)
+            json_dat[args.name].append(kernel)
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
