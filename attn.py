@@ -50,12 +50,12 @@ def get_con_vecs(seq, cutoff):
     low_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
     up_t = torch.triu(up_t)
     up_t = torch.flip(up_t, dims=[2])
-    up_t = F.pad(up_t, pad=(0, 0, 1, 0))[:, :, :-1, :]
+    up_t = F.pad(up_t, pad=(0, 0, 1, 0))[:, :, :-1, 1:]
     low_t = torch.tril(low_t)
     low_t = torch.flip(low_t, dims=[2])
     mtx = torch.cat((up_t, low_t), dim=-1).permute(0, 2, 3, 1)
-    mtx = mtx.reshape(batch_size, n_h, seq_len, seq_len*2, d_k)
-    mtx = mtx[:, :, :, seq_len - cutoff:seq_len + cutoff, :]
+    mtx = mtx.reshape(batch_size, n_h, seq_len, seq_len*2 - 1, d_k)
+    mtx = mtx[:, :, :, seq_len - cutoff - 1:seq_len + cutoff, :]
     return mtx
 
 
@@ -112,7 +112,7 @@ class ScaledDotProductAttention(nn.Module):
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             scores = torch.einsum('bhqcd,bhkcd->bhqkcd', Q, K)
-            scores = torch.einsum('bhqkcd->bhqk', scores) / (np.sqrt(self.d_k) * self.cutoff*2)
+            scores = torch.einsum('bhqkcd->bhqk', scores) / (np.sqrt(self.d_k) * (self.cutoff*2 + 1))
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
