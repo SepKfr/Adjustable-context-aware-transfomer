@@ -6,6 +6,7 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 import argparse
 import matplotlib.pyplot as plt
+import pywt
 
 
 class Scaler:
