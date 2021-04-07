@@ -75,6 +75,7 @@ def train(args, model, train_en, train_de, train_y,
             loss = criterion(test_y[j].to(device), output)
             test_loss += loss.item()
 
+        test_loss = test_loss / test_en.shape[1]
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
             rand_n = random.uniform(0, 1)
@@ -85,7 +86,7 @@ def train(args, model, train_en, train_de, train_y,
 
             e = epoch
 
-        elif epoch - e > 50:
+        elif epoch - e > 40:
             stop = True
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
@@ -133,7 +134,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
         test_loss += loss.item()
-
+    test_loss = test_loss / test_en.shape[1]
     return test_loss
 
 
