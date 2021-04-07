@@ -274,7 +274,7 @@ def main():
     test_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
-    erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[1])))
+    erros[args.name].append(float("{:.3f}".format(test_loss)))
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
@@ -286,7 +286,9 @@ def main():
     if os.path.exists(error_path):
         with open(error_path) as json_file:
             json_dat = json.load(json_file)
-            json_dat[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
+            if json_dat[args.name] is None:
+                json_dat[args.name] = list()
+            json_dat[args.name].append(float("{:.3f}".format(test_loss)))
             json_dat[args.name].append(layers)
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
