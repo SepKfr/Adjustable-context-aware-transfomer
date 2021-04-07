@@ -85,7 +85,7 @@ def train(args, model, train_en, train_de, train_y,
 
             e = epoch
 
-        elif epoch - e > 20:
+        elif epoch - e > 50:
             stop = True
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
