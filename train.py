@@ -104,7 +104,7 @@ def train(args, model, train_en, train_de, train_y,
 
 
 def create_config(hyper_parameters):
-    return list(itertools.product(*hyper_parameters))
+    return list(random.sample(set(itertools.product(*hyper_parameters)), 6))
 
 
 def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
@@ -145,7 +145,7 @@ def main():
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=[1, 3, 6])
-    parser.add_argument("--d_model", type=int, default=[32])
+    parser.add_argument("--d_model", type=int, default=[32, 64])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
     parser.add_argument("--n_heads", type=list, default=[1, 4])
