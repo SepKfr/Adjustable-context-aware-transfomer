@@ -58,6 +58,7 @@ class Data:
                 stScaler = StandardScaler()
                 dat = df_site.iloc[:, f + 1]
                 dat = np.array(dat).reshape(-1, 1)
+                ca1, ca2 = pywt.dwt(dat, 'db1')
                 '''stScaler.fit(dat)
                 dat = stScaler.transform(dat)'''
                 scalers_per_site.add_scaler(f, stScaler)
