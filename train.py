@@ -81,7 +81,7 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 val_loss = val_inner_loss
                 best_config = config
-                torch.save(model.state_dict(), os.path.join(path, args.name))
+                torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
             e = epoch
 
@@ -125,7 +125,9 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                  cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
-    model.load_state_dict(torch.load(os.path.join(path, args.name)))
+    checkpoint = torch.load(os.path.join(path, args.name))
+    model.load_state_dict(checkpoint["model_state_dict"])
+
     model.eval()
 
     test_loss = 0
