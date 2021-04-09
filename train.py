@@ -290,15 +290,15 @@ def main():
     erros[args.name].append(d_model)
     erros[args.name].append(cutoff)
 
-    print("test error for best config {:.3f}".format(test_loss / test_en.shape[0]))
+    print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
             json_dat = json.load(json_file)
             json_dat[args.name] = list()
-            json_dat[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
-            json_dat[args.name].append(float("{:.3f}".format(mae_loss / test_en.shape[0])))
+            json_dat[args.name].append(float("{:.3f}".format(test_loss)))
+            json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
             json_dat[args.name].append(layers)
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
