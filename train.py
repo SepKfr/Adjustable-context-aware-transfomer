@@ -199,8 +199,6 @@ def main():
                                inputs[-val_len:, -seq_len:, :].unsqueeze(0), \
                                outputs[-val_len:, :, :].unsqueeze(0)
 
-    print(test_en.shape)
-
     train_en, train_de, train_y = batching(args.batch_size, inputs[:-2, :-seq_len, :],
                                   inputs[:-2, -seq_len:, :], outputs[:, :, :])
 
