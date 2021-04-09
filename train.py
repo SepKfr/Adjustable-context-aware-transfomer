@@ -114,7 +114,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     n_layers, n_heads, d_model, cutoff, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
-    path = "preds_{}_{}".format(args.site, args.seq_len_pred)
+    path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
 
