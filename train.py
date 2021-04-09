@@ -113,6 +113,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
     n_layers, n_heads, d_model, cutoff, kernel = config
     d_k = int(d_model / n_heads)
+    mae = nn.L1Loss()
 
     model = Attn(src_input_size=test_en.shape[3],
                  tgt_input_size=test_y.shape[3],
@@ -135,9 +136,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         # y_true = inverse_transform(test_y[j]).to(device)
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
-        metric = Metrics(y_true, output)
         test_loss += loss.item()
-        mae_loss += metric.mae.item()
+        mae_loss += mae(y_true, output).item()
     test_loss = test_loss / test_en.shape[1]
     mae_loss = mae_loss / test_en.shape[1]
     return test_loss, mae_loss
@@ -283,8 +283,8 @@ def main():
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
-    erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
-    erros[args.name].append(float("{:.3f}".format(mae_loss / test_en.shape[0])))
+    erros[args.name].append(float("{:.3f}".format(test_loss)))
+    erros[args.name].append(float("{:.3f}".format(mae_loss)))
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
