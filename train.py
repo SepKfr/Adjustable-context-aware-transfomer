@@ -115,8 +115,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(path_to_pred):
+        os.makedirs(path_to_pred)
 
     model = Attn(src_input_size=test_en.shape[3],
                  tgt_input_size=test_y.shape[3],
