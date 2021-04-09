@@ -135,9 +135,9 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         # y_true = inverse_transform(test_y[j]).to(device)
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
-        _, mae = Metrics(y_true, output)
+        metric = Metrics(y_true, output)
         test_loss += loss.item()
-        mae_loss += mae.item()
+        mae_loss += metric.mae.item()
     test_loss = test_loss / test_en.shape[1]
     mae_loss = mae_loss / test_en.shape[1]
     return test_loss, mae_loss
