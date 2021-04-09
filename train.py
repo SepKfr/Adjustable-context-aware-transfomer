@@ -105,7 +105,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = int(len(prod))
+    num_samples = int(len(prod) * 0.4)
     return list(random.sample(set(prod), num_samples))
 
 
