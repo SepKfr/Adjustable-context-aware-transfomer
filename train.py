@@ -128,15 +128,19 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     model.eval()
 
     test_loss = 0
+    mae_loss = 0
     for j in range(test_en.shape[0]):
         output = model(test_en[j].to(device), test_de[j].to(device), training=True)
         # output = inverse_transform(output).to(device)
         # y_true = inverse_transform(test_y[j]).to(device)
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
+        _, mae = Metrics(y_true, output)
         test_loss += loss.item()
+        mae_loss += mae.item()
     test_loss = test_loss / test_en.shape[1]
-    return test_loss
+    mae_loss = mae_loss / test_en.shape[1]
+    return test_loss, mae_loss
 
 
 def main():
@@ -147,6 +151,7 @@ def main():
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=[1, 4, 6])
+    parser.add_argument("--cutoff_best", type=int)
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
@@ -155,6 +160,7 @@ def main():
     parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
+    parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--out_channel", type=int, default=32)
     parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--dr_best", type=float)
@@ -259,9 +265,9 @@ def main():
                 if stop:
                     break
 
-            test_loss = evaluate(best_config, args, test_en, test_de, test_y,
+            test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
                                  criterion, seq_len, path)
-            print("test error {:.3f}".format(test_loss / test_en.shape[0]))
+            print("test error {:.3f}".format(test_loss))
 
         layers, heads, d_model, cutoff, kernel = best_config
         print("best_config: {}".format(best_config))
@@ -272,16 +278,17 @@ def main():
                                      args.d_model_best, args.cutoff, args.kernel
         best_config = layers, heads, d_model, cutoff, kernel
 
-    test_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
+    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
     erros[args.name].append(float("{:.3f}".format(test_loss)))
+    erros[args.name].append(float("{:.3f}".format(mae_loss)))
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
     erros[args.name].append(cutoff)
 
-    print("test error for best config {:.3f}".format(test_loss / test_en.shape[0]))
+    print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
@@ -289,6 +296,7 @@ def main():
             json_dat = json.load(json_file)
             json_dat[args.name] = list()
             json_dat[args.name].append(float("{:.3f}".format(test_loss)))
+            json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
             json_dat[args.name].append(layers)
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)

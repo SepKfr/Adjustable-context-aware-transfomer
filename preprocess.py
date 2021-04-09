@@ -61,6 +61,7 @@ class Data:
                 ca1, ca2 = pywt.dwt(dat, 'db1')
                 '''stScaler.fit(dat)
                 dat = stScaler.transform(dat)'''
+                dat = ca1
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
