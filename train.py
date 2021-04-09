@@ -105,7 +105,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = int(len(prod) * 0.25)
+    num_samples = int(len(prod))
     return list(random.sample(set(prod), num_samples))
 
 
@@ -137,7 +137,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
         test_loss += loss.item()
-        mae_loss += mae(y_true, output).item()
+        mae_loss += mae(y_true, output)
     test_loss = test_loss / test_en.shape[1]
     mae_loss = mae_loss / test_en.shape[1]
     return test_loss, mae_loss
@@ -155,9 +155,9 @@ def main():
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
-    parser.add_argument("--n_heads", type=list, default=[1, 4])
+    parser.add_argument("--n_heads", type=list, default=[1])
     parser.add_argument("--n_heads_best", type=int)
-    parser.add_argument("--n_layers", type=list, default=[1, 3])
+    parser.add_argument("--n_layers", type=list, default=[3])
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--kernel_best", type=int)
