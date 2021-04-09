@@ -199,6 +199,8 @@ def main():
                                inputs[-val_len:, -seq_len:, :].unsqueeze(0), \
                                outputs[-val_len:, :, :].unsqueeze(0)
 
+    print(test_en.shape)
+
     train_en, train_de, train_y = batching(args.batch_size, inputs[:-2, :-seq_len, :],
                                   inputs[:-2, -seq_len:, :], outputs[:, :, :])
 
@@ -275,28 +277,28 @@ def main():
     else:
 
         layers, heads, d_model, cutoff, kernel = args.n_layers_best, args.n_heads_best, \
-                                     args.d_model_best, args.cutoff, args.kernel
+                                     args.d_model_best, args.cutoff_best, args.kernel_best
         best_config = layers, heads, d_model, cutoff, kernel
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
-    erros[args.name].append(float("{:.3f}".format(test_loss)))
-    erros[args.name].append(float("{:.3f}".format(mae_loss)))
+    erros[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
+    erros[args.name].append(float("{:.3f}".format(mae_loss / test_en.shape[0])))
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
     erros[args.name].append(cutoff)
 
-    print("test error for best config {:.3f}".format(test_loss))
+    print("test error for best config {:.3f}".format(test_loss / test_en.shape[0]))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
             json_dat = json.load(json_file)
             json_dat[args.name] = list()
-            json_dat[args.name].append(float("{:.3f}".format(test_loss)))
-            json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
+            json_dat[args.name].append(float("{:.3f}".format(test_loss / test_en.shape[0])))
+            json_dat[args.name].append(float("{:.3f}".format(mae_loss / test_en.shape[0])))
             json_dat[args.name].append(layers)
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
