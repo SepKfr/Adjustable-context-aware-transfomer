@@ -44,14 +44,13 @@ else:
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
           val_inner_loss, optimizer, lr_scheduler, warmup_scheduler,
-          config, config_num, best_config, path, criterion):
+          config, config_num, best_config, path, criterion, hidden):
 
     stop = False
     try:
-        model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            output = model(train_en[batch_id], train_de[batch_id], training=True)
+            output = model(train_en[batch_id], train_de[batch_id], hidden)
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
             optimizer.zero_grad()
@@ -66,7 +65,7 @@ def train(args, model, train_en, train_de, train_y,
         model.eval()
         test_loss = 0
         for j in range(test_en.shape[0]):
-            output = model(test_en[j].to(device), test_de[j].to(device), training=True)
+            output = model(test_en[j].to(device), test_de[j].to(device))
             loss = criterion(test_y[j].to(device), output)
             test_loss += loss.item()
 
@@ -260,13 +259,13 @@ def main():
             val_inner_loss = 1e5
             e = 0
             for epoch in range(epoch_start, args.n_epochs, 1):
-
+                hidden = torch.zeros(n_layers, args.batch_size, hidden_size)
                 best_config, val_loss, val_inner_loss, stop, e = \
                     train(args, model, train_en.to(device), train_de.to(device),
                           train_y.to(device), valid_en.to(device), valid_de.to(device),
                           valid_y.to(device), epoch, e, val_loss, val_inner_loss,
                           optimizer, lr_scheduler, warmup_scheduler,
-                          conf, i, best_config, path, criterion)
+                          conf, i, best_config, path, criterion, hidden)
                 if stop:
                     break
 
