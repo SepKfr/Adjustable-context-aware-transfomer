@@ -161,7 +161,6 @@ def main():
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
     parser.add_argument("--deep_type", type=str, default="cnn")
@@ -285,7 +284,6 @@ def main():
 
         else:
             n_layers, hidden_size = args.n_layers_best, args.hidden_size
-            kernel = 0
             best_config = n_layers, hidden_size
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
@@ -295,7 +293,8 @@ def main():
     erros[args.name].append(float("{:.3f}".format(mae_loss)))
     erros[args.name].append(n_layers)
     erros[args.name].append(hidden_size)
-    erros[args.name].append(kernel)
+    if args.deep_type == "cnn":
+        erros[args.name].append(kernel)
 
     print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
@@ -308,7 +307,8 @@ def main():
             json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
             json_dat[args.name].append(n_layers)
             json_dat[args.name].append(hidden_size)
-            erros[args.name].append(kernel)
+            if args.deep_type == "cnn":
+                json_dat[args.name].append(kernel)
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
