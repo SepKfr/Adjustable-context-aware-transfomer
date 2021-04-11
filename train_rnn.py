@@ -57,8 +57,8 @@ def train(args, model, train_en, train_de, train_y,
             total_loss += loss.item()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
+            '''lr_scheduler.step()
+            warmup_scheduler.dampen()'''
 
         if epoch % 20 == 0:
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
