@@ -78,6 +78,9 @@ class RNN(nn.Module):
         x_en = self.linear1(X_en).permute(1, 0, 2)
         x_de = self.linear1(X_de).permute(1, 0, 2)
 
+        if hidden is None:
+            hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size)
+
         if self.rnn_type == "LSTM":
             en_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
             outputs, _ = self.decoder_lstm(x_de, (hidden, hidden))
