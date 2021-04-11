@@ -75,8 +75,8 @@ class RNN(nn.Module):
 
         b, seq_len, _ = X_en.shape
         b, seq_len_1, _ = X_de.shape
-        x_en = self.linear1(X_en).view(seq_len, b, self.hidden_size)
-        x_de = self.linear1(X_de).view(seq_len_1, b, self.hidden_size)
+        x_en = self.linear1(X_en).permute(1, 0, 2)
+        x_de = self.linear1(X_de).permute(1, 0, 2)
 
         if hidden is None:
             hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size)
@@ -89,8 +89,8 @@ class RNN(nn.Module):
             en_out, hidden = self.encoder_gru(x_en, hidden)
             outputs, _ = self.decoder_gru(x_de, hidden)
 
-        outputs = self.proj_out(outputs.view(b, -1, seq_len_1))
-        outputs = self.linear2(outputs.permute(0, 2, 1)).view(b, self.pred_seq_len, -1)
+        outputs = self.proj_out(outputs.permute(1, 2, 0))
+        outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
 

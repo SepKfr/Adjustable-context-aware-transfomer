@@ -51,14 +51,14 @@ def train(args, model, train_en, train_de, train_y,
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            optimizer.zero_grad()
             output = model(train_en[batch_id], train_de[batch_id], training=True)
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            '''lr_scheduler.step()
-            warmup_scheduler.dampen()'''
+            lr_scheduler.step()
+            warmup_scheduler.dampen()
 
         if epoch % 20 == 0:
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
@@ -167,7 +167,7 @@ def main():
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
-    parser.add_argument("--deep_type", type=str, default="cnn")
+    parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
