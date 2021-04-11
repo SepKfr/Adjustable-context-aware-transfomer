@@ -10,6 +10,7 @@ import itertools
 import sys
 import random
 from baselines import CNN, RNN
+from utils import inverse_transform
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -138,6 +139,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     mae_loss = 0
     for j in range(test_en.shape[0]):
         output = model(test_en[j].to(device), test_de[j].to(device), training=True)
+        output = inverse_transform(output).to(device)
+        y_true = inverse_transform(test_y[j]).to(device)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
         y_true = test_y[j].to(device)
         loss = criterion(y_true, output)
