@@ -113,8 +113,8 @@ class CNN(nn.Module):
 
         de_seq_len = x_de.shape[1]
         b, seq_len, f = x_en.shape
-        x_en = x_en.view(b, f, seq_len)
-        x_de = x_de.view(b, f, de_seq_len)
+        x_en = x_en.contiguous().view(b, f, seq_len)
+        x_de = x_de.contiguous().view(b, f, de_seq_len)
         padding = (self.kernel_size - 1) * self.dilation
         x_en = F.pad(x_en, (padding, 0))
         x_de = F.pad(x_de, (padding, 0))
@@ -134,7 +134,7 @@ class CNN(nn.Module):
 
         x_de_out = proj2(x_de_out)
         x_de_out = self.proj_out(x_de_out)
-        output = self.linear(x_de_out.view(b, -1, self.out_channel))
+        output = self.linear(x_de_out.contiguous().view(b, -1, self.out_channel))
 
         return output
 
