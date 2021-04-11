@@ -14,7 +14,6 @@ from baselines import CNN, RNN
 from utils import inverse_transform
 
 
-
 def batching(batch_size, x_en, x_de, y_t):
 
     batch_n = int(x_en.shape[0] / batch_size)
@@ -52,9 +51,9 @@ def train(args, model, train_en, train_de, train_y,
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
+            optimizer.zero_grad()
             output = model(train_en[batch_id], train_de[batch_id], training=True)
             loss = criterion(output, train_y[batch_id])
-            optimizer.zero_grad()
             total_loss += loss.item()
             loss.backward()
             optimizer.step()
