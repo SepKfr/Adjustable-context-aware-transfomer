@@ -162,7 +162,7 @@ def main():
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
     parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--lr", type=list, default=0.0001)
-    parser.add_argument("--n_epochs", type=int, default=20)
+    parser.add_argument("--n_epochs", type=int, default=40)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--site", type=str, default="WHB")
