@@ -11,6 +11,7 @@ import sys
 import random
 from baselines import CNN, RNN
 from utils import inverse_transform
+from preprocess import Scaler
 
 
 def batching(batch_size, x_en, x_de, y_t):
