@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import torch.nn.functional as F
 
 
 class RNConv(nn.Module):
@@ -55,7 +56,7 @@ class RNConv(nn.Module):
 class RNN(nn.Module):
     def __init__(self, n_layers, hidden_size,
                  input_size, output_size,
-                 rnn_type, seq_len, seq_pred_len, d_r=0.1):
+                 rnn_type, seq_len, seq_pred_len, d_r):
 
         super(RNN, self).__init__()
         self.encoder_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
@@ -96,7 +97,7 @@ class RNN(nn.Module):
 
 class CNN(nn.Module):
     def __init__(self, input_size, output_size,
-                 out_channel, kernel, n_layers, seq_len, seq_pred_len, d_r=0.1):
+                 out_channel, kernel, n_layers, seq_len, seq_pred_len, d_r):
         super(CNN, self).__init__()
         self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
@@ -105,6 +106,8 @@ class CNN(nn.Module):
         self.out_channel = out_channel
         self.proj = nn.Linear(out_channel, input_size)
         self.proj_out = nn.Linear(seq_len, seq_pred_len)
+        self.kernel_size = kernel
+        self.dilation = 1
 
     def forward(self, x_en, x_de, training=True):
 
@@ -112,6 +115,9 @@ class CNN(nn.Module):
         b, seq_len, f = x_en.shape
         x_en = x_en.view(b, f, seq_len)
         x_de = x_de.view(b, f, de_seq_len)
+        padding = (self.kernel_size - 1) * self.dilation
+        x_en = F.pad(x_en, (padding, 0))
+        x_de = F.pad(x_de, (padding, 0))
         proj2 = nn.Linear(seq_len+de_seq_len, de_seq_len)
 
         for i in range(self.n_layers):
