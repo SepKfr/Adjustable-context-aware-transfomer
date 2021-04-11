@@ -55,7 +55,6 @@ def train(args, model, train_en, train_de, train_y,
             output = model(train_en[batch_id], train_de[batch_id], training=True)
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             lr_scheduler.step()
