@@ -1,4 +1,5 @@
 import pickle
+from preprocess import Scaler
 from torch.optim import Adam
 import torch.nn as nn
 import torch
@@ -11,7 +12,7 @@ import sys
 import random
 from baselines import CNN, RNN
 from utils import inverse_transform
-from preprocess import Scaler
+
 
 
 def batching(batch_size, x_en, x_de, y_t):
@@ -39,6 +40,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
     print("running on CPU")
+
 
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
