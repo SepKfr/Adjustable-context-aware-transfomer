@@ -52,9 +52,9 @@ def train(args, model, train_en, train_de, train_y,
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            optimizer.zero_grad()
             output = model(train_en[batch_id], train_de[batch_id], training=True)
             loss = criterion(output, train_y[batch_id])
+            optimizer.zero_grad()
             total_loss += loss.item()
             loss.backward()
             optimizer.step()
@@ -162,7 +162,7 @@ def main():
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
     parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--lr", type=list, default=0.0001)
-    parser.add_argument("--n_epochs", type=int, default=5)
+    parser.add_argument("--n_epochs", type=int, default=20)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[1, 3])
     parser.add_argument("--site", type=str, default="WHB")
