@@ -67,7 +67,7 @@ def train(args, model, train_en, train_de, train_y,
         test_loss = 0
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
-            loss = criterion(test_y[j], output).to(device)
+            loss = criterion(test_y[j], output)
             test_loss += loss.item()
 
         test_loss = test_loss / test_en.shape[1]
