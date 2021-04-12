@@ -102,7 +102,7 @@ class CNN(nn.Module):
                  seq_len, seq_pred_len, device, d_r):
         super(CNN, self).__init__()
         self.conv = [nn.Conv1d(input_size, out_channel, kernel).to(device) for _ in range(n_layers)]
-        self.dropout1 = [nn.Dropout(d_r).to(device) for _ in range(n_layers)]
+        self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
         self.linear = nn.Linear(out_channel, output_size)
         self.n_layers = n_layers
         self.out_channel = out_channel
@@ -121,7 +121,7 @@ class CNN(nn.Module):
         padding = (self.kernel_size - 1) * self.dilation
         x_en = F.pad(x_en, (padding, 0))
         x_de = F.pad(x_de, (padding, 0))
-        proj2 = nn.Linear(seq_len+de_seq_len, de_seq_len)
+        proj2 = nn.Linear(seq_len+de_seq_len, de_seq_len).to(self.device)
 
         for i in range(self.n_layers):
             x_en_out = self.conv[i](x_en)
