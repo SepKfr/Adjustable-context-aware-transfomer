@@ -51,7 +51,7 @@ def train(args, model, train_en, train_de, train_y,
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
-            loss = criterion(output, train_y[batch_id])
+            loss = criterion(output, train_y[batch_id]).to(device)
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -66,7 +66,7 @@ def train(args, model, train_en, train_de, train_y,
         test_loss = 0
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
-            loss = criterion(test_y[j], output)
+            loss = criterion(test_y[j], output).to(device)
             test_loss += loss.item()
 
         test_loss = test_loss / test_en.shape[1]
@@ -143,7 +143,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         output = inverse_transform(output).to(device)
         y_true = inverse_transform(test_y[j]).to(device)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
-        loss = criterion(y_true, output)
+        loss = criterion(y_true, output).to(device)
         test_loss += loss.item()
         mae_loss += mae(y_true, output).item()
 
