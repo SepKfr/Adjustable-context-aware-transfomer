@@ -135,6 +135,7 @@ class CNN(nn.Module):
             x_de_out = self.conv[i](x_de)
             x_de_out = self.dropout1[i](x_de_out)
 
+        x_de_out = x_de_out.to(self.device)
         x_de_out = proj2(x_de_out)
         x_de_out = self.proj_out(x_de_out)
         output = self.linear(x_de_out.contiguous().view(b, -1, self.out_channel))
