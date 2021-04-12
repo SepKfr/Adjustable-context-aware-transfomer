@@ -67,7 +67,7 @@ def train(args, model, train_en, train_de, train_y,
 
         if epoch % 20 == 0:
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
-        print(total_loss)
+
         model.eval()
         test_loss = 0
         for j in range(test_en.shape[0]):
