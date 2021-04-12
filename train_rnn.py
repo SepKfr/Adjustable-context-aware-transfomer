@@ -252,7 +252,7 @@ def main():
                             d_r=args.dr)
                 model = model.to(device)
 
-            optimizer = Adam(model.parameters(), lr=args.lr)
+            optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])

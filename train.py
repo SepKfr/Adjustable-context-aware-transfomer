@@ -244,7 +244,7 @@ def main():
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                          cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
 
-            optimizer = Adam(model.parameters(), lr=args.lr)
+            optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
