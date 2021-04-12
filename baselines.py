@@ -101,7 +101,7 @@ class CNN(nn.Module):
                  out_channel, kernel, n_layers,
                  seq_len, seq_pred_len, device, d_r):
         super(CNN, self).__init__()
-        self.conv = [nn.Conv1d(input_size, out_channel, kernel) for _ in range(n_layers)]
+        self.conv = [nn.Conv1d(input_size, out_channel, kernel).to(device) for _ in range(n_layers)]
         self.dropout1 = [nn.Dropout(d_r) for _ in range(n_layers)]
         self.linear = nn.Linear(out_channel, output_size)
         self.n_layers = n_layers
@@ -129,7 +129,7 @@ class CNN(nn.Module):
 
         x_en_out = self.proj(x_en_out.permute(0, 2, 1))
         x_en_out = x_en_out.permute(0, 2, 1)
-        x_de = torch.cat((x_en_out, x_de), dim=2).to(self.device)
+        x_de = torch.cat((x_en_out, x_de), dim=2)
 
         for i in range(self.n_layers):
             x_de_out = self.conv[i](x_de)
