@@ -48,6 +48,7 @@ def train(args, model, train_en, train_de, train_y,
 
     stop = False
     try:
+        model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
