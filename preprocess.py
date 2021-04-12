@@ -67,18 +67,6 @@ class Data:
                 if f == 1:
                     self.outputs[:, :, 0] = out_data
 
-    def create_one_hot(self, df):
-
-        months = df["Date"].dt.month
-        b = self.ts - self.in_seq_len*2
-        one_hot = torch.zeros((b, self.in_seq_len, self.n_seasons))
-        for i in range(b):
-            for s in range(self.in_seq_len):
-                m = months.iloc[i+s]
-                j = 1 if m <= 3 else 2 if m > 3 & m <= 6 else 3 if m > 6 & m <= 9 else 4
-                one_hot[i, s, j - 1] = 1
-        return one_hot
-
     def get_window_data(self, data):
 
         data_2d_in = torch.zeros((self.ts, self.hist))
