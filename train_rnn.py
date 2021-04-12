@@ -124,6 +124,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     rnn_type=args.rnn_type,
                     seq_len=seq_len,
                     seq_pred_len=args.seq_len_pred,
+                    device=device,
                     d_r=args.dr).to(device)
 
     mae = nn.L1Loss()
@@ -241,6 +242,7 @@ def main():
                             rnn_type=args.rnn_type,
                             seq_len=seq_len,
                             seq_pred_len=args.seq_len_pred,
+                            device=device,
                             d_r=args.dr).to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr)
