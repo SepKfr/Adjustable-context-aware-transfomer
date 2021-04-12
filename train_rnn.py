@@ -115,7 +115,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     n_layers=n_layers,
                     seq_len=seq_len,
                     seq_pred_len=args.seq_len_pred,
-                    d_r=args.dr).to(device)
+                    d_r=args.dr)
+        model = model.to(device)
     else:
         n_layers, hidden_size = config
         model = RNN(n_layers=n_layers,
@@ -126,7 +127,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     seq_len=seq_len,
                     seq_pred_len=args.seq_len_pred,
                     device=device,
-                    d_r=args.dr).to(device)
+                    d_r=args.dr)
+        model = model.to(device)
 
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
@@ -141,7 +143,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     test_loss = 0
     mae_loss = 0
     for j in range(test_en.shape[0]):
-        output = model(test_en[j].to(device), test_de[j].to(device), training=True)
+        output = model(test_en[j].to(device), test_de[j].to(device))
         output = inverse_transform(output).to(device)
         y_true = inverse_transform(test_y[j]).to(device)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
@@ -233,7 +235,8 @@ def main():
                             n_layers=n_layers,
                             seq_len=seq_len,
                             seq_pred_len=args.seq_len_pred,
-                            d_r=args.dr).to(device)
+                            d_r=args.dr)
+                model = model.to(device)
             else:
                 n_layers, hidden_size = conf
                 model = RNN(n_layers=n_layers,
@@ -244,7 +247,8 @@ def main():
                             seq_len=seq_len,
                             seq_pred_len=args.seq_len_pred,
                             device=device,
-                            d_r=args.dr).to(device)
+                            d_r=args.dr)
+                model = model.to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr)
             epoch_start = 0
