@@ -56,7 +56,7 @@ class RNConv(nn.Module):
 class RNN(nn.Module):
     def __init__(self, n_layers, hidden_size,
                  input_size, output_size,
-                 rnn_type, seq_len, seq_pred_len, d_r):
+                 rnn_type, seq_len, seq_pred_len, device, d_r):
 
         super(RNN, self).__init__()
         self.encoder_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
@@ -70,6 +70,7 @@ class RNN(nn.Module):
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.proj_out = nn.Linear(seq_len, seq_pred_len)
         self.pred_seq_len = seq_pred_len
+        self.device = device
 
     def forward(self, X_en, X_de, hidden=None):
 
@@ -79,7 +80,7 @@ class RNN(nn.Module):
         x_de = self.linear1(X_de).permute(1, 0, 2)
 
         if hidden is None:
-            hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size)
+            hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size).to(self.device)
 
         if self.rnn_type == "LSTM":
             en_out, (hidden, state) = self.encoder_lstm(x_en, (hidden, hidden))
