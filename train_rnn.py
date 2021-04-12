@@ -147,9 +147,9 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         output = model(test_en[j].to(device), test_de[j].to(device))
         #output = inverse_transform(output).to(device)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
-        loss = criterion(test_y[j], output)
+        loss = criterion(test_y[j].to('cpu'), output.to('cpu'))
         test_loss += loss.item()
-        mae_loss += mae(test_y[j], output).item()
+        mae_loss += mae(test_y[j].to('cpu'), output.to('cpu')).item()
 
     test_loss = test_loss / test_en.shape[1]
     mae_loss = mae_loss / test_en.shape[1]
