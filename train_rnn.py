@@ -115,6 +115,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     n_layers=n_layers,
                     seq_len=seq_len,
                     seq_pred_len=args.seq_len_pred,
+                    device=device,
                     d_r=args.dr)
         model = model.to(device)
     else:
@@ -235,6 +236,7 @@ def main():
                             n_layers=n_layers,
                             seq_len=seq_len,
                             seq_pred_len=args.seq_len_pred,
+                            device=device,
                             d_r=args.dr)
                 model = model.to(device)
             else:
