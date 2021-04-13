@@ -27,9 +27,11 @@ class Data:
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
+        self.derivative = [4, 8, 16, 32]
+        self.n_derivative = len(self.derivative)
         self.wavelets = ['db3', 'db5']
         self.n_wavelets = 0
-        self.nf = n_features * (self.n_moving_average + self.n_wavelets)
+        self.nf = n_features * (self.n_moving_average + self.n_wavelets + self.n_derivative)
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
 
@@ -47,14 +49,15 @@ class Data:
         self.valid_y = torch.zeros(self.valid_ln, self.out_seq_len, 1)
         self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
         self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)
-        print(self.train_x.shape)
-        print(self.valid_x.shape)
 
         for abr, df_site in self.sites_data.items():
             df_site = df_site.iloc[-self.ts:]
-            self.train_x, self.train_y = self.create_raster(df_site[:self.train_ts], self.train_ln, self.train_x, self.train_y)
-            self.valid_x, self.valid_y = self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln, self.valid_x, self.valid_y)
-            self.test_x, self.test_y = self.create_raster(df_site[-self.test_ts:], self.test_ln, self.test_x, self.test_y)
+            self.train_x, self.train_y = \
+                self.create_raster(df_site[:self.train_ts], self.train_ln, self.train_x, self.train_y)
+            self.valid_x, self.valid_y = \
+                self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln, self.valid_x, self.valid_y)
+            self.test_x, self.test_y = \
+                self.create_raster(df_site[-self.test_ts:], self.test_ln, self.test_x, self.test_y)
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -65,28 +68,29 @@ class Data:
 
     def get_length(self, len):
         ln = len - (self.in_seq_len + self.out_seq_len)
-        ln = int(ln / (self.n_moving_average + self.n_wavelets))
+        ln = int(ln / (self.n_moving_average + self.n_wavelets + self.n_derivative))
         return ln
 
     def create_raster(self, data, ln, inputs, outputs):
 
-        lenth = int(self.nf / (self.n_moving_average + self.n_wavelets))
+        length = int(self.nf / (self.n_moving_average + self.n_wavelets + self.n_derivative))
         f_ind = 0
         ts = len(data)
-        for f in range(lenth):
+        for f in range(length):
 
             dat = data.iloc[:, f + 1]
             dat = np.array(dat).reshape(-1, 1)
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
-            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets] = in_data
+            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets+self.n_derivative] = in_data
             f_ind = f_ind + self.n_moving_average
             if f == 1:
                 outputs[:, :, 0] = out_data
 
         return inputs, outputs
 
-    def moving_average(self, len, data, ts):
+    @staticmethod
+    def moving_average(len, data, ts):
 
         data_mv = torch.zeros((ts, 1))
         for i in range(0, ts):
@@ -97,19 +101,33 @@ class Data:
                 data_mv[i, 0] = sum(data[i-len:i])/len
         return data_mv
 
+    @staticmethod
+    def get_derivative(k, data, ts):
+
+        data_dv = torch.zeros((ts, 1))
+        for i in range(0, ts):
+            if i+k < ts:
+                if i < k:
+                    data_dv[i, 0] = data[i+k] - data[0]
+                else:
+                    data_dv[i, 0] = data[i+k] - data[i-k]
+        return data_dv
+
     def create_wavelet(self, type, data):
         ca, cd = pywt.dwt(data.detach().numpy(), type)
         return torch.FloatTensor(ca)
 
     def get_window_data(self, data, ln, ts):
 
-        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets))
-        data_3d_in = torch.zeros((ln, self.in_seq_len, self.n_moving_average+self.n_wavelets))
+        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets+self.n_derivative))
+        data_3d_in = torch.zeros((ln, self.in_seq_len,
+                                  self.n_moving_average+self.n_wavelets+self.n_derivative))
         data_out = torch.zeros((ln, self.out_seq_len))
 
         for i, mv in enumerate(self.moving_averages):
 
-            data_2d_in[:, i+self.n_wavelets] = self.moving_average(mv, data, ts).squeeze(1)
+            data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
+            data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         j = 0
         for i in range(0, self.ts):
@@ -243,7 +261,7 @@ def main():
     parser.add_argument("--out_seq_len", type=int, default=64)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.8)
-    parser.add_argument("--max_len", type=int, default=2500)
+    parser.add_argument("--max_length", type=int, default=2500)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
