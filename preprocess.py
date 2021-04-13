@@ -24,15 +24,16 @@ class Data:
         self.sites_data = site_data
         self.ts = ts
         self.n_seasons = 4
-        self.hist = 1
+        self.moving_averages = [4, 8, 16, 32]
+        self.n_moving_average = len(self.moving_averages)
 
-        self.nf = n_features * self.hist
+        self.nf = n_features * self.n_moving_average
         '''self.I = I
         self.J = J'''
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
         self.ln = self.ts - (self.in_seq_len + self.out_seq_len)
-        self.ln = int(self.ln / self.hist)
+        self.ln = int(self.ln / self.n_moving_average)
         self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
         self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
         self.create_raster()
@@ -50,7 +51,7 @@ class Data:
             scalers_per_site = Scaler(abr)
             self.scalers.append(scalers_per_site)
 
-            len = int(self.nf / self.hist)
+            len = int(self.nf / self.n_moving_average)
             f_ind = 0
             for f in range(len):
 
@@ -62,27 +63,33 @@ class Data:
                 scalers_per_site.add_scaler(f, stScaler)
                 dat = torch.from_numpy(np.array(dat).flatten())
                 in_data, out_data = self.get_window_data(dat)
-                self.inputs[:, :, f_ind:f_ind+self.hist] = in_data
-                f_ind = f_ind + self.hist
+                self.inputs[:, :, f_ind:f_ind+self.n_moving_average] = in_data
+                f_ind = f_ind + self.n_moving_average
                 if f == 1:
                     self.outputs[:, :, 0] = out_data
 
+    def moving_average(self, len, data):
+        data_mv = torch.zeros((self.ts, 1))
+        for i in range(0, self.ts):
+            if i < len:
+                n = 1 if i == 0 else i
+                data_mv[i, 0] = sum(data[0:i])/n
+            else:
+                data_mv[i, 0] = sum(data[i-len:i])/len
+        return data_mv
+
     def get_window_data(self, data):
 
-        data_2d_in = torch.zeros((self.ts, self.hist))
-        data_3d_in = torch.zeros((self.ln, self.in_seq_len, self.hist))
+        data_2d_in = torch.zeros((self.ts, self.n_moving_average))
+        data_3d_in = torch.zeros((self.ln, self.in_seq_len, self.n_moving_average))
         data_out = torch.zeros((self.ln, self.out_seq_len))
 
-        for i in range(0, self.ts):
+        for i, mv in enumerate(self.moving_averages):
 
-            if i < self.hist:
-                data_2d_in[i, :self.hist - i] = torch.zeros(self.hist - i)
-                data_2d_in[i, self.hist - i:] = data[0:i]
+            data_2d_in[:, i] = self.moving_average(mv, data).squeeze(1)
 
-            else:
-                data_2d_in[i, :] = data[i - self.hist:i]
         j = 0
-        for i in range(0, self.ts, self.hist):
+        for i in range(0, self.ts):
             if j < self.ln:
                 data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
