@@ -46,7 +46,7 @@ def get_con_vecs(seq, cutoff):
     seq = seq.reshape(batch_size, seq_len, n_h * d_k)
     cutoff = seq_len if cutoff >= seq_len else cutoff
 
-    up_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
+    up_t = seq.unsqueeze(2).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
     low_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
     up_t = torch.triu(up_t)
     up_t = torch.flip(up_t, dims=[2])
@@ -112,22 +112,17 @@ class ScaledDotProductAttention(nn.Module):
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
-            '''Q = Q.reshape(batch_size, n_h, seq_len, cutoff*d_k)
-            K = Q.reshape(batch_size, n_h, K.shape[2], cutoff*d_k)'''
-            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k*cutoff))
-            if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(4).repeat(1, 1, 1, 1, cutoff)
+            Q = Q.reshape(batch_size, n_h, seq_len, cutoff*d_k)
+            K = Q.reshape(batch_size, n_h, K.shape[2], cutoff*d_k)
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k*cutoff))
+
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
         if attn_mask is not None:
-
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
-
-        if self.attn_type == "con":
-            scores = torch.einsum('bhqkc->bhqk', scores)
 
         attn = nn.Softmax(dim=-1)(scores)
 
