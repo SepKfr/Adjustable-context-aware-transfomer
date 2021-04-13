@@ -167,7 +167,7 @@ def main():
     parser.add_argument("--lr", type=list, default=0.0001)
     parser.add_argument("--n_epochs", type=int, default=40)
     parser.add_argument("--run_num", type=int, default=1)
-    parser.add_argument("--n_layers", type=list, default=[1, 3])
+    parser.add_argument("--n_layers", type=list, default=[3])
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
