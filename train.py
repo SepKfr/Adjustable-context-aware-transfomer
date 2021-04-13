@@ -119,7 +119,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         os.makedirs(path_to_pred)
 
     model = Attn(src_input_size=test_en.shape[3],
-                 tgt_input_size=test_y.shape[3],
+                 tgt_input_size=1,
                  d_model=d_model,
                  d_ff=d_model * 2,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
@@ -168,7 +168,7 @@ def main():
     parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--dr_best", type=float)
     parser.add_argument("--lr", type=list, default=0.0001)
-    parser.add_argument("--n_epochs", type=int, default=40)
+    parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='attn')
@@ -186,7 +186,7 @@ def main():
     train_x = pickle.load(open("train_x.p", "rb"))
     train_y = pickle.load(open("train_y.p", "rb"))
     valid_x = pickle.load(open("valid_x.p", "rb"))
-    valid_y = pickle.load(open("valid_y.p", "rb"))
+    valid_y_true = pickle.load(open("valid_y.p", "rb"))
     test_x = pickle.load(open("test_x.p", "rb"))
     test_y = pickle.load(open("test_y.p", "rb"))
 
@@ -196,11 +196,12 @@ def main():
                                   train_x[:, -seq_len:, :], train_y[:, :, :])
 
     len_val = int(len(valid_x) * 0.5)
+
     valid_en, valid_de, valid_y = valid_x[:len_val, :-seq_len, :].unsqueeze(0), \
-                                  valid_x[:len_val, -seq_len:, :].unsqueeze(0), valid_y[:len_val, :, :].unsqueeze(0)
+                                  valid_x[:len_val, -seq_len:, :].unsqueeze(0), valid_y_true[:len_val, :, :].unsqueeze(0)
 
     test_en, test_de, test_y = valid_x[-len_val:, :-seq_len, :].unsqueeze(0), \
-                       valid_x[-len_val:, -seq_len:, :].unsqueeze(0), valid_y[-len_val:, :, :].unsqueeze(0)
+                       valid_x[-len_val:, -seq_len:, :].unsqueeze(0), valid_y_true[-len_val:, :, :].unsqueeze(0)
 
 
     criterion = nn.MSELoss()
