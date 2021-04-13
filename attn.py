@@ -111,8 +111,7 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "con":
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
-            cutoff = Q.shape[3]
-            scores = torch.einsum('bhqcd,bhkcd->bhqk', Q, K) / (np.sqrt(self.d_k*cutoff))
+            scores = torch.einsum('bhqcd,bhkcd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
