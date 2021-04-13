@@ -155,7 +155,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=[1, 4, 6])
     parser.add_argument("--cutoff_best", type=int)
-    parser.add_argument("--d_model", type=int, default=[64])
+    parser.add_argument("--d_model", type=int, default=[64, 32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
     parser.add_argument("--n_heads", type=list, default=[1, 4])
@@ -196,8 +196,10 @@ def main():
                                   train_x[:, -seq_len:, :], train_y[:, :, :])
     valid_en, valid_de, valid_y = valid_x[:, :-seq_len, :].unsqueeze(0), \
                                   valid_x[:, -seq_len:, :].unsqueeze(0), valid_y.unsqueeze(0)
+
     test_en, test_de, test_y = test_x[:, :-seq_len, :].unsqueeze(0), \
                        test_x[:, -seq_len:, :].unsqueeze(0), test_y.unsqueeze(0)
+
 
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
