@@ -150,8 +150,6 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
 def main():
 
-    #task = Task.init(project_name='watershed', task_name='hyperparameter tuning for watershed')
-
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
@@ -180,32 +178,26 @@ def main():
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
     args = parser.parse_args()
-    #args = task.connect(args)
 
     path = "models_{}_{}".format(args.site, args.seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
 
-    inputs = pickle.load(open("inputs.p", "rb"))
-    outputs = pickle.load(open("outputs.p", "rb"))
+    train_x = pickle.load(open("train_x.p", "rb"))
+    train_y = pickle.load(open("train_y.p", "rb"))
+    valid_x = pickle.load(open("valid_x.p", "rb"))
+    valid_y = pickle.load(open("valid_y.p", "rb"))
+    test_x = pickle.load(open("test_x.p", "rb"))
+    test_y = pickle.load(open("test_y.p", "rb"))
 
-    max_len = min(len(inputs), 512)
-    inputs = inputs[-max_len:, :, :]
-    outputs = outputs[-max_len:, :]
-    seq_len = int(inputs.shape[1] / 2)
+    seq_len = int(train_x.shape[1] / 2)
 
-    test_len = int(max_len * 0.1)
-    val_len = int(test_len / 2)
-
-    valid_en, valid_de, valid_y = inputs[-test_len:-val_len, :-seq_len, :].unsqueeze(0), \
-                                  inputs[-test_len:-val_len, -seq_len:, :].unsqueeze(0), \
-                                  outputs[-test_len:-val_len, :, :].unsqueeze(0)
-    test_en, test_de, test_y = inputs[-val_len:, :-seq_len, :].unsqueeze(0), \
-                               inputs[-val_len:, -seq_len:, :].unsqueeze(0), \
-                               outputs[-val_len:, :, :].unsqueeze(0)
-
-    train_en, train_de, train_y = batching(args.batch_size, inputs[:-2, :-seq_len, :],
-                                  inputs[:-2, -seq_len:, :], outputs[:, :, :])
+    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
+                                  train_x[:, -seq_len:, :], train_y[:, :, :])
+    valid_en, valid_de, valid_y = valid_x[:, :-seq_len, :].unsqueeze(0), \
+                                  valid_x[:, -seq_len:, :].unsqueeze(0), valid_y.unsqueeze(0)
+    test_en, test_de, test_y = test_x[:, :-seq_len, :].unsqueeze(0), \
+                       test_x[:, -seq_len:, :].unsqueeze(0), test_y.unsqueeze(0)
 
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False

@@ -6,6 +6,7 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 import argparse
 import matplotlib.pyplot as plt
+import pywt
 
 
 class Scaler:
@@ -18,59 +19,77 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, ts, n_features, in_seq_len, out_seq_len):
+    def __init__(self, site_data, max_len, n_features, in_seq_len, out_seq_len, trn_per):
 
         self.scalers = list()
         self.sites_data = site_data
-        self.ts = ts
+        self.ts = max_len
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
-
-        self.nf = n_features * self.n_moving_average
-        '''self.I = I
-        self.J = J'''
+        self.wavelets = ['db3', 'db5']
+        self.n_wavelets = 0
+        self.nf = n_features * (self.n_moving_average + self.n_wavelets)
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
-        self.ln = self.ts - (self.in_seq_len + self.out_seq_len)
-        self.ln = int(self.ln / self.n_moving_average)
-        self.inputs = torch.zeros((self.ln, self.in_seq_len, self.nf))
-        self.outputs = torch.zeros((self.ln, self.out_seq_len, 1))
-        self.create_raster()
-        '''self.outputs = torch.reshape(self.outputs, (self.outputs.shape[0], -1,
-                                                    self.outputs.shape[2] * self.outputs.shape[3]))'''
 
-        pickle.dump(self.inputs, open("inputs.p", "wb"))
-        pickle.dump(self.outputs, open("outputs.p", "wb"))
-        pickle.dump(self.scalers, open("scalers.pkl", "wb"))
+        self.train_ts = int(self.ts * trn_per)
+        self.valid_ts = int((self.ts - self.train_ts) * 0.5)
+        self.test_ts = self.valid_ts
 
-    def create_raster(self):
+        self.train_ln = self.get_length(self.train_ts)
+        self.valid_ln = self.get_length(self.valid_ts)
+        self.test_ln = self.get_length(self.test_ts)
+
+        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf)
+        self.train_y = torch.zeros(self.train_ln, self.out_seq_len, 1)
+        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf)
+        self.valid_y = torch.zeros(self.valid_ln, self.out_seq_len, 1)
+        self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
+        self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)
+        print(self.train_x.shape)
+        print(self.valid_x.shape)
 
         for abr, df_site in self.sites_data.items():
+            df_site = df_site.iloc[-self.ts:]
+            self.train_x, self.train_y = self.create_raster(df_site[:self.train_ts], self.train_ln, self.train_x, self.train_y)
+            self.valid_x, self.valid_y = self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln, self.valid_x, self.valid_y)
+            self.test_x, self.test_y = self.create_raster(df_site[-self.test_ts:], self.test_ln, self.test_x, self.test_y)
 
-            scalers_per_site = Scaler(abr)
-            self.scalers.append(scalers_per_site)
+        pickle.dump(self.train_x, open("train_x.p", "wb"))
+        pickle.dump(self.train_y, open("train_y.p", "wb"))
+        pickle.dump(self.valid_x, open("valid_x.p", "wb"))
+        pickle.dump(self.valid_y, open("valid_y.p", "wb"))
+        pickle.dump(self.test_x, open("test_x.p", "wb"))
+        pickle.dump(self.test_y, open("test_y.p", "wb"))
 
-            len = int(self.nf / self.n_moving_average)
-            f_ind = 0
-            for f in range(len):
+    def get_length(self, len):
+        ln = len - (self.in_seq_len + self.out_seq_len)
+        ln = int(ln / (self.n_moving_average + self.n_wavelets))
+        return ln
 
-                stScaler = StandardScaler()
-                dat = df_site.iloc[:, f + 1]
-                dat = np.array(dat).reshape(-1, 1)
-                '''stScaler.fit(dat)
-                dat = stScaler.transform(dat)'''
-                scalers_per_site.add_scaler(f, stScaler)
-                dat = torch.from_numpy(np.array(dat).flatten())
-                in_data, out_data = self.get_window_data(dat)
-                self.inputs[:, :, f_ind:f_ind+self.n_moving_average] = in_data
-                f_ind = f_ind + self.n_moving_average
-                if f == 1:
-                    self.outputs[:, :, 0] = out_data
+    def create_raster(self, data, ln, inputs, outputs):
 
-    def moving_average(self, len, data):
-        data_mv = torch.zeros((self.ts, 1))
-        for i in range(0, self.ts):
+        lenth = int(self.nf / (self.n_moving_average + self.n_wavelets))
+        f_ind = 0
+        ts = len(data)
+        for f in range(lenth):
+
+            dat = data.iloc[:, f + 1]
+            dat = np.array(dat).reshape(-1, 1)
+            dat = torch.from_numpy(np.array(dat).flatten())
+            in_data, out_data = self.get_window_data(dat, ln, ts)
+            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets] = in_data
+            f_ind = f_ind + self.n_moving_average
+            if f == 1:
+                outputs[:, :, 0] = out_data
+
+        return inputs, outputs
+
+    def moving_average(self, len, data, ts):
+
+        data_mv = torch.zeros((ts, 1))
+        for i in range(0, ts):
             if i < len:
                 n = 1 if i == 0 else i
                 data_mv[i, 0] = sum(data[0:i])/n
@@ -78,19 +97,23 @@ class Data:
                 data_mv[i, 0] = sum(data[i-len:i])/len
         return data_mv
 
-    def get_window_data(self, data):
+    def create_wavelet(self, type, data):
+        ca, cd = pywt.dwt(data.detach().numpy(), type)
+        return torch.FloatTensor(ca)
 
-        data_2d_in = torch.zeros((self.ts, self.n_moving_average))
-        data_3d_in = torch.zeros((self.ln, self.in_seq_len, self.n_moving_average))
-        data_out = torch.zeros((self.ln, self.out_seq_len))
+    def get_window_data(self, data, ln, ts):
+
+        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets))
+        data_3d_in = torch.zeros((ln, self.in_seq_len, self.n_moving_average+self.n_wavelets))
+        data_out = torch.zeros((ln, self.out_seq_len))
 
         for i, mv in enumerate(self.moving_averages):
 
-            data_2d_in[:, i] = self.moving_average(mv, data).squeeze(1)
+            data_2d_in[:, i+self.n_wavelets] = self.moving_average(mv, data, ts).squeeze(1)
 
         j = 0
         for i in range(0, self.ts):
-            if j < self.ln:
+            if j < ln:
                 data_3d_in[j, :, :] = data_2d_in[i:i+self.in_seq_len, :]
                 data_out[j, :] = data[i+self.in_seq_len:i + self.in_seq_len + self.out_seq_len]
                 j += 1
@@ -104,30 +127,11 @@ class STData:
         self.I = 3
         self.J = 6
         self.n_features = 3
-        #self.site_abrs = ["BEF", "GOF", "DCF", 'MCQ', "WHB"]
         self.sites_data = dict()
         site_dat = self.prep_data_per_site(params.site)
-        ln = len(site_dat)
         self.sites_data[params.site] = site_dat
-
-        #self.grid = self.create_grid()
-        '''for abr in self.site_abrs:
-            self.sites_data[abr] = self.prep_data_per_site(abr)
-
-        dates = self.sites_data["BEF"]["Date"].values
-        for abr2, df2 in self.sites_data.items():
-            df2 = df2[np.in1d(df2["Date"].values, dates)]
-            self.sites_data[abr2] = df2
-
-        self.min_len = len(list(self.sites_data.values())[0])
-
-        for key in self.sites_data.keys():
-            site_ln = len(self.sites_data[key])
-            if site_ln < self.min_len:
-                self.min_len = site_ln'''
-
-        self.raster = Data(self.sites_data, ln, self.n_features,
-                           params.in_seq_len, params.out_seq_len)
+        self.raster = Data(self.sites_data, params.max_length, self.n_features,
+                           params.in_seq_len, params.out_seq_len, params.train_percent)
 
     class Site:
         def __init__(self, name, abr, lat, long):
@@ -238,6 +242,8 @@ def main():
     parser.add_argument("--in_seq_len", type=int, default=128)
     parser.add_argument("--out_seq_len", type=int, default=64)
     parser.add_argument("--site", type=str, default="WHB")
+    parser.add_argument("--train_percent", type=float, default=0.8)
+    parser.add_argument("--max_len", type=int, default=2500)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
