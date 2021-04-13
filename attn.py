@@ -388,14 +388,14 @@ class Attn(nn.Module):
         self.tgt_emb = nn.Linear(tgt_input_size, d_model)
         self.src_emb = nn.Linear(src_input_size, d_model)
         self.device = device
+        self.n_layers = n_layers
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 
-        b_size = enc_inputs.shape[0]
         enc_inputs = self.src_emb(enc_inputs)
         dec_inputs = self.src_emb(dec_inputs)
 
-        hidden = torch.zeros(1, enc_inputs.shape[1], self.d_model).to(self.device)
+        hidden = torch.zeros(self.n_layers, enc_inputs.shape[1], self.d_model).to(self.device)
 
         enc_lstm, _ = self.lstm(enc_inputs, (hidden, hidden))
         dec_lstm, _ = self.lstm(dec_inputs, (hidden, hidden))
