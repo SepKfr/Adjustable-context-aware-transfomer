@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import argparse
 import matplotlib.pyplot as plt
 from pywt import wavedec
+import pywt
 
 
 class Scaler:
@@ -114,9 +115,9 @@ class Data:
         return data_dv
 
     def create_wavelet(self, type, data):
-        ca = wavedec(data.detach().numpy(), type)
 
-        return torch.FloatTensor(ca)
+        coeff, freq = pywt.cwt(data.detach().numpy(), 1, type, 1)
+        return torch.FloatTensor(coeff)
 
     def get_window_data(self, data, ln, ts):
 
