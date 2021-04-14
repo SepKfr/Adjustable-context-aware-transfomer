@@ -184,7 +184,7 @@ def main():
     train_x = pickle.load(open("train_x.p", "rb"))
     train_y = pickle.load(open("train_y.p", "rb"))
     valid_x = pickle.load(open("valid_x.p", "rb"))
-    valid_y = pickle.load(open("valid_y.p", "rb"))
+    valid_y_true = pickle.load(open("valid_y.p", "rb"))
     test_x = pickle.load(open("test_x.p", "rb"))
     test_y = pickle.load(open("test_y.p", "rb"))
 
@@ -192,10 +192,14 @@ def main():
 
     train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
                                            train_x[:, -seq_len:, :], train_y[:, :, :])
-    valid_en, valid_de, valid_y = valid_x[:, :-seq_len, :].unsqueeze(0), \
-                                  valid_x[:, -seq_len:, :].unsqueeze(0), valid_y.unsqueeze(0)
-    test_en, test_de, test_y = test_x[:, :-seq_len, :].unsqueeze(0), \
-                               test_x[:, -seq_len:, :].unsqueeze(0), test_y.unsqueeze(0)
+    len_val = int(len(valid_x) * 0.5)
+
+    valid_en, valid_de, valid_y = valid_x[:len_val, :-seq_len, :].unsqueeze(0), \
+                                  valid_x[:len_val, -seq_len:, :].unsqueeze(0), valid_y_true[:len_val, :, :].unsqueeze(
+        0)
+
+    test_en, test_de, test_y = valid_x[-len_val:, :-seq_len, :].unsqueeze(0), \
+                               valid_x[-len_val:, -seq_len:, :].unsqueeze(0), valid_y_true[-len_val:, :, :].unsqueeze(0)
 
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
