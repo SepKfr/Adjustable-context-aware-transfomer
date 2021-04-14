@@ -105,7 +105,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = int(len(prod)*0.5)
+    num_samples = 1 if int(len(prod) * 0.25) < 1 else int(len(prod) * 0.25)
     return list(random.sample(set(prod), num_samples))
 
 
