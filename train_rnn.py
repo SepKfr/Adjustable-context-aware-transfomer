@@ -312,7 +312,8 @@ def main():
     if os.path.exists(error_path):
         with open(error_path) as json_file:
             json_dat = json.load(json_file)
-            json_dat[args.name] = list()
+            if json_dat[args.name] is None:
+                json_dat[args.name] = list()
             json_dat[args.name].append(float("{:.3f}".format(test_loss)))
             json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
             json_dat[args.name].append(n_layers)
