@@ -6,7 +6,7 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 import argparse
 import matplotlib.pyplot as plt
-import pywt
+from pywt import wavedec
 
 
 class Scaler:
@@ -30,7 +30,7 @@ class Data:
         self.derivative = [4, 8, 16, 32]
         self.n_derivative = 0
         self.wavelets = ['db3', 'db5']
-        self.n_wavelets = 0
+        self.n_wavelets = len(self.wavelets)
         self.nf = n_features * (self.n_moving_average + self.n_wavelets + self.n_derivative)
         self.in_seq_len = in_seq_len
         self.out_seq_len = out_seq_len
@@ -114,7 +114,8 @@ class Data:
         return data_dv
 
     def create_wavelet(self, type, data):
-        ca, cd = pywt.dwt(data.detach().numpy(), type)
+        ca = wavedec(data.detach().numpy(), type)
+
         return torch.FloatTensor(ca)
 
     def get_window_data(self, data, ln, ts):
@@ -128,6 +129,9 @@ class Data:
 
             data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
             #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
+
+        for i, type in enumerate(self.wavelets):
+            data_2d_in[:, i+self.n_moving_average] = self.create_wavelet(type, data)
 
         j = 0
         for i in range(0, self.ts):
