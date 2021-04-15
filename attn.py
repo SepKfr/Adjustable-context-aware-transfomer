@@ -223,7 +223,7 @@ class Encoder(nn.Module):
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
+        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
                                       kernel_size=kernel)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -252,7 +252,9 @@ class Encoder(nn.Module):
             enc_outputs = self.src_emb_conv(enc_input)
             enc_outputs = enc_outputs.permute(0, 2, 1)
         else:
-             enc_outputs = enc_input
+            enc_outputs = self.src_emb(enc_input)
+
+        enc_outputs = self.pos_emb(enc_outputs)
 
         enc_self_attn_mask = None
 
@@ -300,7 +302,7 @@ class Decoder(nn.Module):
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
+        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
                                       kernel_size=kernel)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -329,8 +331,11 @@ class Decoder(nn.Module):
             dec_inputs = F.pad(dec_inputs, (padding, 0))
             dec_outputs = self.tgt_emb_conv(dec_inputs)
             dec_outputs = dec_outputs.permute(0, 2, 1)
+
         else:
-            dec_outputs = dec_inputs
+            dec_outputs = self.tgt_emb(dec_inputs)
+
+        dec_outputs = self.pos_emb(dec_outputs)
 
         dec_self_attn_mask = get_attn_subsequent_mask(dec_outputs)
 
@@ -380,28 +385,8 @@ class Attn(nn.Module):
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred)
-        self.lstm = nn.LSTM(d_model, d_model, n_layers)
-        self.d_model = d_model
-        self.tgt_emb = nn.Linear(tgt_input_size, d_model)
-        self.src_emb = nn.Linear(src_input_size, d_model)
-        self.device = device
-        self.n_layers = n_layers
 
     def forward(self, enc_inputs, dec_inputs, training=True):
-
-        enc_inputs = self.src_emb(enc_inputs)
-        dec_inputs = self.src_emb(dec_inputs)
-
-        lstm_enc_inputs = enc_inputs.permute(1, 0, 2)
-        lstm_dec_inputs = dec_inputs.permute(1, 0, 2)
-
-        hidden = torch.zeros(self.n_layers, lstm_enc_inputs.shape[1], self.d_model).to(self.device)
-
-        lstm_enc_inputs, _ = self.lstm(lstm_enc_inputs, (hidden, hidden))
-        lstm_dec_inputs, _ = self.lstm(lstm_dec_inputs, (hidden, hidden))
-
-        enc_inputs = enc_inputs + lstm_enc_inputs.permute(1, 0, 2)
-        dec_inputs = dec_inputs + lstm_dec_inputs.permute(1, 0, 2)
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
