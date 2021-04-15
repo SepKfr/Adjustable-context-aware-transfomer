@@ -29,7 +29,7 @@ class Data:
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
         self.derivative = [4, 8, 16, 32]
-        self.n_derivative = 0
+        self.n_derivative = len(self.derivative)
         self.wavelets = ['db3', 'db5']
         self.n_wavelets = 0
         self.nf = n_features * (self.n_moving_average + self.n_wavelets + self.n_derivative)
@@ -129,7 +129,7 @@ class Data:
         for i, mv in enumerate(self.moving_averages):
 
             data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
-            #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
+            data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         '''for i, type in enumerate(self.wavelets):
             data_2d_in[:, i+self.n_moving_average] = self.create_wavelet(type, data)'''
