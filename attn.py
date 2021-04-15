@@ -44,7 +44,6 @@ def get_con_vecs(seq, cutoff):
 
     batch_size, n_h, seq_len, d_k = seq.shape
     seq = seq.reshape(batch_size, seq_len, n_h * d_k)
-    cutoff = seq_len if cutoff >= seq_len else cutoff
 
     up_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
     low_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
