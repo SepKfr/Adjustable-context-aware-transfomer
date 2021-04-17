@@ -6,7 +6,6 @@ from torch.optim import Adam
 import torch.nn as nn
 import numpy as np
 import torch
-from utils import inverse_transform
 from baselines import RNN, CNN
 import argparse
 import json
@@ -138,11 +137,11 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     for j in range(test_en.shape[0]):
         output = model(test_en[j].to(device), test_de[j].to(device), training=True)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
-        #output = inverse_transform(output).to(device)
-        y_true = test_y[j].to('cpu')
-        loss = criterion(y_true, output.to('cpu'))
+        output = inverse_transform(output, 'valid').to(device)
+        y_true = inverse_transform(test_y[j], 'valid').to(device)
+        loss = criterion(y_true, output)
         test_loss += loss.item()
-        mae_loss += mae(y_true, output.to('cpu')).item()
+        mae_loss += mae(y_true, output).item()
     test_loss = test_loss / test_en.shape[1]
     mae_loss = mae_loss / test_en.shape[1]
     return test_loss, mae_loss
@@ -171,7 +170,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='con')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")

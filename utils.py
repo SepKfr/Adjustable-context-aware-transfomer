@@ -14,13 +14,14 @@ class Metrics:
         self.mae = torch.sum(abs(y_true - y_pred) / len(y_true))
 
 
-def inverse_transform(data):
+def inverse_transform(data, set_dat):
 
     n, d, hw = data.shape
     inv_data = torch.zeros(data.shape)
 
     for i, scalers_per_site in enumerate(scalers):
-        f, scaler = list(scalers_per_site.scalers.items())[1]
+
+        scaler = scalers_per_site.scalers[(set_dat, 1)]
         dat = data[:, :, 0]
         dat = dat.view(n*d)
         in_dat = scaler.inverse_transform(dat.cpu().detach().numpy().reshape(-1, 1))

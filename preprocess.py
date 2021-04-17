@@ -15,8 +15,8 @@ class Scaler:
         self.site = site
         self.scalers = dict()
 
-    def add_scaler(self, f_n, scaler):
-        self.scalers[f_n] = scaler
+    def add_scaler(self, f_n, set_dat, scaler):
+        self.scalers[(set_dat, f_n)] = scaler
 
 
 class Data:
@@ -29,7 +29,7 @@ class Data:
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
         self.derivative = [4, 8, 16, 32]
-        self.n_derivative = 0
+        self.n_derivative = len(self.derivative)
         self.wavelets = ['db3', 'db5']
         self.n_wavelets = 0
         self.nf = n_features * (self.n_moving_average + self.n_wavelets + self.n_derivative)
@@ -51,14 +51,23 @@ class Data:
         self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
         self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)
 
+        self.scalers = list()
+
         for abr, df_site in self.sites_data.items():
+
+            scaler_per_site = Scaler(abr)
+            self.scalers.append(scaler_per_site)
             df_site = df_site.iloc[-self.ts:]
+
             self.train_x, self.train_y = \
-                self.create_raster(df_site[:self.train_ts], self.train_ln, self.train_x, self.train_y)
+                self.create_raster(df_site[:self.train_ts], self.train_ln, self.train_x,
+                                   self.train_y, scaler_per_site, 'train')
             self.valid_x, self.valid_y = \
-                self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln, self.valid_x, self.valid_y)
+                self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln,
+                                   self.valid_x, self.valid_y, scaler_per_site, 'valid')
             self.test_x, self.test_y = \
-                self.create_raster(df_site[-self.test_ts:], self.test_ln, self.test_x, self.test_y)
+                self.create_raster(df_site[-self.test_ts:], self.test_ln,
+                                   self.test_x, self.test_y, scaler_per_site, 'test')
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -66,21 +75,27 @@ class Data:
         pickle.dump(self.valid_y, open("valid_y.p", "wb"))
         pickle.dump(self.test_x, open("test_x.p", "wb"))
         pickle.dump(self.test_y, open("test_y.p", "wb"))
+        pickle.dump(self.scalers, open("scalers.pkl", "wb"))
 
     def get_length(self, len):
         ln = len - (self.in_seq_len + self.out_seq_len)
         ln = int(ln / (self.n_moving_average + self.n_wavelets + self.n_derivative))
         return ln
 
-    def create_raster(self, data, ln, inputs, outputs):
+    def create_raster(self, data, ln, inputs, outputs, scaler, set_dat):
 
         length = int(self.nf / (self.n_moving_average + self.n_wavelets + self.n_derivative))
         f_ind = 0
         ts = len(data)
+
         for f in range(length):
 
+            stScaler = StandardScaler()
             dat = data.iloc[:, f + 1]
             dat = np.array(dat).reshape(-1, 1)
+            stScaler.fit(dat)
+            dat = stScaler.transform(dat)
+            scaler.add_scaler(f, set_dat, stScaler)
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
             inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets+self.n_derivative] = in_data
@@ -129,7 +144,7 @@ class Data:
         for i, mv in enumerate(self.moving_averages):
 
             data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
-            #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
+            data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         '''for i, type in enumerate(self.wavelets):
             data_2d_in[:, i+self.n_moving_average] = self.create_wavelet(type, data)'''
