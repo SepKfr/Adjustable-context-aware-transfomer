@@ -222,7 +222,7 @@ class Encoder(nn.Module):
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
+        self.src_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
                                       kernel_size=kernel)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -245,6 +245,7 @@ class Encoder(nn.Module):
     def forward(self, enc_input):
 
         if self.attn_type == 'attn_conv':
+            enc_input = self.src_emb(enc_input)
             padding = (self.kernel_size - 1) * self.dilation
             enc_input = enc_input.permute(0, 2, 1)
             enc_input = F.pad(enc_input, (padding, 0))
@@ -301,7 +302,7 @@ class Decoder(nn.Module):
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=input_size, out_channels=d_model,
+        self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
                                       kernel_size=kernel)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
@@ -325,6 +326,7 @@ class Decoder(nn.Module):
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == 'attn_conv':
+            dec_inputs = self.tgt_emb(dec_inputs)
             padding = (self.kernel_size - 1) * self.dilation
             dec_inputs = dec_inputs.permute(0, 2, 1)
             dec_inputs = F.pad(dec_inputs, (padding, 0))
