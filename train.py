@@ -104,7 +104,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = 1 if int(len(prod)*0.5) < 1 else int(len(prod)*0.5)
+    num_samples = len(prod)
     return list(random.sample(set(prod), num_samples))
 
 
@@ -150,7 +150,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=32)
+    parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=[1, 4, 9])
     parser.add_argument("--cutoff_best", type=int)
@@ -201,7 +201,6 @@ def main():
 
     test_en, test_de, test_y = valid_x[-len_val:, :-seq_len, :].unsqueeze(0), \
                        valid_x[-len_val:, -seq_len:, :].unsqueeze(0), valid_y_true[-len_val:, :, :].unsqueeze(0)
-
 
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
