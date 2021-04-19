@@ -155,7 +155,7 @@ def main():
     parser.add_argument("--cutoff", type=int, default=[1, 4, 6])
     parser.add_argument("--local", type=int, default=[0])
     parser.add_argument("--cutoff_best", type=int)
-    parser.add_argument("--d_model", type=int, default=[64])
+    parser.add_argument("--d_model", type=int, default=[32, 64])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
     parser.add_argument("--n_heads", type=list, default=[1, 8])
