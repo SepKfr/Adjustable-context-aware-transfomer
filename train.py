@@ -160,7 +160,7 @@ def main():
     parser.add_argument("--dff", type=int, default=64)
     parser.add_argument("--n_heads", type=list, default=[1, 8])
     parser.add_argument("--n_heads_best", type=int)
-    parser.add_argument("--n_layers", type=list, default=[6])
+    parser.add_argument("--n_layers", type=list, default=[3, 6])
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
     parser.add_argument("--kernel_best", type=int)
@@ -270,14 +270,14 @@ def main():
                                  criterion, seq_len, path)
             print("test error {:.3f}".format(test_loss))
 
-        layers, heads, d_model, cutoff, kernel = best_config
+        layers, heads, d_model, cutoff, kernel, local = best_config
         print("best_config: {}".format(best_config))
 
     else:
 
-        layers, heads, d_model, cutoff, kernel = args.n_layers_best, args.n_heads_best, \
-                                     args.d_model_best, args.cutoff_best, args.kernel_best
-        best_config = layers, heads, d_model, cutoff, kernel
+        layers, heads, d_model, cutoff, kernel, local = args.n_layers_best, args.n_heads_best, \
+                                     args.d_model_best, args.cutoff_best, args.kernel_best, args.local_best
+        best_config = layers, heads, d_model, cutoff, kernel, local
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
