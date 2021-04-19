@@ -153,7 +153,7 @@ def main():
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=[1, 4, 6])
-    parser.add_argument("--local", type=int, default=[32, 16])
+    parser.add_argument("--local", type=int, default=[0])
     parser.add_argument("--cutoff_best", type=int)
     parser.add_argument("--d_model", type=int, default=[64])
     parser.add_argument("--d_model_best", type=int)
