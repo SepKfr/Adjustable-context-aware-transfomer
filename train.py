@@ -104,13 +104,13 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = len(prod)
+    num_samples = 1 if int(len(prod)*0.5) < 1 else int(len(prod)*0.5)
     return list(random.sample(set(prod), num_samples))
 
 
 def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
-    n_layers, n_heads, d_model, cutoff, kernel = config
+    n_layers, n_heads, d_model, cutoff, kernel, local = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
@@ -126,7 +126,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
+                 cutoff=cutoff, kernel=kernel, dr=args.dr, local=local).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -153,6 +153,7 @@ def main():
     parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--cutoff", type=int, default=[1, 4, 9])
+    parser.add_argument("--local", type=int, default=[32, 16])
     parser.add_argument("--cutoff_best", type=int)
     parser.add_argument("--d_model", type=int, default=[64])
     parser.add_argument("--d_model_best", type=int)
@@ -209,7 +210,7 @@ def main():
         args.cutoff = [1]
     if args.attn_type != "attn_conv":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff, args.kernel])
+    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff, args.kernel, args.local])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:
@@ -226,7 +227,7 @@ def main():
         for i, conf in enumerate(configs, config_num):
             print('config: {}'.format(conf))
 
-            n_layers, n_heads, d_model, cutoff, kernel = conf
+            n_layers, n_heads, d_model, cutoff, kernel, local = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
@@ -237,7 +238,7 @@ def main():
                          tgt_pad_index=0, device=device,
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
+                         cutoff=cutoff, kernel=kernel, dr=args.dr, local=local).to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
             epoch_start = 0
