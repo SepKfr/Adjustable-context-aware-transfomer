@@ -17,8 +17,8 @@ def get_attn_subsequent_mask(seq):
 
 
 def get_attn_pad_mask(seq_q, seq_k):
-    batch_size, len_q = seq_q.size()
-    batch_size, len_k = seq_k.size()
+    batch_size, len_q, d = seq_q.size()
+    batch_size, len_k, d = seq_k.size()
     # eq(zero) is PAD token
     pad_attn_mask = seq_k.data.eq(0).unsqueeze(1)  # batch_size x 1 x len_k(=len_q), one is masking
     return pad_attn_mask.expand(batch_size, len_q, len_k)
@@ -275,7 +275,7 @@ class Encoder(nn.Module):
 
         enc_outputs = self.pos_emb(enc_outputs)
 
-        enc_self_attn_mask = get_attn_pad_mask(enc_input, enc_input)
+        enc_self_attn_mask = None
         enc_local_self_attn_mask = get_attn_local_mask(enc_input, enc_input, self.local)
 
         enc_self_attns = []
@@ -364,11 +364,7 @@ class Decoder(nn.Module):
 
         dec_outputs = self.pos_emb(dec_outputs)
 
-        dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs)
         dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs)
-        dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask + dec_self_attn_subsequent_mask), 0)
-
-        dec_enc_attn_mask = get_attn_pad_mask(dec_inputs, enc_inputs)
 
         dec_local_self_attn_mask = get_attn_local_mask(dec_outputs, dec_outputs, self.local)
 
@@ -377,9 +373,9 @@ class Decoder(nn.Module):
             dec_outputs, dec_self_attn, dec_enc_attn = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
-                dec_self_attn_mask=dec_self_attn_mask,
+                dec_self_attn_mask=dec_self_attn_subsequent_mask,
                 dec_local_self_attn_mask=dec_local_self_attn_mask,
-                dec_enc_attn_mask=dec_enc_attn_mask,
+                dec_enc_attn_mask=None,
             )
             dec_self_attns.append(dec_self_attn)
             dec_enc_attns.append(dec_enc_attn)
