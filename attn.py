@@ -126,6 +126,7 @@ class ScaledDotProductAttention(nn.Module):
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k*cutoff))
 
         else:
+
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
         if attn_mask is not None:
@@ -189,7 +190,7 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
 
-        self.relu = GELU()
+        self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
