@@ -100,7 +100,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = len(prod)
+    num_samples = 1 if int(len(prod) * 0.5) < 1 else int(len(prod) * 0.5)
     return list(random.sample(set(prod), num_samples))
 
 
@@ -167,7 +167,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.0001)
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
-    parser.add_argument("--n_layers", type=list, default=[6])
+    parser.add_argument("--n_layers", type=list, default=[3, 6])
     parser.add_argument("--site", type=str)
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
