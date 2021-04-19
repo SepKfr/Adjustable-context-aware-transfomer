@@ -282,8 +282,8 @@ def main():
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
-    erros[args.name].append(float("{:.3f}".format(test_loss)))
-    erros[args.name].append(float("{:.3f}".format(mae_loss)))
+    erros[args.name].append(float("{:.4f}".format(test_loss)))
+    erros[args.name].append(float("{:.4f}".format(mae_loss)))
     erros[args.name].append(layers)
     erros[args.name].append(heads)
     erros[args.name].append(d_model)
