@@ -216,6 +216,8 @@ class EncoderLayer(nn.Module):
                 Q=enc_outputs, K=enc_outputs,
                 V=enc_outputs, attn_mask=enc_local_self_attn_mask)
 
+        enc_outputs = self.pos_ffn(enc_outputs)
+
         return enc_outputs, attn
 
 
