@@ -114,7 +114,7 @@ class ScaledDotProductAttention(nn.Module):
             K = get_con_vecs(K, self.cutoff).to(self.device)
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
             Q = Q.reshape(batch_size, n_h, seq_len, cutoff*d_k)
-            K = Q.reshape(batch_size, n_h, K.shape[2], cutoff*d_k)
+            K = K.reshape(batch_size, n_h, K.shape[2], cutoff*d_k)
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k*cutoff))
 
         else:
