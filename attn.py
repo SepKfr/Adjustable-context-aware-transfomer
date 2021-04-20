@@ -265,12 +265,13 @@ class Encoder(nn.Module):
     def forward(self, enc_input):
 
         if self.attn_type == 'attn_conv':
-            enc_input = self.src_emb(enc_input)
+            enc_output = self.src_emb(enc_input)
             padding = (self.kernel_size - 1) * self.dilation
-            enc_input = enc_input.permute(0, 2, 1)
-            enc_input = F.pad(enc_input, (padding, 0))
-            enc_outputs = self.src_emb_conv(enc_input)
+            enc_output = enc_output.permute(0, 2, 1)
+            enc_output = F.pad(enc_output, (padding, 0))
+            enc_outputs = self.src_emb_conv(enc_output)
             enc_outputs = enc_outputs.permute(0, 2, 1)
+
         else:
             enc_outputs = self.src_emb(enc_input)
 
@@ -353,11 +354,11 @@ class Decoder(nn.Module):
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == 'attn_conv':
-            dec_inputs = self.tgt_emb(dec_inputs)
+            dec_outputs = self.tgt_emb(dec_inputs)
             padding = (self.kernel_size - 1) * self.dilation
-            dec_inputs = dec_inputs.permute(0, 2, 1)
-            dec_inputs = F.pad(dec_inputs, (padding, 0))
-            dec_outputs = self.tgt_emb_conv(dec_inputs)
+            dec_outputs = dec_outputs.permute(0, 2, 1)
+            dec_outputs = F.pad(dec_outputs, (padding, 0))
+            dec_outputs = self.tgt_emb_conv(dec_outputs)
             dec_outputs = dec_outputs.permute(0, 2, 1)
 
         else:
