@@ -104,7 +104,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = 1 if int(len(prod)*0.5) < 1 else int(len(prod)*0.5)
+    num_samples = len(prod)
     return list(random.sample(set(prod), num_samples))
 
 
@@ -155,7 +155,7 @@ def main():
     parser.add_argument("--cutoff", type=int, default=[1, 4, 6])
     parser.add_argument("--local", type=int, default=[0])
     parser.add_argument("--cutoff_best", type=int)
-    parser.add_argument("--d_model", type=int, default=[32, 64])
+    parser.add_argument("--d_model", type=int, default=[64])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--dff", type=int, default=64)
     parser.add_argument("--n_heads", type=list, default=[1, 8])
