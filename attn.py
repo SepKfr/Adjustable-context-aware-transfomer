@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
-    subsequent_mask = np.triu(np.ones(attn_shape))
+    subsequent_mask = np.triu(np.ones(attn_shape), k=1)
     subsequent_mask = torch.from_numpy(subsequent_mask).int()
     return subsequent_mask
 
@@ -116,6 +116,8 @@ class ScaledDotProductAttention(nn.Module):
             scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k*cutoff))
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(4).repeat(1, 1, 1, 1, cutoff)
+                cutoff_mask = int(cutoff / 2)
+                attn_mask[:, :, :, :, -cutoff_mask:] = 1
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
