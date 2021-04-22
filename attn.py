@@ -16,14 +16,6 @@ def get_attn_subsequent_mask(seq):
     return subsequent_mask
 
 
-def get_attn_pad_mask(seq_q, seq_k):
-    batch_size, len_q, d = seq_q.size()
-    batch_size, len_k, d = seq_k.size()
-    # eq(zero) is PAD token
-    pad_attn_mask = seq_k.data.eq(0).unsqueeze(1)  # batch_size x 1 x len_k(=len_q), one is masking
-    return pad_attn_mask.expand(batch_size, len_q, len_k)
-
-
 def get_con_attn_subsequent_mask(seq, cutoff, d_k):
     attn_shape = [seq.size(1), seq.size(1), cutoff, d_k]
     subsequent_mask = np.tril(np.ones(attn_shape))
@@ -121,18 +113,20 @@ class ScaledDotProductAttention(nn.Module):
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
-            Q = Q.reshape(batch_size, n_h, seq_len, cutoff*d_k)
-            K = K.reshape(batch_size, n_h, K.shape[2], cutoff*d_k)
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k*cutoff))
-
+            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k*cutoff))
+            if attn_mask is not None:
+                attn_mask = attn_mask.unsqueeze(4).repeat(1, 1, 1, 1, cutoff)
         else:
-
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
         if attn_mask is not None:
+
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
+
+        if self.attn_type == "con":
+            scores = torch.einsum('bhqkc->bhqk', scores)
 
         attn = nn.Softmax(dim=-1)(scores)
 
