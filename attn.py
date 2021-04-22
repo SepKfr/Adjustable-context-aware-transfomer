@@ -242,6 +242,8 @@ class Encoder(nn.Module):
         self.src_emb = nn.Linear(input_size, d_model)
         self.src_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
                                       kernel_size=kernel)
+        self.src_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
+                                   kernel_size=1)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -274,6 +276,7 @@ class Encoder(nn.Module):
 
         else:
             enc_outputs = self.src_emb(enc_input)
+            enc_outputs = self.src_emb_2(enc_outputs)
 
         enc_outputs = self.pos_emb(enc_outputs)
 
@@ -331,6 +334,8 @@ class Decoder(nn.Module):
         self.tgt_emb = nn.Linear(input_size, d_model)
         self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
                                       kernel_size=kernel)
+        self.tgt_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
+                                   kernel_size=1)
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -363,6 +368,7 @@ class Decoder(nn.Module):
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
+            dec_outputs = self.tgt_emb_2(dec_outputs)
 
         dec_outputs = self.pos_emb(dec_outputs)
 
