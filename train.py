@@ -214,7 +214,7 @@ def main():
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:
-        val_loss = 1e5
+        val_loss = 1e10
         best_config = configs[0]
         config_num = 0
         checkpoint = None
@@ -253,7 +253,7 @@ def main():
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
             warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-            val_inner_loss = 1e5
+            val_inner_loss = 1e10
             e = 0
             for epoch in range(epoch_start, args.n_epochs, 1):
 

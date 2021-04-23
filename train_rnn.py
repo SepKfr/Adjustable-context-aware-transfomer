@@ -78,9 +78,6 @@ def train(args, model, train_en, train_de, train_y,
                 best_config = config
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
-            e = epoch
-            print(e)
-
         elif epoch - e > 30:
             stop = True
         if epoch % 20 == 0:
@@ -214,7 +211,7 @@ def main():
     configs = create_config(hyper_param)
 
     if training:
-        val_loss = 1e5
+        val_loss = 1e10
         best_config = configs[0]
         config_num = 0
         checkpoint = None
@@ -265,7 +262,7 @@ def main():
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
             warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
-            val_inner_loss = 1e5
+            val_inner_loss = 1e10
             e = 0
             for epoch in range(epoch_start, args.n_epochs, 1):
                 best_config, val_loss, val_inner_loss, stop, e = \
