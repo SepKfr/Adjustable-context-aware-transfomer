@@ -68,7 +68,7 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.linear1 = nn.Linear(input_size, hidden_size)
-        self.proj_out = nn.Linear(seq_len, seq_pred_len)
+        self.proj_out = nn.Conv1d(in_channels=seq_len, out_channels=seq_pred_len, kernel_size=1)
         self.pred_seq_len = seq_pred_len
         self.device = device
 
