@@ -68,7 +68,6 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.linear1 = nn.Linear(input_size, hidden_size)
-        self.proj_out = nn.Linear(seq_len, seq_pred_len)
         self.pred_seq_len = seq_pred_len
         self.device = device
 
@@ -90,7 +89,6 @@ class RNN(nn.Module):
             en_out, hidden = self.encoder_gru(x_en, hidden)
             outputs, _ = self.decoder_gru(x_de, hidden)
 
-        outputs = self.proj_out(outputs.permute(1, 2, 0))
         outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
