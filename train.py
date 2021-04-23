@@ -190,7 +190,7 @@ def main():
     test_x = pickle.load(open("test_x.p", "rb"))
     test_y = pickle.load(open("test_y.p", "rb"))
 
-    seq_len = int(train_x.shape[1] / 2)
+    seq_len = args.seq_len_pred
 
     train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
                                   train_x[:, -seq_len:, :], train_y[:, :, :])
