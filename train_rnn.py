@@ -159,7 +159,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
 def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=32)
+    parser.add_argument("--seq_len_pred", type=int, default=64)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--hidden_size", type=int, default=[32])
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
@@ -188,7 +188,7 @@ def main():
     test_x = pickle.load(open("test_x.p", "rb"))
     test_y = pickle.load(open("test_y.p", "rb"))
 
-    seq_len = int(train_x.shape[1] / 2)
+    seq_len = args.seq_len_pred
 
     train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
                                            train_x[:, -seq_len:, :], train_y[:, :, :])
