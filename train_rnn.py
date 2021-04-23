@@ -79,6 +79,7 @@ def train(args, model, train_en, train_de, train_y,
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
             e = epoch
+            print(e)
 
         elif epoch - e > 30:
             stop = True
