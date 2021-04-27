@@ -79,7 +79,6 @@ class Data:
 
     def get_length(self, len):
         ln = len - (self.in_seq_len + self.out_seq_len)
-        ln = int(ln / (self.n_moving_average + self.n_wavelets + self.n_derivative))
         return ln
 
     def create_raster(self, data, ln, inputs, outputs, scaler, set_dat):
