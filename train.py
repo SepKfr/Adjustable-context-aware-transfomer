@@ -142,8 +142,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         loss = torch.sqrt(criterion(y_true, output))
         test_loss += loss.item()
         mae_loss += mae(y_true, output).item()
-    test_loss = test_loss / test_en.shape[1]
-    mae_loss = mae_loss / test_en.shape[1]
+
     return test_loss, mae_loss
 
 
@@ -194,7 +193,7 @@ def main():
 
     train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
                                   train_x[:, -seq_len:, :], train_y[:, :, :])
-    print(train_en.shape)
+
     valid_en, valid_de, valid_y = valid_x[:, :-seq_len, :].unsqueeze(0), \
                                   valid_x[:, -seq_len:, :].unsqueeze(0), valid_y[:, :, :].unsqueeze(0)
 
