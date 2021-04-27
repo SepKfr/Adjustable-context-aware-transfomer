@@ -193,10 +193,10 @@ def main():
 
     train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
                                   train_x[:, -seq_len:, :], train_y[:, :, :])
-    print(train_en.shape)
+
     valid_en, valid_de, valid_y = valid_x[:, :-seq_len, :].unsqueeze(0), \
                                   valid_x[:, -seq_len:, :].unsqueeze(0), valid_y[:, :, :].unsqueeze(0)
-    print(valid_en.shape)
+
     test_en, test_de, test_y = test_x[:, :-seq_len, :].unsqueeze(0), \
                              test_x[:, -seq_len:, :].unsqueeze(0), test_y[:, :, :].unsqueeze(0)
 
