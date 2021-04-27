@@ -279,8 +279,8 @@ def main():
     parser.add_argument("--in_seq_len", type=int, default=200)
     parser.add_argument("--out_seq_len", type=int, default=64)
     parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--train_percent", type=float, default=0.8)
-    parser.add_argument("--max_length", type=int, default=3000)
+    parser.add_argument("--train_percent", type=float, default=0.7)
+    parser.add_argument("--max_length", type=int, default=2000)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
