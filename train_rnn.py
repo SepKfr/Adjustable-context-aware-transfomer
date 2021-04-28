@@ -162,7 +162,7 @@ def main():
     parser.add_argument("--hidden_size", type=int, default=[32])
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
     parser.add_argument("--dr", type=float, default=0.5)
-    parser.add_argument("--lr", type=float, default=0.0001)
+    parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
