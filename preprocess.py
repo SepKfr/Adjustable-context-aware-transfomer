@@ -79,6 +79,7 @@ class Data:
 
     def get_length(self, len):
         ln = len - (self.in_seq_len + self.out_seq_len)
+        ln = int(ln / (self.n_moving_average + self.n_wavelets + self.n_derivative))
         return ln
 
     def create_raster(self, data, ln, inputs, outputs, scaler, set_dat):
@@ -276,11 +277,11 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=200)
-    parser.add_argument("--out_seq_len", type=int, default=64)
+    parser.add_argument("--in_seq_len", type=int, default=144)
+    parser.add_argument("--out_seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--train_percent", type=float, default=0.7)
-    parser.add_argument("--max_length", type=int, default=2000)
+    parser.add_argument("--train_percent", type=float, default=0.8)
+    parser.add_argument("--max_length", type=int, default=3000)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
