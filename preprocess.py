@@ -66,7 +66,7 @@ class Data:
                 self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln,
                                    self.valid_x, self.valid_y, scaler_per_site, 'valid')
             self.test_x, self.test_y = \
-                self.create_raster(df_site[-self.test_ts:], self.test_ln,
+                self.create_raster(df_site[self.train_ts+self.valid_ts:self.train_ts+self.valid_ts++self.test_ts], self.test_ln,
                                    self.test_x, self.test_y, scaler_per_site, 'test')
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
