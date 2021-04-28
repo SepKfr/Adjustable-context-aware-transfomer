@@ -182,18 +182,18 @@ class PoswiseFeedForwardNet(nn.Module):
 
     def __init__(self, d_model, d_ff, dr):
         super(PoswiseFeedForwardNet, self).__init__()
-        self.l1 = nn.Linear(d_model, d_ff)
-        self.l2 = nn.Linear(d_ff, d_model)
+        self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
+        self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
 
-        self.relu = GELU()
+        self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
         residual = inputs
-        output = self.l1(inputs)
+        output = self.conv1(inputs.transpose(1, 2))
         output = self.relu(output)
-        output = self.l2(output)
+        output = self.conv2(output).transpose(1, 2)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
 
@@ -272,7 +272,7 @@ class Encoder(nn.Module):
 
         else:
             enc_outputs = self.src_emb(enc_input)
-            enc_outputs = self.src_emb_2(enc_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+            #enc_outputs = self.src_emb_2(enc_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         enc_outputs = self.pos_emb(enc_outputs)
 
@@ -364,7 +364,7 @@ class Decoder(nn.Module):
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
-            dec_outputs = self.tgt_emb_2(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+            #dec_outputs = self.tgt_emb_2(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         dec_outputs = self.pos_emb(dec_outputs)
 
