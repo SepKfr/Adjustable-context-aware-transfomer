@@ -186,7 +186,7 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
 
-        self.relu = nn.ReLU()
+        self.relu = GELU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
