@@ -416,7 +416,7 @@ class Attn(nn.Module):
             attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr, local=local)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
-        self.linear = nn.Linear(seq_len, seq_len_pred)
+        self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 

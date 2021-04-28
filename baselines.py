@@ -63,12 +63,12 @@ class RNN(nn.Module):
         self.decoder_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
         self.encoder_gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout=d_r)
         self.decoder_gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout=d_r)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+        self.linear2 = nn.Linear(hidden_size, output_size, bias=False)
         self.n_layers = n_layers
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.proj_out = nn.Linear(seq_len, seq_pred_len)
+        self.linear1 = nn.Linear(input_size, hidden_size, bias=False)
+        self.proj_out = nn.Linear(seq_len, seq_pred_len, bias=False)
         self.pred_seq_len = seq_pred_len
         self.device = device
 
