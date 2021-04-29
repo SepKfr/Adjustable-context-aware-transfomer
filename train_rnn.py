@@ -10,7 +10,7 @@ import pytorch_warmup as warmup
 import itertools
 import sys
 import random
-from baselines import CNN, RNN
+from baselines import CNN, RNN, MLP
 from utils import inverse_transform
 
 
@@ -51,7 +51,11 @@ def train(args, model, train_en, train_de, train_y,
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            output = model(train_en[batch_id], train_de[batch_id])
+            if args.deep_type == "mlp":
+                train = torch.cat((train_en[batch_id], train_de[batch_id]), dim=1)
+                output = model(train)
+            else:
+                output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id]).to(device)
             total_loss += loss.item()
             optimizer.zero_grad()
@@ -116,7 +120,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     device=device,
                     d_r=args.dr)
         model = model.to(device)
-    else:
+    elif args.deep_type == "RNN":
         n_layers, hidden_size = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
@@ -127,6 +131,15 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     seq_pred_len=args.seq_len_pred,
                     device=device,
                     d_r=args.dr)
+        model = model.to(device)
+    else:
+        n_layers, hidden_size = config
+        model = MLP(n_layers=n_layers,
+                    hidden_size=hidden_size,
+                    input_size=test_en.shape[3],
+                    output_size=test_y.shape[3],
+                    seq_len_pred=args.seq_len_pred,
+                    dr=args.dr)
         model = model.to(device)
 
     mae = nn.L1Loss()
@@ -142,7 +155,11 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     test_loss = 0
     mae_loss = 0
     for j in range(test_en.shape[0]):
-        output = model(test_en[j].to(device), test_de[j].to(device))
+        if args.deep_type == "mlp":
+            test = torch.cat((test_en[j].to(device), test_de[j].to(device)), dim=1)
+            output = model(test)
+        else:
+            output = model(test_en[j].to(device), test_de[j].to(device))
         #output = inverse_transform(output, 'valid').to(device)
         y_true = test_y[j].to(device)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
@@ -169,7 +186,7 @@ def main():
     parser.add_argument("--site", type=str)
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
-    parser.add_argument("--deep_type", type=str, default="rnn")
+    parser.add_argument("--deep_type", type=str, default="mlp")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
@@ -234,7 +251,7 @@ def main():
                             device=device,
                             d_r=args.dr)
                 model = model.to(device)
-            else:
+            elif args.deep_type == "rnn":
                 n_layers, hidden_size = conf
                 model = RNN(n_layers=n_layers,
                             hidden_size=hidden_size,
@@ -246,6 +263,14 @@ def main():
                             device=device,
                             d_r=args.dr)
                 model = model.to(device)
+            else:
+                n_layers, hidden_size = conf
+                model = MLP(n_layers=n_layers,
+                            hidden_size=hidden_size,
+                            input_size=train_en.shape[3],
+                            output_size=train_y.shape[3],
+                            seq_len_pred=args.seq_len_pred,
+                            dr=args.dr)
 
             optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
             epoch_start = 0

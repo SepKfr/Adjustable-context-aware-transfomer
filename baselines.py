@@ -91,11 +91,38 @@ class RNN(nn.Module):
             outputs, _ = self.decoder_gru(x_de, hidden)
 
         outputs = self.proj_out(outputs.permute(1, 2, 0))
-        outputs = nn.ReLU()(outputs)
-        outputs = self.proj_out(outputs)
         outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
+
+
+class MLP(nn.Module):
+    def __init__(self, n_layers, hidden_size,
+                 input_size, output_size, seq_len_pred, dr):
+        super(MLP, self).__init__()
+
+        self.l1 = nn.Linear(input_size, hidden_size)
+        self.l2 = nn.Linear(hidden_size, output_size)
+        self.l3 = nn.Linear(input_size, output_size)
+        self.seq_len_pred = seq_len_pred
+        self.dropout = nn.Dropout(dr)
+
+        self.relu = nn.ReLU()
+        self.layer_norm = nn.LayerNorm(output_size)
+        self.n_layers = n_layers
+
+    def forward(self, inputs):
+        seq_len = inputs.shape[1]
+        for _ in range(self.n_layers):
+            residual = self.l3(inputs)
+            output = self.l1(inputs)
+            output = self.relu(output)
+            output = self.l2(output)
+            output = self.dropout(output)
+        output = output + residual
+
+        output = nn.Linear(seq_len, self.seq_len_pred)(output.permute(0, 2, 1))
+        return self.layer_norm(output.permute(0, 2, 1))
 
 
 class CNN(nn.Module):
