@@ -101,8 +101,8 @@ class MLP(nn.Module):
                  input_size, output_size, seq_len_pred, dr):
         super(MLP, self).__init__()
 
-        self.l1 = nn.Linear(input_size, hidden_size)
-        self.l2 = nn.Linear(hidden_size, output_size)
+        self.l1 = nn.Conv1d(input_size, hidden_size, kernel_size=1)
+        self.l2 = nn.Conv1d(hidden_size, output_size, kernel_size=1)
         self.l3 = nn.Linear(input_size, output_size)
         self.seq_len_pred = seq_len_pred
         self.dropout = nn.Dropout(dr)
@@ -115,9 +115,9 @@ class MLP(nn.Module):
         seq_len = inputs.shape[1]
         for _ in range(self.n_layers):
             residual = self.l3(inputs)
-            output = self.l1(inputs)
+            output = self.l1(inputs.transpose(1, 2))
             output = self.relu(output)
-            output = self.l2(output)
+            output = self.l2(output).transpose(1, 2)
             output = self.dropout(output)
         output = output + residual
         output = nn.Linear(seq_len, self.seq_len_pred).to('cuda:0')(output.permute(0, 2, 1))
