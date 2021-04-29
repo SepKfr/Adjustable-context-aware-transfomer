@@ -416,7 +416,7 @@ class Attn(nn.Module):
             attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr, local=local)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
-        self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
+        self.linear = nn.Linear(tgt_input_size, tgt_input_size, bias=False)
 
     def forward(self, enc_inputs, dec_inputs, training=True):
 
@@ -424,8 +424,9 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
-        dec_outputs = nn.ReLU()(dec_outputs)
-        dec_logits = self.projection(dec_outputs)
+        dec_outputs = self.projection(dec_outputs)
+        dec_outputs = self.linear(dec_outputs)
+        dec_logits = nn.ReLU()(dec_outputs)
+
         return dec_logits
 
