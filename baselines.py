@@ -118,7 +118,7 @@ class MLP(nn.Module):
         for _ in range(self.n_layers):
             residual = self.l1(inputs)
             output = self.conv1(inputs.transpose(1, 2))
-            output = F.sigmoid(output)
+            output = nn.ReLU()(output)
             output = self.conv2(output).transpose(1, 2)
             output = self.dropout(output)
         output = output + residual
