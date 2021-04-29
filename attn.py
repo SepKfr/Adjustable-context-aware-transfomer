@@ -271,8 +271,8 @@ class Encoder(nn.Module):
             enc_outputs = enc_outputs.permute(0, 2, 1)
 
         else:
-            #enc_outputs = self.src_emb(enc_input)
-            enc_outputs = self.src_emb_2(enc_input.permute(0, 2, 1)).permute(0, 2, 1)
+            enc_outputs = self.src_emb(enc_input)
+            enc_outputs = self.src_emb_2(enc_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         enc_outputs = self.pos_emb(enc_outputs)
 
@@ -363,8 +363,8 @@ class Decoder(nn.Module):
             dec_outputs = dec_outputs.permute(0, 2, 1)
 
         else:
-            #dec_outputs = self.tgt_emb(dec_inputs)
-            dec_outputs = self.tgt_emb_2(dec_inputs.permute(0, 2, 1)).permute(0, 2, 1)
+            dec_outputs = self.tgt_emb(dec_inputs)
+            dec_outputs = self.tgt_emb_2(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         dec_outputs = self.pos_emb(dec_outputs)
 
