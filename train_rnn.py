@@ -143,6 +143,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     input_size=test_en.shape[3],
                     output_size=test_y.shape[3],
                     seq_len_pred=args.seq_len_pred,
+                    device=device,
                     dr=args.dr)
         model = model.to(device)
 
@@ -190,7 +191,7 @@ def main():
     parser.add_argument("--site", type=str)
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
-    parser.add_argument("--deep_type", type=str, default="rnn")
+    parser.add_argument("--deep_type", type=str, default="mlp")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
@@ -274,6 +275,7 @@ def main():
                             input_size=train_en.shape[3],
                             output_size=train_y.shape[3],
                             seq_len_pred=args.seq_len_pred,
+                            device=device,
                             dr=args.dr)
                 model = model.to(device)
             optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
