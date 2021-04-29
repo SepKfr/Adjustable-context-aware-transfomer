@@ -182,8 +182,8 @@ class PoswiseFeedForwardNet(nn.Module):
 
     def __init__(self, d_model, d_ff, dr):
         super(PoswiseFeedForwardNet, self).__init__()
-        self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
-        self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1)
+        self.l1 = nn.Linear(d_model, d_ff)
+        self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
 
         self.relu = nn.ReLU()
@@ -191,9 +191,9 @@ class PoswiseFeedForwardNet(nn.Module):
 
     def forward(self, inputs):
         residual = inputs
-        output = self.conv1(inputs.transpose(1, 2))
+        output = self.l1(inputs.transpose(1, 2))
         output = self.relu(output)
-        output = self.conv2(output).transpose(1, 2)
+        output = self.l2(output).transpose(1, 2)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
 
@@ -424,7 +424,7 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+        #dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
