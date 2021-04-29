@@ -70,8 +70,8 @@ class Data:
                 self.create_raster(df_site[self.train_ts+self.valid_ts:self.train_ts+self.valid_ts++self.test_ts], self.test_ln,
                                    self.test_x, self.test_y, scaler_per_site, 'test')
 
-        pickle.dump(self.train_x[:-320, :, :], open("train_x.p", "wb"))
-        pickle.dump(self.train_y[:-320, :, :], open("train_y.p", "wb"))
+        pickle.dump(self.train_x[:-384, :, :], open("train_x.p", "wb"))
+        pickle.dump(self.train_y[:-384, :, :], open("train_y.p", "wb"))
         pickle.dump(self.valid_x, open("valid_x.p", "wb"))
         pickle.dump(self.valid_y, open("valid_y.p", "wb"))
         pickle.dump(self.test_x, open("test_x.p", "wb"))
