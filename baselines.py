@@ -91,6 +91,7 @@ class RNN(nn.Module):
             outputs, _ = self.decoder_gru(x_de, hidden)
 
         outputs = self.proj_out(outputs.permute(1, 2, 0))
+        outputs = torch.sigmoid(outputs)
         outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
@@ -107,7 +108,6 @@ class MLP(nn.Module):
         self.seq_len_pred = seq_len_pred
         self.dropout = nn.Dropout(dr)
 
-        self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(output_size)
         self.n_layers = n_layers
 
@@ -116,7 +116,7 @@ class MLP(nn.Module):
         for _ in range(self.n_layers):
             residual = self.l3(inputs)
             output = self.l1(inputs.transpose(1, 2))
-            output = self.relu(output)
+            output = F.sigmoid(output)
             output = self.l2(output).transpose(1, 2)
             output = self.dropout(output)
         output = output + residual
