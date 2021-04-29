@@ -120,7 +120,7 @@ class MLP(nn.Module):
             output = self.l2(output)
             output = self.dropout(output)
         output = output + residual
-
+        output = output.to('cude:0')
         output = nn.Linear(seq_len, self.seq_len_pred)(output.permute(0, 2, 1))
         return self.layer_norm(output.permute(0, 2, 1))
 
