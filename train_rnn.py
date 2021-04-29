@@ -70,7 +70,11 @@ def train(args, model, train_en, train_de, train_y,
         model.eval()
         test_loss = 0
         for j in range(test_en.shape[0]):
-            output = model(test_en[j], test_de[j])
+            if args.deep_type == "mlp":
+                test = torch.cat((test_en[j], test_en[j]), dim=1)
+                output = model(test)
+            else:
+                output = model(test_en[j], test_de[j])
             loss = criterion(test_y[j], output)
             test_loss += loss.item()
 
@@ -120,7 +124,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                     device=device,
                     d_r=args.dr)
         model = model.to(device)
-    elif args.deep_type == "RNN":
+    elif args.deep_type == "rnn":
         n_layers, hidden_size = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
@@ -174,7 +178,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
 def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=64)
+    parser.add_argument("--seq_len_pred", type=int, default=72)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--hidden_size", type=int, default=[32])
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
@@ -186,7 +190,7 @@ def main():
     parser.add_argument("--site", type=str)
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
-    parser.add_argument("--deep_type", type=str, default="mlp")
+    parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
