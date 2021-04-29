@@ -190,7 +190,7 @@ def main():
     parser.add_argument("--site", type=str)
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
-    parser.add_argument("--deep_type", type=str, default="mlp")
+    parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
