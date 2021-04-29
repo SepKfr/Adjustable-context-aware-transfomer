@@ -172,8 +172,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
         test_loss += loss.item()
         mae_loss += mae(y_true, output).item()
 
-    test_loss = test_loss / test_en.shape[1]
-    mae_loss = mae_loss / test_en.shape[1]
+    '''test_loss = test_loss / test_en.shape[1]
+    mae_loss = mae_loss / test_en.shape[1]'''
     return test_loss, mae_loss
 
 
