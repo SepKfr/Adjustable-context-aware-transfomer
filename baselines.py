@@ -92,7 +92,7 @@ class RNN(nn.Module):
 
         outputs = self.proj_out(outputs.permute(1, 2, 0))
         outputs = nn.ReLU()(outputs)
-        outputs = self.proj_out(outputs).permute(1, 2, 0)
+        outputs = self.proj_out(outputs)
         outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
