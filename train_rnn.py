@@ -275,7 +275,7 @@ def main():
                             output_size=train_y.shape[3],
                             seq_len_pred=args.seq_len_pred,
                             dr=args.dr)
-
+                model = model.to(device)
             optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
             epoch_start = 0
             if continue_train:
