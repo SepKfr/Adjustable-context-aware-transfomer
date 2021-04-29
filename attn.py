@@ -191,9 +191,9 @@ class PoswiseFeedForwardNet(nn.Module):
 
     def forward(self, inputs):
         residual = inputs
-        output = self.l1(inputs.transpose(1, 2))
+        output = self.l1(inputs)
         output = self.relu(output)
-        output = self.l2(output).transpose(1, 2)
+        output = self.l2(output)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
 
@@ -424,7 +424,9 @@ class Attn(nn.Module):
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        #dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1))
+        dec_outputs = nn.ReLU()(dec_outputs)
+        dec_outputs = self.linear(dec_outputs).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
