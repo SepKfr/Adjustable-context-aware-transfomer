@@ -71,7 +71,7 @@ def train(args, model, train_en, train_de, train_y,
         test_loss = 0
         for j in range(test_en.shape[0]):
             if args.deep_type == "mlp":
-                test = torch.cat((test_en[j], test_en[j]), dim=1)
+                test = torch.cat((test_en[j], test_en[j]), dim=1).to(device)
                 output = model(test)
             else:
                 output = model(test_en[j], test_de[j])
@@ -160,7 +160,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     mae_loss = 0
     for j in range(test_en.shape[0]):
         if args.deep_type == "mlp":
-            test = torch.cat((test_en[j].to(device), test_de[j].to(device)), dim=1)
+            test = torch.cat((test_en[j].to(device), test_de[j].to(device)), dim=1).to(device)
             output = model(test)
         else:
             output = model(test_en[j].to(device), test_de[j].to(device))
