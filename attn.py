@@ -109,7 +109,7 @@ class ScaledDotProductAttention(nn.Module):
 
     def forward(self, Q, K, V, attn_mask):
 
-        if self.attn_type == "con":
+        if self.attn_type == "con" or self.attn_type == "con_conv":
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
@@ -262,7 +262,7 @@ class Encoder(nn.Module):
 
     def forward(self, enc_input):
 
-        if self.attn_type == 'attn_conv':
+        if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
             enc_output = self.src_emb(enc_input)
             padding = (self.kernel_size - 1) * self.dilation
             enc_output = enc_output.permute(0, 2, 1)
@@ -354,7 +354,7 @@ class Decoder(nn.Module):
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
-        if self.attn_type == 'attn_conv':
+        if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
             dec_outputs = self.tgt_emb(dec_inputs)
             padding = (self.kernel_size - 1) * self.dilation
             dec_outputs = dec_outputs.permute(0, 2, 1)
@@ -425,7 +425,6 @@ class Attn(nn.Module):
                                                                   enc_outputs, training)
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
-        dec_outputs = torch.sigmoid(dec_outputs)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
