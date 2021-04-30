@@ -425,7 +425,6 @@ class Attn(nn.Module):
                                                                   enc_outputs, training)
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
-        dec_outputs = nn.ReLU()(dec_outputs)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
