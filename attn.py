@@ -186,13 +186,13 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
 
-        self.relu = GELU()
+        self.elu = nn.ELU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
         residual = inputs
         output = self.l1(inputs.transpose(1, 2))
-        output = self.relu(output)
+        output = self.elu(output)
         output = self.l2(output).transpose(1, 2)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
@@ -201,7 +201,7 @@ class PoswiseFeedForwardNet(nn.Module):
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
-                 device, pe, attn_type, cutoff, dr, local):
+                 device, pe, attn_type, cutoff, dr):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
@@ -209,17 +209,12 @@ class EncoderLayer(nn.Module):
             attn_type=attn_type, cutoff=cutoff, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff, dr=dr)
-        self.local = local
 
-    def forward(self, enc_inputs, enc_self_attn_mask, enc_local_self_attn_mask):
+    def forward(self, enc_inputs, enc_self_attn_mask):
 
         enc_outputs, attn = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
             V=enc_inputs, attn_mask=enc_self_attn_mask)
-        if self.local > 0:
-            enc_outputs, attn = self.enc_self_attn(
-                Q=enc_outputs, K=enc_outputs,
-                V=enc_outputs, attn_mask=enc_local_self_attn_mask)
 
         enc_outputs = self.pos_ffn(enc_outputs)
 
@@ -230,7 +225,7 @@ class Encoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v, n_heads,
                  n_layers, pad_index, device, pe,
-                 attn_type, cutoff, kernel, dr, local):
+                 attn_type, cutoff, kernel, dr):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
@@ -252,13 +247,12 @@ class Encoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v, n_heads=n_heads,
                 device=device, pe=pe,
-                attn_type=attn_type, cutoff=cutoff, dr=dr, local=local)
+                attn_type=attn_type, cutoff=cutoff, dr=dr)
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.kernel_size = kernel
         self.dilation = 1
-        self.local = local
 
     def forward(self, enc_input):
 
@@ -277,11 +271,10 @@ class Encoder(nn.Module):
         enc_outputs = self.pos_emb(enc_outputs)
 
         enc_self_attn_mask = None
-        enc_local_self_attn_mask = get_attn_local_mask(enc_input, enc_input, self.local)
 
         enc_self_attns = []
         for layer in self.layers:
-            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask, enc_local_self_attn_mask)
+            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
             enc_self_attns.append(enc_self_attn)
 
         enc_self_attns = torch.stack(enc_self_attns)
@@ -292,7 +285,7 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device, pe, attn_type, cutoff, dr, local):
+                 n_heads, device, pe, attn_type, cutoff, dr):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
@@ -302,16 +295,12 @@ class DecoderLayer(nn.Module):
             d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, cutoff=cutoff, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff, dr=dr)
-        self.local = local
 
-    def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask,
-                dec_local_self_attn_mask, dec_enc_attn_mask):
+    def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
 
         dec_outputs, dec_self_attn = \
             self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
-        if self.local > 0:
-            dec_outputs, dec_self_attn = \
-                self.dec_self_attn(dec_outputs, dec_outputs, dec_outputs, dec_local_self_attn_mask)
+
         dec_outputs, dec_enc_attn = \
             self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
         dec_outputs = self.pos_ffn(dec_outputs)
@@ -322,7 +311,7 @@ class Decoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device, pe,
-                 attn_type, cutoff, kernel, dr, local):
+                 attn_type, cutoff, kernel, dr):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -342,7 +331,7 @@ class Decoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
                 n_heads=n_heads, device=device, pe=pe,
-                attn_type=attn_type, cutoff=cutoff, dr=dr, local=local)
+                attn_type=attn_type, cutoff=cutoff, dr=dr)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
@@ -350,7 +339,7 @@ class Decoder(nn.Module):
         self.d_k = d_k
         self.kernel_size = kernel
         self.dilation = 1
-        self.local = local
+
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
@@ -370,15 +359,12 @@ class Decoder(nn.Module):
 
         dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs)
 
-        dec_local_self_attn_mask = get_attn_local_mask(dec_outputs, dec_outputs, self.local)
-
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
             dec_outputs, dec_self_attn, dec_enc_attn = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
                 dec_self_attn_mask=dec_self_attn_subsequent_mask,
-                dec_local_self_attn_mask=dec_local_self_attn_mask,
                 dec_enc_attn_mask=None,
             )
             dec_self_attns.append(dec_self_attn)
@@ -392,12 +378,25 @@ class Decoder(nn.Module):
         return dec_outputs, dec_self_attns, dec_enc_attns
 
 
+class VariableSelection(nn.Module):
+    def __init__(self, input_size, d_model, dr):
+        super(VariableSelection, self).__init__()
+        self.pff = PoswiseFeedForwardNet(input_size, d_model, dr)
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, inputs):
+        weights = self.pff(inputs)
+        weights = self.softmax(weights)
+        outputs = inputs * weights
+        return outputs
+
+
 class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, cutoff, kernel, dr, local):
+                 seq_len, seq_len_pred, cutoff, kernel, dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -406,26 +405,29 @@ class Attn(nn.Module):
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
             device=device, pe=pe, attn_type=attn_type,
-            cutoff=cutoff, kernel=kernel, dr=dr, local=local)
+            cutoff=cutoff, kernel=kernel, dr=dr)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr, local=local)
+            attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
+        self.var_selection = VariableSelection(seq_len, d_model, dr)
 
     def forward(self, enc_inputs, dec_inputs, training=True):
+
+        enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
+        dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
 
-        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1))
-        dec_outputs = nn.ReLU()(dec_outputs).permute(0, 2, 1)
+        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 

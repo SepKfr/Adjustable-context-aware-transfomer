@@ -109,7 +109,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
-    n_layers, n_heads, d_model, cutoff, kernel, local = config
+    n_layers, n_heads, d_model, cutoff, kernel= config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
@@ -125,7 +125,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=cutoff, kernel=kernel, dr=args.dr, local=local).to(device)
+                 cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -152,8 +152,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=72)
     parser.add_argument("--batch_size", type=int, default=48)
-    parser.add_argument("--cutoff", type=int, default=[1, 3,6, 9])
-    parser.add_argument("--local", type=int, default=[0])
+    parser.add_argument("--cutoff", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--cutoff_best", type=int)
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
@@ -161,7 +160,7 @@ def main():
     parser.add_argument("--n_heads_best", type=int)
     parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--n_layers_best", type=int)
-    parser.add_argument("--kernel", type=int, default=[1, 3,6, 9])
+    parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=0.5)
     parser.add_argument("--dr_best", type=float)
@@ -206,7 +205,7 @@ def main():
         args.cutoff = [1]
     if args.attn_type != "attn_conv":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff, args.kernel, args.local])
+    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:
@@ -223,7 +222,7 @@ def main():
         for i, conf in enumerate(configs, config_num):
             print('config: {}'.format(conf))
 
-            n_layers, n_heads, d_model, cutoff, kernel, local = conf
+            n_layers, n_heads, d_model, cutoff, kernel = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
@@ -234,7 +233,7 @@ def main():
                          tgt_pad_index=0, device=device,
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         cutoff=cutoff, kernel=kernel, dr=args.dr, local=local).to(device)
+                         cutoff=cutoff, kernel=kernel, dr=args.dr).to(device)
 
             optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
             epoch_start = 0
@@ -266,7 +265,7 @@ def main():
                                  criterion, seq_len, path)
             print("test error {:.3f}".format(test_loss))
 
-        layers, heads, d_model, cutoff, kernel, local = best_config
+        layers, heads, d_model, cutoff, kernel = best_config
         print("best_config: {}".format(best_config))
 
     else:
