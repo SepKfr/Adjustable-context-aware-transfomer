@@ -186,7 +186,7 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
 
-        self.relu = nn.ReLU()
+        self.relu = GELU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
@@ -340,6 +340,7 @@ class Decoder(nn.Module):
         self.kernel_size = kernel
         self.dilation = 1
 
+
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
@@ -425,6 +426,8 @@ class Attn(nn.Module):
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs, training)
+
+        dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
