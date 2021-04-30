@@ -186,13 +186,13 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
 
-        self.elu = nn.ELU()
+        self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
         residual = inputs
         output = self.l1(inputs.transpose(1, 2))
-        output = self.elu(output)
+        output = self.relu(output)
         output = self.l2(output).transpose(1, 2)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
