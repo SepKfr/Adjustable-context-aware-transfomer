@@ -90,7 +90,7 @@ class RNN(nn.Module):
             en_out, hidden = self.encoder_gru(x_en, hidden)
             outputs, _ = self.decoder_gru(x_de, hidden)
 
-        outputs = self.proj_out(outputs.permute(1, 2, 0))
+        outputs = outputs.permute(1, 2, 0)
         outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
