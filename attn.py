@@ -343,7 +343,6 @@ class Decoder(nn.Module):
         self.kernel_size = kernel
         self.dilation = 1
 
-
     def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
 
         if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
