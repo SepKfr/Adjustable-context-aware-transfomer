@@ -193,7 +193,7 @@ class PoswiseFeedForwardNet(nn.Module):
         if self.residual:
             residual = inputs
         else:
-            residual = torch.zeros(inputs.shape)
+            residual = torch.zeros(inputs.shape).to('cuda:0')
         output = self.l1(inputs.transpose(1, 2))
         output = self.relu(output)
         output = self.l2(output).transpose(1, 2)
