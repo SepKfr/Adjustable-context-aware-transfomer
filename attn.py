@@ -390,7 +390,7 @@ class VariableSelection(nn.Module):
     def forward(self, inputs):
         weights = self.pff(inputs)
         weights = self.softmax(weights)
-        outputs = inputs * weights
+        outputs = inputs * weights + inputs
         return outputs
 
 
