@@ -180,17 +180,20 @@ class MultiHeadAttention(nn.Module):
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff, dr):
+    def __init__(self, d_model, d_ff, dr, residual=True):
         super(PoswiseFeedForwardNet, self).__init__()
         self.l1 = nn.Conv1d(d_model, d_ff, kernel_size=1)
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
-
+        self.residual = residual
         self.relu = GELU()
         self.layer_norm = nn.LayerNorm(d_model)
 
     def forward(self, inputs):
-        residual = inputs
+        if self.residual:
+            residual = inputs
+        else:
+            residual = torch.zeros(inputs.size)
         output = self.l1(inputs.transpose(1, 2))
         output = self.relu(output)
         output = self.l2(output).transpose(1, 2)
@@ -381,7 +384,7 @@ class Decoder(nn.Module):
 class VariableSelection(nn.Module):
     def __init__(self, input_size, d_model, dr):
         super(VariableSelection, self).__init__()
-        self.pff = PoswiseFeedForwardNet(input_size, d_model, dr)
+        self.pff = PoswiseFeedForwardNet(input_size, d_model, dr, residual=False)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, inputs):
