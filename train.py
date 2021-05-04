@@ -11,9 +11,9 @@ import pytorch_warmup as warmup
 import itertools
 import sys
 import random
-torch.manual_seed(0)
-random.seed(0)
-np.random.seed(0)
+torch.manual_seed(1234)
+random.seed(1234)
+np.random.seed(1234)
 
 
 def batching(batch_size, x_en, x_de, y_t):

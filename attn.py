@@ -8,9 +8,9 @@ import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
 import random
-torch.manual_seed(0)
-np.random.seed(0)
-random.seed(0)
+torch.manual_seed(1234)
+np.random.seed(1234)
+random.seed(1234)
 
 
 def get_attn_subsequent_mask(seq):

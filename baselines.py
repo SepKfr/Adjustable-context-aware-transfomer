@@ -3,9 +3,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import random
-random.seed(0)
-torch.manual_seed(0)
-np.random.seed(0)
+random.seed(1234)
+torch.manual_seed(1234)
+np.random.seed(1234)
 
 
 class RNConv(nn.Module):
