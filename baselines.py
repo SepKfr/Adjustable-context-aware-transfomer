@@ -1,6 +1,11 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+import numpy as np
+import random
+random.seed(0)
+torch.manual_seed(0)
+np.random.seed(0)
 
 
 class RNConv(nn.Module):

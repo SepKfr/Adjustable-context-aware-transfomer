@@ -5,9 +5,11 @@ import torch
 import pickle
 from sklearn.preprocessing import StandardScaler
 import argparse
-import matplotlib.pyplot as plt
-from pywt import wavedec
 import pywt
+import random
+torch.manual_seed(0)
+np.random.seed(0)
+random.seed(0)
 
 
 class Scaler:

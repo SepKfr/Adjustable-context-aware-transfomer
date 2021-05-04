@@ -10,8 +10,12 @@ import pytorch_warmup as warmup
 import itertools
 import sys
 import random
+import numpy as np
 from baselines import CNN, RNN, MLP
 from utils import inverse_transform
+torch.manual_seed(0)
+random.seed(0)
+np.random.seed(0)
 
 
 def batching(batch_size, x_en, x_de, y_t):

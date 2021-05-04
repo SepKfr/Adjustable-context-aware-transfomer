@@ -1,21 +1,19 @@
 import pickle
-from preprocess import Scaler
-from utils import Metrics
 from attn import Attn
 from torch.optim import Adam
 import torch.nn as nn
 import numpy as np
 import torch
-from baselines import RNN, CNN
 import argparse
 import json
 import os
 import pytorch_warmup as warmup
-from clearml import Task, Logger
-from utils import inverse_transform
 import itertools
 import sys
 import random
+torch.manual_seed(0)
+random.seed(0)
+np.random.seed(0)
 
 
 def batching(batch_size, x_en, x_de, y_t):
