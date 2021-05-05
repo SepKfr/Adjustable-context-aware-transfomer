@@ -11,7 +11,7 @@ class Lstnet(nn.Module):
         super(Lstnet, self).__init__()
         self.device = device
         self.P = seq_len
-        self.m = 1
+        self.m = hidCNN
         self.hidR = hidRNN
         self.hidC = hidCNN
         self.hidS = hidSkip
@@ -21,7 +21,7 @@ class Lstnet(nn.Module):
         self.conv1 = nn.Conv2d(1, self.hidC, kernel_size=(self.Ck, self.m))
         self.GRU1 = nn.GRU(self.hidC, self.hidR)
         self.dropout = nn.Dropout(dr)
-        self.proj = nn.Linear(input_size, self.m)
+        self.proj = nn.Linear(input_size, self.hidC)
         if self.skip > 0:
             self.GRUskip = nn.GRU(self.hidC, self.hidS)
             self.linear1 = nn.Linear(self.hidR + self.skip * self.hidS, seq_len_pred)
@@ -163,7 +163,8 @@ class MLP(nn.Module):
             output = self.dropout(output)
         output = output + residual
 
-        output = self.l2(nn.Linear(inputs.size(1), self.seq_len_pred).to(self.device)(output.permute(0, 2, 1)))
+        output = self.l2(nn.Linear(inputs.size(1), self.seq_len_pred).
+                         to(self.device)(output.permute(0, 2, 1)))
         return self.layer_norm(output.permute(0, 2, 1))
 
 

@@ -9,7 +9,6 @@ import pywt
 import random
 
 
-
 class Scaler:
     def __init__(self, site):
         self.site = site
