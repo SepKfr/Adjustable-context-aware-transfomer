@@ -102,8 +102,7 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    num_samples = len(prod)
-    return list(random.sample(set(prod), num_samples))
+    return prod
 
 
 def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
