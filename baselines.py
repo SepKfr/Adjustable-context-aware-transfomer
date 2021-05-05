@@ -27,6 +27,7 @@ class Lstnet(nn.Module):
             self.linear1 = nn.Linear(self.hidR + self.skip * self.hidS, seq_len_pred)
         else:
             self.linear1 = nn.Linear(self.hidR, seq_len_pred)
+        self.linear2 = nn.Linear(seq_len_pred, seq_len_pred)
 
     def forward(self, x):
         batch_size = x.size(0)
@@ -54,7 +55,8 @@ class Lstnet(nn.Module):
             r = torch.cat((r, s), 1)
 
         r = r.unsqueeze(-1)
-        res = self.linear1(r.permute(0, 2, 1)).permute(0, 2, 1)
+        res = self.linear1(r.permute(0, 2, 1))
+        res = self.linear2(res).permute(0, 2, 1)
         res = torch.sigmoid(res)
         return res
 
