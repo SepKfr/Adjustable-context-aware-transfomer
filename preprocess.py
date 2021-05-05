@@ -76,6 +76,8 @@ class Data:
         self.train_x = self.train_x[-max_train_len:, :, :]
         self.train_y = self.train_y[-max_train_len:, :, :]
 
+        print(self.train_x.shape)
+        print(self.valid_x.shape)
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
         pickle.dump(self.valid_x, open("valid_x.p", "wb"))
@@ -287,8 +289,8 @@ def main():
     parser.add_argument("--out_seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.7)
-    parser.add_argument("--max_length", type=int, default=1800)
-    parser.add_argument("--max_train_len", type=int, default=384)
+    parser.add_argument("--max_length", type=int, default=1600)
+    parser.add_argument("--max_train_len", type=int, default=320)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
