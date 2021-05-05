@@ -11,7 +11,7 @@ import itertools
 import sys
 import random
 import numpy as np
-from baselines import CNN, RNN, Lstnet, RNConv
+from baselines import CNN, RNN, Lstnet, RNConv, MLP
 from utils import inverse_transform
 
 
@@ -147,6 +147,16 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                        device=device)
         model = model.to(device)
 
+    else:
+        n_layers, hidden_size = config
+        model = MLP(n_layers=n_layers,
+                    hidden_size=hidden_size,
+                    input_size=test_x.shape[3],
+                    output_size=test_y.shape[3],
+                    seq_len_pred=args.seq_len_pred,
+                    device=device,
+                    dr=args.dr)
+
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
     if not os.path.exists(path_to_pred):
@@ -186,7 +196,7 @@ def main():
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--site", type=str)
-    parser.add_argument("--deep_type", type=str, default="lstnet")
+    parser.add_argument("--deep_type", type=str, default="mlp")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
@@ -219,7 +229,7 @@ def main():
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         hyper_param = list([args.n_layers, args.hidden_size, args.kernel])
-    elif args.deep_type == "rnn":
+    elif args.deep_type == "rnn" or args.deep_type == "mlp":
         hyper_param = list([args.n_layers, args.hidden_size])
     elif args.deep_type == "lstnet":
         hyper_param = list([args.hidden_size, args.hidden_size,
@@ -281,6 +291,17 @@ def main():
                            device=device)
             model = model.to(device)
 
+        else:
+            n_layers, hidden_size = conf
+            model = MLP(n_layers=n_layers,
+                        hidden_size=hidden_size,
+                        input_size=test_x.shape[3],
+                        output_size=test_y.shape[3],
+                        seq_len_pred=args.seq_len_pred,
+                        device=device,
+                        dr=args.dr)
+            model = model.to(device)
+
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
         epoch_start = 0
         if continue_train:
@@ -312,7 +333,7 @@ def main():
 
     if args.deep_type == "cnn":
         n_layers, hidden_size, kernel = best_config
-    elif args.deep_type == "rnn":
+    elif args.deep_type == "rnn" or args.deep_type == "mlp":
         n_layers, hidden_size = best_config
     else:
         hidden_size, hidden_size, kernel = best_config
