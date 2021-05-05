@@ -121,13 +121,14 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                         d_r=args.dr)
         model = model.to(device)
     elif args.deep_type == "rnn":
+
         n_layers, hidden_size = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     input_size=test_x.shape[3],
                     output_size=test_y.shape[3],
                     rnn_type=args.rnn_type,
-                    seq_len=seq_len,
+                    seq_len=test_x.shape[2],
                     seq_pred_len=args.seq_len_pred,
                     device=device,
                     d_r=args.dr)
@@ -147,7 +148,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                        device=device)
         model = model.to(device)
 
-    else:
+    elif args.deep_type == "mlp":
         n_layers, hidden_size = config
         model = MLP(n_layers=n_layers,
                     hidden_size=hidden_size,
@@ -196,7 +197,7 @@ def main():
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--site", type=str)
-    parser.add_argument("--deep_type", type=str, default="mlp")
+    parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
@@ -291,7 +292,7 @@ def main():
                            device=device)
             model = model.to(device)
 
-        else:
+        elif args.rnn == "mlp":
             n_layers, hidden_size = conf
             model = MLP(n_layers=n_layers,
                         hidden_size=hidden_size,
