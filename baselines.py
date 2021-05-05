@@ -92,7 +92,7 @@ class RNConv(nn.Module):
         x_en_out = x_out.view(seq_len, b, -1)
 
         if hidden is None:
-            hidden = torch.zeros(self.n_layers, b, self.hidden_size)
+            hidden = torch.zeros(self.n_layers, b, self.hidden_size).to("cpu:0")
 
         output, _ = self.lstm(x_en_out, (hidden, hidden))
         output = output.permute(0, 2, 1)
