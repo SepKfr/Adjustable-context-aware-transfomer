@@ -355,7 +355,7 @@ def main():
     config_file[args.name].append(n_layers)
     config_file[args.name].append(hidden_size)
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        configs[args.name].append(kernel)
+        config_file[args.name].append(kernel)
 
     print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
