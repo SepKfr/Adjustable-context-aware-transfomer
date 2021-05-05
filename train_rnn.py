@@ -13,9 +13,7 @@ import random
 import numpy as np
 from baselines import CNN, RNN, MLP
 from utils import inverse_transform
-torch.manual_seed(42)
-random.seed(42)
-np.random.seed(42)
+
 
 
 def batching(batch_size, x_en, x_de, y_t):

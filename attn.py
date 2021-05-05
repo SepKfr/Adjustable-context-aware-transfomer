@@ -8,9 +8,7 @@ import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
 import random
-torch.manual_seed(42)
-np.random.seed(42)
-random.seed(42)
+
 
 
 def get_attn_subsequent_mask(seq):
@@ -117,7 +115,7 @@ class ScaledDotProductAttention(nn.Module):
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
-            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k))
+            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k*cutoff))
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(4).repeat(1, 1, 1, 1, cutoff)
                 cutoff_mask = int(cutoff / 2)
