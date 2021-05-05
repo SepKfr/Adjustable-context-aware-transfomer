@@ -32,6 +32,7 @@ def batching(batch_size, x, y_t):
 
 
 erros = dict()
+config_file = dict()
 
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -118,6 +119,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                         hidden_size=hidden_size,
                         seq_len=test_x.shape[2],
                         seq_pred_len=args.seq_len_pred,
+                        device=device,
                         d_r=args.dr)
         model = model.to(device)
     elif args.deep_type == "rnn":
@@ -265,6 +267,7 @@ def main():
                         hidden_size=hidden_size,
                         seq_len=train_x.shape[2],
                         seq_pred_len=args.seq_len_pred,
+                        device=device,
                         d_r=args.dr)
             model = model.to(device)
         elif args.deep_type == "rnn":
@@ -346,11 +349,11 @@ def main():
     test_loss, mae_loss = evaluate(best_config, args, test_x, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
-    configs[args.name] = list()
+    config_file[args.name] = list()
     erros[args.name].append(float("{:.4f}".format(test_loss)))
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
-    configs[args.name].append(n_layers)
-    configs[args.name].append(hidden_size)
+    config_file[args.name].append(n_layers)
+    config_file[args.name].append(hidden_size)
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         configs[args.name].append(kernel)
 
@@ -386,7 +389,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open(config_path, "w") as json_file:
-            json.dump(configs, json_file)
+            json.dump(config_file, json_file)
 
 
 if __name__ == '__main__':

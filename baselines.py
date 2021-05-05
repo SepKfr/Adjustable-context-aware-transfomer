@@ -64,7 +64,9 @@ class Lstnet(nn.Module):
 class RNConv(nn.Module):
 
     def __init__(self,input_size, output_size,
-                 out_channel, kernel, n_layers, hidden_size, seq_len, seq_pred_len, d_r):
+                 out_channel, kernel, n_layers,
+                 hidden_size, seq_len, seq_pred_len,
+                 device, d_r):
 
         super(RNConv, self).__init__()
         self.n_layers = n_layers
@@ -76,6 +78,7 @@ class RNConv(nn.Module):
         self.proj_out = nn.Linear(seq_len, seq_pred_len, bias=False)
         self.kernel_size = kernel
         self.dilation = 1
+        self.device = device
 
     def forward(self, x, hidden=None):
 
@@ -94,7 +97,7 @@ class RNConv(nn.Module):
         x_en_out = x_out.view(seq_len, b, -1)
 
         if hidden is None:
-            hidden = torch.zeros(self.n_layers, b, self.hidden_size).to("cuda:0")
+            hidden = torch.zeros(self.n_layers, b, self.hidden_size).to(self.device)
 
         output, _ = self.lstm(x_en_out, (hidden, hidden))
         output = output.permute(0, 2, 1)
