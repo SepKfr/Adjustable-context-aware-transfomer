@@ -12,6 +12,7 @@ random.seed(0)
 torch.manual_seed(0)
 np.random.seed(0)
 
+
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)
@@ -116,7 +117,7 @@ class ScaledDotProductAttention(nn.Module):
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
-            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k*cutoff))
+            scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k))
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(4).repeat(1, 1, 1, 1, cutoff)
                 cutoff_mask = int(cutoff / 2)
