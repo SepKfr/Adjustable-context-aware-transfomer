@@ -54,7 +54,7 @@ def train(args, model, train_en, train_de, train_y,
         model.train()
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
-            output = model(train_en[batch_id], train_de[batch_id], training=True)
+            output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
             optimizer.zero_grad()
@@ -69,7 +69,7 @@ def train(args, model, train_en, train_de, train_y,
         model.eval()
         test_loss = 0
         for j in range(test_en.shape[0]):
-            output = model(test_en[j].to(device), test_de[j].to(device), training=True)
+            output = model(test_en[j].to(device), test_de[j].to(device))
             loss = criterion(test_y[j].to(device), output)
             test_loss += loss.item()
 

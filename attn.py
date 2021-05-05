@@ -347,7 +347,7 @@ class Decoder(nn.Module):
         self.kernel_size = kernel
         self.dilation = 1
 
-    def forward(self, dec_inputs, enc_inputs, enc_outputs, training=True):
+    def forward(self, dec_inputs, enc_inputs, enc_outputs):
 
         if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
             dec_outputs = self.tgt_emb(dec_inputs)
@@ -424,14 +424,14 @@ class Attn(nn.Module):
         self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
         self.var_selection = VariableSelection(seq_len, d_model, dr)
 
-    def forward(self, enc_inputs, dec_inputs, training=True):
+    def forward(self, enc_inputs, dec_inputs):
 
         '''enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
         dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)'''
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
-                                                                  enc_outputs, training)
+                                                                  enc_outputs)
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
