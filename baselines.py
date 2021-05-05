@@ -7,6 +7,7 @@ random.seed(0)
 torch.manual_seed(0)
 np.random.seed(0)
 
+
 class Lstnet(nn.Module):
     def __init__(self, hidRNN, hidCNN, hidSkip, CNN_kernel, skip,
                  seq_len, seq_len_pred, input_size, dr, device):
