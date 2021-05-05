@@ -10,7 +10,6 @@ import torch.nn.functional as F
 import random
 
 
-
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)

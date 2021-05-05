@@ -189,7 +189,7 @@ def main():
     parser.add_argument("--seq_len_pred", type=int, default=72)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--hidden_size", type=int, default=[32])
-    parser.add_argument("--kernel", type=int, default=[6])
+    parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
     parser.add_argument("--dr", type=float, default=0.5)
