@@ -31,6 +31,7 @@ def batching(batch_size, x_en, x_de, y_t):
 
 
 erros = dict()
+config_file = dict()
 
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -272,13 +273,13 @@ def main():
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
-    configs[args.name] = list()
+    config_file[args.name] = list()
     erros[args.name].append(float("{:.4f}".format(test_loss)))
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
-    configs[args.name].append(layers)
-    configs[args.name].append(heads)
-    configs[args.name].append(d_model)
-    configs[args.name].append(cutoff)
+    config_file[args.name].append(layers)
+    config_file[args.name].append(heads)
+    config_file[args.name].append(d_model)
+    config_file[args.name].append(cutoff)
 
     print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
@@ -313,7 +314,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open(config_path, "w") as json_file:
-            json.dump(configs, json_file)
+            json.dump(config_file, json_file)
 
 
 if __name__ == '__main__':
