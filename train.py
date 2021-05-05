@@ -13,7 +13,6 @@ import sys
 import random
 
 
-
 def batching(batch_size, x_en, x_de, y_t):
 
     batch_n = int(x_en.shape[0] / batch_size)

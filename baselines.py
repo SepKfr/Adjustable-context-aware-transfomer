@@ -127,7 +127,7 @@ class RNN(nn.Module):
         if hidden is None:
             hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size).to(self.device)
 
-        outputs, _ = self.encoder_lstm(x_en, (hidden, hidden))
+        outputs, _ = self.lstm(x_en, (hidden, hidden))
 
         outputs = self.proj_out(outputs.permute(1, 2, 0))
         outputs = self.linear2(outputs.permute(0, 2, 1))
