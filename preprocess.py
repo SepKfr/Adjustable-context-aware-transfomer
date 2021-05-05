@@ -100,8 +100,8 @@ class Data:
             dat = data.iloc[:, f + 1]
             dat = np.array(dat).reshape(-1, 1)
             stScaler.fit(dat)
-            dat = stScaler.transform(dat)
-            scaler.add_scaler(f, set_dat, stScaler)
+            '''dat = stScaler.transform(dat)
+            scaler.add_scaler(f, set_dat, stScaler)'''
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
             inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets+self.n_derivative] = in_data
