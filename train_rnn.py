@@ -251,7 +251,6 @@ def main():
 
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
-        print(conf)
 
         model = None
 
