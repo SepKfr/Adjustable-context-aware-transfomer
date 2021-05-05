@@ -351,7 +351,7 @@ def main():
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
     erros[args.name].append(n_layers)
     erros[args.name].append(hidden_size)
-    if args.deep_type == "cnn" or args.deep_tyep == "rnconv":
+    if args.deep_type == "cnn" or args.deep_type == "rnconv":
         erros[args.name].append(kernel)
 
     print("test error for best config {:.3f}".format(test_loss))
