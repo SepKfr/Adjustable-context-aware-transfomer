@@ -333,13 +333,14 @@ def main():
                                        criterion, seq_len, path)
         print("test error {:.3f}".format(test_loss))
 
-    if args.deep_type == "cnn":
+    if args.deep_type == "cnn" or args.deep_type == "rnconv":
         n_layers, hidden_size, kernel = best_config
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
         n_layers, hidden_size = best_config
     else:
-        hidden_size, hidden_size, kernel = best_config
         n_layers = 1
+        hidden_size, hidden_size, kernel = best_config
+
     print("best_config: {}".format(best_config))
 
     test_loss, mae_loss = evaluate(best_config, args, test_x, test_y, criterion, seq_len, path)
@@ -349,7 +350,7 @@ def main():
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
     erros[args.name].append(n_layers)
     erros[args.name].append(hidden_size)
-    if args.deep_type == "cnn":
+    if args.deep_type == "cnn" or args.deep_tyep == "rnconv":
         erros[args.name].append(kernel)
 
     print("test error for best config {:.3f}".format(test_loss))
