@@ -11,8 +11,13 @@ import itertools
 import sys
 import random
 import numpy as np
+import numpy as np
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
 from utils import inverse_transform
+random.seed(0)
+torch.manual_seed(0)
+np.random.seed(0)
+
 
 
 def batching(batch_size, x, y_t):

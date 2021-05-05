@@ -8,7 +8,9 @@ import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
 import random
-
+random.seed(0)
+torch.manual_seed(0)
+np.random.seed(0)
 
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]

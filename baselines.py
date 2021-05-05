@@ -3,7 +3,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import random
-
+random.seed(0)
+torch.manual_seed(0)
+np.random.seed(0)
 
 class Lstnet(nn.Module):
     def __init__(self, hidRNN, hidCNN, hidSkip, CNN_kernel, skip,
