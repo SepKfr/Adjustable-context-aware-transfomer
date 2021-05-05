@@ -19,7 +19,8 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, max_len, n_features, in_seq_len, out_seq_len, trn_per):
+    def __init__(self, site_data, max_len,
+                 max_train_len, n_features, in_seq_len, out_seq_len, trn_per):
 
         self.scalers = list()
         self.sites_data = site_data
@@ -69,8 +70,11 @@ class Data:
                 self.create_raster(df_site[self.train_ts+self.valid_ts:self.train_ts+self.valid_ts++self.test_ts], self.test_ln,
                                    self.test_x, self.test_y, scaler_per_site, 'test')
 
-        pickle.dump(self.train_x[-320:, :, :], open("train_x.p", "wb"))
-        pickle.dump(self.train_y[-320:, :, :], open("train_y.p", "wb"))
+        self.train_x = self.train_x[-max_train_len:, :, :]
+        self.train_y = self.train_y[-max_train_len:, :, :]
+
+        pickle.dump(self.train_x, open("train_x.p", "wb"))
+        pickle.dump(self.train_y, open("train_y.p", "wb"))
         pickle.dump(self.valid_x, open("valid_x.p", "wb"))
         pickle.dump(self.valid_y, open("valid_y.p", "wb"))
         pickle.dump(self.test_x, open("test_x.p", "wb"))
@@ -167,7 +171,7 @@ class STData:
         self.sites_data = dict()
         site_dat = self.prep_data_per_site(params.site)
         self.sites_data[params.site] = site_dat
-        self.raster = Data(self.sites_data, params.max_length, self.n_features,
+        self.raster = Data(self.sites_data, params.max_length, params.max_train_len, self.n_features,
                            params.in_seq_len, params.out_seq_len, params.train_percent)
 
     class Site:
@@ -281,6 +285,7 @@ def main():
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.7)
     parser.add_argument("--max_length", type=int, default=1600)
+    parser.add_argument("--max_train_len", type=int, default=320)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
