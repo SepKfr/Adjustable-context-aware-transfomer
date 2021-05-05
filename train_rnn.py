@@ -157,6 +157,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                     seq_len_pred=args.seq_len_pred,
                     device=device,
                     dr=args.dr)
+        model = model.to(device)
 
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
