@@ -292,7 +292,7 @@ def main():
                            device=device)
             model = model.to(device)
 
-        elif args.rnn == "mlp":
+        elif args.deep_type == "mlp":
             n_layers, hidden_size = conf
             model = MLP(n_layers=n_layers,
                         hidden_size=hidden_size,
