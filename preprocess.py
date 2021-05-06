@@ -22,12 +22,11 @@ class Scaler:
 
 
 class Data:
-    def __init__(self, site_data, max_len,
-                 max_train_len, n_features, in_seq_len, out_seq_len, trn_per):
+    def __init__(self, site_data, params, n_features):
 
         self.scalers = list()
         self.sites_data = site_data
-        self.ts = max_len
+        self.ts = params.max_len
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
@@ -36,10 +35,10 @@ class Data:
         self.wavelets = ['db3', 'db5']
         self.n_wavelets = 0
         self.nf = n_features * (self.n_moving_average + self.n_wavelets + self.n_derivative)
-        self.in_seq_len = in_seq_len
-        self.out_seq_len = out_seq_len
+        self.in_seq_len = params.in_seq_len
+        self.out_seq_len = params.out_seq_len
 
-        self.train_ts = int(self.ts * trn_per)
+        self.train_ts = int(self.ts * params.train_percent)
         self.valid_ts = int((self.ts - self.train_ts) * 0.5)
         self.test_ts = self.valid_ts
 
@@ -51,8 +50,8 @@ class Data:
         self.train_y = torch.zeros(self.train_ln, self.out_seq_len, 1)
         self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf)
         self.valid_y = torch.zeros(self.valid_ln, self.out_seq_len, 1)
-        self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
-        self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)
+        '''self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
+        self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)'''
 
         self.scalers = list()
 
@@ -69,12 +68,13 @@ class Data:
             self.valid_x, self.valid_y = \
                 self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln,
                                    self.valid_x, self.valid_y, scaler_per_site, 'valid')
-            self.test_x, self.test_y = \
-                self.create_raster(df_site[self.train_ts+self.valid_ts:self.train_ts+self.valid_ts++self.test_ts], self.test_ln,
-                                   self.test_x, self.test_y, scaler_per_site, 'test')
 
-        self.train_x = self.train_x[-max_train_len:, :, :]
-        self.train_y = self.train_y[-max_train_len:, :, :]
+        self.train_x = self.train_x[-params.max_train_len:, :, :]
+        self.train_y = self.train_y[-params.max_train_len:, :, :]
+        self.val_x = self.valid_x[:params.max_val_len, :, :]
+        self.val_y = self.valid_y[:params.max_val_len:, :, :]
+        self.test_x = self.valid_x[params.max_val_len:2*params.max_train_len, :, :]
+        self.test_y = self.valid_x[params.max_val_len:2*params.max_train_len, :, :]
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -174,8 +174,7 @@ class STData:
         self.sites_data = dict()
         site_dat = self.prep_data_per_site(params.site)
         self.sites_data[params.site] = site_dat
-        self.raster = Data(self.sites_data, params.max_length, params.max_train_len, self.n_features,
-                           params.in_seq_len, params.out_seq_len, params.train_percent)
+        self.raster = Data(self.sites_data, params,  self.n_features)
 
     class Site:
         def __init__(self, name, abr, lat, long):
@@ -283,12 +282,13 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=144)
-    parser.add_argument("--out_seq_len", type=int, default=72)
+    parser.add_argument("--in_seq_len", type=int, default=160)
+    parser.add_argument("--out_seq_len", type=int, default=80)
     parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--train_percent", type=float, default=0.7)
-    parser.add_argument("--max_length", type=int, default=1800)
+    parser.add_argument("--train_percent", type=float, default=0.8)
+    parser.add_argument("--max_len", type=int, default=3000)
     parser.add_argument("--max_train_len", type=int, default=320)
+    parser.add_argument("--max_val_len", type=int, default=40)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
