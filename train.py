@@ -198,7 +198,6 @@ def main():
     test_en, test_de, test_y = test_x[:, :-seq_len, :].unsqueeze(0), \
                              test_x[:, -seq_len:, :].unsqueeze(0), test_y[:, :, :].unsqueeze(0)
 
-    print(valid_en.shape)
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
     continue_train = True if args.continue_train == "True" else False
