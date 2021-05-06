@@ -26,7 +26,7 @@ class Data:
 
         self.scalers = list()
         self.sites_data = site_data
-        self.ts = params.max_len
+        self.ts = params.max_length
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
@@ -286,7 +286,7 @@ def main():
     parser.add_argument("--out_seq_len", type=int, default=80)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.8)
-    parser.add_argument("--max_len", type=int, default=3000)
+    parser.add_argument("--max_length", type=int, default=3000)
     parser.add_argument("--max_train_len", type=int, default=320)
     parser.add_argument("--max_val_len", type=int, default=40)
     params = parser.parse_args()
