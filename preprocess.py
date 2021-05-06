@@ -283,11 +283,11 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=4)
-    parser.add_argument("--out_seq_len", type=int, default=1)
+    parser.add_argument("--in_seq_len", type=int, default=144)
+    parser.add_argument("--out_seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.7)
-    parser.add_argument("--max_length", type=int, default=2000)
+    parser.add_argument("--max_length", type=int, default=1800)
     parser.add_argument("--max_train_len", type=int, default=320)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
