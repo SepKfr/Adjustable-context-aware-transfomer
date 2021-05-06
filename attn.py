@@ -49,19 +49,14 @@ def get_con_mask(seq_q, seq_k, padding):
 def get_con_vecs(seq, cutoff):
 
     batch_size, n_h, seq_len, d_k = seq.shape
-    seq = seq.reshape(batch_size, seq_len, n_h * d_k)
-
-    up_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
-    low_t = seq.unsqueeze(1).repeat(1, seq_len, 1, 1).permute(0, 3, 1, 2)
-    up_t = torch.triu(up_t)
-    up_t = torch.flip(up_t, dims=[2])
-    up_t = F.pad(up_t, pad=(0, 0, 1, 0))[:, :, :-1, 1:]
-    low_t = torch.tril(low_t)
-    low_t = torch.flip(low_t, dims=[2])
-    mtx = torch.cat((up_t, low_t), dim=-1).permute(0, 2, 3, 1)
-    mtx = mtx.reshape(batch_size, n_h, seq_len, seq_len*2 - 1, d_k)
-    mtx = mtx[:, :, :, seq_len - cutoff - 1:seq_len + cutoff, :]
-    return mtx
+    seq_pad = F.pad(seq, pad=(cutoff, cutoff, cutoff - 1, 0))
+    seq_un = seq_pad.unfold(2, cutoff, 1).\
+        reshape(batch_size, n_h, seq_len, cutoff, d_k + cutoff*2)
+    seq_re = torch.flip(seq_pad, dims=[2])
+    seq_un_re = seq_re.unfold(2, cutoff, 1).\
+        reshape(batch_size, n_h, seq_len, cutoff, d_k + cutoff*2)
+    seq_out = torch.cat((seq_un, seq_un_re), dim=3)
+    return seq_out
 
 
 def rel_pos_enc(seq):
@@ -116,7 +111,6 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "con":
             Q = get_con_vecs(Q, self.cutoff).to(self.device)
             K = get_con_vecs(K, self.cutoff).to(self.device)
-            V = K
             batch_size, n_h, seq_len, cutoff, d_k = Q.shape
             scores = torch.einsum('bhqcd,bhkcd->bhqkc', Q, K) / (np.sqrt(self.d_k*cutoff))
             if attn_mask is not None:
@@ -135,7 +129,7 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
 
         if self.attn_type == "con":
-            context = torch.einsum('bhqkc,bhvcd->bhqd', attn, V)
+            context = torch.einsum('bhqkc,bhvd->bhqd', attn, V)
             attn = torch.einsum('bhqkc->bhqk', attn)
         else:
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
