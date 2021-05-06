@@ -184,7 +184,7 @@ class MultiHeadAttention(nn.Module):
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff, dr, residual=True):
+    def __init__(self, d_model, d_ff, dr, device, residual=True):
         super(PoswiseFeedForwardNet, self).__init__()
         self.l1 = nn.Conv1d(d_model, d_ff, kernel_size=1)
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
@@ -192,12 +192,13 @@ class PoswiseFeedForwardNet(nn.Module):
         self.residual = residual
         self.relu = GELU()
         self.layer_norm = nn.LayerNorm(d_model)
+        self.device = device
 
     def forward(self, inputs):
         if self.residual:
             residual = inputs
         else:
-            residual = torch.zeros(inputs.shape).to('cuda:0')
+            residual = torch.zeros(inputs.shape).to(self.device)
         output = self.l1(inputs.transpose(1, 2))
         output = self.relu(output)
         output = self.l2(output).transpose(1, 2)
@@ -215,7 +216,7 @@ class EncoderLayer(nn.Module):
             d_v=d_v, n_heads=n_heads, device=device, pe=pe,
             attn_type=attn_type, cutoff=cutoff, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
-            d_model=d_model, d_ff=d_ff, dr=dr)
+            d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
     def forward(self, enc_inputs, enc_self_attn_mask):
 
@@ -301,7 +302,7 @@ class DecoderLayer(nn.Module):
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, cutoff=cutoff, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
-            d_model=d_model, d_ff=d_ff, dr=dr)
+            d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
 
@@ -385,15 +386,15 @@ class Decoder(nn.Module):
 
 
 class VariableSelection(nn.Module):
-    def __init__(self, input_size, d_model, dr):
+    def __init__(self, input_size, d_model, device, dr):
         super(VariableSelection, self).__init__()
-        self.pff = PoswiseFeedForwardNet(input_size, d_model, dr, residual=False)
+        self.pff = PoswiseFeedForwardNet(input_size, d_model, dr, device, residual=True)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, inputs):
         weights = self.pff(inputs)
         weights = self.softmax(weights)
-        outputs = inputs * weights + inputs
+        outputs = inputs * weights
         return outputs
 
 
@@ -422,13 +423,12 @@ class Attn(nn.Module):
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
-        self.var_selection = VariableSelection(seq_len, d_model, dr)
+        self.var_selection = VariableSelection(seq_len, d_model, device, dr)
 
     def forward(self, enc_inputs, dec_inputs):
 
         enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
         dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)
-
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs)

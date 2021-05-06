@@ -150,7 +150,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=1)
+    parser.add_argument("--seq_len_pred", type=int, default=72)
     parser.add_argument("--batch_size", type=int, default=48)
     parser.add_argument("--cutoff", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--cutoff_best", type=int)
