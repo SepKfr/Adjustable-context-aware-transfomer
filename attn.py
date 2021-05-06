@@ -190,7 +190,7 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
         self.residual = residual
-        self.relu = GELU()
+        self.gelu = nn.GELU()
         self.layer_norm = nn.LayerNorm(d_model)
         self.device = device
 
@@ -200,7 +200,7 @@ class PoswiseFeedForwardNet(nn.Module):
         else:
             residual = torch.zeros(inputs.shape).to(self.device)
         output = self.l1(inputs.transpose(1, 2))
-        output = self.relu(output)
+        output = self.gelu(output)
         output = self.l2(output).transpose(1, 2)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
@@ -427,8 +427,8 @@ class Attn(nn.Module):
 
     def forward(self, enc_inputs, dec_inputs):
 
-        enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
-        dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)
+        '''enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
+        dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)'''
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs)

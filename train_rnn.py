@@ -186,8 +186,8 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         test_loss += loss.item()
         mae_loss += mae(y_true, output).item()
 
-    test_loss = test_loss / test_x.shape[1]
-    mae_loss = mae_loss / test_x.shape[1]
+    '''test_loss = test_loss / test_x.shape[1]
+    mae_loss = mae_loss / test_x.shape[1]'''
     return test_loss, mae_loss
 
 
@@ -195,7 +195,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=72)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--hidden_size", type=int, default=[32])
+    parser.add_argument("--hidden_size", type=int, default=[64])
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
