@@ -190,7 +190,7 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
         self.dropout = nn.Dropout(dr)
         self.residual = residual
-        self.gelu = nn.GELU()
+        self.gelu = GELU()
         self.layer_norm = nn.LayerNorm(d_model)
         self.device = device
 
