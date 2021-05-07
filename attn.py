@@ -49,11 +49,11 @@ def get_con_mask(seq_q, seq_k, padding):
 def get_con_vecs(seq, cutoff):
 
     batch_size, n_h, seq_len, d_k = seq.shape
-    seq_pad = F.pad(seq, pad=(0, 0, cutoff - 1, 0))
+    seq = seq.reshape(batch_size, seq_len, n_h*d_k)
+    seq_pad = F.pad(seq, pad=(cutoff, cutoff, cutoff, cutoff))
 
-    seq_out = seq_pad.unfold(2, cutoff, 1).\
-        reshape(batch_size, n_h, seq_len, cutoff, d_k)
-
+    seq_out = seq_pad.unfold(0, cutoff, 1)
+    seq_out = seq_out[:, :seq_len, :, :, :].reshape(batch_size, n_h, seq_len, cutoff, d_k)
     return seq_out
 
 
