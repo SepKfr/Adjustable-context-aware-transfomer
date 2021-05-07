@@ -154,7 +154,6 @@ class MLP(nn.Module):
         self.l2 = nn.Linear(seq_len_pred, seq_len_pred)
         self.seq_len_pred = seq_len_pred
         self.dropout = nn.Dropout(dr)
-        self.proj_out = nn.Linear(hidden_size, output_size)
 
         self.layer_norm = nn.LayerNorm(output_size)
         self.n_layers = n_layers
@@ -172,8 +171,7 @@ class MLP(nn.Module):
 
         output = self.l2(nn.Linear(inputs.size(1), self.seq_len_pred).
                          to(self.device)(output.permute(0, 2, 1)))
-
-        return self.layer_norm(output)
+        return self.layer_norm(output.permute(0, 2, 1))
 
 
 class CNN(nn.Module):
