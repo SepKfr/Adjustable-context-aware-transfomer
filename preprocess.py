@@ -47,9 +47,9 @@ class Data:
         self.valid_ln = self.get_length(self.valid_ts)
         self.test_ln = self.get_length(self.test_ts)
 
-        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf)
+        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf+n_features)
         self.train_y = torch.zeros(self.train_ln, self.out_seq_len, 1)
-        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf)
+        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf+n_features)
         self.valid_y = torch.zeros(self.valid_ln, self.out_seq_len, 1)
         '''self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
         self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)'''
@@ -64,11 +64,11 @@ class Data:
 
             self.train_x, self.train_y = \
                 self.create_raster(df_site[:self.train_ts], self.train_ln, self.train_x,
-                                   self.train_y, scaler_per_site, 'train')
+                                   self.train_y)
 
             self.valid_x, self.valid_y = \
                 self.create_raster(df_site[self.train_ts:self.train_ts+self.valid_ts], self.valid_ln,
-                                   self.valid_x, self.valid_y, scaler_per_site, 'valid')
+                                   self.valid_x, self.valid_y)
 
         self.train_x = self.train_x[-params.max_train_len:, :, :]
         self.train_y = self.train_y[-params.max_train_len:, :, :]
@@ -90,7 +90,7 @@ class Data:
         ln = len - (self.in_seq_len + self.out_seq_len)
         return ln
 
-    def create_raster(self, data, ln, inputs, outputs, scaler, set_dat):
+    def create_raster(self, data, ln, inputs, outputs):
 
         length = int(self.nf / (self.n_moving_average + self.n_wavelets))
         f_ind = 0
@@ -106,7 +106,7 @@ class Data:
             scaler.add_scaler(f, set_dat, stScaler)'''
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
-            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets] = in_data
+            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets+1] = in_data
             f_ind = f_ind + self.n_moving_average
             if f == 1:
                 outputs[:, :, 0] = out_data
@@ -145,18 +145,20 @@ class Data:
 
     def get_window_data(self, data, ln, ts):
 
-        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets))
+        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets+1))
         data_3d_in = torch.zeros((ln, self.in_seq_len,
-                                  self.n_moving_average+self.n_wavelets))
+                                  self.n_moving_average+self.n_wavelets+1))
         data_out = torch.zeros((ln, self.out_seq_len))
+
+        data_2d_in[:, 0] = data
 
         for i, mv in enumerate(self.moving_averages):
 
-            data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
+            data_2d_in[:, i+1] = self.moving_average(mv, data, ts).squeeze(1)
             #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         if self.n_wavelets > 0:
-            data_2d_in[:, self.n_moving_average:self.n_moving_average+self.n_wavelets] = \
+            data_2d_in[:, self.n_moving_average+1:self.n_moving_average+self.n_wavelets+1] = \
                 self.create_wavelet(data)
 
         j = 0
