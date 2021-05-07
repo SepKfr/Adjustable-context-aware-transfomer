@@ -76,6 +76,7 @@ class Data:
         self.val_y = self.valid_y[:params.max_val_len:, :, :]
         self.test_x = self.valid_x[params.max_val_len:2*params.max_train_len, :, :]
         self.test_y = self.valid_y[params.max_val_len:2*params.max_train_len, :, :]
+        print(self.train_x.shape)
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -292,7 +293,7 @@ def main():
     parser.add_argument("--max_length", type=int, default=3000)
     parser.add_argument("--max_train_len", type=int, default=320)
     parser.add_argument("--max_val_len", type=int, default=40)
-    parser.add_argument("--add_wave", type=str, default=False)
+    parser.add_argument("--add_wave", type=str, default="True")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
