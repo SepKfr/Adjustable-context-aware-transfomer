@@ -181,11 +181,11 @@ class PoswiseFeedForwardNet(nn.Module):
 
     def __init__(self, d_model, d_ff, dr, device, residual=True):
         super(PoswiseFeedForwardNet, self).__init__()
-        self.l1 = nn.Conv1d(d_model, d_ff, kernel_size=1)
-        self.l2 = nn.Conv1d(d_ff, d_model, kernel_size=1)
+        self.l1 = nn.Linear(d_model, d_ff)
+        self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
         self.residual = residual
-        self.gelu = GELU()
+        self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(d_model)
         self.device = device
 
@@ -194,9 +194,9 @@ class PoswiseFeedForwardNet(nn.Module):
             residual = inputs
         else:
             residual = torch.zeros(inputs.shape).to(self.device)
-        output = self.l1(inputs.transpose(1, 2))
-        output = self.gelu(output)
-        output = self.l2(output).transpose(1, 2)
+        output = self.l1(inputs)
+        output = self.relu(output)
+        output = self.l2(output)
         output = self.dropout(output)
         return self.layer_norm(output + residual)
 
@@ -269,7 +269,7 @@ class Encoder(nn.Module):
 
         else:
             enc_outputs = self.src_emb(enc_input)
-            #enc_outputs = self.src_emb_2(enc_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+            enc_outputs = self.src_emb_2(enc_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         enc_outputs = self.pos_emb(enc_outputs)
 
@@ -355,7 +355,7 @@ class Decoder(nn.Module):
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
-            #dec_outputs = self.tgt_emb_2(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
+            dec_outputs = self.tgt_emb_2(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         dec_outputs = self.pos_emb(dec_outputs)
 
