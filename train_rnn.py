@@ -364,7 +364,7 @@ def main():
 
     print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
-    config_path = "configd_{}_{}.json".format(args.site, args.seq_len_pred)
+    config_path = "config_{}_{}.json".format(args.site, args.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
