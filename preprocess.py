@@ -27,10 +27,14 @@ class Data:
         self.scalers = list()
         self.sites_data = site_data
         self.ts = params.max_length
+        self.add_wave = True if params.add_wave == "True" else False
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
-        self.n_wavelets = 4
+        if self.add_wave:
+            self.n_wavelets = 4
+        else:
+            self.n_wavelets = 0
         self.nf = n_features * (self.n_moving_average + self.n_wavelets)
         self.in_seq_len = params.in_seq_len
         self.out_seq_len = params.out_seq_len
@@ -150,8 +154,9 @@ class Data:
             data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
             #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
-        data_2d_in[:, self.n_moving_average:self.n_moving_average+self.n_wavelets] = \
-            self.create_wavelet(data)
+        if self.n_wavelets > 0:
+            data_2d_in[:, self.n_moving_average:self.n_moving_average+self.n_wavelets] = \
+                self.create_wavelet(data)
 
         j = 0
         for i in range(0, self.ts):
@@ -287,6 +292,7 @@ def main():
     parser.add_argument("--max_length", type=int, default=3000)
     parser.add_argument("--max_train_len", type=int, default=320)
     parser.add_argument("--max_val_len", type=int, default=40)
+    parser.add_argument("--add_wave", type=str, default=False)
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 

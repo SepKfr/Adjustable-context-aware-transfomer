@@ -400,7 +400,7 @@ class Attn(nn.Module):
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, cutoff, kernel, dr):
+                 seq_len, seq_len_pred, cutoff, kernel, add_var_se, dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -421,11 +421,13 @@ class Attn(nn.Module):
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
         self.var_selection = VariableSelection(seq_len, d_model, device, dr)
+        self.add_var_se = True if add_var_se == "True" else False
 
     def forward(self, enc_inputs, dec_inputs):
 
-        enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
-        dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)
+        if self.add_var_se:
+            enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
+            dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs)
