@@ -51,13 +51,9 @@ def get_con_vecs(seq, cutoff):
     batch_size, n_h, seq_len, d_k = seq.shape
     seq_pad = F.pad(seq, pad=(0, 0, cutoff - 1, 0))
 
-    seq_un = seq_pad.unfold(2, cutoff, 1).\
+    seq_out = seq_pad.unfold(2, cutoff, 1).\
         reshape(batch_size, n_h, seq_len, cutoff, d_k)
-    seq_re = torch.flip(seq_pad, dims=[2])
-    seq_un_re = seq_re.unfold(2, cutoff, 1).\
-        reshape(batch_size, n_h, seq_len, cutoff, d_k)
-    seq_un_re = torch.flip(seq_un_re, dims=[2])
-    seq_out = torch.cat((seq_un, seq_un_re), dim=3)
+
     return seq_out
 
 
