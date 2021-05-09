@@ -76,7 +76,6 @@ class Data:
         self.val_y = self.valid_y[:params.max_val_len:, :, :]
         self.test_x = self.valid_x[params.max_val_len:2*params.max_train_len, :, :]
         self.test_y = self.valid_y[params.max_val_len:2*params.max_train_len, :, :]
-        print(self.train_x.shape)
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
