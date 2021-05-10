@@ -293,7 +293,7 @@ def main():
     parser.add_argument("--max_length", type=int, default=3000)
     parser.add_argument("--max_train_len", type=int, default=320)
     parser.add_argument("--max_val_len", type=int, default=40)
-    parser.add_argument("--add_wave", type=str, default="True")
+    parser.add_argument("--add_wave", type=str, default="False")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
