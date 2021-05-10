@@ -31,11 +31,7 @@ class Data:
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
-        if self.add_wave:
-            self.n_wavelets = 4
-        else:
-            self.n_wavelets = 0
-        self.nf = n_features * (self.n_moving_average + self.n_wavelets)
+        self.nf = n_features * (self.n_moving_average)
         self.in_seq_len = params.in_seq_len
         self.out_seq_len = params.out_seq_len
 
@@ -91,7 +87,7 @@ class Data:
 
     def create_raster(self, data, ln, inputs, outputs):
 
-        length = int(self.nf / (self.n_moving_average + self.n_wavelets))
+        length = int(self.nf / self.n_moving_average)
         f_ind = 0
         ts = len(data)
 
@@ -105,7 +101,7 @@ class Data:
             scaler.add_scaler(f, set_dat, stScaler)'''
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
-            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets] = in_data
+            inputs[:, :, f_ind:f_ind+self.n_moving_average] = in_data
             f_ind = f_ind + self.n_moving_average
             if f == 1:
                 outputs[:, :, 0] = out_data
@@ -144,17 +140,14 @@ class Data:
 
     def get_window_data(self, data, ln, ts):
 
-        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets))
+        data_2d_in = torch.zeros((ts, self.n_moving_average))
         data_3d_in = torch.zeros((ln, self.in_seq_len,
-                                  self.n_moving_average+self.n_wavelets))
+                                  self.n_moving_average))
         data_out = torch.zeros((ln, self.out_seq_len))
 
         for i, mv in enumerate(self.moving_averages):
 
             data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
-            #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
-
-        data_2d_in[:, self.n_moving_average:] = self.create_wavelet(data)
 
         j = 0
         for i in range(0, self.ts):
