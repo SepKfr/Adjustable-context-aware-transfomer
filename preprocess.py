@@ -31,8 +31,9 @@ class Data:
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
+        self.wavelets = ['db1', 'db2', 'db3']
         if self.add_wave:
-            self.n_wavelets = 1
+            self.n_wavelets = 3
         else:
             self.n_wavelets = 0
         self.nf = n_features * (self.n_moving_average + self.n_wavelets)
@@ -136,9 +137,9 @@ class Data:
                     data_dv[i, 0] = data[i+k] - data[i-k]
         return data_dv
 
-    def create_wavelet(self, data):
+    def create_wavelet(self, data, type):
 
-        coeff = pywt.wavedec(data.detach().numpy(), 'db2')
+        coeff = pywt.wavedec(data.detach().numpy(), type)
         arr, slices = pywt.coeffs_to_array(coeff)
         return torch.FloatTensor(arr[:data.shape[0]])
 
@@ -157,7 +158,8 @@ class Data:
             #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         if self.n_wavelets > 0:
-            data_2d_in[:, self.n_moving_average:] = self.create_wavelet(data).unsqueeze(-1)
+            for i, type in enumerate(self.wavelets):
+                data_2d_in[:, self.n_moving_average+i:] = self.create_wavelet(data, type).unsqueeze(-1)
 
         j = 0
         for i in range(0, self.ts):
