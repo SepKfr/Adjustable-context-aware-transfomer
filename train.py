@@ -207,7 +207,7 @@ def main():
         args.cutoff = [1]
     if args.attn_type != "attn_conv":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, args.n_heads, args.d_model, args.cutoff, args.kernel])
+    hyper_param = list([args.n_layers, args.n_heads, [args.d_model], args.cutoff, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:

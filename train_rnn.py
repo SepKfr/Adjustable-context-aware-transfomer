@@ -237,11 +237,11 @@ def main():
     hyper_param = list()
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        hyper_param = list([args.n_layers, args.hidden_size, args.kernel])
+        hyper_param = list([args.n_layers, [args.hidden_size], args.kernel])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        hyper_param = list([args.n_layers, args.hidden_size])
+        hyper_param = list([args.n_layers, [args.hidden_size]])
     elif args.deep_type == "lstnet":
-        hyper_param = list([args.hidden_size, args.hidden_size,
+        hyper_param = list([[args.hidden_size], [args.hidden_size],
                             args.kernel])
 
     configs = create_config(hyper_param)
