@@ -7,9 +7,9 @@ from sklearn.preprocessing import StandardScaler
 import argparse
 import pywt
 import random
-random.seed(0)
-torch.manual_seed(0)
-np.random.seed(0)
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 
 class Scaler:

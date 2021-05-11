@@ -14,9 +14,9 @@ import numpy as np
 import numpy as np
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
 from utils import inverse_transform
-random.seed(0)
-torch.manual_seed(0)
-np.random.seed(0)
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 
 
@@ -114,7 +114,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
     model = None
 
     if args.deep_type == "rnconv":
-        n_layers, hidden_size, kernel = config
+        n_layers, hidden_size, kernel, dr, lr = config
         model = RNConv(
                         input_size=test_x.shape[3],
                         output_size=test_y.shape[3],
@@ -125,7 +125,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                         seq_len=test_x.shape[2],
                         seq_pred_len=args.seq_len_pred,
                         device=device,
-                        d_r=args.dr)
+                        d_r=dr)
         model = model.to(device)
     elif args.deep_type == "rnn":
 
@@ -156,14 +156,14 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         model = model.to(device)
 
     elif args.deep_type == "mlp":
-        n_layers, hidden_size = config
+        n_layers, hidden_size, dr, lr = config
         model = MLP(n_layers=n_layers,
                     hidden_size=hidden_size,
                     input_size=test_x.shape[3],
                     output_size=test_y.shape[3],
                     seq_len_pred=args.seq_len_pred,
                     device=device,
-                    dr=args.dr)
+                    dr=dr)
         model = model.to(device)
 
     mae = nn.L1Loss()
@@ -237,7 +237,7 @@ def main():
     hyper_param = list()
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.kernel])
+        hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.kernel])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
         hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.lr])
     elif args.deep_type == "lstnet":
@@ -262,7 +262,7 @@ def main():
         model = None
 
         if args.deep_type == "rnconv":
-            n_layers, hidden_size, kernel = conf
+            n_layers, hidden_size, kernel, dr, lr = conf
             model = RNConv(
                         input_size=train_x.shape[3],
                         output_size=train_y.shape[3],
@@ -302,7 +302,7 @@ def main():
             model = model.to(device)
 
         elif args.deep_type == "mlp":
-            n_layers, hidden_size = conf
+            n_layers, hidden_size, dr, lr = conf
             model = MLP(n_layers=n_layers,
                         hidden_size=hidden_size,
                         input_size=test_x.shape[3],
@@ -342,7 +342,7 @@ def main():
         print("test error {:.3f}".format(test_loss))
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        n_layers, hidden_size, kernel = best_config
+        n_layers, hidden_size, kernel, dr, lr = best_config
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
         n_layers, hidden_size, dr, lr = best_config
     else:

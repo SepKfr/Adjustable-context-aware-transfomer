@@ -3,9 +3,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import random
-random.seed(0)
-torch.manual_seed(0)
-np.random.seed(0)
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 
 class Lstnet(nn.Module):
@@ -166,6 +166,7 @@ class MLP(nn.Module):
             output = nn.ReLU()(output)
             output = self.conv2(output).transpose(1, 2)
             output = self.dropout(output)
+            inputs = output
         output = output + residual
 
         output = self.l2(nn.Linear(inputs.size(1), self.seq_len_pred).

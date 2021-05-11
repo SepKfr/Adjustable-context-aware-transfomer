@@ -13,9 +13,9 @@ import sys
 import random
 from preprocess import Scaler
 from utils import inverse_transform
-random.seed(0)
-torch.manual_seed(0)
-np.random.seed(0)
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 
 def batching(batch_size, x_en, x_de, y_t):
