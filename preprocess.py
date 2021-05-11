@@ -32,7 +32,7 @@ class Data:
         self.moving_averages = [4, 8, 16, 32]
         self.n_moving_average = len(self.moving_averages)
         if self.add_wave:
-            self.n_wavelets = 4
+            self.n_wavelets = 1
         else:
             self.n_wavelets = 0
         self.nf = n_features * (self.n_moving_average + self.n_wavelets)
@@ -140,7 +140,7 @@ class Data:
         data = data.reshape(-1, 1)
         coeff = pywt.wavedec2(data.detach().numpy(), 'db2')
         arr, slices = pywt.coeffs_to_array(coeff)
-        return torch.FloatTensor(arr[:data.shape[0],:])
+        return torch.FloatTensor(arr[:data.shape[0],0])
 
     def get_window_data(self, data, ln, ts):
 
