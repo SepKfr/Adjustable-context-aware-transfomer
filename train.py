@@ -109,7 +109,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
-    n_layers, n_heads, d_model, lr, cutoff, kernel= config
+    n_layers, n_heads, d_model, lr, dr, cutoff, kernel= config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
@@ -126,7 +126,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                  cutoff=cutoff, kernel=kernel,add_var_se=args.add_var_se,
-                 dr=args.dr).to(device)
+                 dr=dr).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -163,10 +163,10 @@ def main():
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--kernel_best", type=int)
-    parser.add_argument("--dr", type=list, default=0.2)
+    parser.add_argument("--dr", type=list, default=[0.1, 0.3, 0.5])
     parser.add_argument("--dr_best", type=float)
-    parser.add_argument("--lr", type=list, default=[0.0001, 0.001])
-    parser.add_argument("--n_epochs", type=int, default=10)
+    parser.add_argument("--lr", type=list, default=[0.001])
+    parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='con')
@@ -207,7 +207,8 @@ def main():
         args.cutoff = [1]
     if args.attn_type != "attn_conv":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, args.n_heads, [args.d_model], args.lr, args.cutoff, args.kernel])
+    hyper_param = list([args.n_layers, args.n_heads,
+                        [args.d_model], args.lr, args.dr, args.cutoff, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:
@@ -224,7 +225,7 @@ def main():
         for i, conf in enumerate(configs, config_num):
             print('config: {}'.format(conf))
 
-            n_layers, n_heads, d_model, lr, cutoff, kernel = conf
+            n_layers, n_heads, d_model, lr, dr, cutoff, kernel = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
@@ -236,7 +237,7 @@ def main():
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                          cutoff=cutoff, kernel=kernel, add_var_se=args.add_var_se,
-                         dr=args.dr).to(device)
+                         dr=dr).to(device)
 
             optimizer = Adam(model.parameters(), lr=lr)
             epoch_start = 0
@@ -273,8 +274,9 @@ def main():
 
     else:
 
-        layers, heads, d_model, lr, cutoff, kernel, local = args.n_layers_best, args.n_heads_best, \
-                                     args.d_model_best, args.lr_best, args.cutoff_best, args.kernel_best, args.local_best
+        layers, heads, d_model, lr, dr, cutoff, kernel, local = \
+            args.n_layers_best, args.n_heads_best, args.d_model_best, \
+            args.lr_best, args.dr_best, args.cutoff_best, args.kernel_best, args.local_best
         best_config = layers, heads, d_model, lr, cutoff, kernel, local
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
@@ -287,6 +289,7 @@ def main():
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
     config_file[args.name].append(lr)
+    config_file[args.name].append(dr)
     config_file[args.name].append(cutoff)
 
     print("test error for best config {:.3f}".format(test_loss))
@@ -316,6 +319,7 @@ def main():
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
             json_dat[args.name].append(lr)
+            json_dat[args.name].append(dr)
             json_dat[args.name].append(cutoff)
             json_dat[args.name].append(kernel)
 

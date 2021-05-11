@@ -129,7 +129,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         model = model.to(device)
     elif args.deep_type == "rnn":
 
-        n_layers, hidden_size, lr = config
+        n_layers, hidden_size, dr, lr = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     input_size=test_x.shape[3],
@@ -138,7 +138,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                     seq_len=test_x.shape[2],
                     seq_pred_len=args.seq_len_pred,
                     device=device,
-                    d_r=args.dr)
+                    d_r=dr)
         model = model.to(device)
 
     elif args.deep_type == "lstnet":
@@ -199,8 +199,8 @@ def main():
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
-    parser.add_argument("--dr", type=float, default=0.2)
-    parser.add_argument("--lr", type=float, default=[0.0001, 0.001])
+    parser.add_argument("--dr", type=float, default=[0.1, 0.3, 0.5])
+    parser.add_argument("--lr", type=float, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
@@ -239,7 +239,7 @@ def main():
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         hyper_param = list([args.n_layers, [args.hidden_size], args.kernel])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.lr])
+        hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.lr])
     elif args.deep_type == "lstnet":
         hyper_param = list([[args.hidden_size], [args.hidden_size],
                             args.kernel])
@@ -276,7 +276,7 @@ def main():
                         d_r=args.dr)
             model = model.to(device)
         elif args.deep_type == "rnn":
-            n_layers, hidden_size, lr = conf
+            n_layers, hidden_size, dr, lr = conf
             model = RNN(n_layers=n_layers,
                         hidden_size=hidden_size,
                         input_size=train_x.shape[3],
@@ -285,7 +285,7 @@ def main():
                         seq_len=train_x.shape[2],
                         seq_pred_len=args.seq_len_pred,
                         device=device,
-                        d_r=args.dr)
+                        d_r=dr)
             model = model.to(device)
         elif args.deep_type == "lstnet":
             hidden_size, hidden_size,  kernel = conf
@@ -344,7 +344,7 @@ def main():
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         n_layers, hidden_size, kernel = best_config
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        n_layers, hidden_size, lr = best_config
+        n_layers, hidden_size, dr, lr = best_config
     else:
         n_layers = 1
         hidden_size, hidden_size, kernel = best_config
@@ -359,6 +359,7 @@ def main():
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
     config_file[args.name].append(n_layers)
     config_file[args.name].append(hidden_size)
+    config_file[args.name].append(dr)
     config_file[args.name].append(lr)
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         config_file[args.name].append(kernel)
@@ -388,6 +389,7 @@ def main():
                  json_dat[args.name] = list()
             json_dat[args.name].append(n_layers)
             json_dat[args.name].append(hidden_size)
+            json_dat[args.name].append(dr)
             json_dat[args.name].append(lr)
             if args.deep_type == "rnconv":
                 json_dat[args.name].append(kernel)
