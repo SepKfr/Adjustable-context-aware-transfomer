@@ -129,7 +129,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         model = model.to(device)
     elif args.deep_type == "rnn":
 
-        n_layers, hidden_size = config
+        n_layers, hidden_size, lr = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     input_size=test_x.shape[3],
