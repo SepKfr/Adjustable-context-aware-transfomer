@@ -200,12 +200,12 @@ def main():
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
     parser.add_argument("--dr", type=float, default=0.2)
-    parser.add_argument("--lr", type=float, default=0.0001)
+    parser.add_argument("--lr", type=float, default=[0.0001, 0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--site", type=str)
-    parser.add_argument("--deep_type", type=str, default="mlp")
+    parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
@@ -239,7 +239,7 @@ def main():
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         hyper_param = list([args.n_layers, [args.hidden_size], args.kernel])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        hyper_param = list([args.n_layers, [args.hidden_size]])
+        hyper_param = list([args.n_layers, [args.hidden_size], args.lr])
     elif args.deep_type == "lstnet":
         hyper_param = list([[args.hidden_size], [args.hidden_size],
                             args.kernel])
@@ -276,7 +276,7 @@ def main():
                         d_r=args.dr)
             model = model.to(device)
         elif args.deep_type == "rnn":
-            n_layers, hidden_size = conf
+            n_layers, hidden_size, lr = conf
             model = RNN(n_layers=n_layers,
                         hidden_size=hidden_size,
                         input_size=train_x.shape[3],
@@ -312,7 +312,7 @@ def main():
                         dr=args.dr)
             model = model.to(device)
 
-        optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=0.001)
+        optimizer = Adam(model.parameters(), lr=lr)
         epoch_start = 0
         if continue_train:
             model.load_state_dict(checkpoint["model_state_dict"])
@@ -344,7 +344,7 @@ def main():
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         n_layers, hidden_size, kernel = best_config
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        n_layers, hidden_size = best_config
+        n_layers, hidden_size, lr = best_config
     else:
         n_layers = 1
         hidden_size, hidden_size, kernel = best_config
@@ -359,6 +359,7 @@ def main():
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
     config_file[args.name].append(n_layers)
     config_file[args.name].append(hidden_size)
+    config_file[args.name].append(lr)
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         config_file[args.name].append(kernel)
 
@@ -387,6 +388,7 @@ def main():
                  json_dat[args.name] = list()
             json_dat[args.name].append(n_layers)
             json_dat[args.name].append(hidden_size)
+            json_dat[args.name].append(lr)
             if args.deep_type == "rnconv":
                 json_dat[args.name].append(kernel)
 
