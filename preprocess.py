@@ -140,7 +140,7 @@ class Data:
 
         coeff = pywt.wavedec(data.detach().numpy(), 'db2')
         arr, slices = pywt.coeffs_to_array(coeff)
-        return torch.FloatTensor(arr[:data.shape[0],0])
+        return torch.FloatTensor(arr[:data.shape[0]])
 
     def get_window_data(self, data, ln, ts):
 
@@ -157,7 +157,7 @@ class Data:
             #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         if self.n_wavelets > 0:
-            data_2d_in[:, self.n_moving_average:] = self.create_wavelet(data)
+            data_2d_in[:, self.n_moving_average:] = self.create_wavelet(data).unsqueeze(-1)
 
         j = 0
         for i in range(0, self.ts):
@@ -293,7 +293,7 @@ def main():
     parser.add_argument("--max_length", type=int, default=3000)
     parser.add_argument("--max_train_len", type=int, default=320)
     parser.add_argument("--max_val_len", type=int, default=40)
-    parser.add_argument("--add_wave", type=str, default="False")
+    parser.add_argument("--add_wave", type=str, default="True")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params)
 
