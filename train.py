@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--kernel_best", type=int)
-    parser.add_argument("--dr", type=list, default=[0.1, 0.3, 0.5])
+    parser.add_argument("--dr", type=list, default=[0.3])
     parser.add_argument("--dr_best", type=float)
     parser.add_argument("--lr", type=list, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
