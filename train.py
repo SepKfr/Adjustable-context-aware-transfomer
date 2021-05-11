@@ -269,7 +269,7 @@ def main():
                                  criterion, seq_len, path)
             print("test error {:.3f}".format(test_loss))
 
-        layers, heads, d_model, lr, cutoff, kernel = best_config
+        layers, heads, d_model, lr, dr, cutoff, kernel = best_config
         print("best_config: {}".format(best_config))
 
     else:
