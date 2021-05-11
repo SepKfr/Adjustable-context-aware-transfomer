@@ -141,20 +141,6 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
                     d_r=dr)
         model = model.to(device)
 
-    elif args.deep_type == "lstnet":
-        hidden_size, hidden_size,  kernel = config
-        model = Lstnet(hidRNN=hidden_size,
-                       hidCNN=hidden_size,
-                       hidSkip=args.hid_skip,
-                       CNN_kernel=kernel,
-                       skip=args.skip,
-                       seq_len=test_x.shape[2],
-                       seq_len_pred=args.seq_len_pred,
-                       input_size=test_x.shape[3],
-                       dr=args.dr,
-                       device=device)
-        model = model.to(device)
-
     elif args.deep_type == "mlp":
         n_layers, hidden_size, dr, lr = config
         model = MLP(n_layers=n_layers,
@@ -199,13 +185,13 @@ def main():
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
-    parser.add_argument("--dr", type=float, default=[0.3])
+    parser.add_argument("--dr", type=float, default=[0.2])
     parser.add_argument("--lr", type=float, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--site", type=str)
-    parser.add_argument("--deep_type", type=str, default="rnn")
+    parser.add_argument("--deep_type", type=str, default="mlp")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
@@ -237,12 +223,9 @@ def main():
     hyper_param = list()
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.kernel])
+        hyper_param = list([args.n_layers, [args.hidden_size], args.kernel, args.dr, args.lr])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
         hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.lr])
-    elif args.deep_type == "lstnet":
-        hyper_param = list([[args.hidden_size], [args.hidden_size],
-                            args.kernel])
 
     configs = create_config(hyper_param)
 
@@ -273,7 +256,7 @@ def main():
                         seq_len=train_x.shape[2],
                         seq_pred_len=args.seq_len_pred,
                         device=device,
-                        d_r=args.dr)
+                        d_r=dr)
             model = model.to(device)
         elif args.deep_type == "rnn":
             n_layers, hidden_size, dr, lr = conf
@@ -287,21 +270,8 @@ def main():
                         device=device,
                         d_r=dr)
             model = model.to(device)
-        elif args.deep_type == "lstnet":
-            hidden_size, hidden_size,  kernel = conf
-            model = Lstnet(hidRNN=hidden_size,
-                           hidCNN=hidden_size,
-                           hidSkip=args.hid_skip,
-                           CNN_kernel=kernel,
-                           skip=args.skip,
-                           seq_len=train_x.shape[2],
-                           seq_len_pred=args.seq_len_pred,
-                           input_size=train_x.shape[3],
-                           dr=args.dr,
-                           device=device)
-            model = model.to(device)
 
-        elif args.deep_type == "mlp":
+        else:
             n_layers, hidden_size, dr, lr = conf
             model = MLP(n_layers=n_layers,
                         hidden_size=hidden_size,
@@ -309,7 +279,7 @@ def main():
                         output_size=test_y.shape[3],
                         seq_len_pred=args.seq_len_pred,
                         device=device,
-                        dr=args.dr)
+                        dr=dr)
             model = model.to(device)
 
         optimizer = Adam(model.parameters(), lr=lr)

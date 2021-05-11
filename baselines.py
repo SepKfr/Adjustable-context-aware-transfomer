@@ -162,12 +162,11 @@ class MLP(nn.Module):
 
         for _ in range(self.n_layers):
             residual = self.l1(inputs)
-            output = self.conv1(inputs.transpose(1, 2))
-            output = nn.ReLU()(output)
-            output = self.conv2(output).transpose(1, 2)
-            output = self.dropout(output)
-            inputs = output
-        output = output + residual
+            output_1 = self.conv1(inputs.transpose(1, 2))
+            output_1 = nn.ReLU()(output_1)
+            output_1 = self.conv2(output_1).transpose(1, 2)
+            output_1 = self.dropout(output_1)
+        output = output_1 + residual
 
         output = self.l2(nn.Linear(inputs.size(1), self.seq_len_pred).
                          to(self.device)(output.permute(0, 2, 1)))
