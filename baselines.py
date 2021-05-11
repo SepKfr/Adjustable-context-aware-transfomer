@@ -74,8 +74,8 @@ class RNConv(nn.Module):
         super(RNConv, self).__init__()
         self.n_layers = n_layers
         self.hidden_size = hidden_size
-        self.conv = nn.Conv1d(input_size, out_channel, kernel)
-        self.lstm = nn.LSTM(out_channel, hidden_size, n_layers, dropout=d_r)
+        self.conv = nn.Conv1d(input_size, hidden_size, kernel)
+        self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
         self.dropout1 = nn.Dropout(d_r)
         self.linear2 = nn.Linear(out_channel, output_size)
         self.proj_out = nn.Linear(seq_len, seq_pred_len, bias=False)
@@ -93,9 +93,8 @@ class RNConv(nn.Module):
         padding = (self.kernel_size - 1) * self.dilation
         x = F.pad(x, (padding, 0))
 
-        for i in range(self.n_layers):
-            x_out = self.conv(x)
-            x_out = self.dropout1(x_out)
+        x_out = self.conv(x)
+        x_out = self.dropout1(x_out)
 
         x_en_out = x_out.view(seq_len, b, -1)
 
