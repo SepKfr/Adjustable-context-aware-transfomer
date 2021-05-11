@@ -137,8 +137,8 @@ class Data:
         return data_dv
 
     def create_wavelet(self, data):
-        data = data.reshape(-1, 1)
-        coeff = pywt.wavedec2(data.detach().numpy(), 'db2')
+
+        coeff = pywt.wavedec(data.detach().numpy(), 'db2')
         arr, slices = pywt.coeffs_to_array(coeff)
         return torch.FloatTensor(arr[:data.shape[0],0])
 
