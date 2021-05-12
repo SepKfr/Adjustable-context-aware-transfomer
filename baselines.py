@@ -74,7 +74,8 @@ class RNConv(nn.Module):
         super(RNConv, self).__init__()
         self.n_layers = n_layers
         self.hidden_size = hidden_size
-        self.conv = nn.Conv1d(input_size, hidden_size, kernel)
+        self.emd = nn.Linear(input_size, hidden_size)
+        self.conv = nn.Conv1d(hidden_size, hidden_size, kernel)
         self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
         self.dropout1 = nn.Dropout(d_r)
         self.linear2 = nn.Linear(out_channel, output_size)
@@ -86,9 +87,9 @@ class RNConv(nn.Module):
     def forward(self, x, hidden=None):
 
         seq_len, b, f = x.shape
-        x = x.view(b, f, seq_len)
+        x = self.emd(x)
 
-        x = x.contiguous().view(b, f, seq_len)
+        x = x.transpose(1, 2)
         padding = (self.kernel_size - 1) * self.dilation
         x = F.pad(x, (padding, 0))
 

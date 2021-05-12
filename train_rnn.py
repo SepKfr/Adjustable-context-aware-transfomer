@@ -19,7 +19,6 @@ torch.manual_seed(21)
 np.random.seed(21)
 
 
-
 def batching(batch_size, x, y_t):
 
     batch_n = int(x.shape[0] / batch_size)
@@ -191,7 +190,7 @@ def main():
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--site", type=str)
-    parser.add_argument("--deep_type", type=str, default="rnn")
+    parser.add_argument("--deep_type", type=str, default="rnconv")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
 
