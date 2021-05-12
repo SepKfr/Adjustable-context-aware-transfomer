@@ -134,7 +134,7 @@ class RNN(nn.Module):
 
         outputs, _ = self.lstm(x_en, (hidden, hidden))
 
-        outputs = outputs.permute(1, 2, 0)
+        outputs = self.proj_out(outputs.permute(1, 2, 0))
         outputs = self.linear2(outputs.permute(0, 2, 1))
 
         return outputs
