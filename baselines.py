@@ -74,11 +74,11 @@ class RNConv(nn.Module):
         super(RNConv, self).__init__()
         self.n_layers = n_layers
         self.hidden_size = hidden_size
-        self.emd = nn.Linear(input_size, hidden_size)
-        self.conv = nn.Conv1d(hidden_size, hidden_size, kernel)
+        self.emd = nn.Linear(input_size, out_channel)
+        self.conv = nn.Conv1d(out_channel, hidden_size, kernel)
         self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
         self.dropout1 = nn.Dropout(d_r)
-        self.linear2 = nn.Linear(out_channel, output_size)
+        self.linear2 = nn.Linear(hidden_size, output_size)
         self.proj_out = nn.Linear(seq_len, seq_pred_len, bias=False)
         self.kernel_size = kernel
         self.dilation = 1
