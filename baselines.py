@@ -85,7 +85,6 @@ class RNConv(nn.Module):
 
     def forward(self, x, hidden=None):
 
-        x_out = None
         seq_len, b, f = x.shape
         x = x.view(b, f, seq_len)
 
@@ -94,7 +93,6 @@ class RNConv(nn.Module):
         x = F.pad(x, (padding, 0))
 
         x_out = self.conv(x)
-        x_out = self.dropout1(x_out)
 
         x_en_out = x_out.view(seq_len, b, -1)
 
