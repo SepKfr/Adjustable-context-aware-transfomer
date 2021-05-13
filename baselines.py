@@ -86,18 +86,17 @@ class RNConv(nn.Module):
 
     def forward(self, x, hidden=None):
 
-        seq_len, b, f = x.shape
         x = self.emd(x)
 
         x = x.transpose(1, 2)
 
-        x = self.conv(x).transpose(1, 2)
+        x = self.conv(x).permute(2, 0, 1).contiguous()
 
         if hidden is None:
-            hidden = torch.zeros(self.n_layers, b, self.hidden_size).to(self.device)
+            hidden = torch.zeros(self.n_layers, x.shape[1], self.hidden_size).to(self.device)
 
         output, _ = self.lstm(x, (hidden, hidden))
-        output = output.permute(0, 2, 1)
+        output = output.permute(1, 2, 0)
 
         outputs = self.proj_out(output)
         outputs = self.linear2(outputs.permute(0, 2, 1))
