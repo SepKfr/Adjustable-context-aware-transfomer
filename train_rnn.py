@@ -185,7 +185,7 @@ def main():
     parser.add_argument("--kernel", type=int, default=[1])
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
-    parser.add_argument("--dr", type=float, default=[0.1])
+    parser.add_argument("--dr", type=float, default=[0.2])
     parser.add_argument("--lr", type=float, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
