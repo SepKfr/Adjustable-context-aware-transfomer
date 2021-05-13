@@ -163,7 +163,7 @@ def main():
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--kernel_best", type=int)
-    parser.add_argument("--dr", type=list, default=[0.2])
+    parser.add_argument("--dr", type=list, default=[0.1])
     parser.add_argument("--dr_best", type=float)
     parser.add_argument("--lr", type=list, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
@@ -239,7 +239,7 @@ def main():
                          cutoff=cutoff, kernel=kernel, add_var_se=args.add_var_se,
                          dr=dr).to(device)
 
-            optimizer = Adam(model.parameters(), lr=lr)
+            optimizer = Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), weight_decay=-1e9)
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])

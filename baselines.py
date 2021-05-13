@@ -90,17 +90,13 @@ class RNConv(nn.Module):
         x = self.emd(x)
 
         x = x.transpose(1, 2)
-        padding = (self.kernel_size - 1) * self.dilation
-        x = F.pad(x, (padding, 0))
 
-        x_out = self.conv(x)
-
-        x_en_out = x_out.view(seq_len, b, -1)
+        x = self.conv(x).transpose(1, 2)
 
         if hidden is None:
             hidden = torch.zeros(self.n_layers, b, self.hidden_size).to(self.device)
 
-        output, _ = self.lstm(x_en_out, (hidden, hidden))
+        output, _ = self.lstm(x, (hidden, hidden))
         output = output.permute(0, 2, 1)
 
         outputs = self.proj_out(output)

@@ -182,10 +182,10 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--hidden_size", type=int, default=100)
     parser.add_argument("--out_channel", type=int, default=100)
-    parser.add_argument("--kernel", type=int, default=[1, 3, 6, 9])
+    parser.add_argument("--kernel", type=int, default=[1])
     parser.add_argument("--hid_skip", type=int, default=4)
     parser.add_argument("--skip", type=int, default=23)
-    parser.add_argument("--dr", type=float, default=[0.2])
+    parser.add_argument("--dr", type=float, default=[0.1])
     parser.add_argument("--lr", type=float, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
@@ -282,7 +282,7 @@ def main():
                         dr=dr)
             model = model.to(device)
 
-        optimizer = Adam(model.parameters(), lr=lr)
+        optimizer = Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), weight_decay=-1e9)
         epoch_start = 0
         if continue_train:
             model.load_state_dict(checkpoint["model_state_dict"])
