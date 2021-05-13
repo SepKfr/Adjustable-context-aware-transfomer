@@ -11,9 +11,8 @@ import itertools
 import sys
 import random
 import numpy as np
-import numpy as np
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
-from utils import inverse_transform
+
 random.seed(21)
 torch.manual_seed(21)
 np.random.seed(21)
