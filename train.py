@@ -202,7 +202,7 @@ def main():
     criterion = nn.MSELoss()
     training = True if args.training == "True" else False
     continue_train = True if args.continue_train == "True" else False
-    if args.attn_type != "con":
+    if args.attn_type != "con" or args.attn_type != "con_2":
         args.cutoff = [1]
     if args.attn_type != "attn_conv":
         args.kernel = [1]
