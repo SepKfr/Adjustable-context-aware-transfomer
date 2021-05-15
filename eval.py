@@ -62,7 +62,7 @@ def evaluate(site, seq_ln):
     rmses["lstm"] = get_rmse(preds_attn_con, best_ind, criterion)
 
     x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
-    plt.plot(x, rmses[0::9].get("ours").detach().numpy(), 'xb-')
+    plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-')
     plt.savefig('rmses_{}.png'.format(site))
 
 
