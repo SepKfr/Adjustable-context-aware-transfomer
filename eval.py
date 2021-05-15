@@ -6,21 +6,18 @@ import numpy as np
 import argparse
 import torch
 
-train_x = pickle.load(open("train_x.p", "rb"))
-train_y = pickle.load(open("train_y.p", "rb"))
-valid_x = pickle.load(open("valid_x.p", "rb"))
-valid_y = pickle.load(open("valid_y.p", "rb"))
-test_x = pickle.load(open("test_x.p", "rb"))
-test_y = pickle.load(open("test_y.p", "rb"))
-x_true = test_x[:, :, 6]
-y_true = torch.cat((x_true[:, -1].unsqueeze(-1),test_y[:, :, 0]),dim=-1)
-
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
     print("Running on GPU")
 else:
     device = torch.device("cpu")
     print("running on CPU")
+
+
+test_x = pickle.load(open("test_x.p", "rb")).to(device)
+test_y = pickle.load(open("test_y.p", "rb")).to(device)
+x_true = test_x[:, :, 6]
+y_true = torch.cat((x_true[:, -1].unsqueeze(-1),test_y[:, :, 0]),dim=-1)
 
 
 rmses = dict()
