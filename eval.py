@@ -57,9 +57,9 @@ def evaluate(site, seq_ln):
             best_ind = i
 
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
-    rmses["attn"] = get_rmse(preds_attn_con, best_ind, criterion)
-    rmses["attn_conv"] = get_rmse(preds_attn_con, best_ind, criterion)
-    rmses["lstm"] = get_rmse(preds_attn_con, best_ind, criterion)
+    rmses["attn"] = get_rmse(preds_attn, best_ind, criterion)
+    rmses["attn_conv"] = get_rmse(preds_attn_conv, best_ind, criterion)
+    rmses["lstm"] = get_rmse(preds_lstm, best_ind, criterion)
 
     x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
     plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-')
