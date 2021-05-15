@@ -62,14 +62,17 @@ def evaluate(site, seq_ln):
     plt.savefig('rmses_{}.png'.format(site))
     plt.close()
 
-    plt.plot(np.arange(0, 144), x_true[best_ind, :], color='navy')
-    plt.vlines(143, ymin=min(torch.min(x_true[best_ind, :] - 10), torch.min(y_true[best_ind, :] - 10)),
-               ymax=max(torch.max(x_true[best_ind, :]), torch.max(y_true[best_ind, :])), colors='lightblue', ls='--')
-    plt.plot(np.arange(143, 216), y_true[best_ind, :], color='chocolate')
-    plt.plot(np.arange(143, 216), preds_attn_con[best_ind, :, 0], color='deepskyblue')
-    plt.plot(np.arange(143, 216), preds_attn[best_ind, :, 0], color='seagreen')
-    plt.plot(np.arange(143, 216), preds_attn_conv[best_ind, :, 0], color='orange')
-    plt.plot(np.arange(143, 216), preds_lstm[best_ind, :, 0], color='salmon')
+    x_true_c = x_true.cpu()
+    y_true_c = y_true.cpu()
+
+    plt.plot(np.arange(0, 144), x_true_c[best_ind, :], color='navy')
+    plt.vlines(143, ymin=min(torch.min(x_true_c[best_ind, :] - 10), torch.min(y_true_c[best_ind, :] - 10)),
+               ymax=max(torch.max(x_true_c[best_ind, :]), torch.max(y_true_c[best_ind, :])), colors='lightblue', ls='--')
+    plt.plot(np.arange(143, 216), y_true_c[best_ind, :], color='chocolate')
+    plt.plot(np.arange(143, 216), preds_attn_con[best_ind, :, 0].cpu(), color='deepskyblue')
+    plt.plot(np.arange(143, 216), preds_attn[best_ind, :, 0].cpu(), color='seagreen')
+    plt.plot(np.arange(143, 216), preds_attn_conv[best_ind, :, 0].cpu(), color='orange')
+    plt.plot(np.arange(143, 216), preds_lstm[best_ind, :, 0].cpu(), color='salmon')
     plt.savefig('pred_plot_{}.png'.format(site))
     plt.close()
 
