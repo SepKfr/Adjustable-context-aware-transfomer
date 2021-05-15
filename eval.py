@@ -49,12 +49,14 @@ def evaluate(site, seq_ln):
 
     best_rmse = 1e5
     best_ind = 0
-    for i in range(len(test_y)):
+    '''for i in range(len(test_y)):
 
         rmse = torch.sqrt(criterion(preds_attn_con[i, :, :], test_y[i, :, :]))
         if rmse < best_rmse:
             best_rmse = rmse
-            best_ind = i
+            best_ind = i'''
+
+    best_ind = np.random.randint(0, 72)
 
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn"] = get_rmse(preds_attn, best_ind, criterion)
@@ -62,11 +64,11 @@ def evaluate(site, seq_ln):
     rmses["lstm"] = get_rmse(preds_lstm, best_ind, criterion)
 
     x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
-    plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-', color='seagreen')
-    plt.plot(x, rmses.get("attn")[0::9].detach().numpy(), 'xb-', color='deepskyblue')
+    plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-', color='deepskyblue')
+    plt.plot(x, rmses.get("attn")[0::9].detach().numpy(), 'xb-', color='seagreen')
     plt.plot(x, rmses.get("attn_conv")[0::9].detach().numpy(), 'xb-', color='orange')
     plt.plot(x, rmses.get("lstm")[0::9].detach().numpy(), 'xb-', color='salmon')
-    plt.legend(['temp-aware attn', 'attn', 'conv-attn', 'lstm'], loc="lower right")
+    plt.legend(['temp-aware attn', 'attn', 'conv-attn', 'lstm'], loc="upper right")
     plt.savefig('rmses_{}.png'.format(site))
 
 
