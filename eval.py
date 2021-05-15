@@ -34,6 +34,8 @@ def plot_predictions(num):
 def get_rmse(pred, num, criterion):
     rmse = torch.zeros(pred.shape[1])
     for i in range(pred.shape[1]):
+        print(test_y[num, i])
+        print(pred[num, i])
         rmses[i] = torch.sqrt(criterion(test_y[num, i], pred[num, i]))
     return rmse
 
@@ -60,7 +62,6 @@ def evaluate(site, seq_ln):
     rmses["lstm"] = get_rmse(preds_attn_con, best_ind, criterion)
 
     x = np.linspace(0, 8, 72)
-    print(rmses.get("ours"))
     plt.plot(x, rmses.get("ours"), 'xb-')
     plt.savefig('rmses_{}.png'.format(site))
 
