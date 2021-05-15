@@ -23,8 +23,7 @@ else:
 
 def evaluate(site, seq_ln, name):
 
-    preds = torch.load('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, name),
-                       map_location=device)
+    preds = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, name),'rb'))
     print(preds)
 
 
