@@ -32,7 +32,7 @@ def plot_predictions(num):
 
 
 def get_rmse(pred, num, criterion):
-    rmse = torch.zeros(pred.shape(0))
+    rmse = torch.zeros(pred.shape[0])
     for i in range(pred.shape(0)):
         rmses[i] = torch.sqrt(criterion(y_true[num, i], pred[num, i]))
     return rmse
