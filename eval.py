@@ -54,6 +54,7 @@ def evaluate(site, seq_ln):
             best_rmse = rmse
             best_ind = i
 
+    print(preds_attn_con.shape)
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn_conv"] = get_rmse(preds_attn_con, best_ind, criterion)
