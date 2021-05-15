@@ -57,7 +57,7 @@ def evaluate(site, seq_ln):
             best_ind = i
 
     print(best_ind)
-    print(test_y[best_ind, :, :])
+    print(test_y[0, :, :])
 
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn"] = get_rmse(preds_attn_con, best_ind, criterion)
