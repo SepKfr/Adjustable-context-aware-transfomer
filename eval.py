@@ -34,16 +34,15 @@ def plot_predictions(num):
 def get_rmse(pred, num, criterion):
     rmse = torch.zeros(pred.shape[1])
     for i in range(pred.shape[1]):
-        print(test_y[num, i])
-        print(pred[num, i])
-        rmses[i] = torch.sqrt(criterion(test_y[num, i], pred[num, i]))
+        rmse[i] = torch.sqrt(criterion(test_y[num, i], pred[num, i]))
     return rmse
 
 
 def evaluate(site, seq_ln):
 
     criterion = nn.MSELoss()
-    preds_attn_con = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn_con_2'), 'rb'))
+    preds_attn_con = pickle.\
+        load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn_con_2'), 'rb'))
     preds_attn = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn'), 'rb'))
     preds_attn_conv = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn_conv'), 'rb'))
     preds_lstm = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'lstm'), 'rb'))
