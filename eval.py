@@ -67,7 +67,7 @@ def evaluate(site, seq_ln):
 
     plt.plot(np.arange(0, 144), x_true_c[best_ind, :], color='navy')
     plt.vlines(143, ymin=min(torch.min(x_true_c[best_ind, :] - 10), torch.min(y_true_c[best_ind, :] - 10)),
-               ymax=max(torch.max(x_true_c[best_ind, :]), torch.max(y_true_c[best_ind, :])), colors='lightblue', ls='--')
+               ymax=max(torch.max(x_true_c[best_ind, :]), torch.max(y_true_c[best_ind, :])), colors='lightblue', linestyles ="dashed")
     plt.plot(np.arange(143, 216), y_true_c[best_ind, :], color='chocolate')
     plt.plot(np.arange(143, 216), preds_attn_con[best_ind, :, 0].cpu(), color='deepskyblue')
     plt.plot(np.arange(143, 216), preds_attn[best_ind, :, 0].cpu(), color='seagreen')
