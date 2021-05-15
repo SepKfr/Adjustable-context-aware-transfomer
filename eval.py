@@ -54,14 +54,13 @@ def evaluate(site, seq_ln):
             best_rmse = rmse
             best_ind = i
 
-    print(test_y.shape)
-    print(preds_attn_con.shape)
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn_conv"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["lstm"] = get_rmse(preds_attn_con, best_ind, criterion)
 
     x = np.linspace(0, 8, 72)
+    print(rmses.get("ours"))
     plt.plot(x, rmses.get("ours"), 'xb-')
     plt.savefig('rmses_{}.png'.format(site))
 
