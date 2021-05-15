@@ -49,13 +49,14 @@ def evaluate(site, seq_ln):
 
     best_rmse = 1e5
     best_ind = 0
+    print(test_y.shape)
+    print(preds_attn_con.shape)
     for i in range(len(test_y)):
-        print(test_y[i, :, :])
+
         rmse = torch.sqrt(criterion(preds_attn_con[i, :, :], test_y[i, :, :]))
         if rmse < best_rmse:
             best_rmse = rmse
             best_ind = i
-
 
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn"] = get_rmse(preds_attn_con, best_ind, criterion)
