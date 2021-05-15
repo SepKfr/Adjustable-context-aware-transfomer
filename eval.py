@@ -60,8 +60,7 @@ def evaluate(site, seq_ln):
     rmses["lstm"] = get_rmse(preds_attn_con, best_ind, criterion)
 
     x = np.linspace(0, 8, 72)
-    print(x.shape)
-    plt.plot(x, rmses.get("ours")[0::8], 'xb-')
+    plt.plot(x, rmses.get("ours"), 'xb-')
     plt.savefig('rmses_{}.png'.format(site))
 
 
