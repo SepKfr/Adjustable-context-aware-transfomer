@@ -75,8 +75,9 @@ class Data:
         self.train_y = self.train_y[-params.max_train_len:, :, :]
         self.val_x = self.valid_x[:params.max_val_len, :, :]
         self.val_y = self.valid_y[:params.max_val_len:, :, :]
-        self.test_x = self.valid_x[params.max_val_len:2*params.max_train_len, :, :]
-        self.test_y = self.valid_y[params.max_val_len:2*params.max_train_len, :, :]
+        self.test_x = self.valid_x[params.max_val_len:2*params.max_val_len, :, :]
+        self.test_y = self.valid_y[params.max_val_len:2*params.max_val_len, :, :]
+        print(self.test_y.shape)
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -292,7 +293,7 @@ def main():
     parser.add_argument("--out_seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.8)
-    parser.add_argument("--max_length", type=int, default=3200)
+    parser.add_argument("--max_length", type=int, default=3600)
     parser.add_argument("--max_train_len", type=int, default=480)
     parser.add_argument("--max_val_len", type=int, default=60)
     parser.add_argument("--add_wave", type=str, default="False")

@@ -49,8 +49,6 @@ def evaluate(site, seq_ln):
 
     best_rmse = 1e5
     best_ind = 0
-    print(test_y.shape)
-    print(preds_lstm.shape)
     for i in range(len(test_y)):
 
         rmse = torch.sqrt(criterion(preds_attn_con[i, :, :], test_y[i, :, :]))
@@ -63,8 +61,8 @@ def evaluate(site, seq_ln):
     rmses["attn_conv"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["lstm"] = get_rmse(preds_attn_con, best_ind, criterion)
 
-    x = np.linspace(0, 8, 72)
-    plt.plot(x, rmses.get("ours").detach().numpy(), 'xb-')
+    x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
+    plt.plot(x, rmses[0::9].get("ours").detach().numpy(), 'xb-')
     plt.savefig('rmses_{}.png'.format(site))
 
 

@@ -135,7 +135,6 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     mae_loss = 0
     for j in range(test_en.shape[0]):
         output = model(test_en[j].to(device), test_de[j].to(device))
-        print(output.shape)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
         #output = inverse_transform(output, 'test').to(device)
         y_true = test_y[j].to(device)
