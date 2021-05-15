@@ -63,6 +63,10 @@ def evaluate(site, seq_ln):
 
     x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
     plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-')
+    plt.plot(x, rmses.get("attn")[0::9].detach().numpy(), 'xb-', )
+    plt.plot(x, rmses.get("attn_conv")[0::9].detach().numpy(), 'xb-', )
+    plt.plot(x, rmses.get("lstm")[0::9].detach().numpy(), 'xb-', )
+    plt.legend('temp-aware attn', 'attn', 'conv-attn', 'lstm')
     plt.savefig('rmses_{}.png'.format(site))
 
 
