@@ -62,7 +62,7 @@ def evaluate(site, seq_ln):
     rmses["lstm"] = get_rmse(preds_lstm, best_ind, criterion)
 
     x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
-    plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-', color='seagrean')
+    plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-', color='seagreen')
     plt.plot(x, rmses.get("attn")[0::9].detach().numpy(), 'xb-', color='deepskyblue')
     plt.plot(x, rmses.get("attn_conv")[0::9].detach().numpy(), 'xb-', color='orange')
     plt.plot(x, rmses.get("lstm")[0::9].detach().numpy(), 'xb-', color='salmon')
