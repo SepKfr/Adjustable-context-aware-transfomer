@@ -17,8 +17,6 @@ else:
 test_x = pickle.load(open("test_x.p", "rb")).to(device)
 test_y = pickle.load(open("test_y.p", "rb")).to(device)
 x_true = test_x[:, :, 6]
-y_true = torch.cat((x_true[:, -1].unsqueeze(-1),test_y[:, :, 0]),dim=-1)
-
 
 rmses = dict()
 
