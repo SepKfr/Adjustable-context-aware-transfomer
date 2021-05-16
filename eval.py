@@ -53,8 +53,9 @@ def evaluate(site, seq_ln):
     rmses["lstm"] = get_rmse(preds_lstm, best_ind, criterion)
 
     x = np.array([0, 9, 18, 27, 36, 45, 63, 72])
-    plt.rc('axes', labelsize=12)
-    plt.rc('axes', labelsize=12)
+    plt.rc('axes', labelsize=14)
+    plt.rc('axes', labelsize=14)
+    plt.rc('legend', fontsize=10)
     plt.plot(x, rmses.get("ours")[0::9].detach().numpy(), 'xb-', color='deepskyblue')
     plt.plot(x, rmses.get("attn")[0::9].detach().numpy(), 'xb-', color='seagreen')
     plt.plot(x, rmses.get("attn_conv")[0::9].detach().numpy(), 'xb-', color='orange')
@@ -74,8 +75,9 @@ def evaluate(site, seq_ln):
     preds_attn_conv = torch.cat((x_true[:, -1].unsqueeze(-1), preds_attn_conv[:, :, 0]), dim=-1)
     preds_lstm = torch.cat((x_true[:, -1].unsqueeze(-1), preds_lstm[:, :, 0]), dim=-1)
 
-    plt.rc('axes', labelsize=12)
-    plt.rc('axes', labelsize=12)
+    plt.rc('axes', labelsize=14)
+    plt.rc('axes', labelsize=14)
+    plt.rc('legend', fontsize=10)
     plt.plot(np.arange(0, 216), torch.cat((x_true_c[best_ind, :], y_true_c[best_ind, :]), dim=-1), color='navy')
     plt.plot(np.arange(143, 216), preds_attn_con[best_ind, :].cpu().detach().numpy(), color='violet')
     plt.plot(np.arange(143, 216), preds_attn[best_ind, :].cpu().detach().numpy(), color='seagreen')
