@@ -16,6 +16,7 @@ else:
 
 test_x = pickle.load(open("test_x.p", "rb")).to(device)
 test_y = pickle.load(open("test_y.p", "rb")).to(device)
+y_true = test_y[:, :, 0]
 x_true = test_x[:, :, 6]
 
 rmses = dict()
