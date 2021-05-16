@@ -57,6 +57,9 @@ def evaluate(site, seq_ln):
     plt.plot(x, rmses.get("attn")[0::9].detach().numpy(), 'xb-', color='seagreen')
     plt.plot(x, rmses.get("attn_conv")[0::9].detach().numpy(), 'xb-', color='orange')
     plt.plot(x, rmses.get("lstm")[0::9].detach().numpy(), 'xb-', color='salmon')
+    plt.title("{} site".format(site))
+    plt.xlabel("Future Timesteps")
+    plt.ylabel("RMSE")
     plt.legend(['temp-aware attn', 'attn', 'conv-attn', 'lstm'], loc="upper right")
     plt.savefig('rmses_{}.png'.format(site))
     plt.close()
@@ -77,6 +80,9 @@ def evaluate(site, seq_ln):
     plt.vlines(143, ymin=min(torch.min(x_true_c[best_ind, :]), torch.min(y_true_c[best_ind, :])),
                ymax=max(torch.max(x_true_c[best_ind, :]), torch.max(y_true_c[best_ind, :])), colors='lightblue',
                linestyles="dashed")
+    plt.title("{} site".format(site))
+    plt.xlabel("TimeSteps")
+    plt.ylabel("Solute Transport")
     plt.legend(['ground-truth',' temp-aware attn', 'attn', 'conv-attn', 'lstm'], loc="lower left")
     plt.savefig('pred_plot_{}.png'.format(site))
     plt.close()
