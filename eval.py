@@ -82,7 +82,7 @@ def evaluate(site, seq_ln):
                linestyles="dashed")
     plt.title("{} site".format(site))
     plt.xlabel("TimeSteps")
-    plt.ylabel("Solute Transport")
+    plt.ylabel("Solute Concentration")
     plt.legend(['ground-truth',' temp-aware attn', 'attn', 'conv-attn', 'lstm'], loc="lower left")
     plt.savefig('pred_plot_{}.png'.format(site))
     plt.close()
