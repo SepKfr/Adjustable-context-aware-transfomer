@@ -70,12 +70,13 @@ def evaluate(site, seq_ln):
     preds_lstm = torch.cat((x_true[:, -1].unsqueeze(-1), preds_lstm[:, :, 0]), dim=-1)
 
     plt.plot(np.arange(0, 216), torch.cat((x_true_c[best_ind, :], y_true_c[best_ind, :]), dim=-1), color='navy')
-    plt.vlines(143, ymin=min(torch.min(x_true_c[best_ind, :]), torch.min(y_true_c[best_ind, :])),
-               ymax=max(torch.max(x_true_c[best_ind, :]), torch.max(y_true_c[best_ind, :])), colors='lightblue', linestyles ="dashed")
     plt.plot(np.arange(143, 216), preds_attn_con[best_ind, :].cpu().detach().numpy(), color='violet')
     plt.plot(np.arange(143, 216), preds_attn[best_ind, :].cpu().detach().numpy(), color='seagreen')
     plt.plot(np.arange(143, 216), preds_attn_conv[best_ind, :].cpu().detach().numpy(), color='orange')
     plt.plot(np.arange(143, 216), preds_lstm[best_ind, :].cpu().detach().numpy(), color='salmon')
+    plt.vlines(143, ymin=min(torch.min(x_true_c[best_ind, :]), torch.min(y_true_c[best_ind, :])),
+               ymax=max(torch.max(x_true_c[best_ind, :]), torch.max(y_true_c[best_ind, :])), colors='lightblue',
+               linestyles="dashed")
     plt.legend(['ground-truth',' temp-aware attn', 'attn', 'conv-attn', 'lstm'], loc="lower left")
     plt.savefig('pred_plot_{}.png'.format(site))
     plt.close()
