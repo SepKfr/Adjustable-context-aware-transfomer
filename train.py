@@ -67,7 +67,7 @@ def train(args, model, train_en, train_de, train_y,
             lr_scheduler.step()
             warmup_scheduler.dampen()
         t = time()
-        print("start {}:".format(ctime(t)))
+        print("end {}:".format(ctime(t)))
 
         if epoch % 20 == 0:
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
