@@ -33,7 +33,7 @@ class Data:
         self.n_moving_average = 0
         self.wavelets = ['db1', 'db2', 'db3']
         self.n_wavelets = 0
-        self.nf = n_features
+        self.nf = 1
         self.in_seq_len = params.in_seq_len
         self.out_seq_len = params.out_seq_len
 
@@ -74,6 +74,7 @@ class Data:
         self.val_y = self.valid_y[:params.max_val_len:, :, :]
         self.test_x = self.valid_x[params.max_val_len:2*params.max_val_len, :, :]
         self.test_y = self.valid_y[params.max_val_len:2*params.max_val_len, :, :]
+        print(self.test_x)
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -89,24 +90,18 @@ class Data:
 
     def create_raster(self, data, ln, inputs, outputs):
 
-        length = self.nf
-        f_ind = 0
         ts = len(data)
 
-        for f in range(length):
-            stScaler = StandardScaler()
-            dat = data.iloc[:, f + 1]
-            dat = np.array(dat).reshape(-1, 1)
-            stScaler.fit(dat)
-            '''dat = stScaler.transform(dat)
-            scaler.add_scaler(f, set_dat, stScaler)'''
-            dat = torch.from_numpy(np.array(dat).flatten())
-            in_data, out_data = self.get_window_data(dat, ln, ts)
-            inputs[:, :, f_ind:f_ind+1] = in_data
-            f_ind = f_ind + self.n_moving_average
-            if f == 1:
-                outputs[:, :, 0] = out_data
-            f_ind += 1
+        stScaler = StandardScaler()
+        dat = data.iloc[:, 2]
+        dat = np.array(dat).reshape(-1, 1)
+        stScaler.fit(dat)
+        '''dat = stScaler.transform(dat)
+        scaler.add_scaler(f, set_dat, stScaler)'''
+        dat = torch.from_numpy(np.array(dat).flatten())
+        in_data, out_data = self.get_window_data(dat, ln, ts)
+        inputs[:, :, 0:1] = in_data
+        outputs[:, :, 0] = out_data
 
         return inputs, outputs
 
@@ -289,9 +284,9 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=144)
     parser.add_argument("--out_seq_len", type=int, default=72)
-    parser.add_argument("--site", type=str, default="WHB")
+    parser.add_argument("--site", type=str, default="GOF")
     parser.add_argument("--train_percent", type=float, default=0.8)
-    parser.add_argument("--max_length", type=int, default=3600)
+    parser.add_argument("--max_length", type=int, default=3200)
     parser.add_argument("--max_train_len", type=int, default=480)
     parser.add_argument("--max_val_len", type=int, default=60)
     parser.add_argument("--add_wave", type=str, default="False")
