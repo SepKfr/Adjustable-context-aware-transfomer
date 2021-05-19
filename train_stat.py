@@ -36,6 +36,8 @@ def main():
     rmse = torch.sqrt(cirtetion(test_y, predictions))
     cirtetion = torch.nn.L1Loss()
     mae = cirtetion(test_y, predictions)
+    errors[args.name].append(float("{:.4f}".format(rmse)))
+    errors[args.name].append(float("{:.4f}".format(mae)))
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
