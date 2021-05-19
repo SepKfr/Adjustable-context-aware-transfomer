@@ -26,10 +26,11 @@ def main():
     test_y = test_y.squeeze(-1)
     predictions = torch.zeros((len(test_x), args.seq_len_pred))
 
+    seq_len = test_x.shape[1]
     for seq in range(len(test_x)):
-        model = AutoReg(test_x[seq, :, :].reshape(144).detach().numpy(), lags=1)
+        model = AutoReg(test_x[seq, :, :].reshape(seq_len).detach().numpy(), lags=1)
         model_fit = model.fit()
-        preds = model_fit.predict(start=144, end=144 + args.seq_len_pred - 1)
+        preds = model_fit.predict(start=seq_len, end=seq_len + args.seq_len_pred - 1)
         predictions[seq, :] = torch.tensor(preds)
 
     cirtetion = torch.nn.MSELoss()
