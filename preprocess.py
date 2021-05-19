@@ -283,7 +283,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=144)
     parser.add_argument("--out_seq_len", type=int, default=72)
-    parser.add_argument("--site", type=str, default="GOF")
+    parser.add_argument("--site", type=str, default="BEF")
     parser.add_argument("--train_percent", type=float, default=0.8)
     parser.add_argument("--max_length", type=int, default=3200)
     parser.add_argument("--max_train_len", type=int, default=480)
