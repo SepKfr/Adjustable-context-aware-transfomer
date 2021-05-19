@@ -24,8 +24,7 @@ def main():
     test_x = pickle.load(open("test_x.p", "rb"))
     test_y = pickle.load(open("test_y.p", "rb"))
     test_y = test_y.squeeze(-1)
-    print(len(test_x))
-    predictions = torch.zeros((44, args.seq_len_pred))
+    predictions = torch.zeros((len(test_x), args.seq_len_pred))
 
     for seq in range(len(test_x)):
         model = AutoReg(test_x[seq, :, :].reshape(144).detach().numpy(), lags=1)
