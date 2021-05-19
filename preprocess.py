@@ -288,8 +288,8 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=144)
-    parser.add_argument("--out_seq_len", type=int, default=72)
+    parser.add_argument("--in_seq_len", type=int, default=20)
+    parser.add_argument("--out_seq_len", type=int, default=1)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.8)
     parser.add_argument("--max_length", type=int, default=3600)
