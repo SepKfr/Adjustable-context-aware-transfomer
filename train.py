@@ -55,7 +55,8 @@ def train(args, model, train_en, train_de, train_y,
     try:
         model.train()
         total_loss = 0
-        t = time()
+        '''t = time()
+        print("start {}:".format(ctime(t)))'''
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
@@ -65,7 +66,8 @@ def train(args, model, train_en, train_de, train_y,
             optimizer.step()
             lr_scheduler.step()
             warmup_scheduler.dampen()
-        t = time()
+        '''t = time()
+        print("end {}:".format(ctime(t)))'''
 
         if epoch % 20 == 0:
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))

@@ -30,13 +30,10 @@ class Data:
         self.add_wave = True if params.add_wave == "True" else False
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
-        self.n_moving_average = len(self.moving_averages)
+        self.n_moving_average = 0
         self.wavelets = ['db1', 'db2', 'db3']
-        if self.add_wave:
-            self.n_wavelets = 3
-        else:
-            self.n_wavelets = 0
-        self.nf = n_features * (self.n_moving_average + self.n_wavelets)
+        self.n_wavelets = 0
+        self.nf = n_features
         self.in_seq_len = params.in_seq_len
         self.out_seq_len = params.out_seq_len
 
@@ -48,9 +45,9 @@ class Data:
         self.valid_ln = self.get_length(self.valid_ts)
         self.test_ln = self.get_length(self.test_ts)
 
-        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf+n_features)
+        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf)
         self.train_y = torch.zeros(self.train_ln, self.out_seq_len, 1)
-        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf+n_features)
+        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf)
         self.valid_y = torch.zeros(self.valid_ln, self.out_seq_len, 1)
         '''self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
         self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)'''
@@ -77,6 +74,7 @@ class Data:
         self.val_y = self.valid_y[:params.max_val_len:, :, :]
         self.test_x = self.valid_x[params.max_val_len:2*params.max_val_len, :, :]
         self.test_y = self.valid_y[params.max_val_len:2*params.max_val_len, :, :]
+        print(self.test_x)
 
         pickle.dump(self.train_x, open("train_x.p", "wb"))
         pickle.dump(self.train_y, open("train_y.p", "wb"))
@@ -92,12 +90,11 @@ class Data:
 
     def create_raster(self, data, ln, inputs, outputs):
 
-        length = int(self.nf / (self.n_moving_average + self.n_wavelets))
+        length = self.nf
         f_ind = 0
         ts = len(data)
 
         for f in range(length):
-
             stScaler = StandardScaler()
             dat = data.iloc[:, f + 1]
             dat = np.array(dat).reshape(-1, 1)
@@ -106,10 +103,11 @@ class Data:
             scaler.add_scaler(f, set_dat, stScaler)'''
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
-            inputs[:, :, f_ind:f_ind+self.n_moving_average+self.n_wavelets+1] = in_data
+            inputs[:, :, f_ind:f_ind+1] = in_data
             f_ind = f_ind + self.n_moving_average
             if f == 1:
                 outputs[:, :, 0] = out_data
+            f_ind += 1
 
         return inputs, outputs
 
@@ -152,14 +150,16 @@ class Data:
 
         data_2d_in[:, 0] = data
 
-        for i, mv in enumerate(self.moving_averages):
+        #print(data_2d_in)
+
+        '''for i, mv in enumerate(self.moving_averages):
 
             data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
             #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
 
         if self.n_wavelets > 0:
             for i, type in enumerate(self.wavelets):
-                data_2d_in[:, self.n_moving_average+i:] = self.create_wavelet(data, type).unsqueeze(-1)
+                data_2d_in[:, self.n_moving_average+i:] = self.create_wavelet(data, type).unsqueeze(-1)'''
 
         j = 0
         for i in range(0, self.ts):
@@ -288,8 +288,8 @@ class STData:
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--in_seq_len", type=int, default=20)
-    parser.add_argument("--out_seq_len", type=int, default=1)
+    parser.add_argument("--in_seq_len", type=int, default=144)
+    parser.add_argument("--out_seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.8)
     parser.add_argument("--max_length", type=int, default=3600)
