@@ -30,7 +30,7 @@ class Data:
         self.add_wave = True if params.add_wave == "True" else False
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
-        self.n_moving_average = 0
+        self.n_moving_average = 4
         self.wavelets = ['db1', 'db2', 'db3']
         self.n_wavelets = 0
         self.nf = 3
@@ -45,9 +45,9 @@ class Data:
         self.valid_ln = self.get_length(self.valid_ts)
         self.test_ln = self.get_length(self.test_ts)
 
-        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf)
+        self.train_x = torch.zeros(self.train_ln, self.in_seq_len, self.nf*self.n_moving_average + self.nf)
         self.train_y = torch.zeros(self.train_ln, self.out_seq_len, 1)
-        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf)
+        self.valid_x = torch.zeros(self.valid_ln, self.in_seq_len, self.nf*self.n_moving_average+self.nf)
         self.valid_y = torch.zeros(self.valid_ln, self.out_seq_len, 1)
         '''self.test_x = torch.zeros(self.test_ln, self.in_seq_len, self.nf)
         self.test_y = torch.zeros(self.test_ln, self.out_seq_len, 1)'''
@@ -90,7 +90,7 @@ class Data:
     def create_raster(self, data, ln, inputs, outputs):
 
         ts = len(data)
-
+        f_ind = 0
         for f in range(self.nf):
             stScaler = StandardScaler()
             dat = data.iloc[:, f]
@@ -100,7 +100,8 @@ class Data:
             scaler.add_scaler(f, set_dat, stScaler)'''
             dat = torch.from_numpy(np.array(dat).flatten())
             in_data, out_data = self.get_window_data(dat, ln, ts)
-            inputs[:, :, f] = in_data.squeeze(-1)
+            inputs[:, :, f_ind:f_ind+self.n_moving_average+1] = in_data
+            f_ind = f_ind+self.n_moving_average+1
             if f == 1:
                 outputs[:, :, 0] = out_data
 
@@ -138,23 +139,18 @@ class Data:
 
     def get_window_data(self, data, ln, ts):
 
-        data_2d_in = torch.zeros((ts, self.n_moving_average+self.n_wavelets+1))
+        data_2d_in = torch.zeros((ts, self.n_moving_average+1))
         data_3d_in = torch.zeros((ln, self.in_seq_len,
-                                  self.n_moving_average+self.n_wavelets+1))
+                                  self.n_moving_average+1))
         data_out = torch.zeros((ln, self.out_seq_len))
 
         data_2d_in[:, 0] = data
 
         #print(data_2d_in)
 
-        '''for i, mv in enumerate(self.moving_averages):
+        for i, mv in enumerate(self.moving_averages):
 
-            data_2d_in[:, i] = self.moving_average(mv, data, ts).squeeze(1)
-            #data_2d_in[:, i+self.n_moving_average] = self.get_derivative(mv, data, ts).squeeze(1)
-
-        if self.n_wavelets > 0:
-            for i, type in enumerate(self.wavelets):
-                data_2d_in[:, self.n_moving_average+i:] = self.create_wavelet(data, type).unsqueeze(-1)'''
+            data_2d_in[:, i+1] = self.moving_average(mv, data, ts).squeeze(1)
 
         j = 0
         for i in range(0, self.ts):
