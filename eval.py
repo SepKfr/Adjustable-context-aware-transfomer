@@ -63,7 +63,7 @@ def evaluate(site, seq_ln):
     plt.title("{} site".format(site))
     plt.xlabel("Future Timesteps")
     plt.ylabel("RMSE")
-    plt.legend(['temp-aware attn', 'attn', 'conv attn', 'seq2seq-lstm'], loc="upper right")
+    plt.legend(['ours', 'attn', 'conv attn', 'seq2seq-lstm'], loc="upper right")
     plt.savefig('rmses_{}.png'.format(site))
     plt.close()
 
@@ -89,7 +89,7 @@ def evaluate(site, seq_ln):
     plt.title("{} site".format(site))
     plt.xlabel("TimeSteps")
     plt.ylabel("Solute Concentration")
-    plt.legend(['ground-truth',' temp-aware attn', 'attn', 'conv attn', 'seq2seq-lstm'], loc="lower left")
+    plt.legend(['ground-truth', 'ours', 'attn', 'conv attn', 'seq2seq-lstm'], loc="lower left")
     plt.savefig('pred_plot_{}.png'.format(site))
     plt.close()
 
