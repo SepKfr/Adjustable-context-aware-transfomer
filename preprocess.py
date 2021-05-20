@@ -33,7 +33,7 @@ class Data:
         self.n_moving_average = 0
         self.wavelets = ['db1', 'db2', 'db3']
         self.n_wavelets = 0
-        self.nf = 1
+        self.nf = 3
         self.in_seq_len = params.in_seq_len
         self.out_seq_len = params.out_seq_len
 
@@ -91,16 +91,18 @@ class Data:
 
         ts = len(data)
 
-        stScaler = StandardScaler()
-        dat = data.iloc[:, 2]
-        dat = np.array(dat).reshape(-1, 1)
-        stScaler.fit(dat)
-        '''dat = stScaler.transform(dat)
-        scaler.add_scaler(f, set_dat, stScaler)'''
-        dat = torch.from_numpy(np.array(dat).flatten())
-        in_data, out_data = self.get_window_data(dat, ln, ts)
-        inputs[:, :, 0:1] = in_data
-        outputs[:, :, 0] = out_data
+        for f in range(self.nf):
+            stScaler = StandardScaler()
+            dat = data.iloc[:, f]
+            dat = np.array(dat).reshape(-1, 1)
+            stScaler.fit(dat)
+            '''dat = stScaler.transform(dat)
+            scaler.add_scaler(f, set_dat, stScaler)'''
+            dat = torch.from_numpy(np.array(dat).flatten())
+            in_data, out_data = self.get_window_data(dat, ln, ts)
+            inputs[:, :, f] = in_data.squeeze(-1)
+            if f == 1:
+                outputs[:, :, 0] = out_data
 
         return inputs, outputs
 
@@ -268,7 +270,7 @@ class STData:
         end_date = "2019-01-02"
         mask = (df["Date"] >= start_date) & (df["Date"] <= end_date)
         df = df[mask]
-        df = df[["Date", "TempC", "SpConductivity", "Q"]]
+        df = df[["TempC","SpConductivity", "Q"]]
         '''plt.plot(np.arange(0, 1500), df.SpConductivity.iloc[-1500:], color='k')
         plt.tick_params(axis="x", bottom=False, top=False)
         plt.tick_params(axis="y", left=False, right=False)
@@ -283,7 +285,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=144)
     parser.add_argument("--out_seq_len", type=int, default=72)
-    parser.add_argument("--site", type=str, default="BEF")
+    parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--train_percent", type=float, default=0.8)
     parser.add_argument("--max_length", type=int, default=3200)
     parser.add_argument("--max_train_len", type=int, default=480)

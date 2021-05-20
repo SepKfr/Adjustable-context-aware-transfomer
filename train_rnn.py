@@ -188,7 +188,7 @@ def main():
     parser.add_argument("--lr", type=float, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
-    parser.add_argument("--n_layers", type=list, default=[3, 6])
+    parser.add_argument("--n_layers", type=list, default=[6])
     parser.add_argument("--site", type=str)
     parser.add_argument("--deep_type", type=str, default="rnconv")
     parser.add_argument("--rnn_type", type=str, default="lstm")

@@ -111,8 +111,8 @@ def main():
     parser.add_argument("--max_val_len", type=int, default=60)
     parser.add_argument("--add_wave", type=str, default="False")
     params = parser.parse_args()
-    cols = ["seagreen", "violet", "orange"]
-    for i, site in enumerate(["MCQ", "LMP", "SBM"]):
+    cols = ["salmon", "seagreen", "violet", "orange"]
+    for i, site in enumerate(["BEF", "LMP", "SBM"]):
         STData("data/metadata.xlsx", "data", params, site)
         test_x = pickle.load(open("test_x.p", "rb")).to(device)
         test_y = pickle.load(open("test_y.p", "rb")).to(device)
@@ -129,7 +129,7 @@ def main():
                    linestyles="dashed")
     plt.xlabel("TimeSteps")
     plt.ylabel("Solute Concentration")
-    plt.legend(['MCQ', 'LMP', 'SBM'], loc="lower left")
+    plt.legend(['BEF', 'LMP', 'SBM'], loc="lower left")
     plt.savefig('ground_truth.png')
 
     #evaluate(params.site, params.seq_len)
