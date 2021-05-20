@@ -164,14 +164,14 @@ class Data:
 
 
 class STData:
-    def __init__(self, meta_path, site_path, params):
+    def __init__(self, meta_path, site_path, params, site):
         self.meta_path = meta_path
         self.site_path = site_path
         self.I = 3
         self.J = 6
         self.n_features = 3
         self.sites_data = dict()
-        site_dat = self.prep_data_per_site(params.site)
+        site_dat = self.prep_data_per_site(site)
         self.sites_data[params.site] = site_dat
         self.raster = Data(self.sites_data, params,  self.n_features)
 
@@ -290,7 +290,7 @@ def main():
     parser.add_argument("--max_val_len", type=int, default=60)
     parser.add_argument("--add_wave", type=str, default="False")
     params = parser.parse_args()
-    stdata = STData("data/metadata.xlsx", "data", params)
+    stdata = STData("data/metadata.xlsx", "data", params, params.site)
 
 
 if __name__ == '__main__':

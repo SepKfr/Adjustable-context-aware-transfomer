@@ -5,6 +5,7 @@ import torch.nn as nn
 import numpy as np
 import argparse
 import torch
+from preprocess import STData
 
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -96,12 +97,42 @@ def evaluate(site, seq_ln):
 
 def main():
 
-    parser = argparse.ArgumentParser(description="evaluation")
+    '''parser = argparse.ArgumentParser(description="evaluation")
     parser.add_argument("--seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--name", type=str, default="attn")
+    parser.add_argument("--name", type=str, default="attn")'''
+    parser = argparse.ArgumentParser(description="preprocess argument parser")
+    parser.add_argument("--in_seq_len", type=int, default=144)
+    parser.add_argument("--out_seq_len", type=int, default=72)
+    parser.add_argument("--site", type=str, default="BEF")
+    parser.add_argument("--train_percent", type=float, default=0.8)
+    parser.add_argument("--max_length", type=int, default=3200)
+    parser.add_argument("--max_train_len", type=int, default=480)
+    parser.add_argument("--max_val_len", type=int, default=60)
+    parser.add_argument("--add_wave", type=str, default="False")
     params = parser.parse_args()
-    evaluate(params.site, params.seq_len)
+    cols = ["seagreen", "violet", "orange"]
+    for i, site in enumerate(["MCQ", "LMP", "SBM"]):
+        STData("data/metadata.xlsx", "data", params, site)
+        test_x = pickle.load(open("test_x.p", "rb")).to(device)
+        test_y = pickle.load(open("test_y.p", "rb")).to(device)
+        y_true = test_y[:, :, 0]
+        x_true = test_x[:, :, 0]
+        x_true_c = x_true.cpu()
+        y_true_c = y_true.cpu()
+        plt.rc('axes', labelsize=18)
+        plt.rc('axes', titlesize=18)
+        plt.rc('legend', fontsize=12)
+        plt.plot(np.arange(0, 216), torch.cat((x_true_c[0, :], y_true_c[0, :]), dim=-1), color=cols[i])
+        plt.vlines(143, ymin=0,
+                   ymax=max(torch.max(x_true_c[0, :]), torch.max(y_true_c[0, :])), colors='lightblue',
+                   linestyles="dashed")
+    plt.xlabel("TimeSteps")
+    plt.ylabel("Solute Concentration")
+    plt.legend(['MCQ', 'LMP', 'SBM'], loc="lower left")
+    plt.savefig('ground_truth.png')
+
+    #evaluate(params.site, params.seq_len)
 
 
 if __name__ == '__main__':
