@@ -159,7 +159,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=48)
     parser.add_argument("--cutoff", type=int, default=[1, 3, 6, 9])
     parser.add_argument("--cutoff_best", type=int)
-    parser.add_argument("--d_model", type=int, default=32)
+    parser.add_argument("--d_model", type=int, default=[8, 32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--n_heads", type=list, default=[8])
     parser.add_argument("--n_heads_best", type=int)
@@ -212,7 +212,7 @@ def main():
     if args.attn_type != "attn_conv":
         args.kernel = [1]
     hyper_param = list([args.n_layers, args.n_heads,
-                        [args.d_model], args.lr, args.dr, args.cutoff, args.kernel])
+                        args.d_model, args.lr, args.dr, args.cutoff, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:
