@@ -73,7 +73,7 @@ def evaluate(site, seq_ln):
         plt.xlabel("Future Timesteps")
         plt.ylabel("RMSE")
         plt.legend(['ours', 'attn', 'conv attn', 'seq2seq-lstm'], loc="upper right")
-        plt.savefig('rmses_{}.png'.format(site))
+        plt.savefig('rmses_{}_{}.png'.format(site, best_ind))
         plt.close()
 
         plt.rc('axes', labelsize=18)
