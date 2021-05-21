@@ -24,7 +24,7 @@ rmses = dict()
 
 
 def get_rmse(pred, num, criterion):
-    rmse = torch.zeros(pred.shape[1])
+    rmse = torch.zeros(pred.shape[1] - 1)
     for i in range(pred.shape[1] - 1):
         rmse[i] = torch.sqrt(criterion(test_y[num, i], pred[num, i]))
     return rmse
