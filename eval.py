@@ -40,13 +40,13 @@ def evaluate(site, seq_ln):
     preds_lstm = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'lstm'), 'rb'))
 
     best_rmse = 1e5
-    best_ind = 0
-    for i in range(len(test_y)):
+    best_ind = np.random.randint(0, len(y_true))
+    '''for i in range(len(test_y)):
 
         rmse = torch.sqrt(criterion(preds_attn_con[i, :, :], test_y[i, :, :]))
         if rmse < best_rmse:
             best_rmse = rmse
-            best_ind = i
+            best_ind = i'''
 
     rmses["ours"] = get_rmse(preds_attn_con, best_ind, criterion)
     rmses["attn"] = get_rmse(preds_attn, best_ind, criterion)
