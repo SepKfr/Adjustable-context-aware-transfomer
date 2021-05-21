@@ -97,11 +97,12 @@ def evaluate(site, seq_ln):
 
 def main():
 
-    '''parser = argparse.ArgumentParser(description="evaluation")
+    parser = argparse.ArgumentParser(description="evaluation")
     parser.add_argument("--seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="WHB")
-    parser.add_argument("--name", type=str, default="attn")'''
-    parser = argparse.ArgumentParser(description="preprocess argument parser")
+    parser.add_argument("--name", type=str, default="attn")
+    params = parser.parse_args()
+    '''parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--in_seq_len", type=int, default=144)
     parser.add_argument("--out_seq_len", type=int, default=72)
     parser.add_argument("--site", type=str, default="BEF")
@@ -130,9 +131,9 @@ def main():
     plt.xlabel("TimeSteps")
     plt.ylabel("Solute Concentration")
     plt.legend(['BEF', 'LMP', 'SBM'], loc="lower left")
-    plt.savefig('ground_truth.png')
+    plt.savefig('ground_truth.png')'''
 
-    #evaluate(params.site, params.seq_len)
+    evaluate(params.site, params.seq_len)
 
 
 if __name__ == '__main__':
