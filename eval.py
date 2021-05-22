@@ -37,7 +37,7 @@ def evaluate(site, seq_ln):
 
     criterion = nn.MSELoss()
     preds_attn_con = pickle.\
-        load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn_con_2'), 'rb'))
+        load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn_con'), 'rb'))
     preds_attn = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn'), 'rb'))
     preds_attn_conv = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'attn_conv'), 'rb'))
     preds_lstm = pickle.load(open('{}_{}_{}/{}'.format('Preds/preds', site, seq_ln, 'lstm'), 'rb'))
