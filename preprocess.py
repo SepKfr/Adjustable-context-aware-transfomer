@@ -286,7 +286,7 @@ def main():
     parser.add_argument("--train_percent", type=float, default=0.8)
     parser.add_argument("--max_length", type=int, default=3200)
     parser.add_argument("--max_train_len", type=int, default=480)
-    parser.add_argument("--max_val_len", type=int, default=60)
+    parser.add_argument("--max_val_len", type=int, default=64)
     parser.add_argument("--add_wave", type=str, default="False")
     params = parser.parse_args()
     stdata = STData("data/metadata.xlsx", "data", params, params.site)
