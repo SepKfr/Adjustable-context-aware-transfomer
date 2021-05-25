@@ -153,7 +153,7 @@ class MultiHeadAttention(nn.Module):
 
         self.linear = nn.Linear(n_heads * d_v, d_model)
 
-        self.layer_norm = LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dr)
 
         self.device = device
@@ -192,17 +192,12 @@ class PoswiseFeedForwardNet(nn.Module):
         self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
         self.relu = nn.ReLU()
-        self.layer_norm = LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model)
         self.device = device
 
     def forward(self, inputs):
 
-        residual = inputs
-        output = self.l1(inputs)
-        output = self.relu(output)
-        output = self.l2(output)
-        output = self.dropout(output)
-        return self.layer_norm(output + residual)
+        return inputs + self.dropout(self.l2(self.relu(self.l1(inputs))))
 
 
 class EncoderLayer(nn.Module):
