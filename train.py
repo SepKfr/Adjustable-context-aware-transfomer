@@ -276,7 +276,7 @@ def main():
                          dr=dr).to(device)
 
             opt = NoamOpt(d_model, 1, 5000,
-            torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
+            torch.optim.Adam(model.parameters(), lr=0.00001, betas=(0.9, 0.98), eps=1e-9))
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
