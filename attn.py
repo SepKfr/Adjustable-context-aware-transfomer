@@ -402,6 +402,6 @@ class Attn(nn.Module):
                                                                   enc_outputs)
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
-        dec_logits = F.log_softmax(self.projection(dec_outputs), dim=-1)
+        dec_logits = nn.Softmax(dim=-1)(self.projection(dec_outputs))
         return dec_logits
 
