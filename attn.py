@@ -8,7 +8,6 @@ import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
 import random
-import copy
 
 random.seed(21)
 torch.manual_seed(21)
@@ -66,23 +65,10 @@ def rel_pos_enc(seq):
     return rel_weight.unsqueeze(0)
 
 
-def clones(module, N):
-    "Produce N identical layers."
-    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
-
-
-class LayerNorm(nn.Module):
-    "Construct a layernorm module (See citation for details)."
-    def __init__(self, features, eps=1e-6):
-        super(LayerNorm, self).__init__()
-        self.a_2 = nn.Parameter(torch.ones(features))
-        self.b_2 = nn.Parameter(torch.zeros(features))
-        self.eps = eps
+class GELU(nn.Module):
 
     def forward(self, x):
-        mean = x.mean(-1, keepdim=True)
-        std = x.std(-1, keepdim=True)
-        return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+        return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
 
 class PositionalEncoding(nn.Module):
@@ -111,7 +97,7 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, pe, attn_type, cutoff, dropout=None):
+    def __init__(self, d_k, device, pe, attn_type, cutoff):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
@@ -119,7 +105,6 @@ class ScaledDotProductAttention(nn.Module):
         self.pe = pe
         self.attn_type = attn_type
         self.cutoff = cutoff
-        self.dr = dropout
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -129,7 +114,7 @@ class ScaledDotProductAttention(nn.Module):
             b, h, s, c, d = Q.shape
             Q = Q.reshape(b, h, s, c*d)
             K = K.reshape(b, h, s, c*d)
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (torch.norm(Q) * torch.norm(K))
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k) * torch.norm(Q) * torch.norm(K))
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
         if attn_mask is not None:
@@ -139,8 +124,6 @@ class ScaledDotProductAttention(nn.Module):
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
-        if self.dr is not None:
-            attn = self.dr(attn)
         context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
 
@@ -156,7 +139,7 @@ class MultiHeadAttention(nn.Module):
 
         self.linear = nn.Linear(n_heads * d_v, d_model)
 
-        self.layer_norm = LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dr)
 
         self.device = device
@@ -179,13 +162,12 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
-                                                  attn_type=self.attn_type, cutoff=self.cutoff,
-                                                  dropout=self.dropout)(
+                                                  attn_type=self.attn_type, cutoff=self.cutoff)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.linear(context)
-        return output
-
+        output = self.dropout(output)
+        return self.layer_norm(output + Q), attn
 
 class PositionwiseFeedForward(nn.Module):
     "Implements FFN equation."
@@ -195,24 +177,24 @@ class PositionwiseFeedForward(nn.Module):
         self.w_2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x):
-        return self.w_2(self.dropout(F.relu(self.w_1(x))))
+class PoswiseFeedForwardNet(nn.Module):
 
+    def __init__(self, d_model, d_ff, dr, device):
+        super(PoswiseFeedForwardNet, self).__init__()
+        self.l1 = nn.Linear(d_model, d_ff)
+        self.l2 = nn.Linear(d_ff, d_model)
+        self.dropout = nn.Dropout(dr)
+        self.relu = nn.ReLU()
+        self.layer_norm = nn.LayerNorm(d_model)
+        self.device = device
 
-class SublayerConnection(nn.Module):
-    """
-    A residual connection followed by a layer norm.
-    Note for code simplicity the norm is first as opposed to last.
-    """
-    def __init__(self, size, dropout):
-        super(SublayerConnection, self).__init__()
-        self.norm = LayerNorm(size)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x, sublayer):
-        "Apply residual connection to any sublayer with the same size."
-        output = self.dropout(sublayer(self.norm(x)))
-        return x + output
+    def forward(self, inputs):
+        residual = inputs
+        output = self.l1(inputs)
+        output = self.relu(output)
+        output = self.l2(output)
+        output = self.dropout(output)
+        return self.layer_norm(output + residual)
 
 
 class EncoderLayer(nn.Module):
@@ -224,16 +206,18 @@ class EncoderLayer(nn.Module):
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe,
             attn_type=attn_type, cutoff=cutoff, dr=dr)
-        self.pos_ffn = PositionwiseFeedForward(
-            d_model=d_model, d_ff=d_ff)
-
-        self.sublayer = clones(SublayerConnection(d_model, dr), 2)
+        self.pos_ffn = PoswiseFeedForwardNet(
+            d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
     def forward(self, enc_inputs, enc_self_attn_mask):
 
-        enc_outputs = self.sublayer[0](enc_inputs, lambda x: self.enc_self_attn(x, x, x, enc_self_attn_mask))
-        enc_outputs = self.sublayer[1](enc_outputs, self.pos_ffn)
-        return enc_outputs
+        enc_outputs, attn = self.enc_self_attn(
+            Q=enc_inputs, K=enc_inputs,
+            V=enc_inputs, attn_mask=enc_self_attn_mask)
+
+        enc_outputs = self.pos_ffn(enc_outputs)
+
+        return enc_outputs, attn
 
 
 class Encoder(nn.Module):
@@ -257,17 +241,17 @@ class Encoder(nn.Module):
 
         self.n_layers = n_layers
         self.layers = []
-        encoder_layer = EncoderLayer(
-            d_model=d_model, d_ff=d_ff,
-            d_k=d_k, d_v=d_v, n_heads=n_heads,
-            device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, dr=dr)
-        self.layers = clones(encoder_layer, n_layers)
-
+        for _ in range(n_layers):
+            encoder_layer = EncoderLayer(
+                d_model=d_model, d_ff=d_ff,
+                d_k=d_k, d_v=d_v, n_heads=n_heads,
+                device=device, pe=pe,
+                attn_type=attn_type, cutoff=cutoff, dr=dr)
+            self.layers.append(encoder_layer)
+        self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.kernel_size = kernel
         self.dilation = 1
-        self.norm = LayerNorm(d_model)
 
     def forward(self, enc_input):
 
@@ -287,10 +271,14 @@ class Encoder(nn.Module):
 
         enc_self_attn_mask = None
 
+        enc_self_attns = []
         for layer in self.layers:
-            enc_outputs = layer(enc_outputs, enc_self_attn_mask)
+            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
+            enc_self_attns.append(enc_self_attn)
 
-        return self.norm(enc_outputs)
+        enc_self_attns = torch.stack(enc_self_attns)
+        enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])
+        return enc_outputs, enc_self_attns
 
 
 class DecoderLayer(nn.Module):
@@ -304,19 +292,18 @@ class DecoderLayer(nn.Module):
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, cutoff=cutoff, dr=dr)
-        self.pos_ffn = PositionwiseFeedForward(
-            d_model=d_model, d_ff=d_ff)
-        self.sublayer = clones(SublayerConnection(d_model, dr), 3)
+        self.pos_ffn = PoswiseFeedForwardNet(
+            d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask, dec_enc_attn_mask):
 
-        dec_outputs = self.sublayer[0](dec_inputs, lambda x: self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask))
+        dec_outputs, dec_self_attn = \
+            self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
 
-        dec_outputs = self.sublayer[1](dec_outputs, lambda x: self.dec_self_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask))
-
-        dec_outputs = self.sublayer[2](dec_outputs, lambda x: self.pos_ffn(dec_outputs))
-
-        return dec_outputs
+        dec_outputs, dec_enc_attn = \
+            self.dec_enc_attn(dec_outputs, enc_outputs, enc_outputs, dec_enc_attn_mask)
+        dec_outputs = self.pos_ffn(dec_outputs)
+        return dec_outputs, dec_self_attn, dec_enc_attn
 
 
 class Decoder(nn.Module):
@@ -338,18 +325,19 @@ class Decoder(nn.Module):
             dropout=0,
             device=device)
         self.layers = []
-        decoder_layer = DecoderLayer(
-            d_model=d_model, d_ff=d_ff,
-            d_k=d_k, d_v=d_v,
-            n_heads=n_heads, device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, dr=dr)
-        self.layers = clones(decoder_layer, n_layers)
+        for _ in range(n_layers):
+            decoder_layer = DecoderLayer(
+                d_model=d_model, d_ff=d_ff,
+                d_k=d_k, d_v=d_v,
+                n_heads=n_heads, device=device, pe=pe,
+                attn_type=attn_type, cutoff=cutoff, dr=dr)
+            self.layers.append(decoder_layer)
+        self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.cutoff = cutoff
         self.d_k = d_k
         self.kernel_size = kernel
         self.dilation = 1
-        self.norm = LayerNorm(d_model)
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs):
 
@@ -369,15 +357,23 @@ class Decoder(nn.Module):
 
         dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs)
 
+        dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
-            dec_outputs = layer(
+            dec_outputs, dec_self_attn, dec_enc_attn = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
                 dec_self_attn_mask=dec_self_attn_subsequent_mask,
                 dec_enc_attn_mask=None,
             )
+            dec_self_attns.append(dec_self_attn)
+            dec_enc_attns.append(dec_enc_attn)
+        dec_self_attns = torch.stack(dec_self_attns)
+        dec_enc_attns = torch.stack(dec_enc_attns)
 
-        return self.norm(dec_outputs)
+        dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
+        dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
+
+        return dec_outputs, dec_self_attns, dec_enc_attns
 
 
 class Attn(nn.Module):
@@ -385,7 +381,7 @@ class Attn(nn.Module):
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, cutoff, kernel, dr):
+                 seq_len, seq_len_pred, cutoff, kernel,dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -408,8 +404,9 @@ class Attn(nn.Module):
 
     def forward(self, enc_inputs, dec_inputs):
 
-        enc_outputs = self.encoder(enc_inputs)
-        dec_outputs = self.decoder(dec_inputs, enc_inputs,enc_outputs)
+        enc_outputs, enc_self_attns = self.encoder(enc_inputs)
+        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
+                                                                  enc_outputs)
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
         dec_logits = self.projection(dec_outputs)
