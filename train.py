@@ -86,6 +86,8 @@ def train(args, model, train_en, train_de, train_y,
           config, config_num, best_config, path, criterion):
 
     stop = False
+    if opt is None:
+        optimizer = Adam(model.parameters(), lr=0.0001)
     try:
         model.train()
         total_loss = 0
@@ -95,9 +97,15 @@ def train(args, model, train_en, train_de, train_y,
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
-            opt.optimizer.zero_grad()
+            if opt is not None:
+                opt.optimizer.zero_grad()
+            else:
+                optimizer.zero_grad()
             loss.backward()
-            opt.optimizer.step()
+            if opt is not None:
+                opt.optimizer.step()
+            else:
+                optimizer.step()
         '''t = time()
         print("end {}:".format(ctime(t)))'''
 
@@ -209,8 +217,9 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--add_var_se", type=str, default="False")
+    parser.add_argument("--lr_variate", type=str, default="False")
+    parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
     args = parser.parse_args()
 
@@ -275,8 +284,11 @@ def main():
                          cutoff=cutoff, kernel=kernel, add_var_se=args.add_var_se,
                          dr=dr).to(device)
 
-            opt = NoamOpt(d_model, 1, 5000,
-            torch.optim.Adam(model.parameters(), lr=0.00001, betas=(0.9, 0.98), eps=1e-9))
+            if args.lr_variate == "False":
+                opt = None
+            else:
+                opt = NoamOpt(d_model, 1, 5000,
+                torch.optim.Adam(model.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9))
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
