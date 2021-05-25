@@ -182,8 +182,12 @@ class PoswiseFeedForwardNet(nn.Module):
         self.device = device
 
     def forward(self, inputs):
-
-        return inputs + self.dropout(self.l2(self.relu(self.l1(inputs))))
+        residual = inputs
+        output = self.l1(inputs)
+        output = self.relu(output)
+        output = self.l2(output)
+        output = self.dropout(output)
+        return self.layer_norm(output + residual)
 
 
 class EncoderLayer(nn.Module):
