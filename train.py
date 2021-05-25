@@ -201,7 +201,7 @@ def main():
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=[0.2])
     parser.add_argument("--dr_best", type=float)
-    parser.add_argument("--lr", type=list, default=[0.0001])
+    parser.add_argument("--lr", type=list, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
@@ -276,7 +276,7 @@ def main():
                          dr=dr).to(device)
 
             opt = NoamOpt(d_model, 1, 5000,
-            torch.optim.Adam(model.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9))
+            torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
