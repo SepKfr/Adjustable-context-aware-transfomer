@@ -167,7 +167,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
                  seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=cutoff, kernel=kernel,add_var_se=args.add_var_se,
+                 cutoff=cutoff, kernel=kernel,
                  dr=dr).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -215,7 +215,6 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--add_var_se", type=str, default="False")
     parser.add_argument("--lr_variate", type=str, default="True")
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
@@ -279,7 +278,7 @@ def main():
                          tgt_pad_index=0, device=device,
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         cutoff=cutoff, kernel=kernel, add_var_se=args.add_var_se,
+                         cutoff=cutoff, kernel=kernel,
                          dr=dr).to(device)
 
             if args.lr_variate == "False":
