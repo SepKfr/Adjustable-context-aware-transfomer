@@ -82,12 +82,10 @@ else:
 
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
-          val_inner_loss, opt,
+          val_inner_loss, opt, optimizer,
           config, config_num, best_config, path, criterion):
 
     stop = False
-    if opt is None:
-        optimizer = Adam(model.parameters(), lr=0.0001)
     try:
         model.train()
         total_loss = 0
@@ -218,7 +216,7 @@ def main():
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--add_var_se", type=str, default="False")
-    parser.add_argument("--lr_variate", type=str, default="False")
+    parser.add_argument("--lr_variate", type=str, default="True")
     parser.add_argument("--training", type=str, default="True")
     parser.add_argument("--continue_train", type=str, default="False")
     args = parser.parse_args()
@@ -285,14 +283,17 @@ def main():
                          dr=dr).to(device)
 
             if args.lr_variate == "False":
+                optim = Adam(model.parameters(), lr=0.0001)
                 opt = None
             else:
                 opt = NoamOpt(d_model, 1, 5000,
-                torch.optim.Adam(model.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9))
+                Adam(model.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9))
+                optim = opt.optimizer
+
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
-                opt.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                optim.load_state_dict(checkpoint["optimizer_state_dict"])
                 epoch_start = checkpoint["epoch"]
                 best_config = checkpoint["best_config"]
                 continue_train = False
@@ -305,7 +306,7 @@ def main():
                     train(args, model, train_en.to(device), train_de.to(device),
                           train_y.to(device), valid_en.to(device), valid_de.to(device),
                           valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                          opt, conf, i, best_config, path, criterion)
+                          opt, optim, conf, i, best_config, path, criterion)
                 if stop:
                     break
 
