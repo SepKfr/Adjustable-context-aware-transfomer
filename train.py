@@ -18,6 +18,40 @@ torch.manual_seed(21)
 np.random.seed(21)
 
 
+class NoamOpt:
+    "Optim wrapper that implements rate."
+
+    def __init__(self, model_size, factor, warmup, optimizer):
+        self.optimizer = optimizer
+        self._step = 0
+        self.warmup = warmup
+        self.factor = factor
+        self.model_size = model_size
+        self._rate = 0
+
+    def step(self):
+        "Update parameters and rate"
+        self._step += 1
+        rate = self.rate()
+        for p in self.optimizer.param_groups:
+            p['lr'] = rate
+        self._rate = rate
+        self.optimizer.step()
+
+    def rate(self, step=None):
+        "Implement `lrate` above"
+        if step is None:
+            step = self._step
+        return self.factor * \
+               (self.model_size ** (-0.5) *
+                min(step ** (-0.5), step * self.warmup ** (-1.5)))
+
+
+def get_std_opt(model):
+    return NoamOpt(model.src_embed[0].d_model, 2, 4000,
+                   torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+
+
 def batching(batch_size, x_en, x_de, y_t):
 
     batch_n = int(x_en.shape[0] / batch_size)
@@ -48,7 +82,7 @@ else:
 
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
-          val_inner_loss, optimizer, lr_scheduler, warmup_scheduler,
+          val_inner_loss, opt,
           config, config_num, best_config, path, criterion):
 
     stop = False
@@ -61,11 +95,9 @@ def train(args, model, train_en, train_de, train_y,
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
-            optimizer.zero_grad()
+            opt.optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
+            opt.optimizer.step()
         '''t = time()
         print("end {}:".format(ctime(t)))'''
 
@@ -97,7 +129,7 @@ def train(args, model, train_en, train_de, train_y,
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
+            'optimizer_state_dict': opt.optimizer.state_dict(),
             'config_num': config_num,
             'best_config': best_config
         }, os.path.join(path, "{}_continue".format(args.name)))
@@ -163,7 +195,7 @@ def main():
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--n_heads", type=list, default=[8])
     parser.add_argument("--n_heads_best", type=int)
-    parser.add_argument("--n_layers", type=list, default=[6])
+    parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[6, 3, 1])
     parser.add_argument("--kernel_best", type=int)
@@ -243,18 +275,15 @@ def main():
                          cutoff=cutoff, kernel=kernel, add_var_se=args.add_var_se,
                          dr=dr).to(device)
 
-            optimizer = Adam(model.parameters(), lr=lr)
+            opt = NoamOpt(d_model, 1, 400,
+        torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
             epoch_start = 0
             if continue_train:
                 model.load_state_dict(checkpoint["model_state_dict"])
-                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                opt.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 epoch_start = checkpoint["epoch"]
                 best_config = checkpoint["best_config"]
                 continue_train = False
-
-            num_steps = len(train_en) * args.n_epochs
-            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-            warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
 
             val_inner_loss = 1e10
             e = 0
@@ -264,8 +293,7 @@ def main():
                     train(args, model, train_en.to(device), train_de.to(device),
                           train_y.to(device), valid_en.to(device), valid_de.to(device),
                           valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                          optimizer, lr_scheduler, warmup_scheduler,
-                          conf, i, best_config, path, criterion)
+                          opt, conf, i, best_config, path, criterion)
                 if stop:
                     break
 
