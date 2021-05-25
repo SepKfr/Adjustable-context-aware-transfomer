@@ -71,6 +71,20 @@ class GELU(nn.Module):
         return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
 
+class LayerNorm(nn.Module):
+    "Construct a layernorm module (See citation for details)."
+    def __init__(self, features, eps=1e-6):
+        super(LayerNorm, self).__init__()
+        self.a_2 = nn.Parameter(torch.ones(features))
+        self.b_2 = nn.Parameter(torch.zeros(features))
+        self.eps = eps
+
+    def forward(self, x):
+        mean = x.mean(-1, keepdim=True)
+        std = x.std(-1, keepdim=True)
+        return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+
 class PositionalEncoding(nn.Module):
 
     def __init__(self, d_model, dropout, device, max_seq_len=500):
@@ -139,7 +153,7 @@ class MultiHeadAttention(nn.Module):
 
         self.linear = nn.Linear(n_heads * d_v, d_model)
 
-        self.layer_norm = nn.LayerNorm(d_model)
+        self.layer_norm = LayerNorm(d_model)
         self.dropout = nn.Dropout(dr)
 
         self.device = device
@@ -172,21 +186,18 @@ class MultiHeadAttention(nn.Module):
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff, dr, device, residual=True):
+    def __init__(self, d_model, d_ff, dr, device):
         super(PoswiseFeedForwardNet, self).__init__()
         self.l1 = nn.Linear(d_model, d_ff)
         self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
-        self.residual = residual
         self.relu = nn.ReLU()
-        self.layer_norm = nn.LayerNorm(d_model)
+        self.layer_norm = LayerNorm(d_model)
         self.device = device
 
     def forward(self, inputs):
-        if self.residual:
-            residual = inputs
-        else:
-            residual = torch.zeros(inputs.shape).to(self.device)
+
+        residual = inputs
         output = self.l1(inputs)
         output = self.relu(output)
         output = self.l2(output)
@@ -371,19 +382,6 @@ class Decoder(nn.Module):
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
         return dec_outputs, dec_self_attns, dec_enc_attns
-
-
-class VariableSelection(nn.Module):
-    def __init__(self, input_size, d_model, device, dr):
-        super(VariableSelection, self).__init__()
-        self.pff = PoswiseFeedForwardNet(input_size, d_model, dr, device, residual=True)
-        self.softmax = nn.Softmax(dim=-1)
-
-    def forward(self, inputs):
-        weights = self.pff(inputs)
-        weights = self.softmax(weights)
-        outputs = inputs * weights
-        return outputs
 
 
 class Attn(nn.Module):
