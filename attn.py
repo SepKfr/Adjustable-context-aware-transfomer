@@ -8,7 +8,6 @@ import matplotlib.pylab as plt
 import os
 import torch.nn.functional as F
 import random
-import copy
 
 random.seed(21)
 torch.manual_seed(21)
@@ -66,23 +65,10 @@ def rel_pos_enc(seq):
     return rel_weight.unsqueeze(0)
 
 
-def clones(module, N):
-    "Produce N identical layers."
-    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
-
-
-class LayerNorm(nn.Module):
-    "Construct a layernorm module (See citation for details)."
-    def __init__(self, features, eps=1e-6):
-        super(LayerNorm, self).__init__()
-        self.a_2 = nn.Parameter(torch.ones(features))
-        self.b_2 = nn.Parameter(torch.zeros(features))
-        self.eps = eps
+class GELU(nn.Module):
 
     def forward(self, x):
-        mean = x.mean(-1, keepdim=True)
-        std = x.std(-1, keepdim=True)
-        return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+        return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
 
 class PositionalEncoding(nn.Module):
@@ -128,7 +114,7 @@ class ScaledDotProductAttention(nn.Module):
             b, h, s, c, d = Q.shape
             Q = Q.reshape(b, h, s, c*d)
             K = K.reshape(b, h, s, c*d)
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (torch.norm(Q) * torch.norm(K))
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k) * torch.norm(Q) * torch.norm(K))
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
         if attn_mask is not None:
@@ -153,7 +139,7 @@ class MultiHeadAttention(nn.Module):
 
         self.linear = nn.Linear(n_heads * d_v, d_model)
 
-        self.layer_norm = LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dr)
 
         self.device = device
@@ -186,17 +172,21 @@ class MultiHeadAttention(nn.Module):
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff, dr, device):
+    def __init__(self, d_model, d_ff, dr, device, residual=True):
         super(PoswiseFeedForwardNet, self).__init__()
         self.l1 = nn.Linear(d_model, d_ff)
         self.l2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dr)
+        self.residual = residual
         self.relu = nn.ReLU()
-        self.layer_norm = LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model)
         self.device = device
 
     def forward(self, inputs):
-        residual = inputs
+        if self.residual:
+            residual = inputs
+        else:
+            residual = torch.zeros(inputs.shape).to(self.device)
         output = self.l1(inputs)
         output = self.relu(output)
         output = self.l2(output)
@@ -248,17 +238,17 @@ class Encoder(nn.Module):
 
         self.n_layers = n_layers
         self.layers = []
-        encoder_layer = EncoderLayer(
-            d_model=d_model, d_ff=d_ff,
-            d_k=d_k, d_v=d_v, n_heads=n_heads,
-            device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, dr=dr)
-        self.layers = clones(encoder_layer, n_layers)
-
+        for _ in range(n_layers):
+            encoder_layer = EncoderLayer(
+                d_model=d_model, d_ff=d_ff,
+                d_k=d_k, d_v=d_v, n_heads=n_heads,
+                device=device, pe=pe,
+                attn_type=attn_type, cutoff=cutoff, dr=dr)
+            self.layers.append(encoder_layer)
+        self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.kernel_size = kernel
         self.dilation = 1
-        self.norm = LayerNorm(d_model)
 
     def forward(self, enc_input):
 
@@ -285,7 +275,7 @@ class Encoder(nn.Module):
 
         enc_self_attns = torch.stack(enc_self_attns)
         enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])
-        return self.norm(enc_outputs), enc_self_attns
+        return enc_outputs, enc_self_attns
 
 
 class DecoderLayer(nn.Module):
@@ -332,18 +322,19 @@ class Decoder(nn.Module):
             dropout=0,
             device=device)
         self.layers = []
-        decoder_layer = DecoderLayer(
-            d_model=d_model, d_ff=d_ff,
-            d_k=d_k, d_v=d_v,
-            n_heads=n_heads, device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, dr=dr)
-        self.layers = clones(decoder_layer, n_layers)
+        for _ in range(n_layers):
+            decoder_layer = DecoderLayer(
+                d_model=d_model, d_ff=d_ff,
+                d_k=d_k, d_v=d_v,
+                n_heads=n_heads, device=device, pe=pe,
+                attn_type=attn_type, cutoff=cutoff, dr=dr)
+            self.layers.append(decoder_layer)
+        self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.cutoff = cutoff
         self.d_k = d_k
         self.kernel_size = kernel
         self.dilation = 1
-        self.norm = LayerNorm(d_model)
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs):
 
@@ -379,7 +370,7 @@ class Decoder(nn.Module):
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
-        return self.norm(dec_outputs), dec_self_attns, dec_enc_attns
+        return dec_outputs, dec_self_attns, dec_enc_attns
 
 
 class VariableSelection(nn.Module):
@@ -395,22 +386,12 @@ class VariableSelection(nn.Module):
         return outputs
 
 
-class Generator(nn.Module):
-    "Define standard linear + softmax generation step."
-    def __init__(self, d_model, tgt_input_size):
-        super(Generator, self).__init__()
-        self.proj = nn.Linear(d_model, tgt_input_size)
-
-    def forward(self, x):
-        return F.log_softmax(self.proj(x), dim=-1)
-
-
 class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, cutoff, kernel, dr):
+                 seq_len, seq_len_pred, cutoff, kernel, add_var_se, dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -428,16 +409,21 @@ class Attn(nn.Module):
             device=device, pe=pe,
             attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr)
         self.attn_type = attn_type
-        self.generator = Generator(d_model, tgt_input_size)
+        self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
+        self.var_selection = VariableSelection(seq_len, d_model, device, dr)
+        self.add_var_se = True if add_var_se == "True" else False
 
     def forward(self, enc_inputs, dec_inputs):
 
+        if self.add_var_se:
+            enc_inputs = self.var_selection(enc_inputs.transpose(1, 2)).transpose(1, 2)
+            dec_inputs = self.var_selection(dec_inputs.transpose(1, 2)).transpose(1, 2)
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_inputs,
                                                                   enc_outputs)
 
         dec_outputs = self.linear(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
-        dec_logits = self.generator(dec_outputs)
+        dec_logits = self.projection(dec_outputs)
         return dec_logits
 
