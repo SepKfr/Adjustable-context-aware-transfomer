@@ -279,7 +279,6 @@ class Encoder(nn.Module):
         if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
             enc_output = self.src_emb(enc_input)
             padding = (self.kernel_size - 1) * self.dilation
-            enc_output = enc_output.permute(0, 2, 1)
             enc_output = F.pad(enc_output.permute(0, 2, 1), (padding, 0))
             enc_outputs = self.src_emb_conv(enc_output).permute(0, 2, 1)
 
