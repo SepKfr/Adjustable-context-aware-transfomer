@@ -109,14 +109,33 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         if self.attn_type == "con":
-            Q = get_con_vecs(Q, self.cutoff).to(self.device)
-            K = get_con_vecs(K, self.cutoff).to(self.device)
-            b, h, s, c, d = Q.shape
-            Q = Q.reshape(b, h, s, c*d)
-            K = K.reshape(b, h, s, c*d)
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k) * torch.norm(Q) * torch.norm(K))
+
+            '''Q = get_con_vecs(Q, self.cutoff).to(self.device)
+            K = get_con_vecs(K, self.cutoff).to(self.device)'''
+            b, h, l, d_k = Q.shape
+            l_k = K.shape[2]
+            Q = Q.reshape(b, l, d_k*h)
+            K = K.reshape(b, l_k, d_k*h)
+
+            Q_p = torch.zeros(b, h, l, l, d_k)
+            K_p = torch.zeros(b, h, l, l_k, d_k)
+
+            for k in range(0, l):
+                conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
+                padding = (k+1 - 1) * 1
+                Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
+                K_g = F.pad(K.permute(0, 2, 1), (padding, 0))
+                Q_g = conv(Q_g).reshape(b, h, l, d_k)
+                K_g = conv(K_g).reshape(b, h, l_k, d_k)
+                Q_p[:, :, k, :, :] = Q_g
+                K_p[:, :, k, :, :] = K_g
+
+            scores = torch.einsum('bhgqd,bhgkd->bhqkg', Q_p, K_p) / (np.sqrt(self.d_k))
+            scores = torch.max(scores, -1).values
+
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+
         if attn_mask is not None:
 
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
@@ -169,6 +188,7 @@ class MultiHeadAttention(nn.Module):
         output = self.dropout(output)
         return self.layer_norm(output + Q), attn
 
+
 class PositionwiseFeedForward(nn.Module):
     "Implements FFN equation."
     def __init__(self, d_model, d_ff, dropout=0.1):
@@ -176,6 +196,7 @@ class PositionwiseFeedForward(nn.Module):
         self.w_1 = nn.Linear(d_model, d_ff)
         self.w_2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(dropout)
+
 
 class PoswiseFeedForwardNet(nn.Module):
 
@@ -259,9 +280,8 @@ class Encoder(nn.Module):
             enc_output = self.src_emb(enc_input)
             padding = (self.kernel_size - 1) * self.dilation
             enc_output = enc_output.permute(0, 2, 1)
-            enc_output = F.pad(enc_output, (padding, 0))
-            enc_outputs = self.src_emb_conv(enc_output)
-            enc_outputs = enc_outputs.permute(0, 2, 1)
+            enc_output = F.pad(enc_output.permute(0, 2, 1), (padding, 0))
+            enc_outputs = self.src_emb_conv(enc_output).permute(0, 2, 1)
 
         else:
             enc_outputs = self.src_emb(enc_input)
