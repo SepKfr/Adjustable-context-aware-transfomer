@@ -118,11 +118,13 @@ class ScaledDotProductAttention(nn.Module):
             K = K.reshape(b, l_k, d_k*h)
             V = K.reshape(b, l_k, d_k*h)
 
-            Q_p = torch.zeros(b, h, l, l, d_k)
-            K_p = torch.zeros(b, h, l, l_k, d_k)
-            V_p = torch.zeros(b, h, l, l_k, d_k)
+            n_k = math.floor(l / 2)
+            Q_p = torch.zeros(b, h, n_k, l, d_k)
+            K_p = torch.zeros(b, h, n_k, l_k, d_k)
+            V_p = torch.zeros(b, h, n_k, l_k, d_k)
 
-            for k in range(0, l):
+            ind = 0
+            for k in range(0, l, 2):
                 conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
                 padding = (k+1 - 1) * 1
                 Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
@@ -131,13 +133,14 @@ class ScaledDotProductAttention(nn.Module):
                 Q_g = conv(Q_g).reshape(b, h, l, d_k)
                 K_g = conv(K_g).reshape(b, h, l_k, d_k)
                 V_g = conv(V_g).reshape(b, h, l_k, d_k)
-                Q_p[:, :, k, :, :] = Q_g
-                K_p[:, :, k, :, :] = K_g
-                V_p[:, :, k, :, :] = V_g
+                Q_p[:, :, ind, :, :] = Q_g
+                K_p[:, :, ind, :, :] = K_g
+                V_p[:, :, ind, :, :] = V_g
+                ind += 1
 
-            scores = torch.einsum('bhgqd,bhgkd->bhgqk', Q_p.to(self.device), K_p.to(self.device)) / (np.sqrt(self.d_k))
+            scores = torch.einsum('bhgqd,bhgkd->bhqkg', Q_p.to(self.device), K_p.to(self.device)) / (np.sqrt(self.d_k))
             if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, l, 1, 1)
+                attn_mask = attn_mask.unsqueeze(-1).repeat(1, 1, 1, 1, n_k)
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
@@ -149,7 +152,8 @@ class ScaledDotProductAttention(nn.Module):
 
         attn = nn.Softmax(dim=-1)(scores)
         if self.attn_type == "con":
-            context = torch.einsum('bhgqk,bhgvd->bhqd', attn, V_p.to(self.device))
+            attn = nn.Softmax(dim=-2)(scores)
+            context = torch.einsum('bhqkg,bhgvd->bhqd', attn, V_p.to(self.device))
             attn = torch.einsum('bhgqk->bhqk', attn)
         else:
 
