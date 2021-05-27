@@ -116,24 +116,28 @@ class ScaledDotProductAttention(nn.Module):
             l_k = K.shape[2]
             Q = Q.reshape(b, l, d_k*h)
             K = K.reshape(b, l_k, d_k*h)
+            V = K.reshape(b, l_k, d_k*h)
 
             Q_p = torch.zeros(b, h, l, l, d_k)
             K_p = torch.zeros(b, h, l, l_k, d_k)
+            V_p = torch.zeros(b, h, l, l_k, d_k)
 
             for k in range(0, l):
                 conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
                 padding = (k+1 - 1) * 1
                 Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
                 K_g = F.pad(K.permute(0, 2, 1), (padding, 0))
+                V_g = F.pad(V.permute(0, 2, 1), (padding, 0))
                 Q_g = conv(Q_g).reshape(b, h, l, d_k)
                 K_g = conv(K_g).reshape(b, h, l_k, d_k)
+                V_g = conv(V_g).reshape(b, h, l_k, d_k)
                 Q_p[:, :, k, :, :] = Q_g
                 K_p[:, :, k, :, :] = K_g
+                V_p[:, :, k, :, :] = V_g
 
             scores = torch.einsum('bhgqd,bhgkd->bhgqk', Q_p.to(self.device), K_p.to(self.device)) / (np.sqrt(self.d_k))
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, l, 1, 1)
-
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
@@ -144,11 +148,11 @@ class ScaledDotProductAttention(nn.Module):
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
-
         if self.attn_type == "con":
-            context = torch.einsum('bhgqk,bhvd->bhqd', attn, V)
+            context = torch.einsum('bhgqk,bhgvd->bhqd', attn, V_p)
             attn = torch.einsum('bhgqk->bhqk', attn)
         else:
+
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
 
