@@ -130,7 +130,7 @@ class ScaledDotProductAttention(nn.Module):
                 Q_p[:, :, k, :, :] = Q_g
                 K_p[:, :, k, :, :] = K_g
 
-            scores = torch.einsum('bhgqd,bhgkd->bhqkg', Q_p, K_p) / (np.sqrt(self.d_k))
+            scores = torch.einsum('bhgqd,bhgkd->bhqkg', Q_p.to(self.device), K_p.to(self.device)) / (np.sqrt(self.d_k))
             scores = torch.max(scores, -1).values
 
         else:
