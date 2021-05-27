@@ -86,6 +86,8 @@ def train(args, model, train_en, train_de, train_y,
           config, config_num, best_config, path, criterion):
 
     stop = False
+    if opt is not None:
+        optimizer = opt.optimizer
     try:
         model.train()
         total_loss = 0
@@ -95,15 +97,9 @@ def train(args, model, train_en, train_de, train_y,
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
-            if opt is not None:
-                opt.optimizer.zero_grad()
-            else:
-                optimizer.zero_grad()
+            optimizer.zero_grad()
             loss.backward()
-            if opt is not None:
-                opt.optimizer.step()
-            else:
-                optimizer.step()
+            optimizer.step()
         '''t = time()
         print("end {}:".format(ctime(t)))'''
 
@@ -135,7 +131,7 @@ def train(args, model, train_en, train_de, train_y,
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': opt.optimizer.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
             'config_num': config_num,
             'best_config': best_config
         }, os.path.join(path, "{}_continue".format(args.name)))
