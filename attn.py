@@ -117,12 +117,13 @@ class ScaledDotProductAttention(nn.Module):
             Q = Q.reshape(b, l, d_k*h)
             K = K.reshape(b, l_k, d_k*h)
 
-            n_k = math.floor(l / 2)
+            n_k = math.floor(math.log2(l)) + 1
             Q_p = torch.zeros(b, h, n_k, l, d_k)
             K_p = torch.zeros(b, h, n_k, l_k, d_k)
 
             ind = 0
-            for k in range(0, l, 2):
+            for k in range(0, n_k):
+                k = 2 ** k
                 conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
                 padding = (k+1 - 1) * 1
                 Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
