@@ -278,7 +278,7 @@ def main():
                          dr=dr).to(device)
 
             if args.lr_variate == "False":
-                optim = Adam(model.parameters(), lr=0.0001)
+                optim = Adam(model.parameters(), lr=lr)
                 opt = None
             else:
                 opt = NoamOpt(d_model, 1, 5000,
