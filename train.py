@@ -147,7 +147,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 
-    n_layers, n_heads, d_model, lr, dr, cutoff, kernel= config
+    n_layers, n_heads, d_model, lr, dr, kernel= config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
@@ -162,8 +162,7 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
-                 seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                 cutoff=cutoff, kernel=kernel,
+                 seq_len=seq_len, seq_len_pred=args.seq_len_pred, kernel=kernel,
                  dr=dr).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -191,8 +190,6 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--seq_len_pred", type=int, default=8)
     parser.add_argument("--batch_size", type=int, default=48)
-    parser.add_argument("--cutoff", type=int, default=[1])
-    parser.add_argument("--cutoff_best", type=int)
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--n_heads", type=list, default=[8])
@@ -246,7 +243,7 @@ def main():
     if args.attn_type != "attn_conv":
         args.kernel = [1]
     hyper_param = list([args.n_layers, args.n_heads,
-                        args.d_model, args.lr, args.dr, args.cutoff, args.kernel])
+                        args.d_model, args.lr, args.dr, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
     if training:
@@ -263,7 +260,7 @@ def main():
         for i, conf in enumerate(configs, config_num):
             print('config: {}'.format(conf))
 
-            n_layers, n_heads, d_model, lr, dr, cutoff, kernel = conf
+            n_layers, n_heads, d_model, lr, dr, kernel = conf
             d_k = int(d_model / n_heads)
             model = Attn(src_input_size=train_en.shape[3],
                          tgt_input_size=train_y.shape[3],
@@ -274,8 +271,7 @@ def main():
                          tgt_pad_index=0, device=device,
                          pe=args.pos_enc, attn_type=args.attn_type,
                          seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         cutoff=cutoff, kernel=kernel,
-                         dr=dr).to(device)
+                         kernel=kernel, dr=dr).to(device)
 
             if args.lr_variate == "False":
                 optim = Adam(model.parameters(), lr=lr)
@@ -309,15 +305,15 @@ def main():
                                  criterion, seq_len, path)
             print("test error {:.3f}".format(test_loss))
 
-        layers, heads, d_model, lr, dr, cutoff, kernel = best_config
+        layers, heads, d_model, lr, dr, kernel = best_config
         print("best_config: {}".format(best_config))
 
     else:
 
-        layers, heads, d_model, lr, dr, cutoff, kernel, local = \
+        layers, heads, d_model, lr, dr, kernel, local = \
             args.n_layers_best, args.n_heads_best, args.d_model_best, \
-            args.lr_best, args.dr_best, args.cutoff_best, args.kernel_best, args.local_best
-        best_config = layers, heads, d_model, lr, cutoff, kernel, local
+            args.lr_best, args.dr_best, args.kernel_best, args.local_best
+        best_config = layers, heads, d_model, lr, kernel, local
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
@@ -330,7 +326,6 @@ def main():
     config_file[args.name].append(d_model)
     config_file[args.name].append(lr)
     config_file[args.name].append(dr)
-    config_file[args.name].append(cutoff)
 
     print("test error for best config {:.3f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
@@ -360,7 +355,6 @@ def main():
             json_dat[args.name].append(d_model)
             json_dat[args.name].append(lr)
             json_dat[args.name].append(dr)
-            json_dat[args.name].append(cutoff)
             json_dat[args.name].append(kernel)
 
         with open(config_path, "w") as json_file:

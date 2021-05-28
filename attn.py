@@ -97,14 +97,13 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, pe, attn_type, cutoff):
+    def __init__(self, d_k, device, pe, attn_type):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
         self.pe = pe
         self.attn_type = attn_type
-        self.cutoff = cutoff
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -165,7 +164,7 @@ class ScaledDotProductAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, attn_type, cutoff, dr):
+    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, attn_type, dr):
 
         super(MultiHeadAttention, self).__init__()
         self.WQ = nn.Linear(d_model, d_k * n_heads)
@@ -185,7 +184,6 @@ class MultiHeadAttention(nn.Module):
         self.n_heads = n_heads
         self.pe = pe
         self.attn_type = attn_type
-        self.cutoff = cutoff
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -197,21 +195,12 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
-                                                  attn_type=self.attn_type, cutoff=self.cutoff)(
+                                                  attn_type=self.attn_type)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.linear(context)
         output = self.dropout(output)
         return self.layer_norm(output + Q), attn
-
-
-class PositionwiseFeedForward(nn.Module):
-    "Implements FFN equation."
-    def __init__(self, d_model, d_ff, dropout=0.1):
-        super(PositionwiseFeedForward, self).__init__()
-        self.w_1 = nn.Linear(d_model, d_ff)
-        self.w_2 = nn.Linear(d_ff, d_model)
-        self.dropout = nn.Dropout(dropout)
 
 
 class PoswiseFeedForwardNet(nn.Module):
@@ -237,12 +226,12 @@ class PoswiseFeedForwardNet(nn.Module):
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
-                 device, pe, attn_type, cutoff, dr):
+                 device, pe, attn_type, dr):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, dr=dr)
+            attn_type=attn_type, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
@@ -261,7 +250,7 @@ class Encoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v, n_heads,
                  n_layers, pad_index, device, pe,
-                 attn_type, cutoff, kernel, dr):
+                 attn_type, kernel, dr):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
@@ -269,8 +258,8 @@ class Encoder(nn.Module):
         self.src_emb = nn.Linear(input_size, d_model)
         self.src_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
                                       kernel_size=kernel)
-        self.src_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
-                                   kernel_size=1)
+        '''self.src_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
+                                   kernel_size=1)'''
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -283,7 +272,7 @@ class Encoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v, n_heads=n_heads,
                 device=device, pe=pe,
-                attn_type=attn_type, cutoff=cutoff, dr=dr)
+                attn_type=attn_type, dr=dr)
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
@@ -300,7 +289,6 @@ class Encoder(nn.Module):
 
         else:
             enc_outputs = self.src_emb(enc_input)
-            enc_outputs = self.src_emb_2(enc_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         enc_outputs = self.pos_emb(enc_outputs)
 
@@ -319,14 +307,14 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device, pe, attn_type, cutoff, dr):
+                 n_heads, device, pe, attn_type, dr):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, cutoff=cutoff, dr=dr)
+            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, dr=dr)
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, cutoff=cutoff, dr=dr)
+            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
@@ -345,7 +333,7 @@ class Decoder(nn.Module):
 
     def __init__(self, input_size, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device, pe,
-                 attn_type, cutoff, kernel, dr):
+                 attn_type, kernel, dr):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -353,8 +341,8 @@ class Decoder(nn.Module):
         self.tgt_emb = nn.Linear(input_size, d_model)
         self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
                                       kernel_size=kernel)
-        self.tgt_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
-                                   kernel_size=1)
+        '''self.tgt_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
+                                   kernel_size=1)'''
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -365,11 +353,10 @@ class Decoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
                 n_heads=n_heads, device=device, pe=pe,
-                attn_type=attn_type, cutoff=cutoff, dr=dr)
+                attn_type=attn_type, dr=dr)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
-        self.cutoff = cutoff
         self.d_k = d_k
         self.kernel_size = kernel
         self.dilation = 1
@@ -386,7 +373,6 @@ class Decoder(nn.Module):
 
         else:
             dec_outputs = self.tgt_emb(dec_inputs)
-            dec_outputs = self.tgt_emb_2(dec_outputs.permute(0, 2, 1)).permute(0, 2, 1)
 
         dec_outputs = self.pos_emb(dec_outputs)
 
@@ -416,7 +402,7 @@ class Attn(nn.Module):
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, cutoff, kernel,dr):
+                 seq_len, seq_len_pred, kernel,dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -424,15 +410,14 @@ class Attn(nn.Module):
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
-            device=device, pe=pe, attn_type=attn_type,
-            cutoff=cutoff, kernel=kernel, dr=dr)
+            device=device, pe=pe, attn_type=attn_type, kernel=kernel, dr=dr)
         self.decoder = Decoder(
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=tgt_pad_index,
             device=device, pe=pe,
-            attn_type=attn_type, cutoff=cutoff, kernel=kernel, dr=dr)
+            attn_type=attn_type, kernel=kernel, dr=dr)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
         self.linear = nn.Linear(seq_len, seq_len_pred, bias=False)
