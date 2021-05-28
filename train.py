@@ -283,14 +283,11 @@ def main():
             if stop:
                 break
 
-        test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
-                             criterion, seq_len, path)
-        print("test error {:.3f}".format(test_loss))
+    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
+                         criterion, seq_len, path)
 
     layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
-
-    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
     erros[args.name] = list()
     config_file[args.name] = list()
