@@ -282,6 +282,7 @@ def main():
                       opt, optim, conf, i, best_config, path, criterion)
             if stop:
                 break
+            print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
                          criterion, seq_len, path)
