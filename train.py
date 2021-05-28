@@ -209,8 +209,6 @@ def main():
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
-    parser.add_argument("--training", type=str, default="True")
-    parser.add_argument("--continue_train", type=str, default="False")
     args = parser.parse_args()
 
     path = "models_{}_{}".format(args.site, args.seq_len_pred)
@@ -236,84 +234,61 @@ def main():
                              test_x[:, -seq_len:, :].unsqueeze(0), test_y[:, :, :].unsqueeze(0)
 
     criterion = nn.MSELoss()
-    training = True if args.training == "True" else False
-    continue_train = True if args.continue_train == "True" else False
-    if args.attn_type != "con" and args.attn_type != "con_2":
-        args.cutoff = [1]
     if args.attn_type != "attn_conv":
         args.kernel = [1]
     hyper_param = list([args.n_layers, args.n_heads,
                         args.d_model, args.lr, args.dr, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
-    if training:
-        val_loss = 1e10
-        best_config = configs[0]
-        config_num = 0
-        checkpoint = None
 
-        if continue_train:
+    val_loss = 1e10
+    best_config = configs[0]
+    config_num = 0
 
-            checkpoint = torch.load(os.path.join(path, "{}_continue".format(args.name)))
-            config_num = checkpoint["config_num"]
+    for i, conf in enumerate(configs, config_num):
+        print('config: {}'.format(conf))
 
-        for i, conf in enumerate(configs, config_num):
-            print('config: {}'.format(conf))
+        n_layers, n_heads, d_model, lr, dr, kernel = conf
+        d_k = int(d_model / n_heads)
+        model = Attn(src_input_size=train_en.shape[3],
+                     tgt_input_size=train_y.shape[3],
+                     d_model=d_model,
+                     d_ff=d_model*4,
+                     d_k=d_k, d_v=d_k, n_heads=n_heads,
+                     n_layers=n_layers, src_pad_index=0,
+                     tgt_pad_index=0, device=device,
+                     pe=args.pos_enc, attn_type=args.attn_type,
+                     seq_len=seq_len, seq_len_pred=args.seq_len_pred,
+                     kernel=kernel, dr=dr).to(device)
 
-            n_layers, n_heads, d_model, lr, dr, kernel = conf
-            d_k = int(d_model / n_heads)
-            model = Attn(src_input_size=train_en.shape[3],
-                         tgt_input_size=train_y.shape[3],
-                         d_model=d_model,
-                         d_ff=d_model*4,
-                         d_k=d_k, d_v=d_k, n_heads=n_heads,
-                         n_layers=n_layers, src_pad_index=0,
-                         tgt_pad_index=0, device=device,
-                         pe=args.pos_enc, attn_type=args.attn_type,
-                         seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                         kernel=kernel, dr=dr).to(device)
+        if args.lr_variate == "False":
+            optim = Adam(model.parameters(), lr=lr)
+            opt = None
+        else:
+            opt = NoamOpt(d_model, 1, 5000,
+            Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
+            optim = opt.optimizer
 
-            if args.lr_variate == "False":
-                optim = Adam(model.parameters(), lr=lr)
-                opt = None
-            else:
-                opt = NoamOpt(d_model, 1, 5000,
-                Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
-                optim = opt.optimizer
+        epoch_start = 0
 
-            epoch_start = 0
-            if continue_train:
-                model.load_state_dict(checkpoint["model_state_dict"])
-                optim.load_state_dict(checkpoint["optimizer_state_dict"])
-                epoch_start = checkpoint["epoch"]
-                best_config = checkpoint["best_config"]
-                continue_train = False
+        val_inner_loss = 1e10
+        e = 0
+        for epoch in range(epoch_start, args.n_epochs, 1):
 
-            val_inner_loss = 1e10
-            e = 0
-            for epoch in range(epoch_start, args.n_epochs, 1):
+            best_config, val_loss, val_inner_loss, stop, e = \
+                train(args, model, train_en.to(device), train_de.to(device),
+                      train_y.to(device), valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
+                      opt, optim, conf, i, best_config, path, criterion)
+            if stop:
+                break
 
-                best_config, val_loss, val_inner_loss, stop, e = \
-                    train(args, model, train_en.to(device), train_de.to(device),
-                          train_y.to(device), valid_en.to(device), valid_de.to(device),
-                          valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                          opt, optim, conf, i, best_config, path, criterion)
-                if stop:
-                    break
+        test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
+                             criterion, seq_len, path)
+        print("test error {:.3f}".format(test_loss))
 
-            test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
-                                 criterion, seq_len, path)
-            print("test error {:.3f}".format(test_loss))
-
-        layers, heads, d_model, lr, dr, kernel = best_config
-        print("best_config: {}".format(best_config))
-
-    else:
-
-        layers, heads, d_model, lr, dr, kernel, local = \
-            args.n_layers_best, args.n_heads_best, args.d_model_best, \
-            args.lr_best, args.dr_best, args.kernel_best, args.local_best
-        best_config = layers, heads, d_model, lr, kernel, local
+    layers, heads, d_model, lr, dr, kernel = best_config
+    print("best_config: {}".format(best_config))
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, seq_len, path)
 
