@@ -188,8 +188,8 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=8)
-    parser.add_argument("--batch_size", type=int, default=48)
+    parser.add_argument("--seq_len_pred", type=int, default=32)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--n_heads", type=list, default=[8])
