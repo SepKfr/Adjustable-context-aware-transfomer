@@ -149,6 +149,7 @@ class ScaledDotProductAttention(nn.Module):
                 (K).permute(0, 2, 1)
             Q = Q.reshape(b, h, l, d_k)
             K = K.reshape(b, h, l_k, d_k)
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
