@@ -97,54 +97,59 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, pe, attn_type):
+    def __init__(self, d_k, device, pe, attn_type, kernel):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
         self.pe = pe
         self.attn_type = attn_type
+        self.kernel = kernel
 
     def forward(self, Q, K, V, attn_mask):
 
-        if self.attn_type == "con":
+        b, h, l, d_k = Q.shape
+        l_k = K.shape[2]
 
-            '''Q = get_con_vecs(Q, self.cutoff).to(self.device)
-            K = get_con_vecs(K, self.cutoff).to(self.device)'''
-            b, h, l, d_k = Q.shape
-            l_k = K.shape[2]
-            '''Q = Q.reshape(b, l, d_k*h)
-            K = K.reshape(b, l_k, d_k*h)'''
+        if self.attn_type == "temp" or self.attn_type == "temp_2":
 
             n_k = math.floor(math.log2(l)) + 1
-            '''Q_p = torch.zeros(b, h, n_k, l, d_k)
-            K_p = torch.zeros(b, h, n_k, l_k, d_k)'''
-            V_p = torch.zeros(b, h, n_k, l_k, d_k)
+
+            if self.attn_type == "temp_2":
+                V_p = torch.zeros(b, h, n_k, l_k, d_k)
             scores = torch.zeros(b, h, n_k, l, l_k)
 
             ind = 0
             for k in range(0, n_k):
                 k = 2 ** k
-                '''conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
-                padding = (k+1 - 1) * 1
-                Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
-                K_g = F.pad(K.permute(0, 2, 1), (padding, 0))
-                Q_g = conv(Q_g).reshape(b, h, l, d_k)
-                K_g = conv(K_g).reshape(b, h, l_k, d_k)'''
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
                 scores[:, :, ind, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
-                '''Q_p[:, :, ind, :, :] = Q_g
-                K_p[:, :, ind, :, :] = K_g'''
-                V_g = nn.Linear(k, 1).to(self.device)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
-                V_p[:, :, ind, :, :] = V_g
+                if self.attn_type == "temp_2":
+                    V_g = nn.Linear(k, 1).to(self.device)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
+                    V_p[:, :, ind, :, :] = V_g
                 ind += 1
 
-            V = V_p.to(self.device)
+            if self.attn_type == "temp_2":
+                V = V_p.to(self.device)
             scores = scores.to(self.device)
-            #scores = torch.einsum('bhgqd,bhgkd->bhgqk', Q_p.to(self.device), K_p.to(self.device)) / (np.sqrt(self.d_k))
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
+
+        elif self.attn_type == "conv_attn":
+
+            Q = Q.reshape(b, l, h*d_k)
+            K = K.reshape(b, l_k, h*d_k)
+            padding = self.kernel - 1
+            Q = F.pad(Q.permute(0, 2, 1), (padding, 0))
+            K = F.pad(K.permute(0, 2, 1), (padding, 0))
+            Q = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=self.kernel).to(self.device)\
+                (Q).permute(0, 2, 1)
+            K = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=self.kernel).to(self.device)\
+                (K).permute(0, 2, 1)
+            Q = Q.reshape(b, h, l, d_k)
+            K = K.reshape(b, h, l_k, d_k)
+
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
@@ -156,10 +161,14 @@ class ScaledDotProductAttention(nn.Module):
 
         attn = nn.Softmax(dim=-1)(scores)
 
-        if self.attn_type == "con":
+        if self.attn_type == "temp" or self.attn_type == "temp_2":
 
             attn = nn.Softmax(dim=-3)(scores)
-            context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
+            if self.attn_type == "temp_2":
+                context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
+            else:
+                context = torch.einsum('bhgqk,bhkd->bhqd', attn, V)
+
             attn = torch.einsum('bhgqk->bhqk', attn)
         else:
 
@@ -170,7 +179,7 @@ class ScaledDotProductAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, attn_type, dr):
+    def __init__(self, d_model, d_k, d_v, n_heads, device, pe, attn_type, kernel, dr):
 
         super(MultiHeadAttention, self).__init__()
         self.WQ = nn.Linear(d_model, d_k * n_heads)
@@ -190,6 +199,7 @@ class MultiHeadAttention(nn.Module):
         self.n_heads = n_heads
         self.pe = pe
         self.attn_type = attn_type
+        self.kernel = kernel
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -201,7 +211,7 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device, pe=self.pe,
-                                                  attn_type=self.attn_type)(
+                                                  attn_type=self.attn_type, kernel=self.kernel)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.linear(context)
@@ -232,12 +242,12 @@ class PoswiseFeedForwardNet(nn.Module):
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
-                 device, pe, attn_type, dr):
+                 device, pe, attn_type, kernel, dr):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, pe=pe,
-            attn_type=attn_type, dr=dr)
+            attn_type=attn_type, kernel=kernel, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
@@ -262,10 +272,6 @@ class Encoder(nn.Module):
         self.pad_index = pad_index
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
-        self.src_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
-                                      kernel_size=kernel)
-        '''self.src_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
-                                   kernel_size=1)'''
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -278,23 +284,14 @@ class Encoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v, n_heads=n_heads,
                 device=device, pe=pe,
-                attn_type=attn_type, dr=dr)
+                attn_type=attn_type, kernel=kernel, dr=dr)
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
-        self.kernel_size = kernel
-        self.dilation = 1
 
     def forward(self, enc_input):
 
-        if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
-            enc_output = self.src_emb(enc_input)
-            padding = (self.kernel_size - 1) * self.dilation
-            enc_output = F.pad(enc_output.permute(0, 2, 1), (padding, 0))
-            enc_outputs = self.src_emb_conv(enc_output).permute(0, 2, 1)
-
-        else:
-            enc_outputs = self.src_emb(enc_input)
+        enc_outputs = self.src_emb(enc_input)
 
         enc_outputs = self.pos_emb(enc_outputs)
 
@@ -313,14 +310,14 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device, pe, attn_type, dr):
+                 n_heads, device, pe, attn_type, kernel, dr):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, dr=dr)
+            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, kernel=kernel, dr=dr)
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, dr=dr)
+            d_v=d_v, n_heads=n_heads, device=device, pe=pe, attn_type=attn_type, kernel=kernel, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff, device=device, dr=dr)
 
@@ -345,10 +342,6 @@ class Decoder(nn.Module):
         self.device = device
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
-        self.tgt_emb_conv = nn.Conv1d(in_channels=d_model, out_channels=d_model,
-                                      kernel_size=kernel)
-        '''self.tgt_emb_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model,
-                                   kernel_size=1)'''
         self.pos_emb = PositionalEncoding(
             d_model=d_model,
             dropout=0,
@@ -359,26 +352,15 @@ class Decoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
                 n_heads=n_heads, device=device, pe=pe,
-                attn_type=attn_type, dr=dr)
+                attn_type=attn_type, kernel=kernel, dr=dr)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.d_k = d_k
-        self.kernel_size = kernel
-        self.dilation = 1
 
     def forward(self, dec_inputs, enc_inputs, enc_outputs):
 
-        if self.attn_type == 'attn_conv' or self.attn_type == 'con_conv':
-            dec_outputs = self.tgt_emb(dec_inputs)
-            padding = (self.kernel_size - 1) * self.dilation
-            dec_outputs = dec_outputs.permute(0, 2, 1)
-            dec_outputs = F.pad(dec_outputs, (padding, 0))
-            dec_outputs = self.tgt_emb_conv(dec_outputs)
-            dec_outputs = dec_outputs.permute(0, 2, 1)
-
-        else:
-            dec_outputs = self.tgt_emb(dec_inputs)
+        dec_outputs = self.tgt_emb(dec_inputs)
 
         dec_outputs = self.pos_emb(dec_outputs)
 
