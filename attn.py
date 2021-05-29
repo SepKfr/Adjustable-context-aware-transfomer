@@ -136,7 +136,7 @@ class ScaledDotProductAttention(nn.Module):
                 scores[:, :, :, :, ind] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
                 '''Q_p[:, :, ind, :, :] = Q_g
                 K_p[:, :, ind, :, :] = K_g'''
-                V_g = nn.Linear(k, 1)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
+                V_g = nn.Linear(k, 1).to(self.device)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
                 V_p[:, :, ind, :, :] = V_g
                 ind += 1
 
