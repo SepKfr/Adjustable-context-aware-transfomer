@@ -113,8 +113,8 @@ class ScaledDotProductAttention(nn.Module):
             K = get_con_vecs(K, self.cutoff).to(self.device)'''
             b, h, l, d_k = Q.shape
             l_k = K.shape[2]
-            Q = Q.reshape(b, l, d_k*h)
-            K = K.reshape(b, l_k, d_k*h)
+            '''Q = Q.reshape(b, l, d_k*h)
+            K = K.reshape(b, l_k, d_k*h)'''
 
             n_k = math.floor(math.log2(l)) + 1
             '''Q_p = torch.zeros(b, h, n_k, l, d_k)
@@ -125,13 +125,15 @@ class ScaledDotProductAttention(nn.Module):
             ind = 0
             for k in range(0, n_k):
                 k = 2 ** k
-                conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
+                '''conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k+1).to(self.device)
                 padding = (k+1 - 1) * 1
                 Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
                 K_g = F.pad(K.permute(0, 2, 1), (padding, 0))
                 Q_g = conv(Q_g).reshape(b, h, l, d_k)
-                K_g = conv(K_g).reshape(b, h, l_k, d_k)
-                scores[:, :, :, :, ind] = torch.einsum('bhqd,bhkd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
+                K_g = conv(K_g).reshape(b, h, l_k, d_k)'''
+                Q_g = get_con_vecs(Q, k)
+                K_g = get_con_vecs(K, k)
+                scores[:, :, :, :, ind] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
                 '''Q_p[:, :, ind, :, :] = Q_g
                 K_p[:, :, ind, :, :] = K_g'''
                 #V_p[:, :, ind, :, :] = K_g
