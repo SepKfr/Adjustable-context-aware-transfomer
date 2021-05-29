@@ -404,7 +404,7 @@ class Attn(nn.Module):
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
-            n_layers=n_layers, pad_index=tgt_pad_index,
+            n_layers=1, pad_index=tgt_pad_index,
             device=device, pe=pe,
             attn_type=attn_type, kernel=kernel, dr=dr)
         self.attn_type = attn_type
