@@ -116,17 +116,33 @@ class ScaledDotProductAttention(nn.Module):
             n_k = math.floor(math.log2(l)) + 1
 
             if self.attn_type == "temp_2":
+                V = V.reshape(b, l_k, h * d_k)
                 V_p = torch.zeros(b, h, n_k, l_k, d_k)
             scores = torch.zeros(b, h, n_k, l, l_k)
 
             ind = 0
+
+            Q = Q.reshape(b, l, h * d_k)
+            K = K.reshape(b, l_k, h * d_k)
+
             for k in range(0, n_k):
                 k = 2 * k + 1
-                Q_g = get_con_vecs(Q, k)
-                K_g = get_con_vecs(K, k)
-                scores[:, :, ind, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
+                '''Q_g = get_con_vecs(Q, k)
+                K_g = get_con_vecs(K, k)'''
+                padding = k - 1
+                Q_g = F.pad(Q.permute(0, 2, 1), (padding, 0))
+                K_g = F.pad(K.permute(0, 2, 1), (padding, 0))
+                conv = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h, kernel_size=k).to(self.device)
+                Q_g = conv(Q_g).transpose(1, 2)
+                K_g = conv(K_g).transpose(1, 2)
+                Q_g = Q_g.reshape(b, h, l, d_k)
+                K_g = K_g.reshape(b, h, l_k, d_k)
+                scores[:, :, ind, :, :] = torch.einsum('bhqd,bhkd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
                 if self.attn_type == "temp_2":
-                    V_g = nn.Linear(k, 1).to(self.device)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
+                    V_g = F.pad(V.permute(0, 2, 1), (padding, 0))
+                    V_g = conv(V_g).transpose(1, 2)
+                    V_g = V_g.reshape(b, h, l_k, d_k)
+                    #V_g = nn.Linear(k, 1).to(self.device)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
                     V_p[:, :, ind, :, :] = V_g
                 ind += 1
 
