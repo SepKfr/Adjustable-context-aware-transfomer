@@ -208,7 +208,7 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--site", type=str, default="WHB")
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--lr_variate", type=str, default="False")
+    parser.add_argument("--lr_variate", type=str, default="True")
     args = parser.parse_args()
 
     path = "models_{}_{}".format(args.site, args.seq_len_pred)
