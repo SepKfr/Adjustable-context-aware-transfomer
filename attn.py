@@ -134,7 +134,7 @@ class ScaledDotProductAttention(nn.Module):
                 V = V_p.to(self.device)
             scores = scores.to(self.device)
             if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k*2, 1, 1)
 
         elif self.attn_type == "conv_attn":
 
