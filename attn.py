@@ -113,7 +113,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if self.attn_type == "temp" or self.attn_type == "temp_2":
 
-            n_k = math.floor(math.log2(l)) + 1
+            n_k = math.floor(math.log2(l)) - 1
 
             if self.attn_type == "temp_2":
                 V_p = torch.zeros(b, h, n_k, l_k, d_k)
@@ -121,7 +121,7 @@ class ScaledDotProductAttention(nn.Module):
 
             ind = 0
             for k in range(0, n_k):
-                k = 2 * k + 1
+                k = 2*k + 1
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
                 scores[:, :, ind, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
