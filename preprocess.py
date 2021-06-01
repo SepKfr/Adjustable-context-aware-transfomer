@@ -31,7 +31,7 @@ class Data:
         self.add_wave = True if params.add_wave == "True" else False
         self.n_seasons = 4
         self.moving_averages = [4, 8, 16, 32]
-        self.n_moving_average = 4
+        self.n_moving_average = 0
         self.wavelets = ['db1', 'db2', 'db3']
         self.n_wavelets = 0
         self.nf = 3
@@ -149,9 +149,9 @@ class Data:
 
         #print(data_2d_in)
 
-        for i, mv in enumerate(self.moving_averages):
+        '''for i, mv in enumerate(self.moving_averages):
 
-            data_2d_in[:, i+1] = self.moving_average(mv, data, ts).squeeze(1)
+            data_2d_in[:, i+1] = self.moving_average(mv, data, ts).squeeze(1)'''
 
         j = 0
         for i in range(0, self.ts):
