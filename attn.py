@@ -116,8 +116,8 @@ class ScaledDotProductAttention(nn.Module):
             n_k = math.floor(math.log2(l)) + 1
 
             if self.attn_type == "temp_2":
-                V_p = torch.zeros(b, h, n_k, l_k, d_k)
-            scores = torch.zeros(b, h, n_k, l, l_k)
+                V_p = torch.zeros(b, h, n_k*2, l_k, d_k)
+            scores = torch.zeros(b, h, n_k*2, l, l_k)
 
             ind = 0
             for k in range(0, n_k*2):
