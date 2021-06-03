@@ -7,11 +7,14 @@ import torch
 import argparse
 import json
 import os
-import pytorch_warmup as warmup
 import itertools
 import sys
 import random
+import pandas as pd
 from time import time, ctime
+from data_loader import ExperimentConfig
+from base_train import batching, batch_sampled_data
+
 
 random.seed(21)
 torch.manual_seed(21)
@@ -83,7 +86,7 @@ else:
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
           val_inner_loss, opt, optimizer,
-          config, config_num, best_config, path, criterion):
+          config, config_num, best_config, formatter, criterion, path):
 
     stop = False
     if opt is not None:
@@ -109,7 +112,8 @@ def train(args, model, train_en, train_de, train_y,
         model.eval()
         test_loss = 0
         for j in range(test_en.shape[0]):
-            output = model(test_en[j].to(device), test_de[j].to(device))
+            output = model(test_en[j], test_de[j])
+            output = torch.from_numpy(formatter.format_predictions(output.cpu().detach().numpy()))
             loss = criterion(test_y[j].to(device), output)
             test_loss += loss.item()
 
@@ -145,12 +149,12 @@ def create_config(hyper_parameters):
     return prod
 
 
-def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
+def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, formatter ,path):
 
-    n_layers, n_heads, d_model, lr, dr, kernel= config
+    n_layers, n_heads, d_model, lr, dr, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
-    path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
+    path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
     if not os.path.exists(path_to_pred):
         os.makedirs(path_to_pred)
 
@@ -173,22 +177,20 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, path):
     mae_loss = 0
     for j in range(test_en.shape[0]):
         output = model(test_en[j].to(device), test_de[j].to(device))
+        output = torch.from_numpy(formatter.format_predictions(output.cpu().detach().numpy()))
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
-        #output = inverse_transform(output, 'test').to(device)
         y_true = test_y[j].to(device)
         loss = torch.sqrt(criterion(y_true, output))
         test_loss += loss.item()
         mae_loss += mae(y_true, output).item()
 
-    '''test_loss = test_loss / test_en.shape[1]
-    mae_loss = mae_loss / test_en.shape[1]'''
     return test_loss, mae_loss
 
 
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=64)
+    parser.add_argument("--seq_len_pred", type=int, default=24)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
@@ -204,34 +206,52 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='temp_2')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
-    parser.add_argument("--site", type=str, default="WHB")
+    parser.add_argument("--data_csv_path", type=str, default='traffic.csv')
+    parser.add_argument("--exp_name", type=str, default='traffic')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
     args = parser.parse_args()
 
-    path = "models_{}_{}".format(args.site, args.seq_len_pred)
+
+    config = ExperimentConfig(args.exp_name)
+    formatter = config.make_data_formatter()
+
+    path = "models_{}_{}".format(args.exp_name, args.seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
 
-    train_x = pickle.load(open("train_x.p", "rb"))
-    train_y = pickle.load(open("train_y.p", "rb"))
-    valid_x = pickle.load(open("valid_x.p", "rb"))
-    valid_y = pickle.load(open("valid_y.p", "rb"))
-    test_x = pickle.load(open("test_x.p", "rb"))
-    test_y = pickle.load(open("test_y.p", "rb"))
+    print("Loading & splitting data...")
+    raw_data = pd.read_csv(args.data_csv_path, index_col=0)
+    train_data, valid, test = formatter.split_data(raw_data)
+    train_max, valid_max = formatter.get_num_samples_for_calibration()
+    params = formatter.get_experiment_params()
 
-    seq_len = args.seq_len_pred
+    sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
+                       params['num_encoder_steps'], params["column_definition"])
+    train_x, train_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(device)
 
-    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :-seq_len, :],
-                                  train_x[:, -seq_len:, :], train_y[:, :, :])
+    sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
+                                     params['num_encoder_steps'], params["column_definition"])
+    valid_x, valid_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
+        device)
 
-    valid_en, valid_de, valid_y = valid_x[:, :-seq_len, :].unsqueeze(0), \
-                                  valid_x[:, -seq_len:, :].unsqueeze(0), valid_y[:, :, :].unsqueeze(0)
+    sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
+                                     params['num_encoder_steps'], params["column_definition"])
+    test_x, test_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
+        device)
 
-    test_en, test_de, test_y = test_x[:, :-seq_len, :].unsqueeze(0), \
-                             test_x[:, -seq_len:, :].unsqueeze(0), test_y[:, :, :].unsqueeze(0)
+    seq_len = params['num_encoder_steps']
+
+    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :seq_len, :],
+                                  train_x[:, seq_len:, :], train_y[:, :, :])
+
+    valid_en, valid_de, valid_y = batching(args.batch_size, valid_x[:, :seq_len, :],
+                                  valid_x[:, seq_len:, :], valid_y[:, :, :])
+
+    test_en, test_de, test_y = batching(args.batch_size, test_x[:, :seq_len, :],
+                                  test_x[:, seq_len:, :], test_y[:, :, :])
 
     criterion = nn.MSELoss()
     if args.attn_type != "attn_conv":
@@ -279,13 +299,13 @@ def main():
                 train(args, model, train_en.to(device), train_de.to(device),
                       train_y.to(device), valid_en.to(device), valid_de.to(device),
                       valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                      opt, optim, conf, i, best_config, path, criterion)
+                      opt, optim, conf, i, best_config, formatter, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
-                         criterion, seq_len, path)
+                         criterion, seq_len, formatter, path)
 
     layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
@@ -301,8 +321,8 @@ def main():
     config_file[args.name].append(dr)
 
     print("test error for best config {:.3f}".format(test_loss))
-    error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
-    config_path = "configs_{}_{}.json".format(args.site, args.seq_len_pred)
+    error_path = "errors_{}_{}.json".format(args.exp_name, args.seq_len_pred)
+    config_path = "configs_{}_{}.json".format(args.exp_name, args.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:

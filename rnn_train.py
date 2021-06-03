@@ -11,27 +11,15 @@ import itertools
 import sys
 import random
 import numpy as np
+import pandas as pd
+from data_loader import ExperimentConfig
+from base_train import batch_sampled_data, batching
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
+
 
 random.seed(21)
 torch.manual_seed(21)
 np.random.seed(21)
-
-
-def batching(batch_size, x, y_t):
-
-    batch_n = int(x.shape[0] / batch_size)
-    start = x.shape[0] % batch_n
-    X = torch.zeros(batch_n, batch_size, x.shape[1], x.shape[2])
-    Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
-
-    for i in range(batch_n):
-        X[i, :, :, :] = x[start:start+batch_size, :, :]
-        X[i, :, :, :] = x[start:start+batch_size, :, :]
-        Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
-        start += batch_size
-
-    return X, Y_t
 
 
 erros = dict()
@@ -45,8 +33,8 @@ else:
     print("running on CPU")
 
 
-def train(args, model, train_x, train_y,
-          test_x, test_y, epoch, e, val_loss,
+def train(args, model, train_en, train_de, train_y,
+          test_en, test_de, test_y, epoch, e, val_loss,
           val_inner_loss, optimizer, lr_scheduler, warmup_scheduler,
           config, config_num, best_config, path, criterion):
 
@@ -54,8 +42,8 @@ def train(args, model, train_x, train_y,
     try:
         model.train()
         total_loss = 0
-        for batch_id in range(train_x.shape[0]):
-            output = model(train_x[batch_id])
+        for batch_id in range(train_en.shape[0]):
+            output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id]).to(device)
             total_loss += loss.item()
             optimizer.zero_grad()
@@ -69,9 +57,9 @@ def train(args, model, train_x, train_y,
 
         model.eval()
         test_loss = 0
-        for j in range(test_x.shape[0]):
+        for j in range(test_en.shape[0]):
 
-            output = model(test_x[j])
+            output = model(test_en[j], test_de[j])
             loss = criterion(test_y[j], output)
             test_loss += loss.item()
 
@@ -107,20 +95,20 @@ def create_config(hyper_parameters):
     return list(random.sample(set(prod), num_samples))
 
 
-def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
+def evaluate(config, args, test_en, test_de, test_y, criterion, path):
 
     model = None
 
     if args.deep_type == "rnconv":
         n_layers, hidden_size, kernel, dr, lr = config
         model = RNConv(
-                        input_size=test_x.shape[3],
+                        input_size=test_en.shape[3],
                         output_size=test_y.shape[3],
                         out_channel=args.out_channel,
                         kernel=kernel,
                         n_layers=n_layers,
                         hidden_size=hidden_size,
-                        seq_len=test_x.shape[2],
+                        seq_len=test_en.shape[2],
                         seq_pred_len=args.seq_len_pred,
                         device=device,
                         d_r=dr)
@@ -130,10 +118,8 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         n_layers, hidden_size, dr, lr = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
-                    input_size=test_x.shape[3],
-                    output_size=test_y.shape[3],
+                    input_size=test_en.shape[3],
                     rnn_type=args.rnn_type,
-                    seq_len=test_x.shape[2],
                     seq_pred_len=args.seq_len_pred,
                     device=device,
                     d_r=dr)
@@ -143,7 +129,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         n_layers, hidden_size, dr, lr = config
         model = MLP(n_layers=n_layers,
                     hidden_size=hidden_size,
-                    input_size=test_x.shape[3],
+                    input_size=test_en.shape[3],
                     output_size=test_y.shape[3],
                     seq_len_pred=args.seq_len_pred,
                     device=device,
@@ -151,7 +137,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
         model = model.to(device)
 
     mae = nn.L1Loss()
-    path_to_pred = "preds_{}_{}".format(args.site, args.seq_len_pred)
+    path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
     if not os.path.exists(path_to_pred):
         os.makedirs(path_to_pred)
 
@@ -162,8 +148,8 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
 
     test_loss = 0
     mae_loss = 0
-    for j in range(test_x.shape[0]):
-        output = model(test_x[j].to(device))
+    for j in range(test_en.shape[0]):
+        output = model(test_en[j], test_de[j])
         y_true = test_y[j].to(device)
         pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
         loss = torch.sqrt(criterion(y_true, output))
@@ -177,7 +163,7 @@ def evaluate(config, args, test_x, test_y, criterion, seq_len, path):
 
 def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=1)
+    parser.add_argument("--seq_len_pred", type=int, default=24)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--hidden_size", type=int, default=32)
     parser.add_argument("--out_channel", type=int, default=32)
@@ -189,35 +175,53 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--n_layers", type=list, default=[1])
-    parser.add_argument("--site", type=str)
-    parser.add_argument("--deep_type", type=str, default="rnconv")
+    parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
-
+    parser.add_argument("--data_csv_path", type=str, default='traffic.csv')
+    parser.add_argument("--exp_name", type=str, default='traffic')
     args = parser.parse_args()
 
-    path = "models_{}_{}".format(args.site, args.seq_len_pred)
+    config = ExperimentConfig(args.exp_name)
+    formatter = config.make_data_formatter()
+
+    path = "models_{}_{}".format(args.exp_name, args.seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
 
-    train_x = pickle.load(open("train_x.p", "rb"))
-    train_y = pickle.load(open("train_y.p", "rb"))
-    valid_x = pickle.load(open("valid_x.p", "rb"))
-    valid_y = pickle.load(open("valid_y.p", "rb"))
-    test_x = pickle.load(open("test_x.p", "rb"))
-    test_y = pickle.load(open("test_y.p", "rb"))
+    print("Loading & splitting data...")
+    raw_data = pd.read_csv(args.data_csv_path, index_col=0)
+    train_data, valid, test = formatter.split_data(raw_data)
+    train_max, valid_max = formatter.get_num_samples_for_calibration()
+    params = formatter.get_experiment_params()
 
-    seq_len = args.seq_len_pred
+    sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
+                                     params['num_encoder_steps'], params["column_definition"])
+    train_x, train_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
+        device)
 
-    train_x, train_y = batching(args.batch_size, train_x, train_y)
+    sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
+                                     params['num_encoder_steps'], params["column_definition"])
+    valid_x, valid_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
+        device)
 
-    valid_x, valid_y = valid_x.unsqueeze(0), valid_y[:, :, :].unsqueeze(0)
+    sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
+                                     params['num_encoder_steps'], params["column_definition"])
+    test_x, test_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
+        device)
 
-    test_x, test_y = test_x.unsqueeze(0), test_y[:, :, :].unsqueeze(0)
+    seq_len = params['num_encoder_steps']
+
+    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :seq_len, :],
+                                           train_x[:, seq_len:, :], train_y[:, :, :])
+
+    valid_en, valid_de, valid_y = batching(args.batch_size, valid_x[:, :seq_len, :],
+                                           valid_x[:, seq_len:, :], valid_y[:, :, :])
+
+    test_en, test_de, test_y = batching(args.batch_size, test_x[:, :seq_len, :],
+                                        test_x[:, seq_len:, :], test_y[:, :, :])
 
     criterion = nn.MSELoss()
-    training = True
-    continue_train = False
 
     hyper_param = list()
 
@@ -233,21 +237,14 @@ def main():
     config_num = 0
     checkpoint = None
 
-    if continue_train:
-
-        checkpoint = torch.load(os.path.join(path, "{}_continue".format(args.name)))
-        config_num = checkpoint["config_num"]
-
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
-
-        model = None
 
         if args.deep_type == "rnconv":
             n_layers, hidden_size, kernel, dr, lr = conf
             model = RNConv(
-                        input_size=train_x.shape[3],
-                        output_size=train_y.shape[3],
+                        input_size=train_en.shape[3],
+                        output_size=train_en.shape[3],
                         out_channel=args.out_channel,
                         kernel=kernel,
                         n_layers=n_layers,
@@ -261,10 +258,8 @@ def main():
             n_layers, hidden_size, dr, lr = conf
             model = RNN(n_layers=n_layers,
                         hidden_size=hidden_size,
-                        input_size=train_x.shape[3],
-                        output_size=train_y.shape[3],
+                        input_size=train_en.shape[3],
                         rnn_type=args.rnn_type,
-                        seq_len=train_x.shape[2],
                         seq_pred_len=args.seq_len_pred,
                         device=device,
                         d_r=dr)
@@ -274,8 +269,8 @@ def main():
             n_layers, hidden_size, dr, lr = conf
             model = MLP(n_layers=n_layers,
                         hidden_size=hidden_size,
-                        input_size=test_x.shape[3],
-                        output_size=test_y.shape[3],
+                        input_size=test_en.shape[3],
+                        output_size=test_en.shape[3],
                         seq_len_pred=args.seq_len_pred,
                         device=device,
                         dr=dr)
@@ -283,12 +278,6 @@ def main():
 
         optimizer = Adam(model.parameters(), lr=lr)
         epoch_start = 0
-        if continue_train:
-            model.load_state_dict(checkpoint["model_state_dict"])
-            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-            epoch_start = checkpoint["epoch"]
-            best_config = checkpoint["best_config"]
-            continue_train = False
 
         num_steps = len(train_x) * args.n_epochs
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
@@ -298,16 +287,16 @@ def main():
         e = 0
         for epoch in range(epoch_start, args.n_epochs, 1):
             best_config, val_loss, val_inner_loss, stop, e = \
-                train(args, model, train_x.to(device),
-                      train_y.to(device), valid_x.to(device),
+                train(args, model, train_en.to(device), train_de.to(device),
+                      train_y.to(device), valid_en.to(device), valid_de.to(device),
                       valid_y.to(device), epoch, e, val_loss, val_inner_loss,
                       optimizer, lr_scheduler, warmup_scheduler,
                       conf, i, best_config, path, criterion)
             if stop:
                 break
 
-        test_loss, mae_loss = evaluate(best_config, args, test_x, test_y,
-                                       criterion, seq_len, path)
+        test_loss, mae_loss = evaluate(best_config, args, test_en, test_de,
+                                       test_y, criterion, path)
         print("test error {:.3f}".format(test_loss))
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
@@ -320,7 +309,7 @@ def main():
 
     print("best_config: {}".format(best_config))
 
-    test_loss, mae_loss = evaluate(best_config, args, test_x, test_y, criterion, seq_len, path)
+    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, path)
 
     erros[args.name] = list()
     config_file[args.name] = list()
@@ -334,8 +323,8 @@ def main():
         config_file[args.name].append(kernel)
 
     print("test error for best config {:.3f}".format(test_loss))
-    error_path = "errors_{}_{}.json".format(args.site, args.seq_len_pred)
-    config_path = "configs_{}_{}.json".format(args.site, args.seq_len_pred)
+    error_path = "errors_{}_{}.json".format(args.exp_name, args.seq_len_pred)
+    config_path = "configs_{}_{}.json".format(args.exp_name, args.seq_len_pred)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:

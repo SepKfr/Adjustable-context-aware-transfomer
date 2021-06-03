@@ -1,31 +1,32 @@
-import torch
-import torch.nn as nn
-from preprocess import Scaler
-import pickle
-import numpy as np
 
-scalers = pickle.load(open("scalers.pkl", "rb"))
+def get_single_col_by_input_type(input_type, column_definition):
+    """Returns name of single column.
+    Args:
+    input_type: Input type of column to extract
+    column_definition: Column definition list for experiment
+    """
+
+    l = [tup[0] for tup in column_definition if tup[2] == input_type]
+
+    if len(l) != 1:
+        raise ValueError('Invalid number of columns for {}'.format(input_type))
+
+    return l[0]
 
 
-class Metrics:
-    def __init__(self, y_true, y_pred):
-        self.mse = nn.MSELoss()
-        self.rmse = torch.sqrt(self.mse(y_true, y_pred))
-        self.mae = torch.sum(abs(y_true - y_pred) / len(y_true))
+def extract_cols_from_data_type(data_type, column_definition,
+                                excluded_input_types):
+    """Extracts the names of columns that correspond to a define data_type.
+    Args:
+    data_type: DataType of columns to extract.
+    column_definition: Column definition to use.
+    excluded_input_types: Set of input types to exclude
+    Returns:
+    List of names for columns with data type specified.
+    """
+    return [
+      tup[0]
+      for tup in column_definition
+      if tup[1] == data_type and tup[2] not in excluded_input_types
+    ]
 
-
-def inverse_transform(data, set_dat):
-
-    n, d, hw = data.shape
-    inv_data = torch.zeros(data.shape)
-
-    for i, scalers_per_site in enumerate(scalers):
-
-        scaler = scalers_per_site.scalers[(set_dat, 1)]
-        dat = data[:, :, 0]
-        dat = dat.view(n*d)
-        in_dat = scaler.inverse_transform(dat.cpu().detach().numpy().reshape(-1, 1))
-        in_dat = torch.from_numpy(np.array(in_dat).flatten())
-        inv_data[:, :, 0] = in_dat.view(n, d)
-
-    return inv_data

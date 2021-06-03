@@ -111,32 +111,31 @@ class RNConv(nn.Module):
 
 class RNN(nn.Module):
     def __init__(self, n_layers, hidden_size,
-                 input_size, output_size,
-                 rnn_type, seq_len, seq_pred_len, device, d_r):
+                 input_size, rnn_type, seq_pred_len, device, d_r):
 
         super(RNN, self).__init__()
-        self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
-        self.linear2 = nn.Linear(hidden_size, output_size, bias=False)
+        self.enc_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
+        self.dec_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
         self.n_layers = n_layers
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.linear1 = nn.Linear(input_size, hidden_size, bias=False)
-        self.proj_out = nn.Linear(seq_len, seq_pred_len, bias=False)
+        self.linear2 = nn.Linear(hidden_size, 1, bias=False)
         self.pred_seq_len = seq_pred_len
         self.device = device
 
-    def forward(self, x, hidden=None):
+    def forward(self, x_en, x_de, hidden=None):
 
-        b, seq_len, _ = x.shape
-        x_en = self.linear1(x).permute(1, 0, 2)
+        x_en = self.linear1(x_en).permute(1, 0, 2)
+        x_de = self.linear1(x_de).permute(1, 0, 2)
 
         if hidden is None:
             hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size).to(self.device)
 
-        outputs, _ = self.lstm(x_en, (hidden, hidden))
+        _, (hidden, state) = self.enc_lstm(x_en, (hidden, hidden))
+        dec_output, _ = self.dec_lstm(x_de, (hidden, hidden))
 
-        outputs = self.proj_out(outputs.permute(1, 2, 0))
-        outputs = self.linear2(outputs.permute(0, 2, 1))
+        outputs = self.linear2(dec_output).transpose(0, 1)
 
         return outputs
 

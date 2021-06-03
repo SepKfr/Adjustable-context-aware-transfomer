@@ -4,8 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 import argparse
-import shutil
 import sys
+
+import electricity
+import traffic
 
 
 class ExperimentConfig(object):
@@ -38,9 +40,20 @@ class ExperimentConfig(object):
             'traffic': 'hourly_data.csv',
         }
 
-        path = os.path.join(self.data_folder, csv_map[self.experiment])
-        print(path)
-        return path
+        return os.path.join(self.data_folder, csv_map[self.experiment])
+
+    def make_data_formatter(self):
+        """Gets a data formatter object for experiment.
+        Returns:
+          Default DataFormatter per experiment.
+        """
+
+        data_formatter_class = {
+            'electricity': electricity.ElectricityFormatter,
+            'traffic': traffic.TrafficFormatter,
+        }
+
+        return data_formatter_class[self.experiment]()
 
 
 def download_from_url(url, output_path):
@@ -138,7 +151,7 @@ def download_electricity(args):
     output = output[(output['days_from_start'] >= 1096)
                     & (output['days_from_start'] < 1346)].copy()
 
-    output.to_csv("{}/hourly_electricity.csv".format(args.data_folder))
+    output.to_csv("electricity.csv".format(args.data_folder))
 
     print('Done.')
 
@@ -276,7 +289,7 @@ def download_traffic(args):
             + sliced['time_on_day'].apply(lambda x: '_' + format_index_string(x))
         sliced = sliced.set_index(key).sort_index()
 
-        sliced['values'] = sliced['values'].fillna(method='ffill')
+        sliced['values'] = sliced['values'].fillna  (method='ffill')
         sliced['prev_values'] = sliced['values'].shift(1)
         sliced['next_values'] = sliced['values'].shift(-1)
 
@@ -293,7 +306,7 @@ def download_traffic(args):
     flat_df['categorical_day_of_week'] = flat_df['day_of_week'].copy()
     flat_df['categorical_time_on_day'] = flat_df['time_on_day'].copy()
 
-    flat_df.to_csv(args.data_csv_path)
+    flat_df.to_csv("traffic.csv")
     print('Done.')
 
 
