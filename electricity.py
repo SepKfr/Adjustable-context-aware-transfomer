@@ -166,22 +166,7 @@ class ElectricityFormatter(GenericDataFormatter):
           Data frame of unnormalised predictions.
         """
 
-        if self._target_scaler is None:
-            raise ValueError('Scalers have not been set!')
-
-        column_names = predictions.columns
-
-        df_list = []
-        for identifier, sliced in predictions.groupby('identifier'):
-            sliced_copy = sliced.copy()
-            target_scaler = self._target_scaler[identifier]
-
-            for col in column_names:
-                if col not in {'forecast_time', 'identifier'}:
-                    sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
-                    df_list.append(sliced_copy)
-
-        output = pd.concat(df_list, axis=0)
+        output = self._target_scaler.inverse_transform(predictions)
 
         return output
 
@@ -194,3 +179,12 @@ class ElectricityFormatter(GenericDataFormatter):
         }
 
         return fixed_params
+
+    def get_num_samples_for_calibration(self):
+        """Gets the default number of training and validation samples.
+        Use to sub-sample the data for network calibration and a value of -1 uses
+        all available samples.
+        Returns:
+          Tuple of (training samples, validation samples)
+        """
+        return 1600, 200
