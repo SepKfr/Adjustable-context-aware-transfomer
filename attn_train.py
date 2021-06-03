@@ -208,7 +208,6 @@ def main():
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
-    parser.add_argument("--data_csv_path", type=str, default='traffic.csv')
     parser.add_argument("--exp_name", type=str, default='traffic')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
@@ -221,9 +220,10 @@ def main():
     path = "models_{}_{}".format(args.exp_name, args.seq_len_pred)
     if not os.path.exists(path):
         os.makedirs(path)
+    data_csv_path = "{}.csv".format(args.exp_name)
 
     print("Loading & splitting data...")
-    raw_data = pd.read_csv(args.data_csv_path, index_col=0)
+    raw_data = pd.read_csv(data_csv_path, index_col=0)
     train_data, valid, test = formatter.split_data(raw_data)
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
