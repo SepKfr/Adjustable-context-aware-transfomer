@@ -108,5 +108,5 @@ def form_predictions(outputs, test_id, formatter, device):
     )
     flat_prediction['identifier'] = test_id[:, 0, 0]
     predictions = formatter.format_predictions(flat_prediction)
-    predictions = torch.from_numpy(predictions.iloc[:, :-1].to_numpy().astype('float64')).to(device)
+    predictions = torch.from_numpy(predictions.iloc[:, :-1].to_numpy().astype('float32')).to(device)
     return predictions.unsqueeze(-1)
