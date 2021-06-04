@@ -97,11 +97,11 @@ def train(args, model, train_en, train_de, train_y, train_id,
         for j in range(test_en.shape[0]):
             outputs[j] = model(test_en[j], test_de[j])
 
-        predictions = form_predictions(outputs, test_id, formatter, device)
+        '''predictions = form_predictions(outputs, test_id, formatter, device)
 
-        test_y = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1, 1)
+        test_y = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1, 1)'''
 
-        loss = criterion(test_y, predictions)
+        loss = criterion(test_y, outputs)
         test_loss = loss.item()
 
         if test_loss < val_inner_loss:
@@ -113,8 +113,6 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
             e = epoch
 
-        elif epoch - e > 20:
-            stop = True
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
 
