@@ -2,6 +2,11 @@ import base
 import pandas as pd
 import sklearn.preprocessing
 import utils
+import numpy as np
+import random
+
+np.random.seed(21)
+random.seed(21)
 
 GenericDataFormatter = base.GenericDataFormatter
 DataTypes = base.DataTypes

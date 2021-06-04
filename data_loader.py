@@ -5,9 +5,13 @@ import pandas as pd
 import numpy as np
 import argparse
 import sys
+import random
 
 import electricity
 import traffic
+
+np.random.seed(21)
+random.seed(21)
 
 
 class ExperimentConfig(object):

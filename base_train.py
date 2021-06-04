@@ -3,8 +3,13 @@ import numpy as np
 import utils as util
 import base
 import pandas as pd
+import random
 InputTypes = base.InputTypes
 
+
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 def batching(batch_size, x_en, x_de, y_t):
 
