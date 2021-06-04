@@ -119,8 +119,20 @@ class TrafficFormatter(GenericDataFormatter):
         return output
 
     def format_predictions(self, predictions):
+        """Reverts any normalisation to give predictions in original scale.
+        Args:
+          predictions: Dataframe of model predictions.
+        Returns:
+          Data frame of unnormalised predictions.
+        """
 
-        output = self._target_scaler.inverse_transform(predictions)
+        output = predictions.copy()
+
+        column_names = predictions.columns
+
+        for col in column_names:
+            if col not in {'identifier'}:
+                output[col] = self._target_scaler.inverse_transform(predictions[col])
 
         return output
 
@@ -161,4 +173,4 @@ class TrafficFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 1600, 200
+        return 1600, 256

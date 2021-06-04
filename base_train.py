@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import utils as util
 import base
+import pandas as pd
 InputTypes = base.InputTypes
 
 
@@ -93,3 +94,19 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     }
 
     return sampled_data
+
+
+def form_predictions(outputs, test_id, formatter, device):
+
+    outputs = outputs.reshape(outputs.shape[0] * outputs.shape[1], -1, 1)
+    flat_prediction = pd.DataFrame(
+        outputs[:, :, 0],
+        columns=[
+            't+{}'.format(i)
+            for i in range(outputs.shape[1])
+        ]
+    )
+    flat_prediction['identifier'] = test_id[:, 0, 0]
+    predictions = formatter.format_predictions(flat_prediction)
+    predictions = torch.from_numpy(predictions.iloc[:, :-1].to_numpy().astype('float64')).to(device)
+    return predictions.unsqueeze(-1)

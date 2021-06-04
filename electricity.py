@@ -93,6 +93,7 @@ class ElectricityFormatter(GenericDataFormatter):
 
             self._target_scaler[identifier] \
           = sklearn.preprocessing.StandardScaler().fit(targets)
+
           identifiers.append(identifier)
 
         # Format categorical scalers
@@ -104,9 +105,10 @@ class ElectricityFormatter(GenericDataFormatter):
         num_classes = []
         for col in categorical_inputs:
             # Set all to str so that we don't have mixed integer/string columns
-            srs = df[col].apply(str)
-            categorical_scalers[col] = sklearn.preprocessing.LabelEncoder().fit(
+          srs = df[col].apply(str)
+          categorical_scalers[col] = sklearn.preprocessing.LabelEncoder().fit(
               srs.values)
+          num_classes.append(srs.nunique())
 
         # Set categorical scaler outputs
         self._cat_scalers = categorical_scalers
@@ -166,7 +168,22 @@ class ElectricityFormatter(GenericDataFormatter):
           Data frame of unnormalised predictions.
         """
 
-        output = self._target_scaler.inverse_transform(predictions)
+        if self._target_scaler is None:
+            raise ValueError('Scalers have not been set!')
+
+        column_names = predictions.columns
+
+        df_list = []
+        for identifier, sliced in predictions.groupby('identifier'):
+            sliced_copy = sliced.copy()
+            target_scaler = self._target_scaler[identifier]
+
+            for col in column_names:
+                if col not in {'identifier'}:
+                    sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
+            df_list.append(sliced_copy)
+
+        output = pd.concat(df_list, axis=0)
 
         return output
 
@@ -187,4 +204,4 @@ class ElectricityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 1600, 200
+        return 1600, 256

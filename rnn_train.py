@@ -13,7 +13,7 @@ import random
 import numpy as np
 import pandas as pd
 from data_loader import ExperimentConfig
-from base_train import batch_sampled_data, batching
+from base_train import batch_sampled_data, batching, form_predictions
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
 
 
@@ -33,10 +33,10 @@ else:
     print("running on CPU")
 
 
-def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch, e, val_loss,
-          val_inner_loss, optimizer, lr_scheduler, warmup_scheduler,
-          config, config_num, best_config, path, criterion):
+def train(args, model, train_en, train_de, train_y, train_id,
+          test_en, test_de, test_y, test_id, epoch, e, val_loss,
+          val_inner_loss, optimizer, config, config_num,
+          best_config, path, criterion, formatter):
 
     stop = False
     try:
@@ -49,19 +49,22 @@ def train(args, model, train_en, train_de, train_y,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_scheduler.step()
-            warmup_scheduler.dampen()
 
         if epoch % 20 == 0:
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
-        test_loss = 0
-        for j in range(test_en.shape[0]):
 
-            output = model(test_en[j], test_de[j])
-            loss = criterion(test_y[j], output)
-            test_loss += loss.item()
+        outputs = torch.zeros(test_y.shape)
+        for j in range(test_en.shape[0]):
+            outputs[j] = model(test_en[j], test_de[j])
+
+        predictions = form_predictions(outputs, test_id, formatter, device)
+
+        test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)
+
+        loss = criterion(test_y, predictions)
+        test_loss = loss.item()
 
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
@@ -95,7 +98,7 @@ def create_config(hyper_parameters):
     return list(random.sample(set(prod), num_samples))
 
 
-def evaluate(config, args, test_en, test_de, test_y, criterion, path):
+def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path):
 
     model = None
 
@@ -146,18 +149,18 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, path):
 
     model.eval()
 
-    test_loss = 0
-    mae_loss = 0
+    outputs = torch.zeros(test_y.shape)
     for j in range(test_en.shape[0]):
-        output = model(test_en[j], test_de[j])
-        y_true = test_y[j].to(device)
-        pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
-        loss = torch.sqrt(criterion(y_true, output))
-        test_loss += loss.item()
-        mae_loss += mae(y_true, output).item()
+        outputs[j] = model(test_en[j], test_de[j])
 
-    '''test_loss = test_loss / test_x.shape[1]
-    mae_loss = mae_loss / test_x.shape[1]'''
+    predictions = form_predictions(outputs, test_id, formatter, device)
+    test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)
+
+    test_loss = torch.sqrt(criterion(test_y, predictions)).item()
+    mae_loss = mae(test_y, predictions).item()
+
+    pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
+
     return test_loss, mae_loss
 
 
@@ -200,15 +203,21 @@ def main():
     train_x, train_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
         device)
 
+    train_id = sample_data['identifier']
+
     sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
     valid_x, valid_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
         device)
 
+    valid_id = sample_data['identifier']
+
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
     test_x, test_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
         device)
+
+    test_id = sample_data['identifier']
 
     seq_len = params['num_encoder_steps']
 
@@ -235,7 +244,6 @@ def main():
     val_loss = 1e10
     best_config = configs[0]
     config_num = 0
-    checkpoint = None
 
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
@@ -279,25 +287,16 @@ def main():
         optimizer = Adam(model.parameters(), lr=lr)
         epoch_start = 0
 
-        num_steps = len(train_x) * args.n_epochs
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_steps)
-        warmup_scheduler = warmup.UntunedLinearWarmup(optimizer)
-
         val_inner_loss = 1e10
         e = 0
         for epoch in range(epoch_start, args.n_epochs, 1):
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                      optimizer, lr_scheduler, warmup_scheduler,
-                      conf, i, best_config, path, criterion)
+                      train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), valid_id, epoch, e, val_loss, val_inner_loss,
+                      optimizer, conf, i, best_config, path, criterion, formatter)
             if stop:
                 break
-
-        test_loss, mae_loss = evaluate(best_config, args, test_en, test_de,
-                                       test_y, criterion, path)
-        print("test error {:.3f}".format(test_loss))
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         n_layers, hidden_size, kernel, dr, lr = best_config
@@ -309,7 +308,7 @@ def main():
 
     print("best_config: {}".format(best_config))
 
-    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, criterion, path)
+    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, test_id, criterion, formatter, path)
 
     erros[args.name] = list()
     config_file[args.name] = list()

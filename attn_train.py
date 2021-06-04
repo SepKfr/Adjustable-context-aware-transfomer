@@ -13,7 +13,7 @@ import random
 import pandas as pd
 from time import time, ctime
 from data_loader import ExperimentConfig
-from base_train import batching, batch_sampled_data
+from base_train import batching, batch_sampled_data, form_predictions
 
 
 random.seed(21)
@@ -55,23 +55,6 @@ def get_std_opt(model):
                    torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
 
-def batching(batch_size, x_en, x_de, y_t):
-
-    batch_n = int(x_en.shape[0] / batch_size)
-    start = x_en.shape[0] % batch_n
-    X_en = torch.zeros(batch_n, batch_size, x_en.shape[1], x_en.shape[2])
-    X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
-    Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
-
-    for i in range(batch_n):
-        X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
-        X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
-        Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
-        start += batch_size
-
-    return X_en, X_de, Y_t
-
-
 erros = dict()
 config_file = dict()
 
@@ -83,8 +66,8 @@ else:
     print("running on CPU")
 
 
-def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch, e, val_loss,
+def train(args, model, train_en, train_de, train_y, train_id,
+          test_en, test_de, test_y, test_id, epoch, e, val_loss,
           val_inner_loss, opt, optimizer,
           config, config_num, best_config, formatter, criterion, path):
 
@@ -110,12 +93,16 @@ def train(args, model, train_en, train_de, train_y,
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
-        test_loss = 0
+        outputs = torch.zeros(test_y.shape)
         for j in range(test_en.shape[0]):
-            output = model(test_en[j], test_de[j])
-            output = torch.from_numpy(formatter.format_predictions(output.detach().cpu().numpy()))
-            loss = criterion(test_y[j].to(device), output)
-            test_loss += loss.item()
+            outputs[j] = model(test_en[j], test_de[j])
+
+        predictions = form_predictions(outputs, test_id, formatter, device)
+
+        test_y = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1, 1)
+
+        loss = criterion(test_y, predictions)
+        test_loss = loss.item()
 
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
@@ -149,7 +136,7 @@ def create_config(hyper_parameters):
     return prod
 
 
-def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, formatter ,path):
+def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len, formatter,path):
 
     n_layers, n_heads, d_model, lr, dr, kernel = config
     d_k = int(d_model / n_heads)
@@ -173,16 +160,17 @@ def evaluate(config, args, test_en, test_de, test_y, criterion, seq_len, formatt
 
     model.eval()
 
-    test_loss = 0
-    mae_loss = 0
+    outputs = torch.zeros(test_y.shape)
     for j in range(test_en.shape[0]):
-        output = model(test_en[j], test_de[j])
-        output = torch.from_numpy(formatter.format_predictions(output.detach().cpu().numpy()))
-        pickle.dump(output, open(os.path.join(path_to_pred, args.name), "wb"))
-        y_true = test_y[j].to(device)
-        loss = torch.sqrt(criterion(y_true, output))
-        test_loss += loss.item()
-        mae_loss += mae(y_true, output).item()
+        outputs[j] = model(test_en[j], test_de[j])
+
+    predictions = form_predictions(outputs, test_id, formatter, device)
+    test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)
+
+    test_loss = torch.sqrt(criterion(test_y, predictions)).item()
+    mae_loss = mae(test_y, predictions).item()
+
+    pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
     return test_loss, mae_loss
 
@@ -213,7 +201,6 @@ def main():
     parser.add_argument("--lr_variate", type=str, default="True")
     args = parser.parse_args()
 
-
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
 
@@ -231,16 +218,20 @@ def main():
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
                        params['num_encoder_steps'], params["column_definition"])
     train_x, train_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(device)
+    train_id = sample_data['identifier']
 
     sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
     valid_x, valid_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
         device)
+    valid_id = sample_data['identifier']
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
     test_x, test_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
         device)
+
+    test_id = sample_data['identifier']
 
     seq_len = params['num_encoder_steps']
 
@@ -297,15 +288,15 @@ def main():
 
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
+                      train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), valid_id, epoch, e, val_loss, val_inner_loss,
                       opt, optim, conf, i, best_config, formatter, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
-                         criterion, seq_len, formatter, path)
+                                   test_id, criterion, seq_len, formatter, path)
 
     layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
