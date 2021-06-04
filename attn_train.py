@@ -191,7 +191,7 @@ def main():
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=[0])
     parser.add_argument("--dr_best", type=float)
-    parser.add_argument("--lr", type=list, default=[0.0001])
+    parser.add_argument("--lr", type=list, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
@@ -199,7 +199,7 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='electricity')
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--lr_variate", type=str, default="False")
+    parser.add_argument("--lr_variate", type=str, default="True")
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
