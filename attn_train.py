@@ -246,7 +246,7 @@ def main():
                                   test_x[:, seq_len:, :], test_y[:, :, :])
 
     criterion = nn.MSELoss()
-    if args.attn_type != "attn_conv":
+    if args.attn_type != "conv_attn":
         args.kernel = [1]
     hyper_param = list([args.n_layers, args.n_heads,
                         args.d_model, args.lr, args.dr, args.kernel])
