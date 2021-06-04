@@ -190,7 +190,7 @@ def main():
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=[0])
     parser.add_argument("--dr_best", type=float)
-    parser.add_argument("--lr", type=list, default=[0.0001])
+    parser.add_argument("--lr", type=list, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
@@ -198,7 +198,7 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='electricity')
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--lr_variate", type=str, default="True")
+    parser.add_argument("--lr_variate", type=str, default="False")
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
@@ -295,7 +295,7 @@ def main():
                 break
         print("best config so far: {}".format(best_config))
 
-    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y,
+    test_loss, mae_loss = evaluate(best_config, args, test_en.to(device), test_de.to(device), test_y.to(device),
                                    test_id, criterion, seq_len, formatter, path)
 
     layers, heads, d_model, lr, dr, kernel = best_config

@@ -308,7 +308,9 @@ def main():
 
     print("best_config: {}".format(best_config))
 
-    test_loss, mae_loss = evaluate(best_config, args, test_en, test_de, test_y, test_id, criterion, formatter, path)
+    test_loss, mae_loss = evaluate(best_config, args,
+                                   test_en.to(device), test_de.to(device), test_y.to(device), test_id,
+                                   criterion, formatter, path)
 
     erros[args.name] = list()
     config_file[args.name] = list()
