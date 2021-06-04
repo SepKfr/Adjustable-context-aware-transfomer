@@ -83,6 +83,8 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     identifiers = np.empty((max_samples, time_steps, 1), dtype=object)
 
     for i, tup in enumerate(ranges):
+        if (i + 1 % 1000) == 0:
+            print(i + 1, 'of', max_samples, 'samples done...')
         identifier, start_idx = tup
         sliced = split_data_map[identifier].iloc[start_idx -
                                                time_steps:start_idx]

@@ -178,4 +178,4 @@ class TrafficFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 1600, 256
+        return 384000, 48000
