@@ -13,7 +13,7 @@ import random
 import pandas as pd
 from time import time, ctime
 from data_loader import ExperimentConfig
-from base_train import batching, batch_sampled_data, form_predictions
+from base_train import batching, batch_sampled_data, inverse_output
 
 
 random.seed(21)
@@ -113,6 +113,9 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
             e = epoch
 
+        if epoch - e > 20:
+            stop = True
+
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
 
@@ -162,11 +165,11 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
     for j in range(test_en.shape[0]):
         outputs[j] = model(test_en[j], test_de[j])
 
-    predictions = form_predictions(outputs, test_id, formatter, device)
-    test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)
+    predictions = inverse_output(outputs, test_id, formatter, device)
+    y_true = inverse_output(test_y, test_id, formatter, device)
 
-    test_loss = torch.sqrt(criterion(test_y, predictions)).item()
-    mae_loss = mae(test_y, predictions).item()
+    test_loss = torch.sqrt(criterion(y_true, predictions)).item()
+    mae_loss = mae(y_true, predictions).item()
 
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 

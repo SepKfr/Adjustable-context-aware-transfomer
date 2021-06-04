@@ -13,7 +13,7 @@ import random
 import numpy as np
 import pandas as pd
 from data_loader import ExperimentConfig
-from base_train import batch_sampled_data, batching, form_predictions
+from base_train import batch_sampled_data, batching, inverse_output
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
 
 
@@ -151,11 +151,11 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
     for j in range(test_en.shape[0]):
         outputs[j] = model(test_en[j], test_de[j])
 
-    predictions = form_predictions(outputs, test_id, formatter, device)
-    test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)
+    predictions = inverse_output(outputs, test_id, formatter, device)
+    y_true = inverse_output(test_y, test_id, formatter, device)
 
-    test_loss = torch.sqrt(criterion(test_y, predictions)).item()
-    mae_loss = mae(test_y, predictions).item()
+    test_loss = torch.sqrt(criterion(y_true, predictions)).item()
+    mae_loss = mae(y_true, predictions).item()
 
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
