@@ -63,7 +63,7 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
         test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)'''
 
-        loss = criterion(test_y, outputs)
+        loss = criterion(test_y, outputs.to(device))
         test_loss = loss.item()
 
         if test_loss < val_inner_loss:
