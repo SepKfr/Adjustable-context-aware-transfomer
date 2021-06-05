@@ -93,16 +93,16 @@ def train(args, model, train_en, train_de, train_y, train_id,
             print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
-        #outputs = torch.zeros(test_y.shape)
-        test_loss = 0
+        outputs = torch.zeros(test_y.shape)
         for j in range(test_en.shape[0]):
-            output = model(test_en[j], test_de[j])
-            loss = criterion(test_y[j], output.to(device))
-            test_loss += loss.item()
+            outputs[j] = model(test_en[j], test_de[j])
 
         '''predictions = form_predictions(outputs, test_id, formatter, device)
 
         test_y = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1, 1)'''
+
+        loss = criterion(test_y, outputs.to(device))
+        test_loss = loss.item()
 
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
@@ -157,21 +157,16 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
     model.load_state_dict(checkpoint["model_state_dict"])
 
     model.eval()
-    test_loss = 0
-    mae_loss = 0
 
-    _, l, d = test_id.shape
-    n_b, b, _, _ = test_y.shape
-    test_id = test_id.reshape(n_b, b, l, d)
-    predictions = torch.zeros(test_y.shape)
-
+    outputs = torch.zeros(test_y.shape)
     for j in range(test_en.shape[0]):
-        output = model(test_en[j], test_de[j])
-        predictions[j, :, :, :] = inverse_output(output, test_id[j], formatter, device)
-        y_true = inverse_output(test_y[j], test_id[j], formatter, device)
+        outputs[j] = model(test_en[j], test_de[j])
 
-        test_loss += torch.sqrt(criterion(y_true, output)).item()
-        mae_loss += mae(y_true, output).item()
+    predictions = inverse_output(outputs, test_id, formatter, device)
+    y_true = inverse_output(test_y, test_id, formatter, device)
+
+    test_loss = torch.sqrt(criterion(y_true, predictions)).item()
+    mae_loss = mae(y_true, predictions).item()
 
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
