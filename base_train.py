@@ -106,6 +106,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
 
 def inverse_output(outputs, test_id, formatter, device):
 
+    outputs = outputs.reshape(outputs.shape[0] * outputs.shape[1], -1, 1)
     flat_prediction = pd.DataFrame(
         outputs[:, :, 0],
         columns=[
