@@ -56,6 +56,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
                 (identifier, time_steps + i)
                 for i in range(num_entries - time_steps + 1)
             ]
+
             split_data_map[identifier] = df
 
     if 0 < max_samples < len(valid_sampling_locations):

@@ -13,19 +13,26 @@ DataTypes = base.DataTypes
 InputTypes = base.InputTypes
 
 
-class TrafficFormatter(GenericDataFormatter):
+class AirQualityFormatter(GenericDataFormatter):
 
     _column_definition = [
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
-        ('values', DataTypes.REAL_VALUED, InputTypes.TARGET),
-        ('time_on_day', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('CO(GT)', DataTypes.REAL_VALUED, InputTypes.TARGET),
+        ('PT08.S1(CO)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('NMHC(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('C6H6(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('PT08.S2(NMHC)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('NOx(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('PT08.S3(NOx)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('NO2(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('PT08.S4(NO2)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('PT08.S5(O3)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('T', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
-    def split_data(self, df, valid_boundary=151, test_boundary=166):
+    def split_data(self, df, valid_boundary=480, test_boundary=600):
         """Splits data frame into training-validation-test data frames.
         This also calibrates scaling object, and transforms data for each split.
         Args:
@@ -38,7 +45,7 @@ class TrafficFormatter(GenericDataFormatter):
 
         print('Formatting train-valid-test splits.')
 
-        index = df['sensor_day']
+        index = df['days_from_start']
         train = df.loc[index < valid_boundary]
         valid = df.loc[(index >= valid_boundary - 7) & (index < test_boundary)]
         test = df.loc[index >= test_boundary - 7]
@@ -73,24 +80,6 @@ class TrafficFormatter(GenericDataFormatter):
         self._target_scaler = sklearn.preprocessing.StandardScaler().fit(
             df[[target_column]].values)  # used for predictions
 
-        # Format categorical scalers
-        categorical_inputs = utils.extract_cols_from_data_type(
-            DataTypes.CATEGORICAL, column_definitions,
-            {InputTypes.ID, InputTypes.TIME})
-
-        categorical_scalers = {}
-        num_classes = []
-        for col in categorical_inputs:
-            # Set all to str so that we don't have mixed integer/string columns
-            srs = df[col].apply(str)
-            categorical_scalers[col] = sklearn.preprocessing.LabelEncoder().fit(
-                srs.values)
-            num_classes.append(srs.nunique())
-
-        # Set categorical scaler outputs
-        self._cat_scalers = categorical_scalers
-        self._num_classes_per_cat_input = num_classes
-
     def transform_inputs(self, df):
         """Performs feature transformations.
         This includes both feature engineering, preprocessing and normalisation.
@@ -101,7 +90,7 @@ class TrafficFormatter(GenericDataFormatter):
         """
         output = df.copy()
 
-        if self._real_scalers is None and self._cat_scalers is None:
+        if self._real_scalers is None:
             raise ValueError('Scalers have not been set!')
 
         column_definitions = self.get_column_definition()
@@ -109,17 +98,9 @@ class TrafficFormatter(GenericDataFormatter):
         real_inputs = utils.extract_cols_from_data_type(
             DataTypes.REAL_VALUED, column_definitions,
             {InputTypes.ID, InputTypes.TIME})
-        categorical_inputs = utils.extract_cols_from_data_type(
-            DataTypes.CATEGORICAL, column_definitions,
-            {InputTypes.ID, InputTypes.TIME})
 
         # Format real inputs
         output[real_inputs] = self._real_scalers.transform(df[real_inputs].values)
-
-        # Format categorical inputs
-        for col in categorical_inputs:
-            string_df = df[col].apply(str)
-            output[col] = self._cat_scalers[col].transform(string_df)
 
         return output
 
@@ -177,5 +158,5 @@ class TrafficFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 7680, 960
+        return 7680, 480
 

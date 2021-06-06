@@ -9,13 +9,14 @@ import random
 
 import electricity
 import traffic
+import air_quality
 
 np.random.seed(21)
 random.seed(21)
 
 
 class ExperimentConfig(object):
-    default_experiments = ['electricity', 'traffic']
+    default_experiments = ['electricity', 'traffic', 'air_quality']
 
     def __init__(self, experiment='electricity', root_folder=None):
 
@@ -41,7 +42,8 @@ class ExperimentConfig(object):
     def data_csv_path(self):
         csv_map = {
             'electricity': 'hourly_electricity.csv',
-            'traffic': 'hourly_data.csv',
+            'traffic': 'hourly_traffic.csv',
+            'air_quality': 'hourly_air_quality.csv'
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
@@ -55,6 +57,7 @@ class ExperimentConfig(object):
         data_formatter_class = {
             'electricity': electricity.ElectricityFormatter,
             'traffic': traffic.TrafficFormatter,
+            'air_quality': air_quality.AirQualityFormatter
         }
 
         return data_formatter_class[self.experiment]()
@@ -92,6 +95,50 @@ def download_and_unzip(url, zip_path, csv_path, data_folder):
     download_from_url(url, zip_path)
 
     unzip(zip_path, csv_path, data_folder)
+
+    print('Done.')
+
+
+def download_air_quality(args):
+
+    """Downloads air quality dataset from UCI repository"""
+
+    url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.zip'
+
+    data_folder = args.data_folder
+    csv_path = os.path.join(data_folder, 'AirQualityUCI.csv')
+    zip_path = csv_path + '.zip'
+
+    download_and_unzip(url, zip_path, csv_path, data_folder)
+
+    df = pd.read_csv(csv_path, index_col=0, sep=';', decimal=',')
+    df.index = pd.to_datetime(df.index)
+    df.sort_index(inplace=True)
+    df = df.iloc[:, :-2]
+
+    output = df
+    earliest_time = output.index.min()
+
+    start_date = min(output.fillna(method='ffill').dropna().index)
+    end_date = max(output.fillna(method='bfill').dropna().index)
+
+    active_range = (output.index >= start_date) & (output.index <= end_date)
+    output = output[active_range].fillna(0.)
+
+    date = output.index
+
+    output['hour'] = date.hour
+    output['day'] = date.day
+    output['day_of_week'] = date.dayofweek
+    output['t'] = (date - earliest_time).seconds / 60 / 60 + (
+            date - earliest_time).days * 24
+
+    output['month'] = date.month
+    output['days_from_start'] = (date - earliest_time).days
+    output['id'] = 1
+    output['hours_from_start'] = output['t']
+
+    output.to_csv("air_quality.csv".format(args.data_folder))
 
     print('Done.')
 
@@ -332,6 +379,7 @@ def main(expt_name, force_download, output_folder):
     download_functions = {
         'electricity': download_electricity,
         'traffic': download_traffic,
+        'air_quality': download_air_quality
     }
 
     if expt_name not in download_functions:
@@ -370,7 +418,7 @@ if __name__ == '__main__':
             type=str,
             nargs='?',
             choices=['yes', 'no'],
-            default='np',
+            default='yes',
             help='Whether to re-run data download')
 
         args = parser.parse_args()
