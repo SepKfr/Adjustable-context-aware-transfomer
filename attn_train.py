@@ -157,7 +157,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
 
     model.eval()
 
-    predictions = torch.zeros(test_y.shape).to(device)
+    predictions = torch.zeros(test_y.shape)\
     test_loss = 0
     mae_loss = 0
     for j in range(test_en.shape[0]):
@@ -166,12 +166,12 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
         predictions[j, :, :, :] = inverse_output(output, test_id[j], formatter, device)
         y_true = inverse_output(test_y[j], test_id[j], formatter, device)
 
-        test_loss += torch.sqrt(criterion(y_true, predictions[j])).item()
-        mae_loss += mae(y_true, predictions[j]).item()
+        test_loss += torch.sqrt(criterion(y_true, predictions[j].to(device))).item()
+        mae_loss += mae(y_true, predictions[j].to(device)).item()
 
     q_loss = []
     for q in 0.5, 0.9:
-        q_loss.append(quantile_loss(test_y, predictions, q))
+        q_loss.append(quantile_loss(test_y, predictions.to(device), q))
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
     return test_loss, mae_loss, q_loss
