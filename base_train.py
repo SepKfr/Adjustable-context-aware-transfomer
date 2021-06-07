@@ -12,21 +12,23 @@ torch.manual_seed(21)
 np.random.seed(21)
 
 
-def batching(batch_size, x_en, x_de, y_t):
+def batching(batch_size, x_en, x_de, y_t, test_id):
 
     batch_n = int(x_en.shape[0] / batch_size)
     start = x_en.shape[0] % batch_n
     X_en = torch.zeros(batch_n, batch_size, x_en.shape[1], x_en.shape[2])
     X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
     Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
+    tst_id = np.empty((batch_n, batch_size, test_id.shape[1], x_en.shape[2]), dtype=object)
 
     for i in range(batch_n):
         X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
+        tst_id[i, :, :, :] = test_id[start:start+batch_size, :, :]
         start += batch_size
 
-    return X_en, X_de, Y_t
+    return X_en, X_de, Y_t, tst_id
 
 
 def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_definition):
@@ -118,3 +120,13 @@ def inverse_output(outputs, test_id, formatter, device):
     predictions = formatter.format_predictions(flat_prediction)
     predictions = torch.from_numpy(predictions.iloc[:, :-1].to_numpy().astype('float32')).to(device)
     return predictions.unsqueeze(-1)
+
+
+def quantile_loss(y, y_pred, quantile):
+
+    zeros = torch.zeros(y.shape)
+    prediction_underflow = y - y_pred
+    q_loss = quantile * torch.maximum(prediction_underflow, zeros) + \
+             (1 - quantile) * torch.maximum(-prediction_underflow, zeros)
+    q_loss = torch.mean(torch.mean(torch.mean(torch.mean(q_loss, dim=-1), dim=-1), dim=-1), dim=-1)
+    return q_loss

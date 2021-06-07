@@ -13,7 +13,7 @@ import random
 import pandas as pd
 from time import time, ctime
 from data_loader import ExperimentConfig
-from base_train import batching, batch_sampled_data, inverse_output
+from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
 
 
 random.seed(21)
@@ -157,8 +157,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
 
     model.eval()
 
-    predictions = torch.zeros(test_y.shape)
-    test_id = test_id.reshape(test_en.shape[0], test_en.shape[1], -1, 1)
+    predictions = torch.zeros(test_y.shape).to(device)
     test_loss = 0
     mae_loss = 0
     for j in range(test_en.shape[0]):
@@ -170,9 +169,12 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
         test_loss += torch.sqrt(criterion(y_true, predictions[j])).item()
         mae_loss += mae(y_true, predictions[j]).item()
 
+    q_loss = []
+    for q in 0.5, 0.9:
+        q_loss.append(quantile_loss(test_y, predictions, q))
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
-    return test_loss, mae_loss
+    return test_loss, mae_loss, q_loss
 
 
 def main():
@@ -217,32 +219,32 @@ def main():
 
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
                        params['num_encoder_steps'], params["column_definition"])
-    train_x, train_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(device)
-    train_id = sample_data['identifier']
+    train_x, train_y, train_id = torch.from_numpy(sample_data['inputs']).to(device), \
+                                 torch.from_numpy(sample_data['outputs']).to(device), \
+                                 sample_data['identifier']
 
     sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    valid_x, valid_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
-        device)
-    valid_id = sample_data['identifier']
+    valid_x, valid_y, valid_id = torch.from_numpy(sample_data['inputs']).to(device), \
+                                 torch.from_numpy(sample_data['outputs']).to(device), \
+                                 sample_data['identifier']
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    test_x, test_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
-        device)
-
-    test_id = sample_data['identifier']
+    test_x, test_y, test_id = torch.from_numpy(sample_data['inputs']).to(device), \
+                              torch.from_numpy(sample_data['outputs']).to(device), \
+                              sample_data['identifier']
 
     seq_len = params['num_encoder_steps']
 
-    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :seq_len, :],
-                                  train_x[:, seq_len:, :], train_y[:, :, :])
+    train_en, train_de, train_y, train_id = batching(args.batch_size, train_x[:, :seq_len, :],
+                                  train_x[:, seq_len:, :], train_y[:, :, :], train_id)
 
-    valid_en, valid_de, valid_y = batching(args.batch_size, valid_x[:, :seq_len, :],
-                                  valid_x[:, seq_len:, :], valid_y[:, :, :])
+    valid_en, valid_de, valid_y, valid_id = batching(args.batch_size, valid_x[:, :seq_len, :],
+                                  valid_x[:, seq_len:, :], valid_y[:, :, :], valid_id)
 
-    test_en, test_de, test_y = batching(args.batch_size, test_x[:, :seq_len, :],
-                                  test_x[:, seq_len:, :], test_y[:, :, :])
+    test_en, test_de, test_y, test_id = batching(args.batch_size, test_x[:, :seq_len, :],
+                                  test_x[:, seq_len:, :], test_y[:, :, :], test_id)
 
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn":
@@ -295,7 +297,7 @@ def main():
                 break
         print("best config so far: {}".format(best_config))
 
-    test_loss, mae_loss = evaluate(best_config, args, test_en.to(device), test_de.to(device), test_y.to(device),
+    test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device), test_de.to(device), test_y.to(device),
                                    test_id, criterion, seq_len, formatter, path)
 
     layers, heads, d_model, lr, dr, kernel = best_config
@@ -305,6 +307,8 @@ def main():
     config_file[args.name] = list()
     erros[args.name].append(float("{:.4f}".format(test_loss)))
     erros[args.name].append(float("{:.4f}".format(mae_loss)))
+    for q in q_loss:
+        erros[args.name].append(float("{:.4f}".format(q)))
     config_file[args.name].append(layers)
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
@@ -322,6 +326,8 @@ def main():
                 json_dat[args.name] = list()
             json_dat[args.name].append(float("{:.3f}".format(test_loss)))
             json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
+            for q in q_loss:
+                erros[args.name].append(float("{:.4f}".format(q)))
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
