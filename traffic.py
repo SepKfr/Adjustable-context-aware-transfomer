@@ -139,8 +139,6 @@ class TrafficFormatter(GenericDataFormatter):
             if col not in {'identifier'}:
                 output[col] = self._target_scaler.inverse_transform(predictions[col])
 
-        print(predictions)
-        print(output)
         return output
 
     # Default params
@@ -179,5 +177,5 @@ class TrafficFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 450000, 50000
+        return 45000, 5000
 

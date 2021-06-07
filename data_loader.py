@@ -103,20 +103,25 @@ def download_air_quality(args):
 
     """Downloads air quality dataset from UCI repository"""
 
-    url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.zip'
+    url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00501/PRSA2017_Data_20130301-20170228.zip'
 
+    sites = ['Wanshouxigong', 'Wanliu', 'Shunyi', 'Nongzhanguan', 'Huairou', 'Gucheng',
+             'Guanyuan', 'Dongsi', 'Dingling', 'Changping', 'Aotizhongxin']
     data_folder = args.data_folder
-    csv_path = os.path.join(data_folder, 'AirQualityUCI.csv')
-    zip_path = csv_path + '.zip'
+    data_path = os.path.join(data_folder, 'PRSA_Data_20130301-20170228')
+    zip_path = data_path + '.zip'
+    download_and_unzip(url, zip_path, data_path, data_folder)
+    df_list = []
 
-    download_and_unzip(url, zip_path, csv_path, data_folder)
+    for i, site in enumerate(sites):
 
-    df = pd.read_csv(csv_path, index_col=0, sep=';', decimal=',')
-    df.index = pd.to_datetime(df.index)
-    df.sort_index(inplace=True)
-    df = df.iloc[:, :-2]
+        df = pd.read_csv('{}/PRSA_Data_{}_20130301-20170228.csv'.format(data_path, site),
+                         index_col=0, sep=',')
+        df_list.append(df)
 
-    output = df
+    output = pd.concat(df_list, axis=0)
+    output.index = pd.to_datetime(output[['year','month','day']])
+    output.sort_index(inplace=True)
     earliest_time = output.index.min()
 
     start_date = min(output.fillna(method='ffill').dropna().index)
@@ -127,17 +132,11 @@ def download_air_quality(args):
 
     date = output.index
 
-    output['hour'] = date.hour
-    output['day'] = date.day
     output['day_of_week'] = date.dayofweek
-    output['t'] = (date - earliest_time).seconds / 60 / 60 + (
+    output['id'] = output['station']
+    output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
             date - earliest_time).days * 24
-
-    output['month'] = date.month
     output['days_from_start'] = (date - earliest_time).days
-    output['id'] = 1
-    output['hours_from_start'] = output['t']
-
     output.to_csv("air_quality.csv".format(args.data_folder))
 
     print('Done.')
@@ -340,7 +339,7 @@ def download_traffic(args):
             + sliced['time_on_day'].apply(lambda x: '_' + format_index_string(x))
         sliced = sliced.set_index(key).sort_index()
 
-        sliced['values'] = sliced['values'].fillna  (method='ffill')
+        sliced['values'] = sliced['values'].fillna(method='ffill')
         sliced['prev_values'] = sliced['values'].shift(1)
         sliced['next_values'] = sliced['values'].shift(-1)
 

@@ -16,23 +16,23 @@ InputTypes = base.InputTypes
 class AirQualityFormatter(GenericDataFormatter):
 
     _column_definition = [
-        ('id', DataTypes.REAL_VALUED, InputTypes.ID),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
-        ('CO(GT)', DataTypes.REAL_VALUED, InputTypes.TARGET),
-        ('PT08.S1(CO)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('NMHC(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('C6H6(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('PT08.S2(NMHC)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('NOx(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('PT08.S3(NOx)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('NO2(GT)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('PT08.S4(NO2)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('PT08.S5(O3)', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('T', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('CO', DataTypes.REAL_VALUED, InputTypes.TARGET),
+        ('PM2.5', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('PM10', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('SO2', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('NO2', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('O3', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('TEMP', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('PRES', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('DEWP', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('RAIN', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('WSPM', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('id', DataTypes.REAL_VALUED, InputTypes.ID),
     ]
 
-    def split_data(self, df, valid_boundary=480, test_boundary=600):
+    def split_data(self, df, valid_boundary=1200, test_boundary=1360):
         """Splits data frame into training-validation-test data frames.
         This also calibrates scaling object, and transforms data for each split.
         Args:
@@ -158,5 +158,5 @@ class AirQualityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 7680, 480
+        return 45000, 5000
 
