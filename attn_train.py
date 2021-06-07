@@ -113,9 +113,6 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
             e = epoch
 
-        if epoch - e > 30:
-            stop = True
-
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
 
@@ -197,7 +194,7 @@ def main():
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
-    parser.add_argument("--exp_name", type=str, default='air_quality')
+    parser.add_argument("--exp_name", type=str, default='traffic')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
     args = parser.parse_args()
