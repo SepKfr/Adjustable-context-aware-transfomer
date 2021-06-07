@@ -157,7 +157,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
 
     model.eval()
 
-    predictions = torch.zeros(test_y.shape)\
+    predictions = torch.zeros(test_y.shape)
     test_loss = 0
     mae_loss = 0
     for j in range(test_en.shape[0]):
