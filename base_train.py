@@ -126,7 +126,7 @@ def quantile_loss(y, y_pred, quantile):
 
     zeros = torch.zeros(y.shape)
     prediction_underflow = y - y_pred
-    q_loss = quantile * torch.maximum(prediction_underflow, zeros) + \
-             (1 - quantile) * torch.maximum(-prediction_underflow, zeros)
+    q_loss = quantile * torch.max(prediction_underflow, zeros) + \
+             (1 - quantile) * torch.max(-prediction_underflow, zeros)
     q_loss = torch.mean(torch.mean(torch.mean(torch.mean(q_loss, dim=-1), dim=-1), dim=-1), dim=-1)
     return q_loss
