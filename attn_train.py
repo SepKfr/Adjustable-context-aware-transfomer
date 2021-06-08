@@ -171,7 +171,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
 
     q_loss = []
     for q in 0.5, 0.9:
-        q_loss.append(quantile_loss(test_y, predictions.to(device), q))
+        q_loss.append(quantile_loss(test_y, predictions.to(device), q, device))
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
     return test_loss, mae_loss, q_loss

@@ -122,9 +122,9 @@ def inverse_output(outputs, test_id, formatter, device):
     return predictions.unsqueeze(-1)
 
 
-def quantile_loss(y, y_pred, quantile):
+def quantile_loss(y, y_pred, quantile, device):
 
-    zeros = torch.zeros(y.shape)
+    zeros = torch.zeros(y.shape).to(device)
     prediction_underflow = y - y_pred
     q_loss = quantile * torch.max(prediction_underflow, zeros) + \
              (1 - quantile) * torch.max(-prediction_underflow, zeros)
