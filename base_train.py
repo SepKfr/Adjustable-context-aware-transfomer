@@ -107,19 +107,21 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     return sampled_data
 
 
-def inverse_output(outputs, test_id, formatter, device):
+def inverse_output(predictions, outputs, test_id):
 
-    flat_prediction = pd.DataFrame(
-        outputs[:, :, 0],
-        columns=[
-            't+{}'.format(i)
-            for i in range(outputs.shape[1])
-        ]
-    )
-    flat_prediction['identifier'] = test_id[:, 0, 0]
-    predictions = formatter.format_predictions(flat_prediction)
-    predictions = torch.from_numpy(predictions.iloc[:, :-1].to_numpy().astype('float32')).to(device)
-    return predictions.unsqueeze(-1)
+    def format_outputs(preds):
+        flat_prediction = pd.DataFrame(
+            preds[:, :, 0],
+            columns=[
+                't+{}'.format(i)
+                for i in range(preds.shape[1])
+            ]
+        )
+        flat_prediction['identifier'] = test_id[:, 0, 0]
+        return flat_prediction
+
+    process_map = {'predictions': format_outputs(predictions), 'targets': format_outputs(outputs)}
+    return process_map
 
 
 def quantile_loss(y, y_pred, quantile, device):

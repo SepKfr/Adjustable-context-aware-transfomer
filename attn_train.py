@@ -142,6 +142,13 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
     if not os.path.exists(path_to_pred):
         os.makedirs(path_to_pred)
 
+    def extract_numerical_data(data):
+        """Strips out forecast time and identifier columns."""
+        return data[[
+            col for col in data.columns
+            if col not in {"forecast_time", "identifier"}
+        ]]
+
     model = Attn(src_input_size=test_en.shape[3],
                  tgt_input_size=1,
                  d_model=d_model,
@@ -160,14 +167,18 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
     predictions = torch.zeros(test_y.shape)
     test_loss = 0
     mae_loss = 0
+
     for j in range(test_en.shape[0]):
         output = model(test_en[j], test_de[j])
+        output_map = inverse_output(output, test_y[j], test_id[j])
+        forecast = torch.from_numpy(extract_numerical_data(
+            formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32')).to(device)
 
-        predictions[j, :, :, :] = inverse_output(output, test_id[j], formatter, device)
-        y_true = inverse_output(test_y[j], test_id[j], formatter, device)
+        targets = torch.from_numpy(extract_numerical_data(
+            formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')).to(device)
 
-        test_loss += torch.sqrt(criterion(y_true, predictions[j].to(device))).item()
-        mae_loss += mae(y_true, predictions[j].to(device)).item()
+        test_loss += torch.sqrt(criterion(forecast, targets)).item()
+        mae_loss += mae(forecast, targets).item()
 
     q_loss = []
     for q in 0.5, 0.9:
