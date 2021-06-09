@@ -158,5 +158,5 @@ class AirQualityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 48000, 960
+        return 16000, 960
 
