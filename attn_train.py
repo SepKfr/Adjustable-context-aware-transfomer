@@ -339,7 +339,7 @@ def main():
             json_dat[args.name].append(float("{:.3f}".format(test_loss)))
             json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
             for q in q_loss:
-                erros[args.name].append(float("{:.4f}".format(q)))
+                json_dat[args.name].append(float("{:.4f}".format(q)))
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
