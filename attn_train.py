@@ -89,8 +89,8 @@ def train(args, model, train_en, train_de, train_y, train_id,
         '''t = time()
         print("end {}:".format(ctime(t)))'''
 
-        if epoch % 20 == 0:
-            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        #if epoch % 20 == 0:
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
         test_loss = 0
