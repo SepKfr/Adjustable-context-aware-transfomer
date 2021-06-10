@@ -113,7 +113,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if self.attn_type == "temp" or self.attn_type == "temp_2":
 
-            n_k = math.floor(math.log2(l)) + 1
+            n_k = math.floor(math.log2(l))
 
             if self.attn_type == "temp_2":
                 V_p = torch.zeros(b, h, n_k, l_k, d_k)
