@@ -89,8 +89,8 @@ def train(args, model, train_en, train_de, train_y, train_id,
         '''t = time()
         print("end {}:".format(ctime(t)))'''
 
-        #if epoch % 20 == 0:
-        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        if epoch % 20 == 0:
+            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
         test_loss = 0
@@ -208,7 +208,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='temp')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--server", type=str, default="c01")
