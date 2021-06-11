@@ -125,7 +125,7 @@ class ScaledDotProductAttention(nn.Module):
 
             n_k = math.floor(math.log2(l))
             scores = torch.zeros(b, h, n_k, l, l_k)
-            scores = self.cal_dot(n_k, Q, K, scores)
+            scores = self.cal_dot(n_k, Q, K, scores).to(self.device)
 
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
