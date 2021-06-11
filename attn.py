@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pylab as plt
 import os
+from numba import jit, prange
 import torch.nn.functional as F
 import random
 
@@ -106,33 +107,26 @@ class ScaledDotProductAttention(nn.Module):
         self.attn_type = attn_type
         self.kernel = kernel
 
+    @jit(parallel=True, forceobj=True)
+    def cal_dot(self, n_k, Q, K, scores):
+        for i in prange(0, n_k):
+            k = 2 * i + 1
+            Q_g = get_con_vecs(Q, k)
+            K_g = get_con_vecs(K, k)
+            scores[:, :, i, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
+        return scores
+
     def forward(self, Q, K, V, attn_mask):
 
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        if self.attn_type == "temp" or self.attn_type == "temp_2":
+        if self.attn_type == "temp":
 
             n_k = math.floor(math.log2(l))
-
-            if self.attn_type == "temp_2":
-                V_p = torch.zeros(b, h, n_k, l_k, d_k)
             scores = torch.zeros(b, h, n_k, l, l_k)
+            scores = self.cal_dot(n_k, Q, K, scores)
 
-            ind = 0
-            for k in range(0, n_k):
-                k = 2*k + 1
-                Q_g = get_con_vecs(Q, k)
-                K_g = get_con_vecs(K, k)
-                scores[:, :, ind, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
-                if self.attn_type == "temp_2":
-                    V_g = nn.Linear(k, 1).to(self.device)(K_g.transpose(-1, -2)).transpose(-1, -2).squeeze(3)
-                    V_p[:, :, ind, :, :] = V_g
-                ind += 1
-
-            if self.attn_type == "temp_2":
-                V = V_p.to(self.device)
-            scores = scores.to(self.device)
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
 
@@ -165,10 +159,7 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "temp" or self.attn_type == "temp_2":
 
             attn = nn.Softmax(dim=-3)(scores)
-            if self.attn_type == "temp_2":
-                context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
-            else:
-                context = torch.einsum('bhgqk,bhkd->bhqd', attn, V)
+            context = torch.einsum('bhgqk,bhkd->bhqd', attn, V)
 
             attn = torch.einsum('bhgqk->bhqk', attn)
         else:
