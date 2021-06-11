@@ -6,7 +6,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pylab as plt
 import os
-from numba import jit, prange
+from joblib import Parallel, delayed
 import torch.nn.functional as F
 import random
 
@@ -107,13 +107,11 @@ class ScaledDotProductAttention(nn.Module):
         self.attn_type = attn_type
         self.kernel = kernel
 
-    @jit(parallel=True, forceobj=True)
-    def cal_dot(self, n_k, Q, K, scores):
-        for i in prange(0, n_k):
-            k = 2 * i + 1
-            Q_g = get_con_vecs(Q, k)
-            K_g = get_con_vecs(K, k)
-            scores[:, :, i, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
+    def cal_dot(self, i, Q, K, scores):
+        k = 2 * i + 1
+        Q_g = get_con_vecs(Q, k)
+        K_g = get_con_vecs(K, k)
+        scores = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
         return scores
 
     def forward(self, Q, K, V, attn_mask):
@@ -124,8 +122,10 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "temp":
 
             n_k = math.floor(math.log2(l))
-            scores = torch.zeros(b, h, n_k, l, l_k)
-            scores = self.cal_dot(n_k, Q, K, scores).to(self.device)
+            scores = torch.zeros(b, h, l, l_k)
+            scores = Parallel(n_jobs=10)(delayed(self.cal_dot)(i, Q, K, scores) for i in range(n_k))
+            scores = torch.stack(scores)
+            scores = scores.reshape(b, h, n_k, l, l_k)
 
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
