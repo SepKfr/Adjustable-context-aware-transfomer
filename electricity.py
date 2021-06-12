@@ -196,8 +196,8 @@ class ElectricityFormatter(GenericDataFormatter):
         """Returns fixed model parameters for experiments."""
 
         fixed_params = {
-            'total_time_steps': 6 * 24,
-            'num_encoder_steps': 5 * 24,
+            'total_time_steps': 8 * 24,
+            'num_encoder_steps': 7 * 24,
         }
 
         return fixed_params
@@ -209,4 +209,4 @@ class ElectricityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 12800, 128
+        return 12800, 256
