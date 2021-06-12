@@ -68,5 +68,5 @@ class AirQualityFormatter(ElectricityFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 12800, 256
+        return 12800, 128
 
