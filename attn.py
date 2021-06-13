@@ -149,15 +149,18 @@ class ScaledDotProductAttention(nn.Module):
             else:
                 n_k = [1, 3, 6, 9]
                 scores = torch.zeros(b, h, len(n_k), l, l_k)
+                V_p = torch.zeros(b, h, len(n_k), l_k, d_k)
                 ind = 0
                 for k in n_k:
                     k = 2 * k + 1
                     Q_g, K_g = get_conv(k, Q, K)
                     scores[:, :, ind, :, :] = torch.einsum('bhqd,bhkd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
+                    V_p[:, :, ind, :, :] = K_g
                     ind += 1
                 scores = scores.to(self.device)
                 if attn_mask is not None:
                     attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len(n_k), 1, 1)
+                V = V_p
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
@@ -173,7 +176,7 @@ class ScaledDotProductAttention(nn.Module):
         if self.attn_type == "temp" or self.attn_type == "temp_2":
 
             attn = nn.Softmax(dim=-3)(scores)
-            context = torch.einsum('bhgqk,bhkd->bhqd', attn, V)
+            context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
 
             attn = torch.einsum('bhgqk->bhqk', attn)
         else:
