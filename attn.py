@@ -114,19 +114,18 @@ class ScaledDotProductAttention(nn.Module):
 
         if self.attn_type == "temp":
 
-            n_k = math.floor(math.log2(l))
-            scores = torch.zeros(b, h, n_k, l, l_k)
+            n_k = [1, 3, 6, 9]
+            scores = torch.zeros(b, h, len(n_k), l, l_k)
 
             ind = 0
-            for k in range(0, n_k):
-                k = 2*k + 1
+            for k in n_k:
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
                 scores[:, :, ind, :, :] = torch.einsum('bhqcd,bhkcd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
                 ind += 1
             scores = scores.to(self.device)
             if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len(n_k), 1, 1)
 
         elif self.attn_type == "conv_attn" or self.attn_type == "temp_2":
 
@@ -147,17 +146,17 @@ class ScaledDotProductAttention(nn.Module):
                 Q, K = get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
             else:
-                n_k = math.floor(math.log2(l))
-                scores = torch.zeros(b, h, n_k, l, l_k)
+                n_k = [1, 3, 6, 9]
+                scores = torch.zeros(b, h, len(n_k), l, l_k)
                 ind = 0
-                for k in range(0, n_k):
+                for k in n_k:
                     k = 2 * k + 1
                     Q_g, K_g = get_conv(k, Q, K)
                     scores[:, :, ind, :, :] = torch.einsum('bhqd,bhkd->bhqk', Q_g, K_g) / np.sqrt(self.d_k)
                     ind += 1
                 scores = scores.to(self.device)
                 if attn_mask is not None:
-                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
+                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len(n_k), 1, 1)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
