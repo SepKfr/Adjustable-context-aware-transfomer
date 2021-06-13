@@ -111,6 +111,9 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
             e = epoch
 
+        if epoch - e > 20:
+            stop = True
+
         print("Average loss: {:.4f}".format(test_loss))
 
     except KeyboardInterrupt:
