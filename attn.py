@@ -142,6 +142,7 @@ class ScaledDotProductAttention(nn.Module):
                 q_p = q_p.reshape(b, h, l, d_k)
                 k_p = k_p.reshape(b, h, l_k, d_k)
                 return q_p, k_p
+
             if self.attn_type == "conv_attn":
                 Q, K = get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
