@@ -209,4 +209,4 @@ class ElectricityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 12800, 256
+        return 25600, 256
