@@ -179,8 +179,14 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
 
         targets_all[j, :, :] = targets
 
-    test_loss = torch.sqrt(criterion(predictions.to(device), targets_all.to(device))).item()
+    test_loss = criterion(predictions.to(device), targets_all.to(device)).item()
+    normaliser = targets_all.to(device).abs().mean()
+    test_loss = 2 * test_loss / normaliser
+
     mae_loss = mae(predictions.to(device), targets_all.to(device)).item()
+    normaliser = targets_all.to(device).abs().mean()
+    mae_loss = 2 * mae_loss / normaliser
+
     q_loss = []
     for q in 0.5, 0.9:
         q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
