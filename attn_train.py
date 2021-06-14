@@ -212,7 +212,7 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--lr_variate", type=str, default="True")
+    parser.add_argument("--lr_variate", type=str, default="False")
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
