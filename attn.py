@@ -114,11 +114,13 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp" in self.attn_type:
 
-            n_k = [1, 3, 6, 9]
-            Q_p = torch.zeros(b, h, len(n_k), l, d_k)
-            K_p = torch.zeros(b, h, len(n_k), l_k, d_k)
+            n_k = math.floor(math.log2(l))
+            Q_p = torch.zeros(b, h, n_k, l, d_k)
+            K_p = torch.zeros(b, h, n_k, l_k, d_k)
 
-            for ind, k in enumerate(n_k):
+            for ind in range(n_k):
+
+                k = 2*ind + 1
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
                 Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
@@ -128,11 +130,12 @@ class ScaledDotProductAttention(nn.Module):
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
             if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len(n_k), 1, 1)
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
 
         elif "conv" in self.attn_type:
 
             def get_conv(kernel, q_p, k_p):
+
                 q_p = q_p.reshape(b, l, h * d_k)
                 k_p = k_p.reshape(b, l_k, h * d_k)
                 padding = kernel - 1
@@ -151,19 +154,19 @@ class ScaledDotProductAttention(nn.Module):
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
             elif "temp" in self.attn_type:
-                n_k = [1, 3, 6, 9]
-                Q_p = torch.zeros(b, h, len(n_k), l, d_k)
-                K_p = torch.zeros(b, h, len(n_k), l_k, d_k)
+                n_k = math.floor(math.log2(l))
+                Q_p = torch.zeros(b, h, n_k, l, d_k)
+                K_p = torch.zeros(b, h, n_k, l_k, d_k)
 
-                ind = 0
-                for k in n_k:
+                for ind in range(n_k):
+                    k = 2*ind + 1
                     Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
 
                 V = K_p if "v_2" in self.attn_type else V
                 scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
 
                 if attn_mask is not None:
-                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len(n_k), 1, 1)
+                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
