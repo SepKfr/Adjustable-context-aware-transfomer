@@ -109,7 +109,7 @@ class ScaledDotProductAttention(nn.Module):
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        if "temp" in self.attn_type:
+        if "temp_cutoff" in self.attn_type:
 
             if "fft" in self.attn_type:
                 Q = Q.reshape(b, l, h*d_k)
