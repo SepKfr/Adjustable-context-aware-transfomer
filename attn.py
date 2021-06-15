@@ -1,5 +1,4 @@
 import torch
-import torch.fft
 import torch.nn as nn
 import math
 from torch.autograd import Variable
