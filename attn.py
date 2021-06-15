@@ -1,12 +1,9 @@
 import torch
+import torch.fft
 import torch.nn as nn
 import math
 from torch.autograd import Variable
 import numpy as np
-import seaborn as sns
-import matplotlib.pylab as plt
-import os
-from numba import njit, prange
 import torch.nn.functional as F
 import random
 
@@ -114,6 +111,14 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp" in self.attn_type:
 
+            if "fft" in self.attn_type:
+                Q = Q.reshape(b, l, h*d_k)
+                K = K.reshape(b, l_k, h*d_k)
+                Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
+                K = torch.fft.fft(torch.fft.fft(K, dim=-1), dim=-2).real
+                Q = Q.reshape(b, h, l, d_k)
+                K = K.reshape(b, h, l_k, d_k)
+
             n_k = math.floor(math.log2(l))
             Q_p = torch.zeros(b, h, n_k, l, d_k)
             K_p = torch.zeros(b, h, n_k, l_k, d_k)
@@ -154,6 +159,15 @@ class ScaledDotProductAttention(nn.Module):
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
             elif "temp" in self.attn_type:
+
+                if "fft" in self.attn_type:
+                    Q = Q.reshape(b, l, h * d_k)
+                    K = K.reshape(b, l_k, h * d_k)
+                    Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
+                    K = torch.fft.fft(torch.fft.fft(K, dim=-1), dim=-2).real
+                    Q = Q.reshape(b, h, l, d_k)
+                    K = K.reshape(b, h, l_k, d_k)
+
                 n_k = math.floor(math.log2(l))
                 Q_p = torch.zeros(b, h, n_k, l, d_k)
                 K_p = torch.zeros(b, h, n_k, l_k, d_k)
