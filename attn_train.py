@@ -12,6 +12,7 @@ import sys
 import random
 import pandas as pd
 from time import time, ctime
+import math
 from data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
 
@@ -181,7 +182,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
 
     test_loss = criterion(predictions.to(device), targets_all.to(device)).item()
     normaliser = targets_all.to(device).abs().mean()
-    test_loss = 2 * torch.sqrt(test_loss) / normaliser
+    test_loss = 2 * math.sqrt(test_loss) / normaliser
 
     mae_loss = mae(predictions.to(device), targets_all.to(device)).item()
     normaliser = targets_all.to(device).abs().mean()
