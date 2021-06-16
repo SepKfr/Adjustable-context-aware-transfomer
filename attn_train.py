@@ -202,7 +202,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--d_model", type=int, default=[64])
     parser.add_argument("--d_model_best", type=int)
-    parser.add_argument("--n_heads", type=list, default=[8])
+    parser.add_argument("--n_heads", type=list, default=[4, 8])
     parser.add_argument("--n_heads_best", type=int)
     parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
