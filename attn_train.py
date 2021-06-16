@@ -202,7 +202,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--d_model", type=int, default=[64])
     parser.add_argument("--d_model_best", type=int)
-    parser.add_argument("--n_heads", type=list, default=[4, 8])
+    parser.add_argument("--n_heads", type=list, default=[1, 4])
     parser.add_argument("--n_heads_best", type=int)
     parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
@@ -323,17 +323,17 @@ def main():
 
     erros[args.name] = list()
     config_file[args.name] = list()
-    erros[args.name].append(float("{:.4f}".format(test_loss)))
-    erros[args.name].append(float("{:.4f}".format(mae_loss)))
+    erros[args.name].append(float("{:.5f}".format(test_loss)))
+    erros[args.name].append(float("{:.5f}".format(mae_loss)))
     for q in q_loss:
-        erros[args.name].append(float("{:.4f}".format(q)))
+        erros[args.name].append(float("{:.5f}".format(q)))
     config_file[args.name].append(layers)
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
     config_file[args.name].append(lr)
     config_file[args.name].append(dr)
 
-    print("test error for best config {:.3f}".format(test_loss))
+    print("test error for best config {:.4f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.exp_name, args.seq_len_pred)
     config_path = "configs_{}_{}.json".format(args.exp_name, args.seq_len_pred)
 
@@ -342,10 +342,10 @@ def main():
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
                 json_dat[args.name] = list()
-            json_dat[args.name].append(float("{:.3f}".format(test_loss)))
-            json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
+            json_dat[args.name].append(float("{:.5f}".format(test_loss)))
+            json_dat[args.name].append(float("{:.5f}".format(mae_loss)))
             for q in q_loss:
-                json_dat[args.name].append(float("{:.4f}".format(q)))
+                json_dat[args.name].append(float("{:.5f}".format(q)))
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
