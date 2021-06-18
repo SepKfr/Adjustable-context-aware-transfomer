@@ -8,7 +8,6 @@ import sys
 import random
 import gc
 import glob
-import datetime
 
 import electricity
 import traffic
@@ -400,8 +399,8 @@ def process_favorita(config):
     print('Unzipping complete, commencing data processing...')
 
     # Extract only a subset of data to save/process for efficiency
-    start_date = datetime(2015, 1, 1)
-    end_date = datetime(2016, 6, 1)
+    start_date = pd.datetime(2015, 1, 1)
+    end_date = pd.datetime(2016, 6, 1)
 
     print('Regenerating data...')
 
