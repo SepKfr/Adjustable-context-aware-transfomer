@@ -12,6 +12,7 @@ import glob
 import electricity
 import traffic
 import air_quality
+import watershed
 
 np.random.seed(21)
 random.seed(21)
@@ -62,6 +63,7 @@ class ExperimentConfig(object):
             'electricity': electricity.ElectricityFormatter,
             'traffic': traffic.TrafficFormatter,
             'air_quality': air_quality.AirQualityFormatter,
+            'watershed': watershed.WatershedFormatter
         }
 
         return data_formatter_class[self.experiment]()
