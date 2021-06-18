@@ -18,7 +18,7 @@ random.seed(21)
 
 
 class ExperimentConfig(object):
-    default_experiments = ['electricity', 'traffic', 'air_quality', 'favorita']
+    default_experiments = ['electricity', 'traffic', 'air_quality', 'favorita', 'watershed']
 
     def __init__(self, experiment='electricity', root_folder=None):
 
@@ -46,7 +46,8 @@ class ExperimentConfig(object):
             'electricity': 'hourly_electricity.csv',
             'traffic': 'hourly_traffic.csv',
             'air_quality': 'hourly_air_quality.csv',
-            'favorita': 'favorita_consolidated.csv'
+            'favorita': 'favorita_consolidated.csv',
+            'watershed': 'watershed.csv'
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
@@ -102,6 +103,47 @@ def download_and_unzip(url, zip_path, csv_path, data_folder):
     print('Done.')
 
 
+def process_watershed(config):
+
+    """Process watershed dataset
+    Args:
+    config: Default experiment config for Watershed
+    """
+    sites = ['BDC', 'BEF', 'DCF', 'GOF', 'HBF', 'LMP', 'MCQ', 'SBM', 'TPB', 'WHB']
+    data_path = config.data_folder
+    df_list = []
+
+    for i, site in enumerate(sites):
+
+        df = pd.read_csv('{}/{}_WQual_Level4.csv'.format(data_path, site), index_col=0, sep=',')
+        df_list.append(df.iloc[0::4, :])
+
+    output = pd.concat(df_list, axis=0)
+    output.index = pd.to_datetime(output.Date)
+    output.sort_index(inplace=True)
+    output = output.dropna(axis=1, how='all')
+    output = output.fillna(0.)
+
+    start_date = pd.to_datetime('2013-03-28')
+    earliest_time = start_date
+    output = output[output.index >= start_date]
+
+    date = output.index
+    output['day_of_week'] = date.dayofweek
+    output['id'] = output['Site']
+    output['categorical_id'] = output['Site']
+    output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
+            date - earliest_time).days * 24
+
+    output['days_from_start'] = (date - earliest_time).days
+    output = output[output['Site'] != 0.0]
+    output = output.fillna('na')
+    output = output[output['days_from_start'] != 'na']
+    output.to_csv("watershed.csv")
+
+    print('Done.')
+
+
 def download_air_quality(args):
 
     """Downloads air quality dataset from UCI repository"""
@@ -141,7 +183,7 @@ def download_air_quality(args):
     output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
             date - earliest_time).days * 24
     output['days_from_start'] = (date - earliest_time).days
-    output.to_csv("air_quality.csv".format(args.data_folder))
+    output.to_csv("air_quality.csv")
 
     print('Done.')
 
@@ -540,7 +582,8 @@ def main(expt_name, force_download, output_folder):
         'electricity': download_electricity,
         'traffic': download_traffic,
         'air_quality': download_air_quality,
-        'favorita': process_favorita
+        'favorita': process_favorita,
+        'watershed': process_watershed
     }
 
     if expt_name not in download_functions:
