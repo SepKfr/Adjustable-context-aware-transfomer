@@ -164,7 +164,7 @@ class TrafficFormatter(GenericDataFormatter):
             'learning_rate': 0.001,
             'minibatch_size': 128,
             'max_gradient_norm': 100.,
-            'num_heads': 4,
+            'num_heads': 8,
             'stack_size': 1
         }
 

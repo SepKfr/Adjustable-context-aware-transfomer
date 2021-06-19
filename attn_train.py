@@ -203,7 +203,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--d_model", type=int, default=[32])
     parser.add_argument("--d_model_best", type=int)
-    parser.add_argument("--n_heads", type=list, default=[8])
+    parser.add_argument("--n_heads", type=list, default=[4])
     parser.add_argument("--n_heads_best", type=int)
     parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
@@ -215,7 +215,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='temp_fft')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
@@ -265,10 +265,11 @@ def main():
     test_en, test_de, test_y, test_id = batching(args.batch_size, test_x[:, :seq_len, :],
                                   test_x[:, seq_len:, :], test_y[:, :, :], test_id)
 
+    model_params = formatter.get_default_model_params()
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, args.n_heads,
+    hyper_param = list([args.n_layers, [model_params['num_heads']],
                         args.d_model, args.lr, args.dr, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
