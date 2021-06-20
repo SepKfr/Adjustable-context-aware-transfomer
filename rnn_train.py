@@ -49,8 +49,7 @@ def train(args, model, train_en, train_de, train_y, train_id,
             loss.backward()
             optimizer.step()
 
-        if epoch % 20 == 0:
-            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
         model.eval()
 
@@ -81,9 +80,7 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
         if epoch - e > 10:
             stop = True
-
-        if epoch % 20 == 0:
-            print("Average loss: {:.3f}".format(test_loss))
+        print("Average loss: {:.3f}".format(test_loss))
 
     except KeyboardInterrupt:
         torch.save({
