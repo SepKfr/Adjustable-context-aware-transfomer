@@ -270,7 +270,7 @@ def main():
     if args.attn_type != "conv_attn":
         args.kernel = [1]
     hyper_param = list([args.n_layers, [model_params['num_heads']],
-                        args.d_model, args.lr, args.dr, args.kernel])
+                        [model_params['hidden_layer_size']], args.lr, args.dr, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
