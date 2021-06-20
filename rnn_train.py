@@ -1,19 +1,18 @@
 import pickle
-from preprocess import Scaler
 from torch.optim import Adam
 import torch.nn as nn
 import torch
 import argparse
 import json
 import os
-import pytorch_warmup as warmup
+import math
 import itertools
 import sys
 import random
 import numpy as np
 import pandas as pd
 from data_loader import ExperimentConfig
-from base_train import batch_sampled_data, batching, inverse_output
+from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
 from baselines import CNN, RNN, Lstnet, RNConv, MLP
 
 
@@ -74,6 +73,9 @@ def train(args, model, train_en, train_de, train_y, train_id,
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
             e = epoch
+
+        if epoch - e > 10:
+            stop = True
 
         if epoch % 20 == 0:
             print("Average loss: {:.3f}".format(test_loss))
@@ -147,21 +149,44 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
+    def extract_numerical_data(data):
+        """Strips out forecast time and identifier columns."""
+        return data[[
+            col for col in data.columns
+            if col not in {"forecast_time", "identifier"}
+        ]]
+
     model.eval()
 
-    outputs = torch.zeros(test_y.shape)
+    predictions = torch.zeros(test_y.squeeze(-1).shape)
+    targets_all = torch.zeros(test_y.squeeze(-1).shape)
+
     for j in range(test_en.shape[0]):
-        outputs[j] = model(test_en[j], test_de[j])
+        output = model(test_en[j], test_de[j])
+        output_map = inverse_output(output, test_y[j], test_id[j])
+        forecast = torch.from_numpy(extract_numerical_data(
+            formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32')).to(device)
 
-    predictions = inverse_output(outputs, test_id, formatter, device)
-    y_true = inverse_output(test_y, test_id, formatter, device)
+        predictions[j, :, :] = forecast
+        targets = torch.from_numpy(extract_numerical_data(
+            formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')).to(device)
 
-    test_loss = torch.sqrt(criterion(y_true, predictions)).item()
-    mae_loss = mae(y_true, predictions).item()
+        targets_all[j, :, :] = targets
 
+    test_loss = criterion(predictions.to(device), targets_all.to(device)).item()
+    normaliser = targets_all.to(device).abs().mean()
+    test_loss = 2 * math.sqrt(test_loss) / normaliser
+
+    mae_loss = mae(predictions.to(device), targets_all.to(device)).item()
+    normaliser = targets_all.to(device).abs().mean()
+    mae_loss = 2 * mae_loss / normaliser
+
+    q_loss = []
+    for q in 0.5, 0.9:
+        q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
     pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
 
-    return test_loss, mae_loss
+    return test_loss, mae_loss, q_loss
 
 
 def main():
@@ -200,44 +225,43 @@ def main():
 
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    train_x, train_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
-        device)
-
-    train_id = sample_data['identifier']
+    train_x, train_y, train_id = torch.from_numpy(sample_data['inputs']).to(device), \
+                                 torch.from_numpy(sample_data['outputs']).to(device), \
+                                 sample_data['identifier']
 
     sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    valid_x, valid_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
-        device)
-
-    valid_id = sample_data['identifier']
+    valid_x, valid_y, valid_id = torch.from_numpy(sample_data['inputs']).to(device), \
+                                 torch.from_numpy(sample_data['outputs']).to(device), \
+                                 sample_data['identifier']
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    test_x, test_y = torch.from_numpy(sample_data['inputs']).to(device), torch.from_numpy(sample_data['outputs']).to(
-        device)
-
-    test_id = sample_data['identifier']
+    test_x, test_y, test_id = torch.from_numpy(sample_data['inputs']).to(device), \
+                              torch.from_numpy(sample_data['outputs']).to(device), \
+                              sample_data['identifier']
 
     seq_len = params['num_encoder_steps']
 
-    train_en, train_de, train_y = batching(args.batch_size, train_x[:, :seq_len, :],
-                                           train_x[:, seq_len:, :], train_y[:, :, :])
+    train_en, train_de, train_y, train_id = batching(args.batch_size, train_x[:, :seq_len, :],
+                                                     train_x[:, seq_len:, :], train_y[:, :, :], train_id)
 
-    valid_en, valid_de, valid_y = batching(args.batch_size, valid_x[:, :seq_len, :],
-                                           valid_x[:, seq_len:, :], valid_y[:, :, :])
+    valid_en, valid_de, valid_y, valid_id = batching(args.batch_size, valid_x[:, :seq_len, :],
+                                                     valid_x[:, seq_len:, :], valid_y[:, :, :], valid_id)
 
-    test_en, test_de, test_y = batching(args.batch_size, test_x[:, :seq_len, :],
-                                        test_x[:, seq_len:, :], test_y[:, :, :])
+    test_en, test_de, test_y, test_id = batching(args.batch_size, test_x[:, :seq_len, :],
+                                                 test_x[:, seq_len:, :], test_y[:, :, :], test_id)
 
     criterion = nn.MSELoss()
 
     hyper_param = list()
 
+    model_params = formatter.get_default_model_params()
+
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.kernel, args.dr, args.lr])
+        hyper_param = list([args.n_layers, [model_params['hidden_layer_size']], args.kernel, args.dr, args.lr])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.lr])
+        hyper_param = list([args.n_layers, [model_params['hidden_layer_size']], args.dr, args.lr])
 
     configs = create_config(hyper_param)
 
@@ -308,14 +332,16 @@ def main():
 
     print("best_config: {}".format(best_config))
 
-    test_loss, mae_loss = evaluate(best_config, args,
+    test_loss, mae_loss, q_loss = evaluate(best_config, args,
                                    test_en.to(device), test_de.to(device), test_y.to(device), test_id,
                                    criterion, formatter, path)
 
     erros[args.name] = list()
     config_file[args.name] = list()
-    erros[args.name].append(float("{:.4f}".format(test_loss)))
-    erros[args.name].append(float("{:.4f}".format(mae_loss)))
+    erros[args.name].append(float("{:.5f}".format(test_loss)))
+    erros[args.name].append(float("{:.5f}".format(mae_loss)))
+    for q in q_loss:
+        erros[args.name].append(float("{:.5f}".format(q)))
     config_file[args.name].append(n_layers)
     config_file[args.name].append(hidden_size)
     config_file[args.name].append(dr)
@@ -332,8 +358,10 @@ def main():
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
                  json_dat[args.name] = list()
-            json_dat[args.name].append(float("{:.3f}".format(test_loss)))
-            json_dat[args.name].append(float("{:.3f}".format(mae_loss)))
+            json_dat[args.name].append(float("{:.5f}".format(test_loss)))
+            json_dat[args.name].append(float("{:.5f}".format(mae_loss)))
+            for q in q_loss:
+                json_dat[args.name].append(float("{:.5f}".format(q)))
 
         with open(error_path, "w") as json_file:
             json.dump(json_dat, json_file)
