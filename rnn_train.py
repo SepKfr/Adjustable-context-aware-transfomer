@@ -256,9 +256,9 @@ def main():
     model_params = formatter.get_default_model_params()
 
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.kernel, args.dr, args.lr])
+        hyper_param = list([args.n_layers, [model_params['hidden_layer_size']], args.kernel, args.dr, args.lr])
     elif args.deep_type == "rnn" or args.deep_type == "mlp":
-        hyper_param = list([args.n_layers, [args.hidden_size], args.dr, args.lr])
+        hyper_param = list([args.n_layers, [model_params['hidden_layer_size']], args.dr, args.lr])
 
     configs = create_config(hyper_param)
 
