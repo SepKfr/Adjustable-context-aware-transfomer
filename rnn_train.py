@@ -54,9 +54,14 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
         model.eval()
 
+        test_loss = 0
+
         outputs = torch.zeros(test_y.shape)
         for j in range(test_en.shape[0]):
-            outputs[j] = model(test_en[j], test_de[j])
+
+            outputs = model(test_en[j], test_de[j])
+            loss = criterion(test_y[j], outputs)
+            test_loss += loss.item()
 
         '''predictions = form_predictions(outputs, test_id, formatter, device)
 
