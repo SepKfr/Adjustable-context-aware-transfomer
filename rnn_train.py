@@ -60,10 +60,6 @@ def train(args, model, train_en, train_de, train_y, train_id,
             loss = criterion(test_y[j], outputs)
             test_loss += loss.item()
 
-        '''predictions = form_predictions(outputs, test_id, formatter, device)
-
-        test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)'''
-
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
             if val_inner_loss < val_loss:
