@@ -55,9 +55,7 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
         test_loss = 0
 
-        outputs = torch.zeros(test_y.shape)
         for j in range(test_en.shape[0]):
-
             outputs = model(test_en[j], test_de[j])
             loss = criterion(test_y[j], outputs)
             test_loss += loss.item()
@@ -65,9 +63,6 @@ def train(args, model, train_en, train_de, train_y, train_id,
         '''predictions = form_predictions(outputs, test_id, formatter, device)
 
         test_y = test_y.reshape(test_y.shape[0] * test_y.shape[1], -1, 1)'''
-
-        loss = criterion(test_y, outputs.to(device))
-        test_loss = loss.item()
 
         if test_loss < val_inner_loss:
             val_inner_loss = test_loss
