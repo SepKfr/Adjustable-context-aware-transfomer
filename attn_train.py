@@ -215,7 +215,7 @@ def main():
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
-    parser.add_argument("--lr_variate", type=str, default="True")
+    parser.add_argument("--lr_variate", type=str, default="False")
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
@@ -295,7 +295,7 @@ def main():
             opt = None
         else:
             opt = NoamOpt(d_model, 1, 5000,
-            Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+            Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
             optim = opt.optimizer
 
         epoch_start = 0
