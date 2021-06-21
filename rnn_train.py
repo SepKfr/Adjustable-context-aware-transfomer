@@ -342,7 +342,7 @@ def main():
     if args.deep_type == "cnn" or args.deep_type == "rnconv":
         config_file[args.name].append(kernel)
 
-    print("test error for best config {:.3f}".format(test_loss))
+    print("test error for best config {:.4f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.exp_name, args.seq_len_pred)
     config_path = "configs_{}_{}.json".format(args.exp_name, args.seq_len_pred)
 
