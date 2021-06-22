@@ -154,8 +154,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
-                 seq_len=seq_len, seq_len_pred=args.seq_len_pred, kernel=kernel,
-                 dr=dr).to(device)
+                 kernel=kernel, dr=dr).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -287,7 +286,6 @@ def main():
                      n_layers=n_layers, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      pe=args.pos_enc, attn_type=args.attn_type,
-                     seq_len=seq_len, seq_len_pred=args.seq_len_pred,
                      kernel=kernel, dr=dr).to(device)
 
         if args.lr_variate == "False":

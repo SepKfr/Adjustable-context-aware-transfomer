@@ -423,8 +423,7 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, pe, attn_type,
-                 seq_len, seq_len_pred, kernel,dr):
+                 tgt_pad_index, device, pe, attn_type, kernel, dr):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
