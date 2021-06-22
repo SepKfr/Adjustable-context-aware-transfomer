@@ -443,7 +443,6 @@ class Attn(nn.Module):
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
 
-
     def forward(self, enc_inputs, dec_inputs):
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
