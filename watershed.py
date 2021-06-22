@@ -74,7 +74,7 @@ class WatershedFormatter(DataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': 64,
+            'hidden_layer_size': [64],
             'learning_rate': 0.001,
             'minibatch_size': 128,
             'max_gradient_norm': 100.,
@@ -91,4 +91,4 @@ class WatershedFormatter(DataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 1280, 512
+        return 128000, 5120

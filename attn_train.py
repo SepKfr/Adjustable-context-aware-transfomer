@@ -265,7 +265,7 @@ def main():
     if args.attn_type != "conv_attn":
         args.kernel = [1]
     hyper_param = list([args.n_layers, [model_params['num_heads']],
-                        [model_params['hidden_layer_size']], args.lr, args.dr, args.kernel])
+                        model_params['hidden_layer_size'], args.lr, args.dr, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
@@ -292,7 +292,7 @@ def main():
             optim = Adam(model.parameters(), lr=lr)
             opt = None
         else:
-            opt = NoamOpt(d_model, 1, 5000,
+            opt = NoamOpt(d_model, 1, 4000,
             Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
             optim = opt.optimizer
 
