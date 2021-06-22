@@ -288,13 +288,7 @@ def main():
                      tgt_pad_index=0, device=device,
                      pe=args.pos_enc, attn_type=args.attn_type,
                      seq_len=seq_len, seq_len_pred=args.seq_len_pred,
-                     kernel=kernel, dr=dr)
-
-        if torch.cuda.device_count() > 1:
-            print("Let's use", torch.cuda.device_count(), "GPUs!")
-            model = nn.DataParallel(model)
-
-        model.to(device)
+                     kernel=kernel, dr=dr).to(device)
 
         if args.lr_variate == "False":
             optim = Adam(model.parameters(), lr=lr)
