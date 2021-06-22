@@ -199,7 +199,7 @@ def main():
     parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
-    parser.add_argument("--exp_name", type=str, default='traffic')
+    parser.add_argument("--exp_name", type=str, default='watershed')
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
