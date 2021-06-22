@@ -60,7 +60,7 @@ erros = dict()
 config_file = dict()
 
 if torch.cuda.is_available():
-    device = torch.device("cuda:1")
+    device = torch.device("cuda:0")
     print("Running on GPU")
 else:
     device = torch.device("cpu")
