@@ -85,8 +85,8 @@ def train(args, model, train_en, train_de, train_y,
         '''t = time()
         print("start {}:".format(ctime(t)))'''
 
-        total_loss = None
-        test_loss = None
+        total_loss_out = 1e9
+        test_loss_out = 1e9
 
         for k in kernel:
 
@@ -119,11 +119,16 @@ def train(args, model, train_en, train_de, train_y,
 
                 e = epoch
 
-        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+            if test_loss < test_loss_out:
+                test_loss_out = test_loss
+            if total_loss < test_loss_out:
+                test_loss_out = total_loss
+
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss_out))
 
         if epoch - e > 10:
             stop = True
-        print("Average loss: {:.4f}".format(test_loss))
+        print("Average loss: {:.4f}".format(test_loss_out))
 
     except KeyboardInterrupt:
         torch.save({
