@@ -85,10 +85,13 @@ def train(args, model, train_en, train_de, train_y,
         '''t = time()
         print("start {}:".format(ctime(t)))'''
 
-        total_loss = 0
-        test_loss = 0
+        total_loss = None
+        test_loss = None
 
         for k in kernel:
+
+            total_loss = 0
+            test_loss = 0
 
             for batch_id in range(train_en.shape[0]):
                 output = model(train_en[batch_id], train_de[batch_id], k)
@@ -115,9 +118,6 @@ def train(args, model, train_en, train_de, train_y,
                     torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
                 e = epoch
-
-            total_loss = 0
-            test_loss = 0
 
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
@@ -225,7 +225,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='attn')
+    parser.add_argument("--attn_type", type=str, default='conv_attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
