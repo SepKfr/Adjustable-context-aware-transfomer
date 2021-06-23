@@ -111,7 +111,7 @@ def train(args, model, train_en, train_de, train_y,
                 val_inner_loss = test_loss
                 if val_inner_loss < val_loss:
                     val_loss = val_inner_loss
-                    best_config = config
+                    best_config = config, kernel
                     torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
                 e = epoch
@@ -140,7 +140,9 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter,path):
 
-    n_layers, n_heads, d_model, lr, dr, kernel = config
+    conf, kernel = config
+    n_layers, n_heads, d_model, lr, dr = conf
+
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
@@ -218,7 +220,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='conv_attn')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
@@ -321,8 +323,9 @@ def main():
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device), test_de.to(device), test_y.to(device),
                                    test_id, criterion, formatter, path)
+    conf, kernel = best_config
+    n_layers, n_heads, d_model, lr, dr = conf
 
-    layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
@@ -331,8 +334,8 @@ def main():
     erros[args.name].append(float("{:.5f}".format(mae_loss)))
     for q in q_loss:
         erros[args.name].append(float("{:.5f}".format(q)))
-    config_file[args.name].append(layers)
-    config_file[args.name].append(heads)
+    config_file[args.name].append(n_layers)
+    config_file[args.name].append(n_heads)
     config_file[args.name].append(d_model)
     config_file[args.name].append(lr)
     config_file[args.name].append(dr)
