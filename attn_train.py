@@ -72,63 +72,45 @@ def train(args, model, train_en, train_de, train_y,
           val_inner_loss, opt, optimizer,
           config, config_num, best_config, criterion, path):
 
-    if args.attn_type != 'conv_attn':
-        kernel = [1]
-    else:
-        kernel = args.kernel
-
     stop = False
     if opt is not None:
         optimizer = opt.optimizer
     try:
         model.train()
+        total_loss = 0
         '''t = time()
         print("start {}:".format(ctime(t)))'''
+        for batch_id in range(train_en.shape[0]):
+            output = model(train_en[batch_id], train_de[batch_id])
+            loss = criterion(output, train_y[batch_id])
+            total_loss += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        '''t = time()
+        print("end {}:".format(ctime(t)))'''
 
-        total_loss_out = 1e9
-        test_loss_out = 1e9
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
-        for k in kernel:
+        model.eval()
+        test_loss = 0
+        for j in range(test_en.shape[0]):
+            outputs = model(test_en[j], test_de[j])
+            loss = criterion(test_y[j], outputs)
+            test_loss += loss.item()
 
-            total_loss = 0
-            test_loss = 0
+        if test_loss < val_inner_loss:
+            val_inner_loss = test_loss
+            if val_inner_loss < val_loss:
+                val_loss = val_inner_loss
+                best_config = config
+                torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
-            for batch_id in range(train_en.shape[0]):
-                output = model(train_en[batch_id], train_de[batch_id], k)
-                loss = criterion(output, train_y[batch_id])
-                total_loss += loss.item()
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-            '''t = time()
-            print("end {}:".format(ctime(t)))'''
-
-            model.eval()
-
-            for j in range(test_en.shape[0]):
-                outputs = model(test_en[j], test_de[j])
-                loss = criterion(test_y[j], outputs)
-                test_loss += loss.item()
-
-            if test_loss < val_inner_loss:
-                val_inner_loss = test_loss
-                if val_inner_loss < val_loss:
-                    val_loss = val_inner_loss
-                    best_config = config, kernel
-                    torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
-
-                e = epoch
-
-            if test_loss < test_loss_out:
-                test_loss_out = test_loss
-            if total_loss < total_loss_out:
-                total_loss_out = total_loss
-
-        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss_out))
+            e = epoch
 
         if epoch - e > 10:
             stop = True
-        print("Average loss: {:.4f}".format(test_loss_out))
+        print("Average loss: {:.4f}".format(test_loss))
 
     except KeyboardInterrupt:
         torch.save({
@@ -148,11 +130,9 @@ def create_config(hyper_parameters):
     return prod
 
 
-def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter,path):
+def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len, formatter,path):
 
-    conf, kernel = config
-    n_layers, n_heads, d_model, lr, dr = conf
-
+    n_layers, n_heads, d_model, lr, dr, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
@@ -230,7 +210,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='conv_attn')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
@@ -284,8 +264,8 @@ def main():
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, [model_params['n_heads']],
-                        model_params['hidden_layer_size'], args.lr, args.dr])
+    hyper_param = list([args.n_layers, [model_params['num_heads']],
+                        model_params['hidden_layer_size'], args.lr, args.dr, args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
@@ -296,7 +276,7 @@ def main():
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
 
-        n_layers, n_heads, d_model, lr, dr = conf
+        n_layers, n_heads, d_model, lr, dr, kernel = conf
         d_k = int(d_model / n_heads)
         model = Attn(src_input_size=train_en.shape[3],
                      tgt_input_size=train_y.shape[3],
@@ -306,7 +286,7 @@ def main():
                      n_layers=n_layers, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      pe=args.pos_enc, attn_type=args.attn_type,
-                     kernel=args.kernel, dr=dr).to(device)
+                     kernel=kernel, dr=dr).to(device)
 
         if args.lr_variate == "False":
             optim = Adam(model.parameters(), lr=lr)
@@ -324,18 +304,17 @@ def main():
 
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                      opt, optim, conf, i, best_config, criterion, path)
+                      train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), valid_id, epoch, e, val_loss, val_inner_loss,
+                      opt, optim, conf, i, best_config, formatter, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device), test_de.to(device), test_y.to(device),
-                                   test_id, criterion, formatter, path)
-    conf, kernel = best_config
-    n_layers, n_heads, d_model, lr, dr = conf
+                                   test_id, criterion, seq_len, formatter, path)
 
+    layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
@@ -344,8 +323,8 @@ def main():
     erros[args.name].append(float("{:.5f}".format(mae_loss)))
     for q in q_loss:
         erros[args.name].append(float("{:.5f}".format(q)))
-    config_file[args.name].append(n_layers)
-    config_file[args.name].append(n_heads)
+    config_file[args.name].append(layers)
+    config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
     config_file[args.name].append(lr)
     config_file[args.name].append(dr)
