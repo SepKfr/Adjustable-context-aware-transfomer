@@ -71,28 +71,26 @@ class GELU(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_hid, device, n_position=200):
+    def __init__(self, d_model, dropout, device, max_seq_len=500):
         super(PositionalEncoding, self).__init__()
-        self.device = device
 
-        # Not a parameter
-        self.register_buffer('pos_table', self._get_sinusoid_encoding_table(n_position, d_hid))
-
-    def _get_sinusoid_encoding_table(self, n_position, d_hid):
-        ''' Sinusoid position encoding table '''
-        # TODO: make it with torch instead of numpy
-
-        def get_position_angle_vec(position):
-            return [position / np.power(10000, 2 * (hid_j // 2) / d_hid) for hid_j in range(d_hid)]
-
-        sinusoid_table = np.array([get_position_angle_vec(pos_i) for pos_i in range(n_position)])
-        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
-        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
-
-        return torch.FloatTensor(sinusoid_table).unsqueeze(0).to(self.device)
+        self.d_model = d_model
+        self.dropout = nn.Dropout(p=dropout)
+        self.pe = torch.zeros(max_seq_len, d_model)
+        position = torch.arange(0., max_seq_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0., d_model, 2) *
+                             -(math.log(10000.0) / d_model))
+        self.pe[:, 0::2] = torch.sin(position * div_term)
+        self.pe[:, 1::2] = torch.cos(position * div_term)
+        self.pe = self.pe.unsqueeze(0).to(device)
 
     def forward(self, x):
-        return x + self.pos_table[:, :x.size(1)].clone().detach()
+
+        seq_len = x.size(1)
+        self.pe = self.pe[:, :seq_len]
+
+        x = x + Variable(self.pe, requires_grad=False)
+        return self.dropout(x)
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -304,7 +302,8 @@ class Encoder(nn.Module):
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
         self.pos_emb = PositionalEncoding(
-            d_hid =d_model,
+            d_model=d_model,
+            dropout=0,
             device=device)
         self.dr = nn.Dropout(dr)
         self.layer_norm = nn.LayerNorm(d_model)
@@ -375,7 +374,8 @@ class Decoder(nn.Module):
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
         self.pos_emb = PositionalEncoding(
-            d_hid=d_model,
+            d_model=d_model,
+            dropout=0,
             device=device)
         self.dr = nn.Dropout(dr)
         self.layer_norm = nn.LayerNorm(d_model)
