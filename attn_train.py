@@ -82,9 +82,11 @@ def train(args, model, train_en, train_de, train_y,
         optimizer = opt.optimizer
     try:
         model.train()
-        total_loss = 0
         '''t = time()
         print("start {}:".format(ctime(t)))'''
+
+        total_loss = 0
+        test_loss = 0
 
         for k in kernel:
 
@@ -98,10 +100,8 @@ def train(args, model, train_en, train_de, train_y,
             '''t = time()
             print("end {}:".format(ctime(t)))'''
 
-            print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
-
             model.eval()
-            test_loss = 0
+
             for j in range(test_en.shape[0]):
                 outputs = model(test_en[j], test_de[j])
                 loss = criterion(test_y[j], outputs)
@@ -116,9 +116,14 @@ def train(args, model, train_en, train_de, train_y,
 
                 e = epoch
 
-            if epoch - e > 10:
-                stop = True
-            print("Average loss: {:.4f}".format(test_loss))
+            total_loss = 0
+            test_loss = 0
+
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+
+        if epoch - e > 10:
+            stop = True
+        print("Average loss: {:.4f}".format(test_loss))
 
     except KeyboardInterrupt:
         torch.save({
