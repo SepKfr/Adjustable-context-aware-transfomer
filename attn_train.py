@@ -304,9 +304,9 @@ def main():
 
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), valid_id, epoch, e, val_loss, val_inner_loss,
-                      opt, optim, conf, i, best_config, formatter, criterion, path)
+                      train_y.to(device), valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
+                      opt, optim, conf, i, best_config, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
