@@ -138,7 +138,7 @@ class ScaledDotProductAttention(nn.Module):
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
-        elif "conv" in self.attn_type:
+        elif "temp_conv" in self.attn_type:
 
             def get_conv(kernel, q_p, k_p):
 
@@ -155,13 +155,7 @@ class ScaledDotProductAttention(nn.Module):
                 k_p = k_p.reshape(b, h, l_k, d_k)
                 return q_p, k_p
 
-            if self.attn_type == "conv_attn":
-                Q, K = get_conv(self.kernel, Q, K)
-                scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
-
-            elif "temp" in self.attn_type:
-
-                if "fft" in self.attn_type:
+            if "fft" in self.attn_type:
                     Q = Q.reshape(b, l, h * d_k)
                     K = K.reshape(b, l_k, h * d_k)
                     Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
@@ -169,19 +163,19 @@ class ScaledDotProductAttention(nn.Module):
                     Q = Q.reshape(b, h, l, d_k)
                     K = K.reshape(b, h, l_k, d_k)
 
-                n_k = [1, 3, 6, 9]
-                len_n_k = len(n_k)
-                Q_p = torch.zeros(b, h, len_n_k, l, d_k)
-                K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
+            n_k = [1, 3, 6, 9]
+            len_n_k = len(n_k)
+            Q_p = torch.zeros(b, h, len_n_k, l, d_k)
+            K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
 
-                for ind, k in enumerate(n_k):
-                    Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
+            for ind, k in enumerate(n_k):
+                Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
 
-                V = K_p if "v_2" in self.attn_type else V
-                scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
+            V = K_p if "v_2" in self.attn_type else V
+            scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
 
-                if attn_mask is not None:
-                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+            if attn_mask is not None:
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
@@ -441,8 +435,20 @@ class Attn(nn.Module):
             attn_type=attn_type, kernel=kernel, dr=dr)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
+        self.src_input_size = src_input_size
+        self.device = device
 
-    def forward(self, enc_inputs, dec_inputs):
+    def forward(self, enc_inputs, dec_inputs, kernel=1):
+
+        if self.attn_type == 'conv_attn':
+            padding = kernel - 1
+            enc_inputs = F.pad(enc_inputs.permute(0, 2, 1), (padding, 0))
+            dec_inputs = F.pad(dec_inputs.permute(0, 2, 1), (padding, 0))
+            enc_inputs = nn.Conv1d(in_channels=self.src_input_size, out_channels=self.src_input_size, kernel_size=kernel)\
+                .to(self.device) \
+                (enc_inputs).permute(0, 2, 1)
+            dec_inputs = nn.Conv1d(in_channels=self.src_input_size, out_channels=self.src_input_size, kernel_size=kernel).to(self.device) \
+                (dec_inputs).permute(0, 2, 1)
 
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)

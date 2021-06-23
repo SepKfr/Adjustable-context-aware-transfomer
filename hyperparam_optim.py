@@ -21,7 +21,7 @@ def job_complete_callback(
 
 def run_hyperparam_optim(project_name, task_name, task_id):
     # Connecting ClearML
-    task = Task.init(project_name='watershed Hyper-param optimization',
+    task = Task.init(project_name='Hyper-param optimization',
                      task_name='Automatic Hyper-param optimization',
                      task_type=Task.TaskTypes.optimizer,
                      reuse_last_task_id=False)
@@ -41,10 +41,7 @@ def run_hyperparam_optim(project_name, task_name, task_id):
     an_optimizer = HyperParameterOptimizer(
         base_task_id=args['template_task_id'],
         hyper_parameters=[
-            DiscreteParameterRange('n_heads', values=[1, 4]),
-            DiscreteParameterRange('n_layers', values=[1, 3]),
-            DiscreteParameterRange('lr', values=[0.0001, 0.001, 0.01]),
-            DiscreteParameterRange('dr', values=[0.1, 0.5])
+            DiscreteParameterRange('kernel', values=[1, 3, 6, 9])
         ],
         objective_metric_title='evaluate',
         objective_metric_series='loss',
@@ -54,8 +51,8 @@ def run_hyperparam_optim(project_name, task_name, task_id):
         execution_queue='default',
         time_limit_per_job=60.,
         total_max_jobs=10,
-        min_iteration_per_job=100,
-        max_iteration_per_job=10000
+        min_iteration_per_job=1,
+        max_iteration_per_job=3
     )
 
     an_optimizer.set_report_period(1.0)
@@ -76,8 +73,8 @@ def run_hyperparam_optim(project_name, task_name, task_id):
 
 def main():
     parser = argparse.ArgumentParser(description='Run hyper-parameter optimization for watershed')
-    parser.add_argument('--project_name', default='watershed')
-    parser.add_argument('--task_name', default='watershed training')
+    parser.add_argument('--project_name', default='time series forecasting')
+    parser.add_argument('--task_name', default='Hyperparam optimization')
     parser.add_argument('-ti', '--task_id')
     args = parser.parse_args()
     run_hyperparam_optim(args.project_name, args.task_name, args.task_id)
