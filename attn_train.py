@@ -121,8 +121,8 @@ def train(args, model, train_en, train_de, train_y,
 
             if test_loss < test_loss_out:
                 test_loss_out = test_loss
-            if total_loss < test_loss_out:
-                test_loss_out = total_loss
+            if total_loss < total_loss_out:
+                total_loss_out = total_loss
 
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss_out))
 
