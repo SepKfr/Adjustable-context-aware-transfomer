@@ -24,12 +24,7 @@ np.random.seed(21)
 erros = dict()
 config_file = dict()
 
-if torch.cuda.is_available():
-    device = torch.device("cuda:1")
-    print("Running on GPU")
-else:
-    device = torch.device("cpu")
-    print("running on CPU")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train(args, model, train_en, train_de, train_y, train_id,
@@ -110,7 +105,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                         seq_pred_len=args.seq_len_pred,
                         device=device,
                         d_r=dr)
-        model = model.to(device)
+
     elif args.deep_type == "rnn":
 
         n_layers, hidden_size, dr, lr = config
@@ -121,7 +116,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                     seq_pred_len=args.seq_len_pred,
                     device=device,
                     d_r=dr)
-        model = model.to(device)
 
     elif args.deep_type == "mlp":
         n_layers, hidden_size, dr, lr = config
@@ -132,7 +126,9 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                     seq_len_pred=args.seq_len_pred,
                     device=device,
                     dr=dr)
-        model = model.to(device)
+
+    model = nn.DataParallel(model)
+    model.to(device)
 
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
