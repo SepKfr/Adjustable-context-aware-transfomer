@@ -71,26 +71,28 @@ class GELU(nn.Module):
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model, dropout, device, max_seq_len=500):
+    def __init__(self, d_hid, device, n_position=200):
         super(PositionalEncoding, self).__init__()
+        self.device = device
 
-        self.d_model = d_model
-        self.dropout = nn.Dropout(p=dropout)
-        self.pe = torch.zeros(max_seq_len, d_model)
-        position = torch.arange(0., max_seq_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0., d_model, 2) *
-                             -(math.log(10000.0) / d_model))
-        self.pe[:, 0::2] = torch.sin(position * div_term)
-        self.pe[:, 1::2] = torch.cos(position * div_term)
-        self.pe = self.pe.unsqueeze(0).to(device)
+        # Not a parameter
+        self.register_buffer('pos_table', self._get_sinusoid_encoding_table(n_position, d_hid))
+
+    def _get_sinusoid_encoding_table(self, n_position, d_hid):
+        ''' Sinusoid position encoding table '''
+        # TODO: make it with torch instead of numpy
+
+        def get_position_angle_vec(position):
+            return [position / np.power(10000, 2 * (hid_j // 2) / d_hid) for hid_j in range(d_hid)]
+
+        sinusoid_table = torch.tensor([get_position_angle_vec(pos_i) for pos_i in range(n_position)], dtype='float32')
+        sinusoid_table[:, 0::2] = torch.sin(sinusoid_table[:, 0::2])  # dim 2i
+        sinusoid_table[:, 1::2] = torch.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+
+        return sinusoid_table.unsqueeze(0).to(self.device)
 
     def forward(self, x):
-
-        seq_len = x.size(1)
-        self.pe = self.pe[:, :seq_len]
-
-        x = x + Variable(self.pe, requires_grad=False)
-        return self.dropout(x)
+        return x + self.pos_table[:, :x.size(1)].clone().detach()
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -120,13 +122,12 @@ class ScaledDotProductAttention(nn.Module):
                 Q = Q.reshape(b, h, l, d_k)
                 K = K.reshape(b, h, l_k, d_k)
 
-            n_k = [1, 3, 6, 9]
-            len_n_k = len(n_k)
-            Q_p = torch.zeros(b, h, len_n_k, l, d_k)
-            K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
+            n_k = math.floor(math.log2(l))
+            Q_p = torch.zeros(b, h, n_k, l, d_k)
+            K_p = torch.zeros(b, h, n_k, l_k, d_k)
 
-            for ind, k in enumerate(n_k):
-
+            for ind in range(n_k):
+                k = 2*ind + 1
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
                 Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
@@ -136,7 +137,7 @@ class ScaledDotProductAttention(nn.Module):
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
             if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
 
         elif "conv" in self.attn_type:
 
@@ -169,19 +170,19 @@ class ScaledDotProductAttention(nn.Module):
                     Q = Q.reshape(b, h, l, d_k)
                     K = K.reshape(b, h, l_k, d_k)
 
-                n_k = [1, 3, 6, 9]
-                len_n_k = len(n_k)
-                Q_p = torch.zeros(b, h, len_n_k, l, d_k)
-                K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
+                n_k = math.floor(math.log2(l))
+                Q_p = torch.zeros(b, h, n_k, l, d_k)
+                K_p = torch.zeros(b, h, n_k, l_k, d_k)
 
-                for ind, k in enumerate(n_k):
+                for ind in range(n_k):
+                    k = ind*2 + 1
                     Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
 
                 V = K_p if "v_2" in self.attn_type else V
                 scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
 
                 if attn_mask is not None:
-                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, n_k, 1, 1)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
@@ -302,8 +303,7 @@ class Encoder(nn.Module):
         self.attn_type = attn_type
         self.src_emb = nn.Linear(input_size, d_model)
         self.pos_emb = PositionalEncoding(
-            d_model=d_model,
-            dropout=0,
+            d_hid =d_model,
             device=device)
         self.dr = nn.Dropout(dr)
         self.layer_norm = nn.LayerNorm(d_model)
@@ -374,8 +374,7 @@ class Decoder(nn.Module):
         self.attn_type = attn_type
         self.tgt_emb = nn.Linear(input_size, d_model)
         self.pos_emb = PositionalEncoding(
-            d_model=d_model,
-            dropout=0,
+            d_hid=d_model,
             device=device)
         self.dr = nn.Dropout(dr)
         self.layer_norm = nn.LayerNorm(d_model)
