@@ -292,7 +292,7 @@ def main():
             optim = Adam(model.parameters(), lr=lr)
             opt = None
         else:
-            opt = NoamOpt(d_model, 2, 64000,
+            opt = NoamOpt(d_model, 2, 10000,
             Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9))
             optim = opt.optimizer
 
