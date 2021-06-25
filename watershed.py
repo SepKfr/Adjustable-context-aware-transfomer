@@ -91,4 +91,4 @@ class WatershedFormatter(DataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 48000, 1280
+        return 64000, 2560
