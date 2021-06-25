@@ -134,7 +134,7 @@ class ScaledDotProductAttention(nn.Module):
 
             V = K_p.to(self.device) if "v_2" in self.attn_type else V
 
-            scores = torch.einsum('bhpqd,bhpkd->bhqpk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
+            scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
