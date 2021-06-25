@@ -59,7 +59,7 @@ def get_std_opt(model):
 erros = dict()
 config_file = dict()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def train(args, model, train_en, train_de, train_y,
@@ -283,7 +283,6 @@ def main():
                      pe=args.pos_enc, attn_type=args.attn_type,
                      kernel=kernel, dr=dr)
 
-        model = nn.DataParallel(model)
         model.to(device)
 
         if args.lr_variate == "False":

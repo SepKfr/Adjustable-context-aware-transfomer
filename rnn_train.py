@@ -24,7 +24,7 @@ np.random.seed(21)
 erros = dict()
 config_file = dict()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def train(args, model, train_en, train_de, train_y, train_id,
@@ -127,7 +127,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                     device=device,
                     dr=dr)
 
-    model = nn.DataParallel(model)
     model.to(device)
 
     mae = nn.L1Loss()
