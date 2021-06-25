@@ -200,8 +200,8 @@ class ScaledDotProductAttention(nn.Module):
             if "v_2" in self.attn_type:
                 context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
             else:
-                context = torch.einsum('bhqpk,bhkd->bhqd', attn, V)
-            attn = torch.einsum('bhgqk->bhqk', attn)
+                context = torch.einsum('bhpqk,bhkd->bhqd', attn, V)
+            attn = torch.einsum('bhpqk->bhqk', attn)
         else:
 
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
