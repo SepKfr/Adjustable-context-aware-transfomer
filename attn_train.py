@@ -59,7 +59,7 @@ def get_std_opt(model):
 erros = dict()
 config_file = dict()
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def train(args, model, train_en, train_de, train_y,
