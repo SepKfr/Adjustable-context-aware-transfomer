@@ -21,7 +21,6 @@ random.seed(21)
 torch.manual_seed(21)
 np.random.seed(21)
 
-global device
 
 class NoamOpt:
     "Optim wrapper that implements rate."
@@ -124,7 +123,7 @@ def create_config(hyper_parameters):
     return prod
 
 
-def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, seq_len, formatter,path):
+def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatter, path, device):
 
     n_layers, n_heads, d_model, lr, dr, kernel = config
     d_k = int(d_model / n_heads)
@@ -310,8 +309,9 @@ def main():
                 break
         print("best config so far: {}".format(best_config))
 
-    test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device), test_de.to(device), test_y.to(device),
-                                   test_id, criterion, seq_len, formatter, path)
+    test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device),
+                                   test_de.to(device), test_y.to(device),
+                                   test_id, criterion, seq_len, formatter, path, device)
 
     layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))

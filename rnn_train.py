@@ -24,7 +24,6 @@ np.random.seed(21)
 erros = dict()
 config_file = dict()
 
-global device
 
 def train(args, model, train_en, train_de, train_y, train_id,
           test_en, test_de, test_y, test_id, epoch, e, val_loss,
@@ -37,7 +36,7 @@ def train(args, model, train_en, train_de, train_y, train_id,
         total_loss = 0
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
-            loss = criterion(output, train_y[batch_id]).to(device)
+            loss = criterion(output, train_y[batch_id])
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -87,7 +86,7 @@ def create_config(hyper_parameters):
     return list(random.sample(set(prod), num_samples))
 
 
-def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path):
+def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
     model = None
 
@@ -324,7 +323,7 @@ def main():
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args,
                                    test_en.to(device), test_de.to(device), test_y.to(device), test_id,
-                                   criterion, formatter, path)
+                                   criterion, formatter, path, device)
 
     erros[args.name] = list()
     config_file[args.name] = list()
