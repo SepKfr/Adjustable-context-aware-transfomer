@@ -160,7 +160,7 @@ class TrafficFormatter(GenericDataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [64],
+            'hidden_layer_size': [32],
             'learning_rate': 0.001,
             'minibatch_size': 128,
             'max_gradient_norm': 100.,
@@ -177,6 +177,6 @@ class TrafficFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 128000, 8000
+        return 128000, 5120
 
 
