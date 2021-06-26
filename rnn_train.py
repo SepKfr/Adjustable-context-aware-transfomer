@@ -24,8 +24,7 @@ np.random.seed(21)
 erros = dict()
 config_file = dict()
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+global device
 
 def train(args, model, train_en, train_de, train_y, train_id,
           test_en, test_de, test_y, test_id, epoch, e, val_loss,
@@ -195,7 +194,10 @@ def main():
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
     parser.add_argument("--exp_name", type=str, default='watershed')
+    parser.add_argument("--cuda", type=str, default='cuda:0')
     args = parser.parse_args()
+
+    device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()

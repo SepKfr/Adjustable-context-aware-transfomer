@@ -21,6 +21,7 @@ random.seed(21)
 torch.manual_seed(21)
 np.random.seed(21)
 
+global device
 
 class NoamOpt:
     "Optim wrapper that implements rate."
@@ -58,8 +59,6 @@ def get_std_opt(model):
 
 erros = dict()
 config_file = dict()
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def train(args, model, train_en, train_de, train_y,
@@ -210,7 +209,10 @@ def main():
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
+    parser.add_argument("--cuda", type=str, default="cuda:0")
     args = parser.parse_args()
+
+    device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
