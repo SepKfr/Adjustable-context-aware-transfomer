@@ -104,7 +104,6 @@ def train(args, model, train_en, train_de, train_y,
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
             'config_num': config_num,
             'best_config': best_config
         }, os.path.join(path, "{}_continue".format(args.name)))
