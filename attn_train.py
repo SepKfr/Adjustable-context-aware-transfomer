@@ -55,14 +55,13 @@ class NoamOpt:
             param_group['lr'] = lr
 
 
-
 erros = dict()
 config_file = dict()
 
 
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
-          val_inner_loss, opt, optimizer,
+          val_inner_loss, optimizer,
           config, config_num, best_config, criterion, path):
 
     stop = False
@@ -201,7 +200,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='temp_conv')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
@@ -284,12 +283,7 @@ def main():
 
         model.to(device)
 
-        if args.lr_variate == "False":
-            optim = Adam(model.parameters(), lr=lr)
-            opt = None
-        else:
-            opt = NoamOpt(Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
-            optim = opt
+        optim = NoamOpt(Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
 
         epoch_start = 0
 
@@ -301,14 +295,14 @@ def main():
                 train(args, model, train_en.to(device), train_de.to(device),
                       train_y.to(device), valid_en.to(device), valid_de.to(device),
                       valid_y.to(device), epoch, e, val_loss, val_inner_loss,
-                      opt, optim, conf, i, best_config, criterion, path)
+                      optim, conf, i, best_config, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device),
                                    test_de.to(device), test_y.to(device),
-                                   test_id, criterion, seq_len, formatter, path, device)
+                                   test_id, criterion, formatter, path, device)
 
     layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
