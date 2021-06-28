@@ -247,7 +247,7 @@ class EncoderLayer(nn.Module):
             attn_type=attn_type, kernel=kernel)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
-        self.layer_norm = nn.LayerNorm(d_model)
+        self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
