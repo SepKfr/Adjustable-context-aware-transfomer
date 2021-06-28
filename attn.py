@@ -26,25 +26,6 @@ def get_con_attn_subsequent_mask(seq, cutoff, d_k):
     return subsequent_mask
 
 
-def get_attn_local_mask(seq_q, seq_k, local_mask):
-
-    mask = [[1 if abs(i - j) > local_mask else 0 for j in
-             range(seq_k.size(1))] for i in range(seq_k.size(1))]
-    mask = np.array(mask)
-    mask = torch.from_numpy(mask).int()
-    mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
-    return mask
-
-
-def get_con_mask(seq_q, seq_k, padding):
-    mask = [[1 if abs(i - j) > padding else 0 for j in
-             range(seq_k.size(1))] for i in range(seq_q.size(1))]
-    mask = np.array(mask)
-    mask = torch.from_numpy(mask).int()
-    mask = mask.unsqueeze(0).repeat(seq_q.size(0), 1, 1)
-    return mask
-
-
 def get_con_vecs(seq, cutoff):
 
     batch_size, n_h, seq_len, d_k = seq.shape
@@ -61,12 +42,6 @@ def rel_pos_enc(seq):
 
     rel_weight = nn.Parameter(torch.randn(seq.shape[2], seq.shape[3]), requires_grad=True)
     return rel_weight.unsqueeze(0)
-
-
-class GELU(nn.Module):
-
-    def forward(self, x):
-        return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
 
 class PositionalEncoding(nn.Module):
@@ -436,7 +411,7 @@ class Attn(nn.Module):
             input_size=src_input_size,
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
-            n_layers=n_layers, pad_index=tgt_pad_index,
+            n_layers=1, pad_index=tgt_pad_index,
             device=device, pe=pe,
             attn_type=attn_type, kernel=kernel, dr=dr)
         self.attn_type = attn_type
