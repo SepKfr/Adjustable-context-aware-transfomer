@@ -141,7 +141,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  pe=args.pos_enc, attn_type=args.attn_type,
-                 kernel=kernel, dr=dr).to(device)
+                 kernel=kernel).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -276,7 +276,7 @@ def main():
                      n_layers=n_layers, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      pe=args.pos_enc, attn_type=args.attn_type,
-                     kernel=kernel, dr=dr)
+                     kernel=kernel)
 
         model.to(device)
 
