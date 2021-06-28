@@ -298,7 +298,7 @@ def main():
                         dr=dr)
             model = model.to(device)
 
-        optimizer = Adam(model.parameters(), lr=lr)
+        optimizer = Adam(model.parameters())
         epoch_start = 0
 
         val_inner_loss = 1e10
