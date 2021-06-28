@@ -240,17 +240,17 @@ def main():
                               sample_data['identifier']
 
     seq_len = params['num_encoder_steps']
-
-    train_en, train_de, train_y, train_id = batching(args.batch_size, train_x[:, :seq_len, :],
+    model_params = formatter.get_default_model_params()
+    train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_x[:, :seq_len, :],
                                   train_x[:, seq_len:, :], train_y[:, :, :], train_id)
 
-    valid_en, valid_de, valid_y, valid_id = batching(args.batch_size, valid_x[:, :seq_len, :],
+    valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_x[:, :seq_len, :],
                                   valid_x[:, seq_len:, :], valid_y[:, :, :], valid_id)
 
-    test_en, test_de, test_y, test_id = batching(args.batch_size, test_x[:, :seq_len, :],
+    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
                                   test_x[:, seq_len:, :], test_y[:, :, :], test_id)
 
-    model_params = formatter.get_default_model_params()
+
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn":
         args.kernel = [1]
