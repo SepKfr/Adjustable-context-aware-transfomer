@@ -160,9 +160,9 @@ class TrafficFormatter(GenericDataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [64],
+            'hidden_layer_size': [32],
             'learning_rate': 0.001,
-            'minibatch_size': 64,
+            'minibatch_size': 128,
             'max_gradient_norm': 100.,
             'num_heads': 8,
             'stack_size': 1
