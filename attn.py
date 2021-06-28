@@ -196,9 +196,6 @@ class MultiHeadAttention(nn.Module):
         self.WV = nn.Linear(d_model, d_v * n_heads, bias=False)
         self.fc = nn.Linear(n_heads * d_v, d_model, bias=False)
 
-        self.layer_norm = nn.LayerNorm(d_model)
-        self.dropout = nn.Dropout(dr)
-
         self.device = device
 
         self.d_model = d_model
@@ -223,26 +220,20 @@ class MultiHeadAttention(nn.Module):
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
-        output = self.dropout(output)
-        return self.layer_norm(output + Q), attn
+        return output, attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
 
-    def __init__(self, d_model, d_ff, dr, device):
+    def __init__(self, d_model, d_ff):
         super(PoswiseFeedForwardNet, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)
         self.w_2 = nn.Linear(d_ff, d_model)
-        self.dropout = nn.Dropout(dr)
         self.relu = nn.ReLU()
-        self.layer_norm = nn.LayerNorm(d_model)
-        self.device = device
 
     def forward(self, inputs):
-        residual = inputs
-        output = self.w_2(self.relu(self.w_1(inputs)))
-        output = self.dropout(output)
-        return self.layer_norm(output + residual)
+
+        return self.w_2(self.relu(self.w_1(inputs)))
 
 
 class EncoderLayer(nn.Module):
@@ -255,7 +246,7 @@ class EncoderLayer(nn.Module):
             d_v=d_v, n_heads=n_heads, device=device, pe=pe,
             attn_type=attn_type, kernel=kernel, dr=dr)
         self.pos_ffn = PoswiseFeedForwardNet(
-            d_model=d_model, d_ff=d_ff, device=device, dr=dr)
+            d_model=d_model, d_ff=d_ff)
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
@@ -277,9 +268,9 @@ class Encoder(nn.Module):
         self.device = device
         self.pad_index = pad_index
         self.attn_type = attn_type
-        self.src_emb = nn.Linear(input_size, d_model)
+        self.src_emb = nn.Embedding(input_size, d_model)
         self.pos_emb = PositionalEncoding(
-            d_hid =d_model,
+            d_hid=d_model,
             device=device)
         self.dr = nn.Dropout(dr)
         self.layer_norm = nn.LayerNorm(d_model)
@@ -348,7 +339,7 @@ class Decoder(nn.Module):
         self.pad_index = pad_index
         self.device = device
         self.attn_type = attn_type
-        self.tgt_emb = nn.Linear(input_size, d_model)
+        self.tgt_emb = nn.Embedding(input_size, d_model)
         self.pos_emb = PositionalEncoding(
             d_hid=d_model,
             device=device)
