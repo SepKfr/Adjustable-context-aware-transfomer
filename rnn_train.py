@@ -61,6 +61,10 @@ def train(args, model, train_en, train_de, train_y, train_id,
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
             e = epoch
+
+        if epoch - e > 20:
+            stop = True
+
         print("Average loss: {:.3f}".format(test_loss))
 
     except KeyboardInterrupt:
