@@ -81,20 +81,40 @@ class ScaledDotProductAttention(nn.Module):
         self.attn_type = attn_type
         self.kernel = kernel
 
+    @staticmethod
+    def get_fft(Q, K):
+
+        b, h, l, d_k = Q.shape
+        l_k = K.shape[2]
+
+        Q = Q.reshape(b, l, h * d_k)
+        K = K.reshape(b, l_k, h * d_k)
+        Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
+        K = torch.fft.fft(torch.fft.fft(K, dim=-1), dim=-2).real
+        Q = Q.reshape(b, h, l, d_k)
+        K = K.reshape(b, h, l_k, d_k)
+
+        return Q, K
+
     def forward(self, Q, K, V, attn_mask):
 
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
+        if 'temp_fft' in self.attn_type:
+
+            Q, K = self.get_fft(Q, K)
+            Q_g = get_con_vecs(Q, self.kernel)
+            K_g = get_con_vecs(K, self.kernel)
+            Q = nn.Linear(self.kernel, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
+            K = nn.Linear(self.kernel, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+
         if "temp_cutoff" in self.attn_type:
 
             if "fft" in self.attn_type:
-                Q = Q.reshape(b, l, h*d_k)
-                K = K.reshape(b, l_k, h*d_k)
-                Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
-                K = torch.fft.fft(torch.fft.fft(K, dim=-1), dim=-2).real
-                Q = Q.reshape(b, h, l, d_k)
-                K = K.reshape(b, h, l_k, d_k)
+
+                Q, K = self.get_fft(Q, K)
 
             n_k = [1, 3, 6, 9]
             len_n_k = len(n_k)
@@ -138,12 +158,8 @@ class ScaledDotProductAttention(nn.Module):
             elif "temp" in self.attn_type:
 
                 if "fft" in self.attn_type:
-                    Q = Q.reshape(b, l, h * d_k)
-                    K = K.reshape(b, l_k, h * d_k)
-                    Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
-                    K = torch.fft.fft(torch.fft.fft(K, dim=-1), dim=-2).real
-                    Q = Q.reshape(b, h, l, d_k)
-                    K = K.reshape(b, h, l_k, d_k)
+
+                    Q, K = self.get_fft(Q, K)
 
                 n_k = [1, 3, 6, 9]
                 len_n_k = len(n_k)

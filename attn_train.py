@@ -250,9 +250,8 @@ def main():
     test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
                                   test_x[:, seq_len:, :], test_y[:, :, :], test_id)
 
-
     criterion = nn.MSELoss()
-    if args.attn_type != "conv_attn":
+    if args.attn_type != "conv_attn" or args.attn_type != "temp_fft":
         args.kernel = [1]
     hyper_param = list([args.n_layers, [model_params['num_heads']],
                         model_params['hidden_layer_size'], args.lr, args.dr, args.kernel])
