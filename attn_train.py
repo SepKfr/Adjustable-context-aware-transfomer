@@ -197,7 +197,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='attn')
+    parser.add_argument("--attn_type", type=str, default='tmp_fft')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
@@ -251,7 +251,7 @@ def main():
                                   test_x[:, seq_len:, :], test_y[:, :, :], test_id)
 
     criterion = nn.MSELoss()
-    if args.attn_type != "conv_attn" or args.attn_type != "temp_fft":
+    if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
         args.kernel = [1]
     hyper_param = list([args.n_layers, [model_params['num_heads']],
                         model_params['hidden_layer_size'], args.lr, args.dr, args.kernel])

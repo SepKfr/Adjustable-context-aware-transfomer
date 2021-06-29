@@ -101,7 +101,7 @@ class ScaledDotProductAttention(nn.Module):
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        if 'temp_fft' in self.attn_type:
+        if 'tmp_fft' in self.attn_type:
 
             Q, K = self.get_fft(Q, K)
             Q_g = get_con_vecs(Q, self.kernel)
