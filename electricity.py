@@ -199,7 +199,7 @@ class ElectricityFormatter(GenericDataFormatter):
             'dropout_rate': 0.3,
             'hidden_layer_size': [32],
             'learning_rate': 0.001,
-            'minibatch_size': 128,
+            'minibatch_size': 64,
             'max_gradient_norm': 100.,
             'num_heads': 8,
             'stack_size': 1
@@ -224,4 +224,4 @@ class ElectricityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 128000, 16000
+        return 64000, 8000

@@ -162,7 +162,7 @@ class TrafficFormatter(GenericDataFormatter):
             'dropout_rate': 0.3,
             'hidden_layer_size': [32],
             'learning_rate': 0.001,
-            'minibatch_size': 128,
+            'minibatch_size': 64,
             'max_gradient_norm': 100.,
             'num_heads': 8,
             'stack_size': 1
