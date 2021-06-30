@@ -255,7 +255,7 @@ class PoswiseFeedForwardNet(nn.Module):
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
-                 device, pe, attn_type, kernel):
+                 device, pe, attn_type, kernel, dr=0.1):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
@@ -264,15 +264,16 @@ class EncoderLayer(nn.Module):
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
+        self.dropout = nn.Dropout(dr)
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
         out, attn = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
             V=enc_inputs, attn_mask=enc_self_attn_mask)
-        out = self.layer_norm(out + enc_inputs)
+        out = self.dropout(self.layer_norm(out + enc_inputs))
         out_2 = self.pos_ffn(out)
-        out_2 = self.layer_norm(out_2 + out)
+        out_2 = self.dropout(self.layer_norm(out_2 + out))
         return out_2, attn
 
 
@@ -319,7 +320,7 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device, pe, attn_type, kernel):
+                 n_heads, device, pe, attn_type, kernel, dr=0.1):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
@@ -330,15 +331,16 @@ class DecoderLayer(nn.Module):
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
+        self.dropout = nn.Dropout(dr)
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask=None, dec_enc_attn_mask=None):
 
         out, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
-        out = self.layer_norm(dec_inputs + out)
+        out = self.dropout(self.layer_norm(dec_inputs + out))
         out2, dec_enc_attn = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
-        out2 = self.layer_norm(out + out2)
+        out2 = self.dropout(self.layer_norm(out + out2))
         out3 = self.pos_ffn(out2)
-        out3 = self.layer_norm(out2 + out3)
+        out3 = self.dropout(self.layer_norm(out2 + out3))
         return out3, dec_self_attn, dec_enc_attn
 
 
@@ -411,14 +413,18 @@ class Attn(nn.Module):
             device=device, pe=pe,
             attn_type=attn_type, kernel=kernel)
 
-        self.embedding = nn.Linear(src_input_size, d_model)
+        self.embedding = nn.Conv1d(src_input_size, d_model, kernel_size=1)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
 
+        for m in self.modules():
+            if isinstance(m, nn.Conv1d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='leaky_relu')
+
     def forward(self, enc_inputs, dec_inputs):
 
-        enc_inputs = self.embedding(enc_inputs)
-        dec_inputs = self.embedding(dec_inputs)
+        enc_inputs = self.embedding(enc_inputs.permute(0, 2, 1)).transpose(1, 2)
+        dec_inputs = self.embedding(dec_inputs.permute(0, 2, 1)).transpose(1, 2)
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
