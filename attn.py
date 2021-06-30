@@ -116,7 +116,7 @@ class ScaledDotProductAttention(nn.Module):
 
                 Q, K = self.get_fft(Q, K)
 
-            n_k = [1, 3, 6, 9]
+            n_k = [1, 3, 9]
             len_n_k = len(n_k)
             Q_p = torch.zeros(b, h, len_n_k, l, d_k)
             K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
