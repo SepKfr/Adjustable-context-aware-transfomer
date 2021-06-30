@@ -188,9 +188,10 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp" in self.attn_type:
 
-            attn = nn.Softmax(dim=-3)(scores)
             if "v_2" in self.attn_type:
                 context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
+                context = context[:, :, torch.argmax(context, dim=2), :, :]
+                context = context.squeeze(2)
             else:
                 context = torch.einsum('bhpqk,bhkd->bhqd', attn, V)
             attn = torch.einsum('bhpqk->bhqk', attn)
@@ -329,7 +330,6 @@ class DecoderLayer(nn.Module):
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
-        self.dropout = nn.Dropout(dr)
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask=None, dec_enc_attn_mask=None):
 
