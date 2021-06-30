@@ -189,7 +189,7 @@ class ScaledDotProductAttention(nn.Module):
         if "temp" in self.attn_type:
 
             if "v_2" in self.attn_type:
-                context = torch.einsum('bhgqk,bhgkd->bhqd', attn, V)
+                context = torch.einsum('bhgqk,bhgkd->bhgqd', attn, V)
                 context = context[:, :, torch.argmax(context, dim=2), :, :]
                 context = context.squeeze(2)
             else:
