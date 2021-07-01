@@ -125,10 +125,11 @@ class ScaledDotProductAttention(nn.Module):
 
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
-                Q_g = Q_g.reshape(b, l, -1, d_k*h)
-                K_g = K_g.reshape(b, l_k, -1, d_k*h)
 
                 if 'v2' in self.attn_type:
+
+                    Q_g = Q_g.reshape(b, l, -1, d_k * h)
+                    K_g = K_g.reshape(b, l_k, -1, d_k * h)
                     q = nn.Conv2d(k, 1, kernel_size=1).\
                         to(self.device)(Q_g.permute(0, 2, 1, 3)).squeeze(1)
                     k = nn.Conv2d(k, 1, kernel_size=1).\
