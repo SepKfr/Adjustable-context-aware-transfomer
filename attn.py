@@ -125,10 +125,15 @@ class ScaledDotProductAttention(nn.Module):
 
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
-                Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
-                K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
-            V = K_p.to(self.device) if "v_2" in self.attn_type else V
+                if 'v_2' in self.attn_type:
+                    Q_p[:, :, ind, :, :] = nn.Conv2d(k, 1, kernel_size=1).\
+                        to(self.device)(Q_g.permute(0, 2, 1, 3)).squeeze(1)
+                    K_p[:, :, ind, :, :] = nn.Conv2d(k, 1, kernel_size=1).\
+                        to(self.device)(K_g.permute(0, 2, 1, 3)).squeeze(1)
+                else:
+                    Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
+                    K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
             if attn_mask is not None:
@@ -169,7 +174,6 @@ class ScaledDotProductAttention(nn.Module):
                 for ind, k in enumerate(n_k):
                     Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
 
-                V = K_p if "v_2" in self.attn_type else V
                 scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
 
                 if attn_mask is not None:
@@ -188,12 +192,8 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp" in self.attn_type:
 
-            if "v_2" in self.attn_type:
-                context = torch.einsum('bhgqk,bhgkd->bhgqd', attn, V)
-
-            else:
-                attn, index = torch.max(attn, dim=2)
-                context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+            attn, index = torch.max(attn, dim=2)
+            context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
         else:
 
