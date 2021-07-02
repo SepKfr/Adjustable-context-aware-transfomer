@@ -279,7 +279,7 @@ def main():
 
         model.to(device)
 
-        optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
+        optim = NoamOpt(Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
 
         epoch_start = 0
 
