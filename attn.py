@@ -274,10 +274,10 @@ class EncoderLayer(nn.Module):
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
-        out, attn = self.dropout(self.enc_self_attn(
+        out, attn = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
-            V=enc_inputs, attn_mask=enc_self_attn_mask))
-        out = self.layer_norm(out + enc_inputs)
+            V=enc_inputs, attn_mask=enc_self_attn_mask)
+        out = self.layer_norm(self.dropout(out) + enc_inputs)
         out_2 = self.dropout(self.pos_ffn(out))
         out_2 = self.layer_norm(out_2 + out)
         return out_2, attn
@@ -287,7 +287,7 @@ class Encoder(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
                  n_layers, pad_index, device, pe,
-                 attn_type, kernel):
+                 attn_type, kernel, dr=0.1):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
@@ -306,10 +306,11 @@ class Encoder(nn.Module):
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
+        self.dropout = nn.Dropout(dr)
 
     def forward(self, enc_input):
 
-        enc_outputs = self.pos_emb(enc_input)
+        enc_outputs = self.dropout(self.pos_emb(enc_input))
 
         enc_self_attn_mask = None
 
@@ -341,12 +342,12 @@ class DecoderLayer(nn.Module):
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask=None, dec_enc_attn_mask=None):
 
-        out, dec_self_attn = self.dropout(self.dec_self_attn(dec_inputs, dec_inputs,
-                                                             dec_inputs, dec_self_attn_mask))
-        out = self.layer_norm(dec_inputs + out)
-        out2, dec_enc_attn = self.dropout(self.dec_enc_attn(out, enc_outputs,
-                                                            enc_outputs, dec_enc_attn_mask))
-        out2 = self.layer_norm(out + out2)
+        out, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs,
+                                                             dec_inputs, dec_self_attn_mask)
+        out = self.layer_norm(dec_inputs + self.dropout(out))
+        out2, dec_enc_attn = self.dec_enc_attn(out, enc_outputs,
+                                                            enc_outputs, dec_enc_attn_mask)
+        out2 = self.layer_norm(out + self.dropout(out2))
         out3 = self.dropout(self.pos_ffn(out2))
         out3 = self.layer_norm(out2 + out3)
         return out3, dec_self_attn, dec_enc_attn
@@ -356,7 +357,7 @@ class Decoder(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device, pe,
-                 attn_type, kernel):
+                 attn_type, kernel, dr=0.1):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -376,10 +377,11 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList(self.layers)
         self.pe = pe
         self.d_k = d_k
+        self.dropout = nn.Dropout(dr)
 
     def forward(self, dec_inputs, enc_outputs):
 
-        dec_outputs = self.pos_emb(dec_inputs)
+        dec_outputs = self.dropout(self.pos_emb(dec_inputs))
 
         dec_self_attn_subsequent_mask = get_attn_subsequent_mask(dec_inputs)
 
@@ -406,7 +408,7 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, pe, attn_type, kernel):
+                 tgt_pad_index, device, pe, attn_type, kernel, dr=0.1):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -424,11 +426,12 @@ class Attn(nn.Module):
         self.embedding = nn.Linear(src_input_size, d_model)
         self.attn_type = attn_type
         self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
+        self.dropout = nn.Dropout(0.1)
 
     def forward(self, enc_inputs, dec_inputs):
 
-        enc_inputs = self.embedding(enc_inputs)
-        dec_inputs = self.embedding(dec_inputs)
+        enc_inputs = self.dropout(self.embedding(enc_inputs))
+        dec_inputs = self.dropout(self.embedding(dec_inputs))
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
