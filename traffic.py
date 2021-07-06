@@ -146,8 +146,8 @@ class TrafficFormatter(GenericDataFormatter):
         """Returns fixed model parameters for experiments."""
 
         fixed_params = {
-            'total_time_steps': 252 + 5,
-            'num_encoder_steps': 252,
+            'total_time_steps': 8*24,
+            'num_encoder_steps': 7*24,
             'num_epochs': 100,
             'early_stopping_patience': 5,
             'multiprocessing_workers': 5
@@ -160,7 +160,7 @@ class TrafficFormatter(GenericDataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [8],
+            'hidden_layer_size': [16],
             'learning_rate': 0.001,
             'minibatch_size': 64,
             'max_gradient_norm': 100.,

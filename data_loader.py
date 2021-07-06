@@ -201,11 +201,9 @@ def download_exchange(args):
     zip_path = csv_path + '.gz'
 
     download_from_url(url, zip_path)
-    with open(zip_path) as f:
-        data = f.read()
-        print(data)
+    print(zip_path)
 
-
+    df = pd.read_csv(zip_path, compression='gzip', header=0, sep=',', quotechar='"')
 
 
 
