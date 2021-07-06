@@ -8,6 +8,7 @@ import sys
 import random
 import gc
 import glob
+import gzip
 
 import electricity
 import traffic
@@ -19,7 +20,7 @@ random.seed(21)
 
 
 class ExperimentConfig(object):
-    default_experiments = ['electricity', 'traffic', 'air_quality', 'favorita', 'watershed']
+    default_experiments = ['electricity', 'traffic', 'air_quality', 'favorita', 'watershed', 'exchange']
 
     def __init__(self, experiment='electricity', root_folder=None):
 
@@ -48,7 +49,8 @@ class ExperimentConfig(object):
             'traffic': 'hourly_traffic.csv',
             'air_quality': 'hourly_air_quality.csv',
             'favorita': 'favorita_consolidated.csv',
-            'watershed': 'watershed.csv'
+            'watershed': 'watershed.csv',
+            'exchange': 'exchange.csv'
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
@@ -188,6 +190,23 @@ def download_air_quality(args):
     output.to_csv("air_quality.csv")
 
     print('Done.')
+
+
+def download_exchange(args):
+
+    url = 'https://github.com/laiguokun/multivariate-time-series-data/blob/master' \
+          '/exchange_rate/exchange_rate.txt.gz'
+    data_folder = args.data_folder
+    csv_path = os.path.join(data_folder, 'exchange_rate.txt')
+    zip_path = csv_path + '.gz'
+
+    download_from_url(url, zip_path)
+    with open(zip_path) as f:
+        data = f.read()
+        print(data)
+
+
+
 
 
 def download_electricity(args):
@@ -585,7 +604,8 @@ def main(expt_name, force_download, output_folder):
         'traffic': download_traffic,
         'air_quality': download_air_quality,
         'favorita': process_favorita,
-        'watershed': process_watershed
+        'watershed': process_watershed,
+        'exchange': download_exchange
     }
 
     if expt_name not in download_functions:
