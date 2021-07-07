@@ -143,8 +143,8 @@ class ScaledDotProductAttention(nn.Module):
 
             w_q = nn.Parameter(torch.Tensor(b, h, len_n_k, l, d_k)).to(self.device)
             w_k = nn.Parameter(torch.Tensor(b, h, len_n_k, l_k, d_k)).to(self.device)
-            Q_f, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', Q_p, w_q), dim=2)
-            K_f, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', K_p, w_k), dim=2)
+            Q_f, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', Q_p, w_q), dim=2).to(self.device)
+            K_f, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', K_p, w_k), dim=2).to(self.device)
 
             '''scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
             if attn_mask is not None:
