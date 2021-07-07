@@ -60,7 +60,7 @@ class WatershedFormatter(DataFormatter):
         """Returns fixed model parameters for experiments."""
 
         fixed_params = {
-            'total_time_steps': 9 * 24,
+            'total_time_steps': 8 * 24,
             'num_encoder_steps': 7 * 24,
             'num_epochs': 100,
             'early_stopping_patience': 5,
@@ -91,4 +91,4 @@ class WatershedFormatter(DataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 640, 80
+        return 64000, 8000
