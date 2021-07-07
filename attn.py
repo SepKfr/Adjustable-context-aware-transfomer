@@ -151,6 +151,7 @@ class ScaledDotProductAttention(nn.Module):
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)'''
 
             scores = torch.einsum('bhqd,bhkd->bhqk', Q_f, K_f) / (np.sqrt(self.d_k))
+            scores = scores.to(self.device)
 
         elif "conv" in self.attn_type:
 
@@ -211,7 +212,7 @@ class ScaledDotProductAttention(nn.Module):
         else:
 
         '''
-        context = torch.einsum('bhqk,bhvd->bhqd', attn.to(self.device), V.to(self.device))
+        context = torch.einsum('bhqk,bhvd->bhqd', attn, V.to(self.device))
 
         return context, attn
 
