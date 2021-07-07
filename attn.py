@@ -141,8 +141,8 @@ class ScaledDotProductAttention(nn.Module):
                     Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
                     K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
-            w_q = nn.Parameter(torch.Tensor(b, h, len_n_k, l, d_k))
-            w_k = nn.Parameter(torch.Tensor(b, h, len_n_k, l_k, d_k))
+            w_q = nn.Parameter(torch.Tensor(b, h, len_n_k, l, d_k)).to(self.device)
+            w_k = nn.Parameter(torch.Tensor(b, h, len_n_k, l_k, d_k)).to(self.device)
             Q, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', Q_p, w_q), dim=2)
             K, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', K_p, w_k), dim=2)
 
