@@ -141,9 +141,16 @@ class ScaledDotProductAttention(nn.Module):
                     Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
                     K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
-            scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
+            w_q = nn.Parameter(torch.Tensor(b, h, len_n_k, l, d_k))
+            w_k = nn.Parameter(torch.Tensor(b, h, len_n_k, l_k, d_k))
+            Q, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', Q_p, w_q), dim=2)
+            K, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', K_p, w_k), dim=2)
+
+            '''scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
             if attn_mask is not None:
-                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)'''
+
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
         elif "conv" in self.attn_type:
 
@@ -196,14 +203,15 @@ class ScaledDotProductAttention(nn.Module):
 
         attn = nn.Softmax(dim=-1)(scores)
 
-        if "temp" in self.attn_type:
+        '''if "temp" in self.attn_type:
 
             attn, index = torch.max(attn, dim=2)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
         else:
 
-            context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
+        '''
+        context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
 
         return context, attn
 
