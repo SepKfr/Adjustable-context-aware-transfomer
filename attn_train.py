@@ -206,6 +206,8 @@ def main():
     args = parser.parse_args()
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        print("Running on GPU")
 
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
