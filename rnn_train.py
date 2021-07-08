@@ -144,6 +144,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 
     predictions = torch.zeros(test_y.squeeze(-1).shape)
     targets_all = torch.zeros(test_y.squeeze(-1).shape)
+    forecast_list = []
 
     for j in range(test_en.shape[0]):
         output = model(test_en[j], test_de[j])
@@ -154,6 +155,9 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
         predictions[j, :, :] = forecast
         targets = torch.from_numpy(extract_numerical_data(
             formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')).to(device)
+
+        out_2 = inverse_output(forecast.unsqueeze(-1), targets.unsqueeze(-1), test_id[j])
+        forecast_list.append(out_2["predictions"])
 
         targets_all[j, :, :] = targets
 
@@ -166,9 +170,10 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
     mae_loss = 2 * mae_loss / normaliser
 
     q_loss = []
+    forecasts = pd.concat(forecast_list, axis=0)
     for q in 0.5, 0.9:
         q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
-    pickle.dump(predictions, open(os.path.join(path_to_pred, args.name), "wb"))
+    pickle.dump(forecasts, open(os.path.join(path_to_pred, args.name), "wb"))
 
     return test_loss, mae_loss, q_loss
 
