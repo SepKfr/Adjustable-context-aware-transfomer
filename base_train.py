@@ -7,9 +7,9 @@ import random
 InputTypes = base.InputTypes
 
 
-random.seed(1992)
-torch.manual_seed(1992)
-np.random.seed(1992)
+random.seed(41)
+torch.manual_seed(41)
+np.random.seed(41)
 
 
 def batching(batch_size, x_en, x_de, y_t, test_id):
