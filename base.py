@@ -3,8 +3,8 @@ import abc
 import numpy as np
 import random
 
-np.random.seed(21)
-random.seed(21)
+np.random.seed(11)
+random.seed(11)
 
 # Type defintions
 class DataTypes(enum.IntEnum):

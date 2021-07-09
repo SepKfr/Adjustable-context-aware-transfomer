@@ -7,9 +7,9 @@ import numpy as np
 import torch.nn.functional as F
 import random
 
-random.seed(21)
-torch.manual_seed(21)
-np.random.seed(21)
+random.seed(11)
+torch.manual_seed(11)
+np.random.seed(11)
 
 
 def get_attn_subsequent_mask(seq):
