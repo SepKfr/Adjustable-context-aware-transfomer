@@ -4,9 +4,9 @@ import torch.nn.functional as F
 import numpy as np
 import random
 
-random.seed(41)
-torch.manual_seed(41)
-np.random.seed(41)
+random.seed(9)
+torch.manual_seed(9)
+np.random.seed(9)
 
 
 class Lstnet(nn.Module):
