@@ -3,8 +3,8 @@ import numpy as np
 import random
 import electricity
 
-np.random.seed(11)
-random.seed(11)
+np.random.seed(1992)
+random.seed(1992)
 
 ElectricityFormatter = electricity.ElectricityFormatter
 DataTypes = base.DataTypes
