@@ -5,8 +5,8 @@ import utils
 import numpy as np
 import random
 
-np.random.seed(71)
-random.seed(71)
+np.random.seed(1234)
+random.seed(1234)
 
 GenericDataFormatter = base.GenericDataFormatter
 DataTypes = base.DataTypes

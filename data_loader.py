@@ -15,8 +15,8 @@ import traffic
 import air_quality
 import watershed
 
-np.random.seed(71)
-random.seed(71)
+np.random.seed(1234)
+random.seed(1234)
 
 
 class ExperimentConfig(object):
