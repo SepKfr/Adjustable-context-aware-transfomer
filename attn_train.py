@@ -116,7 +116,7 @@ def create_config(hyper_parameters):
     return prod
 
 
-def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatter, path, device):
+def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, seq_len, path, device):
 
     n_layers, n_heads, d_model, lr, dr, kernel = config
     d_k = int(d_model / n_heads)
@@ -146,8 +146,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
 
     model.eval()
 
-    predictions = torch.zeros(test_y.squeeze(-1).shape)
-    targets_all = torch.zeros(test_y.squeeze(-1).shape)
+    predictions = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2] - seq_len)
+    targets_all = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2] - seq_len)
     forecast_list = []
     target_list = []
 
@@ -165,7 +165,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
         forecast_list.append(out_2["predictions"])
         target_list.append(out_2["targets"])
 
-        targets_all[j, :, :] = targets
+        targets_all[j, :, :] = targets[:, seq_len:]
 
     test_loss = criterion(predictions.to(device), targets_all.to(device)).item()
     normaliser = targets_all.to(device).abs().mean()
@@ -181,8 +181,14 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
     for q in 0.5, 0.9:
         q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
     pickle.dump(forecasts, open(os.path.join(path_to_pred, args.name), "wb"))
+    y_true = targets.iloc[:, seq_len:]
+    y_true_input = targets.iloc[:, :seq_len]
+    y_true_input.loc[:, 'identifier'] = targets['identifier'].values
+
     if not os.path.exists('y_true.pkl'):
-        pickle.dump(targets, open('y_true.pkl', "wb"))
+        pickle.dump(y_true, open('y_true.pkl', "wb"))
+    if not os.path.exists('y_true_input.pkl'):
+        pickle.dump(y_true_input, open('y_true_input.pkl', "wb"))
 
     return test_loss, mae_loss, q_loss
 
@@ -253,10 +259,10 @@ def main():
     seq_len = params['num_encoder_steps']
     model_params = formatter.get_default_model_params()
     train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_x[:, :seq_len, :],
-                                  train_x[:, seq_len:, :], train_y[:, :, :], train_id)
+                                  train_x[:, seq_len:, :], train_y[:, params['num_encoder_steps']:, :], train_id)
 
     valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_x[:, :seq_len, :],
-                                  valid_x[:, seq_len:, :], valid_y[:, :, :], valid_id)
+                                  valid_x[:, seq_len:, :], valid_y[:, params['num_encoder_steps']:, :], valid_id)
 
     test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
                                   test_x[:, seq_len:, :], test_y[:, :, :], test_id)
@@ -309,7 +315,7 @@ def main():
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device),
                                    test_de.to(device), test_y.to(device),
-                                   test_id, criterion, formatter, path, device)
+                                   test_id, criterion, formatter, seq_len, path, device)
 
     layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
