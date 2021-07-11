@@ -149,6 +149,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
     predictions = torch.zeros(test_y.squeeze(-1).shape)
     targets_all = torch.zeros(test_y.squeeze(-1).shape)
     forecast_list = []
+    target_list = []
 
     for j in range(test_en.shape[0]):
         output = model(test_en[j], test_de[j])
@@ -162,6 +163,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
 
         out_2 = inverse_output(forecast.unsqueeze(-1), targets.unsqueeze(-1), test_id[j])
         forecast_list.append(out_2["predictions"])
+        target_list.append(out_2["targets"])
 
         targets_all[j, :, :] = targets
 
@@ -175,9 +177,12 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion,formatte
 
     q_loss = []
     forecasts = pd.concat(forecast_list, axis=0)
+    targets = pd.concat(target_list, axis=0)
     for q in 0.5, 0.9:
         q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
     pickle.dump(forecasts, open(os.path.join(path_to_pred, args.name), "wb"))
+    if not os.path.exists('y_true.pkl'):
+        pickle.dump(targets, open('y_true.pkl', "wb"))
 
     return test_loss, mae_loss, q_loss
 
@@ -201,7 +206,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='temp_cutoff')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")

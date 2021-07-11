@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from utils import utils as util, base
+from Utils import utils, base
 import pandas as pd
 import random
 InputTypes = base.InputTypes
@@ -43,8 +43,8 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
         raise ValueError(
           'Illegal number of samples specified! samples={}'.format(max_samples))
 
-    id_col = util.get_single_col_by_input_type(InputTypes.ID, column_definition)
-    time_col = util.get_single_col_by_input_type(InputTypes.TIME, column_definition)
+    id_col = utils.get_single_col_by_input_type(InputTypes.ID, column_definition)
+    time_col = utils.get_single_col_by_input_type(InputTypes.TIME, column_definition)
 
     data.sort_values(by=[id_col, time_col], inplace=True)
 
@@ -70,9 +70,9 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
           max_samples, len(valid_sampling_locations)))
         ranges = valid_sampling_locations
 
-    id_col = util.get_single_col_by_input_type(InputTypes.ID, column_definition)
-    time_col = util.get_single_col_by_input_type(InputTypes.TIME, column_definition)
-    target_col = util.get_single_col_by_input_type(InputTypes.TARGET, column_definition)
+    id_col = utils.get_single_col_by_input_type(InputTypes.ID, column_definition)
+    time_col = utils.get_single_col_by_input_type(InputTypes.TIME, column_definition)
+    target_col = utils.get_single_col_by_input_type(InputTypes.TARGET, column_definition)
     input_cols = [
         tup[0]
         for tup in column_definition

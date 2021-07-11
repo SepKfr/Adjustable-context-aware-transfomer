@@ -1,4 +1,4 @@
-from utils import base
+from Utils import base
 from data.electricity import ElectricityFormatter
 import numpy as np
 import random
@@ -91,4 +91,4 @@ class WatershedFormatter(DataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 64000, 8000
+        return 640, 64
