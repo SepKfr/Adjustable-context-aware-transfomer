@@ -1,5 +1,5 @@
 import pickle
-from attn import Attn
+from models.attn import Attn
 from torch.optim import Adam
 import torch.nn as nn
 import numpy as np
@@ -11,9 +11,8 @@ import itertools
 import sys
 import random
 import pandas as pd
-from time import time, ctime
 import math
-from data_loader import ExperimentConfig
+from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
 
 

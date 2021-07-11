@@ -1,7 +1,7 @@
-import base
+from utils import base
 import numpy as np
 import random
-import electricity
+from data import electricity
 
 np.random.seed(1)
 random.seed(1)

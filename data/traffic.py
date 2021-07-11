@@ -1,7 +1,5 @@
-import base
-import pandas as pd
 import sklearn.preprocessing
-import utils
+from utils import utils, base
 import numpy as np
 import random
 

@@ -8,12 +8,8 @@ import sys
 import random
 import gc
 import glob
-import gzip
 
-import electricity
-import traffic
-import air_quality
-import watershed
+from data import air_quality, electricity, traffic, watershed
 
 np.random.seed(1)
 random.seed(1)
@@ -29,12 +25,12 @@ class ExperimentConfig(object):
 
         if root_folder is None:
             root_folder = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), '..', 'outputs')
+                os.path.dirname(os.path.realpath(__file__)), '../..', 'outputs')
             print('Using root folder {}'.format(root_folder))
 
         self.root_folder = root_folder
         self.experiment = experiment
-        self.data_folder = os.path.join(root_folder, 'data', experiment)
+        self.data_folder = os.path.join(root_folder, '', experiment)
 
         for relevant_directory in [
             self.root_folder, self.data_folder

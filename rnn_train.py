@@ -11,9 +11,9 @@ import sys
 import random
 import numpy as np
 import pandas as pd
-from data_loader import ExperimentConfig
+from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
-from baselines import CNN, RNN, Lstnet, RNConv, MLP
+from models.baselines import RNN, RNConv, MLP
 
 
 random.seed(1)

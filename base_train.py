@@ -1,7 +1,6 @@
 import torch
 import numpy as np
-import utils as util
-import base
+from utils import utils as util, base
 import pandas as pd
 import random
 InputTypes = base.InputTypes
