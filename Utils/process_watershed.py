@@ -10,9 +10,9 @@ import json
 from Utils import base
 InputTypes = base.InputTypes
 
-random.seed(1)
-torch.manual_seed(1)
-np.random.seed(1)
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 
 def quantile_loss(y, y_pred, quantile):

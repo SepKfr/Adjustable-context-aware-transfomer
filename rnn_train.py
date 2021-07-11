@@ -16,9 +16,9 @@ from base_train import batching, batch_sampled_data, inverse_output, quantile_lo
 from models.baselines import RNN, RNConv, MLP
 
 
-random.seed(1)
-torch.manual_seed(1)
-np.random.seed(1)
+random.seed(21)
+torch.manual_seed(21)
+np.random.seed(21)
 
 
 erros = dict()

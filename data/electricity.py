@@ -4,8 +4,8 @@ from Utils import utils, base
 import numpy as np
 import random
 
-np.random.seed(1)
-random.seed(1)
+np.random.seed(21)
+random.seed(21)
 
 GenericDataFormatter = base.GenericDataFormatter
 DataTypes = base.DataTypes
