@@ -181,13 +181,13 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
     for q in 0.5, 0.9:
         q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
     pickle.dump(forecasts, open(os.path.join(path_to_pred, args.name), "wb"))
-    y_true = targets.iloc[:, seq_len:]
-    y_true_input = targets.iloc[:, :seq_len]
-    y_true_input.loc[:, 'identifier'] = targets['identifier'].values
 
     if not os.path.exists('y_true.pkl'):
+        y_true = targets.iloc[:, seq_len:]
         pickle.dump(y_true, open('y_true.pkl', "wb"))
     if not os.path.exists('y_true_input.pkl'):
+        y_true_input = targets.iloc[:, :seq_len]
+        y_true_input.loc[:, 'identifier'] = targets['identifier'].values
         pickle.dump(y_true_input, open('y_true_input.pkl', "wb"))
 
     return test_loss, mae_loss, q_loss
