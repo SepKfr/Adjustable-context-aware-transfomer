@@ -96,7 +96,7 @@ def main():
     parser.add_argument('--path', type=str, default='../preds_watershed_24')
     parser.add_argument('--name', type=str, default='lstm')
     parser.add_argument('--exp_name', type=str, default='watershed')
-    parser.add_argument('--error_path', type=str, default='warshed_details.json')
+    parser.add_argument('--error_path', type=str, default='../warshed_details.json')
     args = parser.parse_args()
     read_preds(args)
 
