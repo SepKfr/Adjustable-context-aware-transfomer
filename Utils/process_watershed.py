@@ -11,7 +11,7 @@ from Utils import base
 InputTypes = base.InputTypes
 
 random.seed(21)
-torch.manual_seed(19)
+torch.manual_seed(9)
 np.random.seed(21)
 
 
