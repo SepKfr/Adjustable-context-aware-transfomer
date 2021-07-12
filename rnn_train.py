@@ -17,7 +17,7 @@ from models.baselines import RNN, RNConv, MLP
 
 
 random.seed(21)
-torch.manual_seed(21)
+torch.manual_seed(19)
 np.random.seed(21)
 
 
