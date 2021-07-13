@@ -17,7 +17,7 @@ from base_train import batching, batch_sampled_data, inverse_output, quantile_lo
 
 
 random.seed(21)
-torch.manual_seed(9)
+torch.manual_seed(12)
 np.random.seed(21)
 
 
