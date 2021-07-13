@@ -5,7 +5,7 @@ import numpy as np
 import random
 
 random.seed(21)
-torch.manual_seed(12)
+torch.manual_seed(21)
 np.random.seed(21)
 
 
