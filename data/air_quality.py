@@ -1,6 +1,7 @@
+from Utils import base
 import numpy as np
 import random
-from data import electricity, base
+from data import electricity
 
 np.random.seed(21)
 random.seed(21)

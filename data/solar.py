@@ -1,4 +1,4 @@
-from data import base
+from Utils import base
 from data.electricity import ElectricityFormatter
 import numpy as np
 import random

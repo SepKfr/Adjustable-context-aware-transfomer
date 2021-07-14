@@ -1,5 +1,5 @@
 import sklearn.preprocessing
-from data import base, utils
+from Utils import utils, base
 import numpy as np
 import random
 
