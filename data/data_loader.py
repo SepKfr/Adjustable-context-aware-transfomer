@@ -9,7 +9,7 @@ import random
 import gc
 import glob
 
-from data import air_quality, electricity, traffic, watershed
+from data import air_quality, electricity, traffic, watershed, solar
 
 np.random.seed(21)
 random.seed(21)
@@ -62,6 +62,7 @@ class ExperimentConfig(object):
             'traffic': traffic.TrafficFormatter,
             'air_quality': air_quality.AirQualityFormatter,
             'watershed': watershed.WatershedFormatter,
+            'solar': solar.SolarFormatter,
         }
 
         return data_formatter_class[self.experiment]()
@@ -275,14 +276,16 @@ def download_solar(args):
         parts = file.split("_")
         df = pd.read_csv(os.path.join(data_folder, '{}.csv'.format(file)), index_col=0, sep=',')
         df_hr = df.iloc[0::12, :]
-        df_hr['latitude'] = parts[1]
-        df_hr['longtitude'] = parts[2]
-        df_hr['capacity'] = parts[5]
-        df_list.append(df_hr)
+        df_sub = df_hr.copy()
+        df_sub['latitude'] = parts[1]
+        df_sub['longtitude'] = parts[2]
+        df_sub['id'] = parts[1] + "_" + parts[2]
+        df_sub['capacity'] = parts[5]
+        df_list.append(df_sub)
 
     output = pd.concat(df_list, axis=0)
     output.index = pd.to_datetime(output.index)
-    #output.sort_index(inplace=True)
+    output.sort_index(inplace=True)
     earliest_time = output.index.min()
     date = output.index
 
@@ -290,10 +293,9 @@ def download_solar(args):
     output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
             date - earliest_time).days * 24
     output['days_from_start'] = (date - earliest_time).days
-    output['id'] = output['latitude'] + "_" + output['longtitude']
-    output['categorical_id'] = output['id'].copy
+    output['categorical_id'] = output['id']
 
-    output.iloc[:1000, :].to_csv("solar.csv")
+    output.to_csv("solar.csv")
 
     print('Done.')
 
@@ -678,10 +680,10 @@ def main(expt_name, force_download, output_folder):
     print('#### Running download script ###')
     expt_config = ExperimentConfig(expt_name, output_folder)
 
-    if os.path.exists(expt_config.data_csv_path) and not force_download:
+    if os.path.exists(expt_config.data_csv_path):
         print('Data has been processed for {}. Skipping download...'.format(
             expt_name))
-        sys.exit(0)
+        #sys.exit(0)
     else:
         print('Resetting data folder...')
         #shutil.rmtree(expt_config.data_csv_path)
