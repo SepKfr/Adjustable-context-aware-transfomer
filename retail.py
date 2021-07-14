@@ -18,7 +18,7 @@
 Defines dataset specific column definitions and data transformations.
 """
 
-from Utils import utils, base
+from data import base, utils
 import pandas as pd
 import sklearn.preprocessing
 

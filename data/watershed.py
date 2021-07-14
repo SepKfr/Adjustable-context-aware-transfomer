@@ -1,5 +1,5 @@
-from Utils import base
-from data.electricity import ElectricityFormatter
+from data import base
+from electricity import ElectricityFormatter
 import numpy as np
 import random
 

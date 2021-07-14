@@ -7,7 +7,8 @@ import random
 import numpy as np
 import math
 import json
-from Utils import base
+from data import base
+
 InputTypes = base.InputTypes
 
 random.seed(21)
