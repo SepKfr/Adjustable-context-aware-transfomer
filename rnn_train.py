@@ -62,7 +62,7 @@ def train(args, model, train_en, train_de, train_y, train_id,
 
             e = epoch
 
-        print("Average loss: {:.3f}".format(test_loss))
+        print("Average loss: {:.4f}".format(test_loss))
 
     except KeyboardInterrupt:
         torch.save({
