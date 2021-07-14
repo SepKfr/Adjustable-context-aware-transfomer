@@ -680,10 +680,10 @@ def main(expt_name, force_download, output_folder):
     print('#### Running download script ###')
     expt_config = ExperimentConfig(expt_name, output_folder)
 
-    if os.path.exists(expt_config.data_csv_path):
+    if os.path.exists(expt_config.data_csv_path) and not force_download:
         print('Data has been processed for {}. Skipping download...'.format(
             expt_name))
-        #sys.exit(0)
+        sys.exit(0)
     else:
         print('Resetting data folder...')
         #shutil.rmtree(expt_config.data_csv_path)
