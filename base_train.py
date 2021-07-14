@@ -7,7 +7,7 @@ InputTypes = base.InputTypes
 
 
 random.seed(21)
-torch.manual_seed(9)
+torch.manual_seed(92)
 np.random.seed(21)
 
 
