@@ -9,7 +9,7 @@ import random
 import gc
 import glob
 
-from data import air_quality, electricity, traffic, watershed, solar
+import air_quality, electricity, traffic, watershed, solar
 
 np.random.seed(21)
 random.seed(21)
