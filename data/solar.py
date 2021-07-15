@@ -19,6 +19,7 @@ class SolarFormatter(ElectricityFormatter):
         ('Power(MW)', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
+        ('capacity', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
 
     ]
 
