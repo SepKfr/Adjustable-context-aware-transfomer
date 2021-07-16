@@ -179,6 +179,7 @@ def download_air_quality(args):
     date = output.index
 
     output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
     output['id'] = output['station']
     output['categorical_id'] = output['station']
     output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
@@ -290,6 +291,7 @@ def download_solar(args):
     date = output.index
 
     output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
     output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
             date - earliest_time).days * 24
     output['days_from_start'] = (date - earliest_time).days
