@@ -131,6 +131,7 @@ def process_watershed(config):
 
     date = output.index
     output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
     output['id'] = output['Site']
     output['categorical_id'] = output['Site']
     output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
