@@ -26,7 +26,6 @@ class WatershedFormatter(DataFormatter):
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
         ('SpConductivity', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Q', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
@@ -72,7 +71,7 @@ class WatershedFormatter(DataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [32],
+            'hidden_layer_size': [16],
             'learning_rate': 0.001,
             'minibatch_size': 64,
             'max_gradient_norm': 100.,
