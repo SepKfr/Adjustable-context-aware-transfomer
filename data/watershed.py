@@ -31,7 +31,7 @@ class WatershedFormatter(DataFormatter):
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
-    def split_data(self, df, valid_boundary=1307, test_boundary=1707):
+    def split_data(self, df, valid_boundary=1207, test_boundary=1657):
         """Splits data frame into training-validation-test data frames.
         This also calibrates scaling object, and transforms data for each split.
         Args:
