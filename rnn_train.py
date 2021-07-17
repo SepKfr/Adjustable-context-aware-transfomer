@@ -256,7 +256,6 @@ def main():
         y_true_input.loc[:, 'identifier'] = targets['identifier'].values
         pickle.dump(y_true_input, open('y_true_input.pkl', "wb"))
 
-
     model_params = formatter.get_default_model_params()
 
     train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_x[:, :seq_len, :],
