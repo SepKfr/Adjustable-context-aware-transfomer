@@ -16,6 +16,7 @@ class AirQualityFormatter(ElectricityFormatter):
     _column_definition = [
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
         ('CO', DataTypes.REAL_VALUED, InputTypes.TARGET),
+        ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('PM2.5', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('PM10', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('SO2', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
