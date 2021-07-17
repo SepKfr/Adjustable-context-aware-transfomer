@@ -26,13 +26,12 @@ class WatershedFormatter(DataFormatter):
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
         ('SpConductivity', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Q', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
-    def split_data(self, df, valid_boundary=1000, test_boundary=1500):
+    def split_data(self, df, valid_boundary=1107, test_boundary=1607):
         """Splits data frame into training-validation-test data frames.
         This also calibrates scaling object, and transforms data for each split.
         Args:
@@ -72,7 +71,7 @@ class WatershedFormatter(DataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [32],
+            'hidden_layer_size': [16],
             'learning_rate': 0.001,
             'minibatch_size': 64,
             'max_gradient_norm': 100.,
