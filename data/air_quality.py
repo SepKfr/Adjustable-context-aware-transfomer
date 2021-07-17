@@ -31,7 +31,7 @@ class AirQualityFormatter(ElectricityFormatter):
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
     ]
 
-    def split_data(self, df, valid_boundary=1060, test_boundary=1260):
+    def split_data(self, df, valid_boundary=1257, test_boundary=1357):
         print('Formatting train-valid-test splits.')
 
         index = df['days_from_start']
