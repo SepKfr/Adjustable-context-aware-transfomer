@@ -24,7 +24,7 @@ class SolarFormatter(ElectricityFormatter):
 
     ]
 
-    def split_data(self, df, valid_boundary=284, test_boundary=324):
+    def split_data(self, df, valid_boundary=214, test_boundary=289):
         print('Formatting train-valid-test splits.')
 
         index = df['days_from_start']
