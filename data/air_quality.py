@@ -31,7 +31,7 @@ class AirQualityFormatter(ElectricityFormatter):
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
     ]
 
-    def split_data(self, df, valid_boundary=1260, test_boundary=1360):
+    def split_data(self, df, valid_boundary=1060, test_boundary=1260):
         print('Formatting train-valid-test splits.')
 
         index = df['days_from_start']
@@ -78,4 +78,4 @@ class AirQualityFormatter(ElectricityFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 64000, 8000
+        return 640, 64
