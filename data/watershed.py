@@ -1,10 +1,5 @@
 from Utils import base
 from data.electricity import ElectricityFormatter
-import numpy as np
-import random
-
-np.random.seed(21)
-random.seed(21)
 
 DataFormatter = ElectricityFormatter
 DataTypes = base.DataTypes

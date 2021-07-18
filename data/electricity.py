@@ -1,11 +1,6 @@
 import pandas as pd
 import sklearn.preprocessing
 from Utils import utils, base
-import numpy as np
-import random
-
-np.random.seed(21)
-random.seed(21)
 
 GenericDataFormatter = base.GenericDataFormatter
 DataTypes = base.DataTypes
@@ -196,7 +191,7 @@ class ElectricityFormatter(GenericDataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [16, 32],
+            'hidden_layer_size': [32, 64],
             'learning_rate': 0.001,
             'minibatch_size': 64,
             'max_gradient_norm': 100.,
