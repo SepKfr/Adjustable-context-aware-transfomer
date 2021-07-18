@@ -177,6 +177,7 @@ def main():
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
+    parser.add_argument("--cuda", type=str, default='cuda:0')
     parser.add_argument("--seed", type=int, default=21)
 
     args = parser.parse_args()
