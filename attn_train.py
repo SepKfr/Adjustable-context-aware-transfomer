@@ -275,7 +275,7 @@ def main():
 
     search_space = {"kernel": args.kernel, "hidden_layer_size": model_params['hidden_layer_size']}
     study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-    study.optimize(train_optuna, n_trials=20, callbacks=[callback])
+    study.optimize(train_optuna, n_trials=6, callbacks=[callback])
     best_model = study.user_attrs["best_model"]
     torch.save({'model_state_dict':  best_model.state_dict()}, os.path.join(path, args.name))
 
