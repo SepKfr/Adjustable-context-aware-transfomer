@@ -92,7 +92,7 @@ def unzip(zip_path, output_file, data_folder):
             'Error in unzipping process! {} not found.'.format(output_file))'''
 
     shutil.register_unpack_format('7zip', ['.7z'], unpack_7zarchive)
-    shutil.unpack_archive('filename.7z', '/unzip_path')
+    shutil.unpack_archive(zip_path, data_folder)
 
 
 def download_and_unzip(url, zip_path, csv_path, data_folder):
