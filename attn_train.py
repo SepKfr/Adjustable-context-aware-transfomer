@@ -18,11 +18,6 @@ from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
 
 
-random.seed(21)
-torch.manual_seed(21)
-np.random.seed(21)
-
-
 class NoamOpt:
 
     def __init__(self, optimizer, lr_mul, d_model, n_warmup_steps):
@@ -174,7 +169,7 @@ def main():
     parser.add_argument("--dr", type=list, default=[0])
     parser.add_argument("--dr_best", type=float)
     parser.add_argument("--lr", type=list, default=[0.001])
-    parser.add_argument("--n_epochs", type=int, default=1)
+    parser.add_argument("--n_epochs", type=int, default=2)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
     parser.add_argument("--attn_type", type=str, default='conv_attn')
@@ -182,8 +177,13 @@ def main():
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
-    parser.add_argument("--cuda", type=str, default="cuda:0")
+    parser.add_argument("--seed", type=int, default=21)
+
     args = parser.parse_args()
+
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
@@ -242,10 +242,7 @@ def main():
             'hidden_layer_size': trial.suggest_categorical('hidden_layer_size',
                                                            model_params['hidden_layer_size']),
             'kernel': trial.suggest_categorical('kernel', args.kernel),
-            'seed': 21
         }
-
-        torch.manual_seed(cfg['seed'])
 
         d_k = int(cfg['hidden_layer_size'] / cfg['num_heads'])
         model = Attn(src_input_size=train_en.shape[3],
@@ -268,16 +265,23 @@ def main():
                         train_y.to(device), valid_en.to(device), valid_de.to(device),
                         valid_y.to(device), epoch, optim, criterion)
 
-        torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
+        trial.set_user_attr(key="best_model", value=model)
 
         return loss
 
+    def callback(study, trial):
+        if study.best_trial.number == trial.number:
+            study.set_user_attr(key="best_model", value=trial.user_attrs["best_model"])
+
     search_space = {"kernel": args.kernel, "hidden_layer_size": model_params['hidden_layer_size']}
     study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-    study.optimize(train_optuna, n_trials=10)
+    study.optimize(train_optuna, n_trials=20, callbacks=[callback])
+    best_model = study.user_attrs["best_model"]
+    torch.save({'model_state_dict':  best_model.state_dict()}, os.path.join(path, args.name))
+
     joblib.dump(study, os.path.join(path, '{}_optuna.pkl'.format(args.name)))
 
-    study =joblib.load(os.path.join(path, '{}_optuna.pkl'.format(args.name)))
+    study = joblib.load(os.path.join(path, '{}_optuna.pkl'.format(args.name)))
     best_config = \
         args.n_layers, model_params['num_heads'], study.best_trial.params['hidden_layer_size'], \
         study.best_trial.params['kernel']\

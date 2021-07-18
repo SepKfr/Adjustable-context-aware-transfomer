@@ -7,10 +7,6 @@ import numpy as np
 import torch.nn.functional as F
 import random
 
-random.seed(21)
-torch.manual_seed(21)
-np.random.seed(21)
-
 
 def get_attn_subsequent_mask(seq):
     attn_shape = [seq.size(0), seq.size(1), seq.size(1)]
