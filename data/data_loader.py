@@ -8,8 +8,11 @@ import sys
 import random
 import gc
 import glob
+from py7zr import unpack_7zarchive
+import shutil
 
-from data import air_quality, electricity, traffic, watershed, solar
+
+from data import air_quality, electricity, traffic, watershed, solar, favorita
 
 np.random.seed(21)
 random.seed(21)
@@ -63,6 +66,7 @@ class ExperimentConfig(object):
             'air_quality': air_quality.AirQualityFormatter,
             'watershed': watershed.WatershedFormatter,
             'solar': solar.SolarFormatter,
+            'favorita' : favorita.FavoritaFormatter,
         }
 
         return data_formatter_class[self.experiment]()
@@ -79,13 +83,16 @@ def download_from_url(url, output_path):
 def unzip(zip_path, output_file, data_folder):
     """Unzips files and checks successful completion."""
 
-    print('Unzipping file: {}'.format(zip_path))
+    '''print('Unzipping file: {}'.format(zip_path))
     pyunpack.Archive(zip_path).extractall(data_folder)
 
     # Checks if unzip was successful
-    '''if not os.path.exists(output_file):
+    if not os.path.exists(output_file):
         raise ValueError(
             'Error in unzipping process! {} not found.'.format(output_file))'''
+
+    shutil.register_unpack_format('7zip', ['.7z'], unpack_7zarchive)
+    shutil.unpack_archive('filename.7z', '/unzip_path')
 
 
 def download_and_unzip(url, zip_path, csv_path, data_folder):
@@ -624,7 +631,7 @@ def process_favorita(config):
     oil.name = 'oil'
     oil.index = pd.to_datetime(oil.index)
     temporal = temporal.join(
-      oil.loc[dates].fillna(method='ffill'), on='date', how='left')
+      oil.reindex(dates).fillna(method='ffill'), on='date', how='left')
     temporal['oil'] = temporal['oil'].fillna(-1)
 
     print('Adding store info')
@@ -675,7 +682,7 @@ def process_favorita(config):
     temporal.sort_values('unique_id', inplace=True)
 
     print('Saving processed file to {}'.format(config.data_csv_path))
-    temporal.to_csv("retail.py")
+    temporal.to_csv("retail.csv")
 
 
 def main(expt_name, force_download, output_folder):
