@@ -8,8 +8,6 @@ import sys
 import random
 import gc
 import glob
-from py7zr import unpack_7zarchive
-import shutil
 
 
 from data import air_quality, electricity, traffic, watershed, solar, favorita
@@ -83,16 +81,13 @@ def download_from_url(url, output_path):
 def unzip(zip_path, output_file, data_folder):
     """Unzips files and checks successful completion."""
 
-    '''print('Unzipping file: {}'.format(zip_path))
+    print('Unzipping file: {}'.format(zip_path))
     pyunpack.Archive(zip_path).extractall(data_folder)
 
     # Checks if unzip was successful
-    if not os.path.exists(output_file):
+    '''if not os.path.exists(output_file):
         raise ValueError(
             'Error in unzipping process! {} not found.'.format(output_file))'''
-
-    shutil.register_unpack_format('7zip', ['.7z'], unpack_7zarchive)
-    shutil.unpack_archive(zip_path, data_folder)
 
 
 def download_and_unzip(url, zip_path, csv_path, data_folder):
