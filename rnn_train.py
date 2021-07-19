@@ -1,4 +1,5 @@
 import pickle
+from torch.optim import Adam
 import torch.nn as nn
 import torch
 import argparse
@@ -6,48 +7,69 @@ import json
 import os
 import math
 import itertools
-import optuna
-import joblib
+import sys
 import random
+import numpy as np
 import pandas as pd
 from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
-from models.baselines import RNN
-import numpy as np
-from torch.optim import Adam
+from models.baselines import RNN, RNConv, MLP
 
 
 erros = dict()
 config_file = dict()
 
 
-def train(model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch, optimizer, criterion):
+def train(args, model, train_en, train_de, train_y, train_id,
+          test_en, test_de, test_y, test_id, epoch, e, val_loss,
+          val_inner_loss, optimizer, config, config_num,
+          best_config, path, criterion, formatter):
 
-    model.train()
-    total_loss = 0
-    for batch_id in range(train_en.shape[0]):
-        output = model(train_en[batch_id], train_de[batch_id])
-        loss = criterion(output, train_y[batch_id])
-        total_loss += loss.item()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+    stop = False
+    try:
+        model.train()
+        total_loss = 0
+        for batch_id in range(train_en.shape[0]):
+            output = model(train_en[batch_id], train_de[batch_id])
+            loss = criterion(output, train_y[batch_id])
+            total_loss += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-    print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
-    model.eval()
+        model.eval()
 
-    test_loss = 0
+        test_loss = 0
 
-    for j in range(test_en.shape[0]):
-        outputs = model(test_en[j], test_de[j])
-        loss = criterion(test_y[j], outputs)
-        test_loss += loss.item()
+        for j in range(test_en.shape[0]):
+            outputs = model(test_en[j], test_de[j])
+            loss = criterion(test_y[j], outputs)
+            test_loss += loss.item()
 
-    print("Average loss: {:.4f}".format(test_loss))
+        if test_loss < val_inner_loss:
+            val_inner_loss = test_loss
+            if val_inner_loss < val_loss:
+                val_loss = val_inner_loss
+                best_config = config
+                torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
-    return test_loss
+            e = epoch
+
+        print("Average loss: {:.4f}".format(test_loss))
+
+    except KeyboardInterrupt:
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'config_num': config_num,
+            'best_config': best_config
+        }, os.path.join(path, "{}_continue".format(args.name)))
+        sys.exit(0)
+
+    return best_config, val_loss, val_inner_loss, stop, e
 
 
 def create_config(hyper_parameters):
@@ -59,14 +81,42 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    n_layers, hidden_size = config
-    model = RNN(n_layers=n_layers,
-                hidden_size=hidden_size,
-                input_size=test_en.shape[3],
-                rnn_type=args.rnn_type,
-                seq_pred_len=args.seq_len_pred,
-                device=device,
-                d_r=0)
+    model = None
+
+    if args.deep_type == "rnconv":
+        n_layers, hidden_size, kernel, dr, lr = config
+        model = RNConv(
+                        input_size=test_en.shape[3],
+                        output_size=test_y.shape[3],
+                        out_channel=args.out_channel,
+                        kernel=kernel,
+                        n_layers=n_layers,
+                        hidden_size=hidden_size,
+                        seq_len=test_en.shape[2],
+                        seq_pred_len=args.seq_len_pred,
+                        device=device,
+                        d_r=dr)
+
+    elif args.deep_type == "rnn":
+
+        n_layers, hidden_size, dr, lr = config
+        model = RNN(n_layers=n_layers,
+                    hidden_size=hidden_size,
+                    input_size=test_en.shape[3],
+                    rnn_type=args.rnn_type,
+                    seq_pred_len=args.seq_len_pred,
+                    device=device,
+                    d_r=dr)
+
+    elif args.deep_type == "mlp":
+        n_layers, hidden_size, dr, lr = config
+        model = MLP(n_layers=n_layers,
+                    hidden_size=hidden_size,
+                    input_size=test_en.shape[3],
+                    output_size=test_y.shape[3],
+                    seq_len_pred=args.seq_len_pred,
+                    device=device,
+                    dr=dr)
 
     model.to(device)
 
@@ -136,7 +186,7 @@ def main():
     parser.add_argument("--lr", type=float, default=[0.001])
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
-    parser.add_argument("--n_layers", type=list, default=1)
+    parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
     parser.add_argument("--name", type=str, default='lstm')
@@ -219,53 +269,46 @@ def main():
 
     criterion = nn.MSELoss()
 
-    def train_optuna(trial):
-        cfg = {
-            'n_layers': args.n_layers,
-            'hidden_layer_size': trial.suggest_categorical('hidden_layer_size',
-                                                           model_params['hidden_layer_size']),
-        }
-        model = RNN(n_layers=cfg['n_layers'],
-                    hidden_size=cfg['hidden_layer_size'],
+    hyper_param = list([args.n_layers, model_params['hidden_layer_size'], args.dr, args.lr])
+
+    configs = create_config(hyper_param)
+
+    val_loss = 1e10
+    best_config = configs[0]
+    config_num = 0
+
+    for i, conf in enumerate(configs, config_num):
+        print('config: {}'.format(conf))
+        n_layers, hidden_size, dr, lr = conf
+        model = RNN(n_layers=n_layers,
+                    hidden_size=hidden_size,
                     input_size=train_en.shape[3],
                     rnn_type=args.rnn_type,
                     seq_pred_len=args.seq_len_pred,
                     device=device,
-                    d_r=0)
+                    d_r=dr)
         model = model.to(device)
+
         optimizer = Adam(model.parameters())
-        for epoch in range(args.n_epochs):
-            loss = train(model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), epoch, optimizer, criterion)
+        epoch_start = 0
 
-        trial.set_user_attr(key="best_model", value=model)
+        val_inner_loss = 1e10
+        e = 0
+        for epoch in range(epoch_start, args.n_epochs, 1):
+            best_config, val_loss, val_inner_loss, stop, e = \
+                train(args, model, train_en.to(device), train_de.to(device),
+                      train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), valid_id, epoch, e, val_loss, val_inner_loss,
+                      optimizer, conf, i, best_config, path, criterion, formatter)
+            if stop:
+                break
 
-        return loss
-
-    def callback(study, trial):
-        if study.best_trial.number == trial.number:
-            study.set_user_attr(key="best_model", value=trial.user_attrs["best_model"])
-
-    search_space = {"hidden_layer_size": model_params['hidden_layer_size']}
-    study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-    study.optimize(train_optuna, n_trials=6, callbacks=[callback])
-    best_model = study.user_attrs["best_model"]
-    torch.save({'model_state_dict': best_model.state_dict()}, os.path.join(path, args.name))
-
-    joblib.dump(study, os.path.join(path, '{}_optuna.pkl'.format(args.name)))
-
-    study = joblib.load(os.path.join(path, '{}_optuna.pkl'.format(args.name)))
-    best_config = \
-        args.n_layers, study.best_trial.params['hidden_layer_size'],
-
+    n_layers, hidden_size, dr, lr = best_config
     print("best_config: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args,
                                    test_en.to(device), test_de.to(device), test_y.to(device), test_id,
                                    criterion, formatter,path, device)
-
-    n_layers, hidden_size = best_config
 
     erros[args.name] = list()
     config_file[args.name] = list()
@@ -275,7 +318,6 @@ def main():
         erros[args.name].append(float("{:.5f}".format(q)))
     config_file[args.name].append(n_layers)
     config_file[args.name].append(hidden_size)
-
 
     print("test error for best config {:.4f}".format(test_loss))
     error_path = "errors_{}_{}.json".format(args.exp_name, args.seq_len_pred)

@@ -12,10 +12,13 @@ import sys
 import random
 import pandas as pd
 import math
-import optuna
-import joblib
 from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
+
+
+random.seed(21)
+torch.manual_seed(7)
+np.random.seed(21)
 
 
 class NoamOpt:
@@ -55,32 +58,57 @@ erros = dict()
 config_file = dict()
 
 
-def train(model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch,
-          optimizer, criterion):
+def train(args, model, train_en, train_de, train_y,
+          test_en, test_de, test_y, epoch, e, val_loss,
+          val_inner_loss, optimizer,
+          config, config_num, best_config, criterion, path):
 
-    model.train()
-    total_loss = 0
-    for batch_id in range(train_en.shape[0]):
-        output = model(train_en[batch_id], train_de[batch_id])
-        loss = criterion(output, train_y[batch_id])
-        total_loss += loss.item()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step_and_update_lr()
+    stop = False
+    try:
+        model.train()
+        total_loss = 0
+        '''t = time()
+        print("start {}:".format(ctime(t)))'''
+        for batch_id in range(train_en.shape[0]):
+            output = model(train_en[batch_id], train_de[batch_id])
+            loss = criterion(output, train_y[batch_id])
+            total_loss += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step_and_update_lr()
+        '''t = time()
+        print("end {}:".format(ctime(t)))'''
 
-    print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
-    model.eval()
-    test_loss = 0
-    for j in range(test_en.shape[0]):
-        outputs = model(test_en[j], test_de[j])
-        loss = criterion(test_y[j], outputs)
-        test_loss += loss.item()
+        model.eval()
+        test_loss = 0
+        for j in range(test_en.shape[0]):
+            outputs = model(test_en[j], test_de[j])
+            loss = criterion(test_y[j], outputs)
+            test_loss += loss.item()
 
-    print("Average loss: {:.4f}".format(test_loss))
+        if test_loss < val_inner_loss:
+            val_inner_loss = test_loss
+            if val_inner_loss < val_loss:
+                val_loss = val_inner_loss
+                best_config = config
+                torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
-    return test_loss
+            e = epoch
+
+        print("Average loss: {:.4f}".format(test_loss))
+
+    except KeyboardInterrupt:
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'config_num': config_num,
+            'best_config': best_config
+        }, os.path.join(path, "{}_continue".format(args.name)))
+        sys.exit(0)
+
+    return best_config, val_loss, val_inner_loss, stop, e
 
 
 def create_config(hyper_parameters):
@@ -90,7 +118,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    n_layers, n_heads, d_model, kernel = config
+    n_layers, n_heads, d_model, lr, dr, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
@@ -110,7 +138,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  d_ff=d_model * 4,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
                  n_layers=n_layers, src_pad_index=0,
-                 tgt_pad_index=0, device=device, attn_type=args.attn_type,
+                 tgt_pad_index=0, device=device,
+                 attn_type=args.attn_type,
                  kernel=kernel).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -162,24 +191,23 @@ def main():
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--n_heads", type=list, default=[8])
     parser.add_argument("--n_heads_best", type=int)
-    parser.add_argument("--n_layers", type=list, default=1)
+    parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=[0])
     parser.add_argument("--dr_best", type=float)
     parser.add_argument("--lr", type=list, default=[0.001])
-    parser.add_argument("--n_epochs", type=int, default=2)
+    parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='conv_attn')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
-    parser.add_argument("--cuda", type=str, default='cuda:0')
+    parser.add_argument("--cuda", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=21)
-
     args = parser.parse_args()
 
     np.random.seed(21)
@@ -234,64 +262,56 @@ def main():
                                   test_x[:, seq_len:, :], test_y[:, seq_len:, :], test_id)
 
     criterion = nn.MSELoss()
+    if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
+        args.kernel = [1]
+    hyper_param = list([args.n_layers, [model_params['num_heads']],
+                        model_params['hidden_layer_size'], args.lr, args.dr, args.kernel])
+    configs = create_config(hyper_param)
+    print('number of config: {}'.format(len(configs)))
 
-    def train_optuna(trial):
-        cfg = {
-            'attn_type': args.attn_type,
-            'n_layers': args.n_layers,
-            'num_heads': model_params['num_heads'],
-            'hidden_layer_size': trial.suggest_categorical('hidden_layer_size',
-                                                           model_params['hidden_layer_size']),
-            'kernel': trial.suggest_categorical('kernel', args.kernel),
-        }
+    val_loss = 1e10
+    best_config = configs[0]
+    config_num = 0
 
-        d_k = int(cfg['hidden_layer_size'] / cfg['num_heads'])
+    for i, conf in enumerate(configs, config_num):
+        print('config: {}'.format(conf))
+
+        n_layers, n_heads, d_model, lr, dr, kernel = conf
+        d_k = int(d_model / n_heads)
         model = Attn(src_input_size=train_en.shape[3],
                      tgt_input_size=train_y.shape[3],
-                     d_model=cfg['hidden_layer_size'],
-                     d_ff=cfg['hidden_layer_size']*4,
-                     d_k=d_k, d_v=d_k, n_heads=cfg['num_heads'],
-                     n_layers=cfg['n_layers'], src_pad_index=0,
-                     tgt_pad_index=0, device=device, attn_type=args.attn_type,
-                     kernel=cfg['kernel'])
+                     d_model=d_model,
+                     d_ff=d_model*4,
+                     d_k=d_k, d_v=d_k, n_heads=n_heads,
+                     n_layers=n_layers, src_pad_index=0,
+                     tgt_pad_index=0, device=device,
+                     attn_type=args.attn_type,
+                     kernel=kernel)
 
         model.to(device)
 
-        optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2,
-                        cfg['hidden_layer_size'], 4000)
+        optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
 
-        for epoch in range(args.n_epochs):
+        epoch_start = 0
 
-            loss = train(model, train_en.to(device), train_de.to(device),
-                        train_y.to(device), valid_en.to(device), valid_de.to(device),
-                        valid_y.to(device), epoch, optim, criterion)
+        val_inner_loss = 1e10
+        e = 0
+        for epoch in range(epoch_start, args.n_epochs, 1):
 
-        trial.set_user_attr(key="best_model", value=model)
-
-        return loss
-
-    def callback(study, trial):
-        if study.best_trial.number == trial.number:
-            study.set_user_attr(key="best_model", value=trial.user_attrs["best_model"])
-
-    search_space = {"kernel": args.kernel, "hidden_layer_size": model_params['hidden_layer_size']}
-    study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-    study.optimize(train_optuna, n_trials=6, callbacks=[callback])
-    best_model = study.user_attrs["best_model"]
-    torch.save({'model_state_dict':  best_model.state_dict()}, os.path.join(path, args.name))
-
-    joblib.dump(study, os.path.join(path, '{}_optuna.pkl'.format(args.name)))
-
-    study = joblib.load(os.path.join(path, '{}_optuna.pkl'.format(args.name)))
-    best_config = \
-        args.n_layers, model_params['num_heads'], study.best_trial.params['hidden_layer_size'], \
-        study.best_trial.params['kernel']\
+            best_config, val_loss, val_inner_loss, stop, e = \
+                train(args, model, train_en.to(device), train_de.to(device),
+                      train_y.to(device), valid_en.to(device), valid_de.to(device),
+                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
+                      optim, conf, i, best_config, criterion, path)
+            if stop:
+                break
+        print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device),
                                    test_de.to(device), test_y.to(device),
                                    test_id, criterion, formatter, path, device)
 
-    layers, heads, d_model, kernel = best_config
+    layers, heads, d_model, lr, dr, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
