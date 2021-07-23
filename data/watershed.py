@@ -25,6 +25,8 @@ class WatershedFormatter(DataFormatter):
         ('Conductivity', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('Nitrate_mg', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('Q', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('pH', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('ODOPerCent', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
