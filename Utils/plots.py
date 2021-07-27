@@ -42,9 +42,9 @@ def main():
     plt.plot(np.arange(0, 192), np.concatenate((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1])),
              color='blue')
     plt.vlines(168, ymin=0, ymax=max(y_true.iloc[rand_ind, :-1]), colors='lightblue', linestyles="dashed")
-    plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='red')
+    '''plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='red')
     plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet')
-    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')
+    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')'''
     plt.plot(np.arange(168, 192), attn_temp_cutoff.iloc[rand_ind, :-1], color='orange')
 
     plt.title(args.exp_name)
