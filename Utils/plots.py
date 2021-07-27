@@ -16,20 +16,27 @@ def main():
     args = parser.parse_args()
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
-    print(y_true.shape)
+    print("read y_true")
     y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
+    print("read y_true_input")
 
     lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'lstm_{}'.format(args.seed)), 'rb'))
+    print("read lstm")
     attn = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_{}'.format(args.seed)), 'rb'))
+    print("read attn")
     attn_conv = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_conv_{}'.format(args.seed))
                                  , 'rb'))
+    print("read conv attn")
     attn_temp_cutoff = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
                                                      .format(args.seed)), 'rb'))
+    print("read attn temp cutoff")
 
     rand_ind = random.randint(0, 8000)
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
+
+    print("plotting...")
 
     plt.plot(np.arange(0, 192), np.cat((y_true_input[rand_ind, :], y_true[rand_ind, :]), dim=1), color='blue')
     plt.plot(np.arange(168, 192), lstm[rand_ind, :], color='navy')
