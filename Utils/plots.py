@@ -46,3 +46,6 @@ def main():
     plt.savefig('pred_plot_{}.png'.format(args.exp_name))
     plt.close()
 
+
+if __name__ == '__main__':
+    main()
