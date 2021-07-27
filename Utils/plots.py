@@ -31,13 +31,11 @@ def main():
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
 
-    plt.plot(np.arange(0, 192), torch.cat((y_true_input[rand_ind, :, :].squeeze(-1)
-                                          .cpu().detach().numpy(), y_true[rand_ind, :, :].squeeze(-1).
-                                          cpu().detach().numpy()), dim=1), color='blue')
-    plt.plot(np.arange(168, 192), lstm[rand_ind, :, :].squeeze(-1).cpu().detach().numpy(), color='navy')
-    plt.plot(np.arange(168, 192), attn[rand_ind, :, :].squeeze(-1).cpu().detach().numpy(), color='violet')
-    plt.plot(np.arange(168, 192), attn_conv[rand_ind, :, :].squeeze(-1).cpu().detach().numpy(), color='seagreen')
-    plt.plot(np.arange(168, 192), attn_temp_cutoff[rand_ind, :, :].squeeze(-1).cpu().detach().numpy(), color='orange')
+    plt.plot(np.arange(0, 192), np.cat((y_true_input[rand_ind, :], y_true[rand_ind, :]), dim=1), color='blue')
+    plt.plot(np.arange(168, 192), lstm[rand_ind, :], color='navy')
+    plt.plot(np.arange(168, 192), attn[rand_ind, :], color='violet')
+    plt.plot(np.arange(168, 192), attn_conv[rand_ind, :], color='seagreen')
+    plt.plot(np.arange(168, 192), attn_temp_cutoff[rand_ind, :], color='orange')
     plt.vlines(168, colors='lightblue', linestyles="dashed")
 
     plt.title(args.exp_name)
