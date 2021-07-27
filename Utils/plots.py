@@ -43,7 +43,7 @@ def main():
     predictions_attn_conv = np.ndarray((3, 8000, 24))
     predictions_attn_temp = np.ndarray((3, 8000, 24))
 
-    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb')).values.cpu().detach()
+    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb')).values
     print("read y_true")
     '''y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true_input")'''
@@ -51,13 +51,13 @@ def main():
     seeds = [21, 9, 1992]
     for i, seed in enumerate(seeds):
         predictions_lstm[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                             'lstm_{}'.format(seed)), 'rb')).values.cpu().detach()
+                                             'lstm_{}'.format(seed)), 'rb')).values
         predictions_attn[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                             'attn_{}'.format(seed)), 'rb')).values.cpu().detach()
+                                             'attn_{}'.format(seed)), 'rb')).values
         predictions_attn_conv[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                                  'attn_conv_{}'.format(seed)), 'rb')).values.cpu().detach()
+                                                  'attn_conv_{}'.format(seed)), 'rb')).values
         predictions_attn_temp[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
-                                                         .format(seed)), 'rb')).values.cpu().detach()
+                                                         .format(seed)), 'rb')).values
 
     RMSE = nn.MSELoss()
 
