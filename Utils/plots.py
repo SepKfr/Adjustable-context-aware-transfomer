@@ -67,6 +67,8 @@ def main():
 
     for i in range(3):
         for j in range(24):
+            print(len(y_true[:, j]))
+            print(len(predictions_lstm[i, :, j]))
             rmse_lstm[i, j] = RMSE(y_true[:, j], predictions_lstm[i, :, j])
             rmse_attn[i, j] = RMSE(y_true[:, j], predictions_attn[i, :, j])
             rmse_attn_conv[i, j] = RMSE(y_true[:, j], predictions_attn_conv[i, :, j])
