@@ -20,6 +20,15 @@ def main():
     y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true_input")
 
+    rand_ind = random.randint(0, 8000)
+    plt.rc('axes', labelsize=18)
+    plt.rc('axes', titlesize=18)
+    plt.rc('legend', fontsize=12)
+    plt.plot(np.arange(0, 192), np.cat((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1]), dim=1),
+             color='blue')
+    del y_true
+    del y_true_input
+
     lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'lstm_{}'.format(args.seed)), 'rb'))
     print("read lstm")
     attn = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_{}'.format(args.seed)), 'rb'))
@@ -31,14 +40,8 @@ def main():
                                                      .format(args.seed)), 'rb'))
     print("read attn temp cutoff")
 
-    rand_ind = random.randint(0, 8000)
-    plt.rc('axes', labelsize=18)
-    plt.rc('axes', titlesize=18)
-    plt.rc('legend', fontsize=12)
-
     print("plotting...")
 
-    plt.plot(np.arange(0, 192), np.cat((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1]), dim=1), color='blue')
     plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='navy')
     plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet')
     plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')
