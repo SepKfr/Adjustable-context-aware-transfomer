@@ -36,6 +36,8 @@ def main():
 
     print("plotting...")
     rand_ind = random.randint(0, 8000)
+    print(lstm.iloc[rand_ind, :-1])
+    print(attn.iloc[rand_ind, :-1])
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
