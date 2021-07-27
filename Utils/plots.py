@@ -85,11 +85,11 @@ def main():
     plt.plot(x, rmse_attn_conv[0::4].detach().numpy(), 'xb-', color='seagreen')
     plt.plot(x, rmse_attn[0::4].detach().numpy(), 'xb-', color='orange')
     plt.plot(x, rmse_lstm[0::4].detach().numpy(), 'xb-', color='salmon')
-    plt.title(args.exp_name)
     plt.xlabel("Future Timesteps")
     plt.ylabel("RMSE")
     plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
     name = args.exp_name if args.exp_name != "favorita" else "Retail"
+    plt.title(name)
     plt.savefig('rmses_{}.png'.format(name))
     plt.close()
 
