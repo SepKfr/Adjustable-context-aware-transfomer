@@ -31,21 +31,27 @@ def main():
 
     lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'lstm_{}'.format(args.seed)), 'rb'))
     print("read lstm")
+    plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='navy')
+    del lstm
+
     attn = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_{}'.format(args.seed)), 'rb'))
     print("read attn")
+    plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet')
+    del attn
+
     attn_conv = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_conv_{}'.format(args.seed))
                                  , 'rb'))
     print("read conv attn")
+    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')
+    del attn_conv
+
     attn_temp_cutoff = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
                                                      .format(args.seed)), 'rb'))
     print("read attn temp cutoff")
+    plt.plot(np.arange(168, 192), attn_temp_cutoff.iloc[rand_ind, :-1], color='orange')
+    del attn_temp_cutoff
 
     print("plotting...")
-
-    plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='navy')
-    plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet')
-    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')
-    plt.plot(np.arange(168, 192), attn_temp_cutoff.iloc[rand_ind, :-1], color='orange')
     plt.vlines(168, colors='lightblue', linestyles="dashed")
 
     plt.title(args.exp_name)
