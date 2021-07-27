@@ -89,7 +89,8 @@ def main():
     plt.xlabel("Future Timesteps")
     plt.ylabel("RMSE")
     plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
-    plt.savefig('rmses_{}.png'.format(args.exp_name))
+    name = args.exp_name if args.exp_name != "favorita" else "Retail"
+    plt.savefig('rmses_{}.png'.format(name))
     plt.close()
 
 
