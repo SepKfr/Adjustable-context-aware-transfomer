@@ -24,7 +24,7 @@ def main():
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
-    plt.plot(np.arange(0, 192), np.cat((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1]), dim=1),
+    plt.plot(np.arange(0, 192), np.concatenate((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1]), dim=1),
              color='blue')
     del y_true
     del y_true_input
