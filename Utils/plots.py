@@ -43,11 +43,11 @@ def main():
     plt.rc('legend', fontsize=12)
     plt.plot(np.arange(0, 192), np.concatenate((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1])),
              color='blue')
-    plt.vlines(168, ymin=0, ymax=max(y_true.iloc[rand_ind, :-1]), colors='lightblue', linestyles="dashed")
-    plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='red', linestyles="dashed")
-    plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet', linestyles="dashed")
-    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen', linestyles="dashed")
-    plt.plot(np.arange(168, 192), attn_temp_cutoff.iloc[rand_ind, :-1], color='orange', linestyles="dashed")
+    plt.vlines(168, ymin=0, ymax=max(y_true.iloc[rand_ind, :-1]), colors='lightblue', marker='--')
+    plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='red', marker='--')
+    plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet', marker='--')
+    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen', marker='--')
+    plt.plot(np.arange(168, 192), attn_temp_cutoff.iloc[rand_ind, :-1], color='orange', marker='--')
 
     plt.title(args.exp_name)
     plt.xlabel('TimeSteps')
