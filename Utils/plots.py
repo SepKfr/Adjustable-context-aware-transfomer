@@ -14,10 +14,10 @@ def main():
     parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
 
-    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
+    '''y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true")
     y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
-    print("read y_true_input")
+    print("read y_true_input")'''
 
     lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
                                          'lstm_{}'.format(args.seed)), 'rb'))
@@ -41,9 +41,9 @@ def main():
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
-    plt.plot(np.arange(0, 192), np.concatenate((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1])),
+    '''plt.plot(np.arange(0, 192), np.concatenate((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1])),
              color='blue')
-    plt.vlines(168, ymin=0, ymax=max(y_true.iloc[rand_ind, :-1]), colors='lightblue', linestyles="dashed")
+    plt.vlines(168, ymin=0, ymax=max(y_true.iloc[rand_ind, :-1]), colors='lightblue', linestyles="dashed")'''
     plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='red')
     plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet')
     plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')
