@@ -10,7 +10,7 @@ import torch
 def main():
 
     parser = argparse.ArgumentParser("plots for predictions")
-    parser.add_argument("--epx_name", type=str, default="favorita")
+    parser.add_argument("--exp_name", type=str, default="favorita")
     parser.add_argument("--cuda", type=str, default='cuda:0')
     parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
@@ -18,11 +18,11 @@ def main():
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
     y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
 
-    lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.epx_name), 'lstm_{}'.format(args.seed)), 'rb'))
-    attn = pickle.load(open(os.path.join('preds_{}_24'.format(args.epx_name), 'attn_{}'.format(args.seed)), 'rb'))
-    attn_conv = pickle.load(open(os.path.join('preds_{}_24'.format(args.epx_name), 'attn_conv_{}'.format(args.seed))
+    lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'lstm_{}'.format(args.seed)), 'rb'))
+    attn = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_{}'.format(args.seed)), 'rb'))
+    attn_conv = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_conv_{}'.format(args.seed))
                                  , 'rb'))
-    attn_temp_cutoff = pickle.load(open(os.path.join('preds_{}_24'.format(args.epx_name), 'attn_temp_cutoff_{}'
+    attn_temp_cutoff = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
                                                      .format(args.seed)), 'rb'))
 
     rand_ind = random.randint(0, 8000)
