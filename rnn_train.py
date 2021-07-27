@@ -248,13 +248,13 @@ def main():
 
     targets = formatter.format_predictions(format_outputs(test_y))
 
-    if not os.path.exists('y_true.pkl'):
+    if not os.path.exists('y_true_{}.pkl'.format(args.exp_name)):
         y_true = targets.iloc[:, seq_len:]
-        pickle.dump(y_true, open('y_true.pkl', "wb"))
-    if not os.path.exists('y_true_input.pkl'):
+        pickle.dump(y_true, open('y_true_{}.pkl'.format(args.exp_name), "wb"))
+    if not os.path.exists('y_true_input_{}.pkl'.format(args.exp_name)):
         y_true_input = targets.iloc[:, :seq_len]
         y_true_input.loc[:, 'identifier'] = targets['identifier'].values
-        pickle.dump(y_true_input, open('y_true_input.pkl', "wb"))
+        pickle.dump(y_true_input, open('y_true_input_{}.pkl'.format(args.exp_name), "wb"))
 
     model_params = formatter.get_default_model_params()
 
@@ -277,7 +277,7 @@ def main():
     best_config = configs[0]
     config_num = 0
 
-    for i, conf in enumerate(configs, config_num):
+    '''for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
         n_layers, hidden_size, dr, lr = conf
         model = RNN(n_layers=n_layers,
@@ -351,7 +351,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open(config_path, "w") as json_file:
-            json.dump(config_file, json_file)
+            json.dump(config_file, json_file)'''
 
 
 if __name__ == '__main__':
