@@ -43,7 +43,7 @@ def main():
     predictions_attn_conv = np.ndarray((3, 8000, 24))
     predictions_attn_temp = np.ndarray((3, 8000, 24))
 
-    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb')).values.to('cpu')
+    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true")
     '''y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true_input")'''
