@@ -38,11 +38,11 @@ def main():
 
     print("plotting...")
 
-    plt.plot(np.arange(0, 192), np.cat((y_true_input[rand_ind, :], y_true[rand_ind, :]), dim=1), color='blue')
-    plt.plot(np.arange(168, 192), lstm[rand_ind, :], color='navy')
-    plt.plot(np.arange(168, 192), attn[rand_ind, :], color='violet')
-    plt.plot(np.arange(168, 192), attn_conv[rand_ind, :], color='seagreen')
-    plt.plot(np.arange(168, 192), attn_temp_cutoff[rand_ind, :], color='orange')
+    plt.plot(np.arange(0, 192), np.cat((y_true_input.iloc[rand_ind, :-1], y_true.iloc[rand_ind, :-1]), dim=1), color='blue')
+    plt.plot(np.arange(168, 192), lstm.iloc[rand_ind, :-1], color='navy')
+    plt.plot(np.arange(168, 192), attn.iloc[rand_ind, :-1], color='violet')
+    plt.plot(np.arange(168, 192), attn_conv.iloc[rand_ind, :-1], color='seagreen')
+    plt.plot(np.arange(168, 192), attn_temp_cutoff.iloc[rand_ind, :-1], color='orange')
     plt.vlines(168, colors='lightblue', linestyles="dashed")
 
     plt.title(args.exp_name)
