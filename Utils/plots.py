@@ -16,6 +16,7 @@ def main():
     args = parser.parse_args()
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
+    print(y_true.shape)
     y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
 
     lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'lstm_{}'.format(args.seed)), 'rb'))
