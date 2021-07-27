@@ -277,7 +277,7 @@ def main():
     best_config = configs[0]
     config_num = 0
 
-    '''for i, conf in enumerate(configs, config_num):
+    for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
         n_layers, hidden_size, dr, lr = conf
         model = RNN(n_layers=n_layers,
@@ -351,7 +351,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open(config_path, "w") as json_file:
-            json.dump(config_file, json_file)'''
+            json.dump(config_file, json_file)
 
 
 if __name__ == '__main__':

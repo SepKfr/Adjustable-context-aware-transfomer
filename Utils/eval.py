@@ -93,7 +93,7 @@ def evaluate(site, seq_ln):
     plt.title("{} site".format(site))
     plt.xlabel("TimeSteps")
     plt.ylabel("Solute Concentration")
-    plt.legend(['ground-truth', 'ours', 'attn', 'conv attn', 'seq2seq-lstm'], loc="lower left")
+    plt.legend(['ground-truth', 'ours', 'attn', 'conv attn', 'seq2seq-lstm'], loc="upper right")
     plt.savefig('pred_plot_{}.png'.format(site))
     plt.close()
 
