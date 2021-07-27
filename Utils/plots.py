@@ -38,10 +38,10 @@ def main():
     parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
 
-    predictions_lstm = np.ndarray((3, 8000, 24))
-    predictions_attn = np.ndarray((3, 8000, 24))
-    predictions_attn_conv = np.ndarray((3, 8000, 24))
-    predictions_attn_temp = np.ndarray((3, 8000, 24))
+    predictions_lstm = np.zeros((3, 8000, 24))
+    predictions_attn = np.zeros((3, 8000, 24))
+    predictions_attn_conv = np.zeros((3, 8000, 24))
+    predictions_attn_temp = np.zeros((3, 8000, 24))
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true")
@@ -60,10 +60,10 @@ def main():
                                                          .format(seed)), 'rb')).values[:, :-1]
 
     RMSE = nn.MSELoss()
-    rmse_lstm = np.array((3, 24))
-    rmse_attn = np.array((3, 24))
-    rmse_attn_conv = np.array((3, 24))
-    rmse_attn_temp_cutoff = np.array((3, 24))
+    rmse_lstm = np.zeros((3, 24))
+    rmse_attn = np.zeros((3, 24))
+    rmse_attn_conv = np.zeros((3, 24))
+    rmse_attn_temp_cutoff = np.zeros((3, 24))
 
     for i in range(3):
         for j in range(24):
