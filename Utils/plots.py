@@ -60,6 +60,37 @@ def main():
                                                          .format(seed)), 'rb')).values[:, :-1]
 
     RMSE = nn.MSELoss()
+    rmse_lstm = np.array((3, 24))
+    rmse_attn = np.array((3, 24))
+    rmse_attn_conv = np.array((3, 24))
+    rmse_attn_temp_cutoff = np.array((3, 24))
+
+    for i in range(3):
+        for j in range(24):
+            rmse_lstm[i, j] = RMSE(y_true[:, j], predictions_lstm[i, :, j])
+            rmse_attn[i, j] = RMSE(y_true[:, j], predictions_attn[i, :, j])
+            rmse_attn_conv[i, j] = RMSE(y_true[:, j], predictions_attn_conv[i, :, j])
+            rmse_attn_temp_cutoff[i, j] = RMSE(y_true[:, j], predictions_attn_temp[i, :, j])
+
+    rmse_lstm = np.mean(rmse_lstm, axis=0)
+    rmse_attn = np.mean(rmse_attn, axis=0)
+    rmse_attn_conv = np.mean(rmse_attn_conv, axis=0)
+    rmse_attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+
+    x = np.array([0, 4, 8, 12, 16, 20, 24])
+    plt.rc('axes', labelsize=18)
+    plt.rc('axes', titlesize=18)
+    plt.rc('legend', fontsize=12)
+    plt.plot(x, rmse_attn_temp_cutoff[0::4].detach().numpy(), 'xb-', color='deepskyblue')
+    plt.plot(x, rmse_attn_conv[0::4].detach().numpy(), 'xb-', color='seagreen')
+    plt.plot(x, rmse_attn[0::4].detach().numpy(), 'xb-', color='orange')
+    plt.plot(x, rmse_lstm[0::4].detach().numpy(), 'xb-', color='salmon')
+    plt.title(args.exp_name)
+    plt.xlabel("Future Timesteps")
+    plt.ylabel("RMSE")
+    plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
+    plt.savefig('rmses_{}.png'.format(args.exp_name))
+    plt.close()
 
 
 if __name__ == '__main__':
