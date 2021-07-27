@@ -189,7 +189,7 @@ def main():
     parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--deep_type", type=str, default="rnn")
     parser.add_argument("--rnn_type", type=str, default="lstm")
-    parser.add_argument("--name", type=str, default='lstm')
+    parser.add_argument("--name", type=str, default='lstm_21')
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--cuda", type=str, default='cuda:0')
     parser.add_argument("--seed", type=int, default=21)
