@@ -40,58 +40,50 @@ def main():
     parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
 
-    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
+    predictions_lstm = np.zeros((3, 8000, 24))
+    predictions_attn = np.zeros((3, 8000, 24))
+    predictions_attn_conv = np.zeros((3, 8000, 24))
+    predictions_attn_temp = np.zeros((3, 8000, 24))
+
+    y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
+    print(y_true)
+    print("read y_true")
     '''y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true_input")'''
 
-    def get_slice(data):
-        id_cal = 'identifier'
-        data_list = dict()
-        for id, df in data.groupby(id_cal):
-            data_list[id] = df
-        return data_list
+    seeds = [21, 9, 1992]
+    for i, seed in enumerate(seeds):
+        predictions_lstm[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
+                                             'lstm_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
+        print(predictions_lstm[i, :, :])
+        predictions_attn[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
+                                             'attn_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
+        predictions_attn_conv[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
+                                                  'attn_conv_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
+        predictions_attn_temp[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
+                                                         .format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
 
-    def calculate_RMSE(y_list, pred_list):
-        rmses = torch.zeros(24)
-        for key in y_list.keys():
-            y = torch.tensor(y_list[key].iloc[:, :-1].to_numpy().astype('float32'))
-            norm = y.abs().mean()
-            pred = torch.tensor(pred_list[key].iloc[:, :-1].to_numpy().astype('float32'))
-            for i in range(24):
-                rmses[i] = math.sqrt(MSE(pred, y)) / norm
-        return rmses
-
-    y_true_list = get_slice(y_true)
     MSE = nn.MSELoss()
     rmse_lstm = torch.zeros((3, 24))
     rmse_attn = torch.zeros((3, 24))
     rmse_attn_conv = torch.zeros((3, 24))
     rmse_attn_temp_cutoff = torch.zeros((3, 24))
 
-    seeds = [21, 9, 1992]
-    for i, seed in enumerate(seeds):
-        lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                             'lstm_{}'.format(seed)), 'rb'))
-        attn = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                             'attn_{}'.format(seed)), 'rb'))
-        attn_conv = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                                  'attn_conv_{}'.format(seed)), 'rb'))
-        attn_temp_cutoff = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
-                                                         .format(seed)), 'rb'))
-        lstm_list = get_slice(lstm)
-        attn_list = get_slice(attn)
-        attn_conv_list = get_slice(attn_conv)
-        attn_temp_cutoff_list = get_slice(attn_temp_cutoff)
+    normalizer = torch.tensor(y_true).abs().mean()
+    print(normalizer)
 
-        rmse_lstm[i, :] = calculate_RMSE(y_true_list, lstm_list)
-        rmse_attn[i, :] = calculate_RMSE(y_true_list, attn_list)
-        rmse_attn_conv[i, :] = calculate_RMSE(y_true_list, attn_conv_list)
-        rmse_attn_temp_cutoff[i, :] = calculate_RMSE(y_true_list, attn_temp_cutoff_list)
+    for i in range(3):
+        for j in range(24):
+            rmse_lstm[i, j] = math.sqrt(MSE(torch.tensor(predictions_lstm[i, :, j]), (torch.tensor(y_true[:, j]))).item())
+            rmse_attn[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn[i, :, j]), torch.tensor(y_true[:, j])).item())
+            rmse_attn_conv[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn_conv[i, :, j]), torch.tensor(y_true[:, j])).item())
+            rmse_attn_temp_cutoff[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn_temp[i, :, j]), torch.tensor(y_true[:, j])).item())
 
-    rmse_lstm = torch.mean(rmse_lstm, dim=0)
-    rmse_attn = torch.mean(rmse_attn, dim=0)
-    rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0)
-    rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0)
+    rmse_lstm = torch.mean(rmse_lstm, dim=0) / normalizer
+    rmse_attn = torch.mean(rmse_attn, dim=0) / normalizer
+    rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0) / normalizer
+    rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0) / normalizer
+
 
     x = np.arange(0, 24)
     plt.rc('axes', labelsize=18)
