@@ -5,6 +5,7 @@ import numpy as np
 import random
 import argparse
 import torch.nn as nn
+import torch
 
 
 def plot(args, y_true, y_true_input, lstm, attn, attn_conv, attn_temp_cutoff):
@@ -59,24 +60,23 @@ def main():
         predictions_attn_temp[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
                                                          .format(seed)), 'rb')).values[:, :-1]
 
-    RMSE = nn.MSELoss()
-    rmse_lstm = np.zeros((3, 24))
-    rmse_attn = np.zeros((3, 24))
-    rmse_attn_conv = np.zeros((3, 24))
-    rmse_attn_temp_cutoff = np.zeros((3, 24))
+    MSE = nn.MSELoss()
+    rmse_lstm = torch.zeros((3, 24))
+    rmse_attn = torch.zeros((3, 24))
+    rmse_attn_conv = torch.zeros((3, 24))
+    rmse_attn_temp_cutoff = torch.zeros((3, 24))
 
     for i in range(3):
         for j in range(24):
-            print(RMSE(y_true[:, j], predictions_lstm[i, :, j]))
-            rmse_lstm[i, j] = RMSE(y_true[:, j], predictions_lstm[i, :, j])
-            rmse_attn[i, j] = RMSE(y_true[:, j], predictions_attn[i, :, j])
-            rmse_attn_conv[i, j] = RMSE(y_true[:, j], predictions_attn_conv[i, :, j])
-            rmse_attn_temp_cutoff[i, j] = RMSE(y_true[:, j], predictions_attn_temp[i, :, j])
+            rmse_lstm[i, j] = MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_lstm[i, :, j]))
+            rmse_attn[i, j] = MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn[i, :, j]))
+            rmse_attn_conv[i, j] = MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn_conv[i, :, j]))
+            rmse_attn_temp_cutoff[i, j] = MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn_temp[i, :, j]))
 
-    rmse_lstm = np.mean(rmse_lstm, axis=0)
-    rmse_attn = np.mean(rmse_attn, axis=0)
-    rmse_attn_conv = np.mean(rmse_attn_conv, axis=0)
-    rmse_attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+    rmse_lstm = torch.mean(rmse_lstm, dim=0)
+    rmse_attn = torch.mean(rmse_attn, dim=0)
+    rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0)
+    rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0)
 
     x = np.array([0, 4, 8, 12, 16, 20, 24])
     plt.rc('axes', labelsize=18)
