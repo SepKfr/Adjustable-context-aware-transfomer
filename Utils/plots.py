@@ -78,19 +78,14 @@ def main():
     rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0)
     rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0)
 
-    x = np.array([0, 4, 8, 12, 16, 20, 24])
+    x = np.arange(0, 23)
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
-    plt.plot(x,
-             torch.cat((rmse_attn_temp_cutoff[0::4], rmse_attn_temp_cutoff[-1]), dim=0).
-             detach().numpy(), 'xb-', color='deepskyblue')
-    plt.plot(x, torch.cat((rmse_attn_conv[0::4], rmse_attn_conv[-1]), dim=0).
-             detach().numpy(), 'xb-', color='seagreen')
-    plt.plot(x, torch.cat((rmse_attn[0::4], rmse_attn[-1]), dim=0).
-             detach().numpy(), 'xb-', color='orange')
-    plt.plot(x, torch.cat((rmse_lstm[0::4], rmse_lstm[-1]), dim=0).
-             detach().numpy(), 'xb-', color='salmon')
+    plt.plot(x, rmse_attn_temp_cutoff.detach().numpy(), 'xb-', color='deepskyblue')
+    plt.plot(x, rmse_attn_conv[0::4].detach().numpy(), 'xb-', color='seagreen')
+    plt.plot(x, rmse_attn[0::4].detach().numpy(), 'xb-', color='orange')
+    plt.plot(x, rmse_lstm[0::4], rmse_lstm[-1].detach().numpy(), 'xb-', color='salmon')
     plt.xlabel("Future Timesteps")
     plt.ylabel("RMSE")
     plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
