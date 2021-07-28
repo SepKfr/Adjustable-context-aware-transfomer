@@ -6,6 +6,7 @@ import random
 import argparse
 import torch.nn as nn
 import torch
+import math
 
 
 def plot(args, y_true, y_true_input, lstm, attn, attn_conv, attn_temp_cutoff):
@@ -69,12 +70,14 @@ def main():
     for i in range(3):
         for j in range(24):
             normalizer = torch.tensor(y_true[:, j]).abs().mean()
-            print(normalizer)
-            rmse_lstm[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_lstm[i, :, j]))) / normalizer
-            print(rmse_lstm[i, j])
-            rmse_attn[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn[i, :, j]))) / normalizer
-            rmse_attn_conv[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn_conv[i, :, j]))) / normalizer
-            rmse_attn_temp_cutoff[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn_temp[i, :, j]))) / normalizer
+            rmse_lstm[i, j] = (math.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_lstm[i, :, j]))
+                                         .item())) / normalizer
+            rmse_attn[i, j] = (math.sqrt(MSE(torch.tensor(y_true[:, j]),
+                                             torch.tensor(predictions_attn[i, :, j])).item())) / normalizer
+            rmse_attn_conv[i, j] = (math.sqrt(MSE(torch.tensor(y_true[:, j]),
+                                                  torch.tensor(predictions_attn_conv[i, :, j])).item())) / normalizer
+            rmse_attn_temp_cutoff[i, j] = (math.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(
+                predictions_attn_temp[i, :, j])).item())) / normalizer
 
     print(rmse_lstm)
     rmse_lstm = torch.mean(rmse_lstm, dim=0)
