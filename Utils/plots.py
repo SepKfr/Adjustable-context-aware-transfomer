@@ -68,6 +68,7 @@ def main():
     rmse_attn_temp_cutoff = torch.zeros((3, 24))
 
     normalizer = torch.tensor(y_true).abs().mean()
+    print(normalizer)
 
     for i in range(3):
         for j in range(24):
