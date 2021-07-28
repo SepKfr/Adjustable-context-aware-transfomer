@@ -69,7 +69,9 @@ def main():
     for i in range(3):
         for j in range(24):
             normalizer = torch.tensor(y_true[:, j]).abs().mean()
+            print(normalizer)
             rmse_lstm[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_lstm[i, :, j]))) / normalizer
+            print(rmse_lstm[i, j])
             rmse_attn[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn[i, :, j]))) / normalizer
             rmse_attn_conv[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn_conv[i, :, j]))) / normalizer
             rmse_attn_temp_cutoff[i, j] = torch.sqrt(MSE(torch.tensor(y_true[:, j]), torch.tensor(predictions_attn_temp[i, :, j]))) / normalizer
