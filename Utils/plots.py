@@ -46,7 +46,7 @@ def main():
     predictions_attn_temp = np.zeros((3, 8000, 24))
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
-    print(y_true)
+    print(y_true.sort_index(inplace=True))
     print("read y_true")
     '''y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
     print("read y_true_input")'''
@@ -56,7 +56,6 @@ def main():
         lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
                                              'lstm_{}'.format(seed)), 'rb'))
         lstm = lstm.sort_index(inplace=True)
-        print(lstm)
         predictions_attn[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
                                              'attn_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
         predictions_attn_conv[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
