@@ -55,7 +55,7 @@ def main():
     for i, seed in enumerate(seeds):
         lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
                                              'lstm_{}'.format(seed)), 'rb')).sort_index(inplace=True).iloc[:, :-1].to_numpy().astype('float32')
-        print(lstm])
+        print(lstm)
         predictions_attn[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
                                              'attn_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
         predictions_attn_conv[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
