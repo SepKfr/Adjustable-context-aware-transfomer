@@ -78,6 +78,7 @@ def main():
             rmse_attn_conv[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn_conv[i, :, j]), torch.tensor(y_true[:, j])).item())
             rmse_attn_temp_cutoff[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn_temp[i, :, j]), torch.tensor(y_true[:, j])).item())
 
+    print(rmse_lstm)
     rmse_lstm = torch.mean(rmse_lstm, dim=0) / normalizer
     rmse_attn = torch.mean(rmse_attn, dim=0) / normalizer
     rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0) / normalizer
