@@ -46,14 +46,12 @@ def main():
     predictions_attn_temp = np.zeros((3, 8000, 24))
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
-    y_true = y_true.sort_index()
     y_true = y_true.iloc[:, :-1].to_numpy().astype('float32')
     print("read y_true")
 
     def read_preds(name, seed):
         pred = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
                                              '{}_{}'.format(name, seed)), 'rb'))
-        pred = pred.sort_index()
         pred = pred.iloc[:, :-1].to_numpy().astype('float32')
         return pred
 
