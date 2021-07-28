@@ -72,18 +72,17 @@ def main():
 
     for i in range(3):
         for j in range(24):
-
+            print(torch.tensor(predictions_lstm[i, :, j]))
             rmse_lstm[i, j] = math.sqrt(MSE(torch.tensor(predictions_lstm[i, :, j]), (torch.tensor(y_true[:, j]))).item())
             rmse_attn[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn[i, :, j]), torch.tensor(y_true[:, j])).item())
             rmse_attn_conv[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn_conv[i, :, j]), torch.tensor(y_true[:, j])).item())
             rmse_attn_temp_cutoff[i, j] = math.sqrt(MSE(torch.tensor(predictions_attn_temp[i, :, j]), torch.tensor(y_true[:, j])).item())
 
-    print(rmse_lstm)
     rmse_lstm = torch.mean(rmse_lstm, dim=0) / normalizer
     rmse_attn = torch.mean(rmse_attn, dim=0) / normalizer
     rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0) / normalizer
     rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0) / normalizer
-    print(rmse_lstm)
+
 
     x = np.arange(0, 24)
     plt.rc('axes', labelsize=18)
