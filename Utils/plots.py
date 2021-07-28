@@ -35,7 +35,7 @@ def plot(args, y_true, y_true_input, lstm, attn, attn_conv, attn_temp_cutoff):
 def main():
 
     parser = argparse.ArgumentParser("plots for predictions")
-    parser.add_argument("--exp_name", type=str, default="favorita")
+    parser.add_argument("--exp_name", type=str, default="air_quality")
     parser.add_argument("--cuda", type=str, default='cuda:0')
     parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
@@ -46,22 +46,23 @@ def main():
     predictions_attn_temp = np.zeros((3, 8000, 24))
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
-    print(y_true.sort_index(inplace=True))
+    y_true = y_true.sort_index()
     print("read y_true")
-    '''y_true_input = pickle.load(open('y_true_input_{}.pkl'.format(args.exp_name), 'rb'))
-    print("read y_true_input")'''
+
+    def read_preds(name, seed):
+        pred = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
+                                             '{}_{}'.format(name, seed)), 'rb'))
+        pred = pred.sort_index()
+        pred = pred.iloc[:, :-1].to_numpy().astype('float32')
+        return pred
 
     seeds = [21, 9, 1992]
     for i, seed in enumerate(seeds):
-        lstm = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                             'lstm_{}'.format(seed)), 'rb'))
-        lstm = lstm.sort_index(inplace=True)
-        predictions_attn[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                             'attn_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
-        predictions_attn_conv[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name),
-                                                  'attn_conv_{}'.format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
-        predictions_attn_temp[i, :, :] = pickle.load(open(os.path.join('preds_{}_24'.format(args.exp_name), 'attn_temp_cutoff_{}'
-                                                         .format(seed)), 'rb')).iloc[:, :-1].to_numpy().astype('float32')
+
+        predictions_lstm[i, :, :] = read_preds("lstm", seed)
+        predictions_attn[i, :, :] = read_preds("attn", seed)
+        predictions_attn_conv[i, :, :] = read_preds("attn_conv", seed)
+        predictions_attn_temp[i, :, :] = read_preds("attn_temp_cutoff", seed)
 
     MSE = nn.MSELoss()
     rmse_lstm = torch.zeros((3, 24))
@@ -70,7 +71,6 @@ def main():
     rmse_attn_temp_cutoff = torch.zeros((3, 24))
 
     normalizer = torch.tensor(y_true).abs().mean()
-    print(normalizer)
 
     for i in range(3):
         for j in range(24):
@@ -83,7 +83,6 @@ def main():
     rmse_attn = torch.mean(rmse_attn, dim=0) / normalizer
     rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0) / normalizer
     rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0) / normalizer
-
 
     x = np.arange(0, 24)
     plt.rc('axes', labelsize=18)
