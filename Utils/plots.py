@@ -83,13 +83,13 @@ def main():
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
     plt.plot(x,
-             torch.cat(rmse_attn_temp_cutoff[0::4], rmse_attn_temp_cutoff[-1]).
+             torch.cat((rmse_attn_temp_cutoff[0::4], rmse_attn_temp_cutoff[-1]), dim=0).
              detach().numpy(), 'xb-', color='deepskyblue')
-    plt.plot(x, torch.cat(rmse_attn_conv[0::4], rmse_attn_conv[-1]).
+    plt.plot(x, torch.cat((rmse_attn_conv[0::4], rmse_attn_conv[-1]), dim=0).
              detach().numpy(), 'xb-', color='seagreen')
-    plt.plot(x, torch.cat(rmse_attn[0::4], rmse_attn[-1]).
+    plt.plot(x, torch.cat((rmse_attn[0::4], rmse_attn[-1]), dim=0).
              detach().numpy(), 'xb-', color='orange')
-    plt.plot(x, torch.cat(rmse_lstm[0::4], rmse_lstm[-1]).
+    plt.plot(x, torch.cat((rmse_lstm[0::4], rmse_lstm[-1]), dim=0).
              detach().numpy(), 'xb-', color='salmon')
     plt.xlabel("Future Timesteps")
     plt.ylabel("RMSE")
