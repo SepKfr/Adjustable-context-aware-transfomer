@@ -47,6 +47,7 @@ def main():
 
     y_true = pickle.load(open('y_true_{}.pkl'.format(args.exp_name), 'rb'))
     y_true = y_true.sort_index()
+    y_true = y_true.iloc[:, :-1].to_numpy().astype('float32')
     print("read y_true")
 
     def read_preds(name, seed):
