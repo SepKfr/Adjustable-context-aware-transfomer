@@ -82,6 +82,7 @@ def main():
     rmse_attn = torch.mean(rmse_attn, dim=0) / normalizer
     rmse_attn_conv = torch.mean(rmse_attn_conv, dim=0) / normalizer
     rmse_attn_temp_cutoff = torch.mean(rmse_attn_temp_cutoff, dim=0) / normalizer
+    print(rmse_lstm)
 
     x = np.arange(0, 24)
     plt.rc('axes', labelsize=18)
