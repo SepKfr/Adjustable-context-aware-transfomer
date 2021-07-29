@@ -9,6 +9,8 @@ from models.attn import Attn
 import os
 import torch.nn as nn
 import math
+import numpy as np
+import random
 
 
 def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
@@ -108,7 +110,12 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
     parser.add_argument('--cuda', type=str, default='cuda:0')
+    parser.add_argument("--seed", type=int, default=21)
+
     args = parser.parse_args()
+    np.random.seed(21)
+    random.seed(21)
+    torch.manual_seed(args.seed)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
