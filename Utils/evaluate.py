@@ -21,8 +21,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     input_size=test_en.shape[3],
-                    rnn_type=args.rnn_type,
-                    seq_pred_len=args.seq_len_pred,
+                    rnn_type="lstm",
+                    seq_pred_len=24,
                     device=device,
                     d_r=0)
         checkpoint = torch.load(os.path.join(mdl_path, "lstm_{}".format(seed)))
