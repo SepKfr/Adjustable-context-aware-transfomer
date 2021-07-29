@@ -57,6 +57,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     def make_predictions(model):
 
+        model.eval()
         predictions = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
 
         def extract_numerical_data(data):
@@ -102,8 +103,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             test_loss = math.sqrt(test_loss) / normaliser
             return test_loss
 
-        pred_lstm = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
-        print(pred_lstm)
+        pred_attn_temp = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
+        print(pred_attn_temp)
 
 
 def main():
