@@ -16,11 +16,6 @@ from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
 
 
-random.seed(21)
-torch.manual_seed(7)
-np.random.seed(21)
-
-
 class NoamOpt:
 
     def __init__(self, optimizer, lr_mul, d_model, n_warmup_steps):
