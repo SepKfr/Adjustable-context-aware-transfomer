@@ -85,11 +85,11 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     for i, seed in enumerate([21, 9, 1992]):
 
         lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
-        attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn_{}".format(seed))
-        attn_conv_model = load_attn(seed, configs["attn_{}".format(seed)], models_path,
-                              "conv_attn", "attn_conv_{}".format(seed))
-        attn_temp_cutoff_model = load_attn(seed, configs["attn_{}".format(seed)],
-                                     models_path, "temp_cutoff", "attn_temp_cutoff_{}".format(seed))
+        attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
+        attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
+                              "conv_attn", "attn_conv")
+        attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
+                                     models_path, "temp_cutoff", "attn_temp_cutoff")
 
         predictions_lstm[i, :, :, :] = make_predictions(lstm_model)
         predictions_attn[i, :, :, :] = make_predictions(attn_model)
