@@ -67,8 +67,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             ]]
 
         for j in range(test_en.shape[0]):
-            output = model(test_en[j].to(device), test_de[j].to(device))
-            output_map = inverse_output(output.to('cpu'), test_y[j], test_id[j])
+            output = model(test_en[j], test_de[j])
+            output_map = inverse_output(output, test_y[j], test_id[j])
             forecast = torch.from_numpy(extract_numerical_data(
                 formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))
 
@@ -141,7 +141,8 @@ def main():
     test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
                                                  test_x[:, seq_len:, :], test_y[:, seq_len:, :], test_id)
 
-    read_models(args, device, test_en, test_de, test_y, test_id, formatter)
+    read_models(args, device, test_en.to(device), test_de.to(device), test_y.to(device),
+                test_id.to(device), formatter)
 
 
 if __name__ == '__main__':
