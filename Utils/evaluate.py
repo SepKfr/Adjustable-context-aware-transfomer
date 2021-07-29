@@ -24,7 +24,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                     rnn_type="lstm",
                     seq_pred_len=24,
                     device=device,
-                    d_r=0)
+                    d_r=0).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "lstm_{}".format(seed)))
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
