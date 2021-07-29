@@ -117,10 +117,16 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         rmse_attn_conv[i, :] = calculate_loss(predictions_attn_conv[i, :, :, :])
         rmse_attn_temp_cutoff[i, :] = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
 
+    rmse_lstm = np.mean(rmse_lstm, axis=0)
+    rmse_attn = np.mean(rmse_attn, axis=0)
+    rmse_attn_conv = np.mean(rmse_attn_conv, axis=0)
+    rmse_attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+
     x = np.arange(0, 24)
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
+
     plt.plot(x, rmse_attn_temp_cutoff, 'xb-', color='deepskyblue')
     plt.plot(x, rmse_attn_conv, 'xb-', color='seagreen')
     plt.plot(x, rmse_attn, 'xb-', color='orange')
