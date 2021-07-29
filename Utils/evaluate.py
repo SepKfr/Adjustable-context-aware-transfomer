@@ -142,7 +142,7 @@ def main():
                                                  test_x[:, seq_len:, :], test_y[:, seq_len:, :], test_id)
 
     read_models(args, device, test_en.to(device), test_de.to(device), test_y.to(device),
-                test_id.to(device), formatter)
+                test_id, formatter)
 
 
 if __name__ == '__main__':
