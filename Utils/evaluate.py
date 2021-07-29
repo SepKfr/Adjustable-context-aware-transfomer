@@ -83,6 +83,11 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     criterion = nn.MSELoss()
 
+    rmse_lstm = np.zeros((3, 24))
+    rmse_attn = np.zeros((3, 24))
+    rmse_attn_conv = np.zeros((3, 24))
+    rmse_attn_temp_cutoff = np.zeros((3, 24))
+
     for i, seed in enumerate([21, 9, 1992]):
 
         lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
@@ -98,13 +103,20 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         predictions_attn_temp_cutoff[i, :, :, :] = make_predictions(attn_temp_cutoff_model)
 
         def calculate_loss(predictions):
-            test_loss = criterion(predictions, targets_all).item()
-            normaliser = targets_all.to(device).abs().mean()
-            test_loss = math.sqrt(test_loss) / normaliser
-            return test_loss
+            rmses = np.zeros(24)
+            for j in range(24):
+                test_loss = criterion(predictions[:, :, j], targets_all[:, :, j]).item()
+                normaliser = targets_all[:, :, j].abs().mean()
+                test_loss = math.sqrt(test_loss) / normaliser
+                rmses[j] = test_loss
+            return rmses
 
-        pred_attn_temp = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
-        print(pred_attn_temp)
+        rmse_lstm[i, :] = calculate_loss(predictions_lstm[i, :, :, :])
+        rmse_attn[i, :] = calculate_loss(predictions_attn[i, :, :, :])
+        rmse_attn_conv[i, :] = calculate_loss(predictions_attn_conv[i, :, :, :])
+        rmse_attn_temp_cutoff[i, :] = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
+
+        print(rmse_lstm)
 
 
 def main():
