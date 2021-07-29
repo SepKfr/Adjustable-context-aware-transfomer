@@ -143,10 +143,12 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             mae_losses = np.zeros(3)
             MAE = nn.L1Loss()
             final_error[name] = list()
+            normalizer = targets_all.abs().mean()
 
             for k in range(3):
-                rmse_losses[k] = criterion(predictions[k, :, :, :], targets_all)
-                mae_losses[k] = MAE(predictions[k, :, :, :], targets_all)
+
+                rmse_losses[k] = math.sqrt(criterion(predictions[k, :, :, :], targets_all).item()) / normalizer
+                mae_losses[k] = MAE(predictions[k, :, :, :], targets_all).item() / normalizer
 
             rmse_mean, rmse_ste = rmse_losses.mean(), rmse_losses.std() / 9
             mae_mean, mae_ste = mae_losses.mean(), mae_losses.std() / 9
@@ -162,9 +164,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         calculate_loss(predictions_attn_conv, "attn_conv")
         calculate_loss(predictions_attn_temp_cutoff, "attn_temp_cutoff")
 
-        with open("final_error.json", "w") as json_file:
-            json.dump(final_error, json_file)
+        config_path = "final_errors_{}.json".format(args.exp_name)
 
+        with open(config_path, "w") as json_file:
+            json.dump(final_error, json_file)
 
 
 def main():
