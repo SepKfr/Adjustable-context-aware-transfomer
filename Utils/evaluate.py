@@ -102,7 +102,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             test_loss = math.sqrt(test_loss) / normaliser
             return test_loss
 
-        pred_lstm = calculate_loss(predictions_lstm[i, :, :, :])
+        pred_lstm = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
         print(pred_lstm)
 
 
