@@ -90,6 +90,29 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     rmse_attn_conv = np.zeros((3, 24))
     rmse_attn_temp_cutoff = np.zeros((3, 24))
 
+    def create_rmse_plot():
+        lstm = np.mean(rmse_lstm, axis=0)
+        attn = np.mean(rmse_attn, axis=0)
+        attn_conv = np.mean(rmse_attn_conv, axis=0)
+        attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+
+        x = np.arange(0, 24)
+        plt.rc('axes', labelsize=18)
+        plt.rc('axes', titlesize=18)
+        plt.rc('legend', fontsize=12)
+
+        plt.plot(x, attn_temp_cutoff, 'xb-', color='deepskyblue')
+        plt.plot(x, attn_conv, 'xb-', color='seagreen')
+        plt.plot(x, attn, 'xb-', color='orange')
+        plt.plot(x, lstm, 'xb-', color='salmon')
+        plt.xlabel("Future Timesteps")
+        plt.ylabel("RMSE")
+        plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
+        name = args.exp_name if args.exp_name != "favorita" else "Retail"
+        plt.title(name)
+        plt.savefig('rmses_{}.png'.format(name))
+        plt.close()
+
     for i, seed in enumerate([21, 9, 1992]):
 
         lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
@@ -104,7 +127,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         predictions_attn_conv[i, :, :, :] = make_predictions(attn_conv_model)
         predictions_attn_temp_cutoff[i, :, :, :] = make_predictions(attn_temp_cutoff_model)
 
-        def calculate_loss(predictions):
+        def calculate_loss_per_step(predictions):
             rmses = np.zeros(24)
             for j in range(24):
                 test_loss = criterion(predictions[:, :, j], targets_all[:, :, j]).item()
@@ -113,32 +136,35 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 rmses[j] = test_loss
             return rmses
 
-        rmse_lstm[i, :] = calculate_loss(predictions_lstm[i, :, :, :])
-        rmse_attn[i, :] = calculate_loss(predictions_attn[i, :, :, :])
-        rmse_attn_conv[i, :] = calculate_loss(predictions_attn_conv[i, :, :, :])
-        rmse_attn_temp_cutoff[i, :] = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
+        final_error = dict()
 
-    rmse_lstm = np.mean(rmse_lstm, axis=0)
-    rmse_attn = np.mean(rmse_attn, axis=0)
-    rmse_attn_conv = np.mean(rmse_attn_conv, axis=0)
-    rmse_attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+        def calculate_loss(predictions, name):
+            rmse_losses = np.zeros(3)
+            mae_losses = np.zeros(3)
+            MAE = nn.L1Loss()
+            final_error[name] = list()
 
-    x = np.arange(0, 24)
-    plt.rc('axes', labelsize=18)
-    plt.rc('axes', titlesize=18)
-    plt.rc('legend', fontsize=12)
+            for k in range(3):
+                rmse_losses[k] = criterion(predictions[k, :, :, :], targets_all)
+                mae_losses[k] = MAE(predictions[k, :, :, :], targets_all)
 
-    plt.plot(x, rmse_attn_temp_cutoff, 'xb-', color='deepskyblue')
-    plt.plot(x, rmse_attn_conv, 'xb-', color='seagreen')
-    plt.plot(x, rmse_attn, 'xb-', color='orange')
-    plt.plot(x, rmse_lstm, 'xb-', color='salmon')
-    plt.xlabel("Future Timesteps")
-    plt.ylabel("RMSE")
-    plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
-    name = args.exp_name if args.exp_name != "favorita" else "Retail"
-    plt.title(name)
-    plt.savefig('rmses_{}.png'.format(name))
-    plt.close()
+            rmse_mean, rmse_ste = rmse_losses.mean(), rmse_losses.std() / 9
+            mae_mean, mae_ste = mae_losses.mean(), mae_losses.std() / 9
+            final_error[name].append([rmse_mean, rmse_ste, mae_mean, mae_ste])
+
+        '''rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :])
+        rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :])
+        rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
+        rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])'''
+
+        calculate_loss(predictions_lstm, "lstm")
+        calculate_loss(predictions_attn, "attn")
+        calculate_loss(predictions_attn_conv, "attn_conv")
+        calculate_loss(predictions_attn_temp_cutoff, "attn_temp_cutoff")
+
+        with open("final_error.json", "w") as json_file:
+            json.dump(final_error, json_file)
+
 
 
 def main():
