@@ -47,7 +47,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
 
-    configs = json.load(open('configs_{}_24.json'.format(args.exp_name), 'r'))
+    with open('configs_{}_24.json'.format(args.exp_name), 'r') as json_file:
+        configs = json.load(json_file)
     models_path = "models_{}_24".format(args.exp_name)
 
     predictions_lstm = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
