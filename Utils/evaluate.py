@@ -11,6 +11,7 @@ import torch.nn as nn
 import math
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 
 def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
@@ -116,7 +117,21 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         rmse_attn_conv[i, :] = calculate_loss(predictions_attn_conv[i, :, :, :])
         rmse_attn_temp_cutoff[i, :] = calculate_loss(predictions_attn_temp_cutoff[i, :, :, :])
 
-        print(rmse_lstm)
+    x = np.arange(0, 24)
+    plt.rc('axes', labelsize=18)
+    plt.rc('axes', titlesize=18)
+    plt.rc('legend', fontsize=12)
+    plt.plot(x, rmse_attn_temp_cutoff, 'xb-', color='deepskyblue')
+    plt.plot(x, rmse_attn_conv, 'xb-', color='seagreen')
+    plt.plot(x, rmse_attn, 'xb-', color='orange')
+    plt.plot(x, rmse_lstm, 'xb-', color='salmon')
+    plt.xlabel("Future Timesteps")
+    plt.ylabel("RMSE")
+    plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
+    name = args.exp_name if args.exp_name != "favorita" else "Retail"
+    plt.title(name)
+    plt.savefig('rmses_{}.png'.format(name))
+    plt.close()
 
 
 def main():
