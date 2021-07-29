@@ -106,8 +106,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
-    parser.add_argument('--name', type=str, default='attn')
-    parser.add_argument('--exp_name', type=str, default='favorita')
+    parser.add_argument('--exp_name', type=str, default='traffic')
     args = parser.parse_args()
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
