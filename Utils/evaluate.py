@@ -75,7 +75,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             '''forecast = torch.from_numpy(extract_numerical_data(
                 formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))'''
 
-            predictions[j, :, :] = output[:, :, 0]
+            predictions[j, :, :] = output[:, :, 0].to('cpu')
             '''targets = torch.from_numpy(extract_numerical_data(
                 formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
@@ -177,7 +177,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     pred_attn_temp_cutoff = torch.mean(predictions_attn_temp_cutoff, dim=0).\
         reshape(test_y.shape[0]*test_y.shape[1], -1)
 
-    targets_all = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1)
+    targets_all = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1).to('cpu')
 
     loss = 10e-10
     ind = 0
