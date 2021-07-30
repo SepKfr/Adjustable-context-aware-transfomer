@@ -56,6 +56,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_conv = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
     predictions_attn_temp_cutoff = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
     targets_all = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
+    targets_all_input = torch.zeros(test_y.shape[0], 168, test_y.shape[2])
 
     def make_predictions(model):
 
@@ -69,6 +70,17 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 if col not in {"forecast_time", "identifier"}
             ]]
 
+        def format_outputs(preds):
+            flat_prediction = pd.DataFrame(
+                preds[:, :, 0],
+                columns=[
+                    't+{}'.format(i)
+                    for i in range(preds.shape[1])
+                ]
+            )
+            flat_prediction['identifier'] = test_id[:, 0, 0]
+            return flat_prediction
+
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
             output_map = inverse_output(output, test_y[j], test_id[j])
@@ -80,6 +92,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
             targets_all[j, :, :] = targets
+
+            if targets_all_input[j, :, :] == 0:
+                out_2 = torch.from_numpy(extract_numerical_data(format_outputs(test_en[j])).to_numpy().astype('float32'))
+                targets_all_input[j, :, :] = out_2
 
         return predictions
 
@@ -193,11 +209,14 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
-    plt.plot(np.arange(0, 24), targets_all[ind, :].detach().numpy(), color='blue')
-    plt.plot(np.arange(0, 24), pred_lstm[ind, :].detach().numpy(), color='red', linestyle='dashed')
-    plt.plot(np.arange(0, 24), pred_attn[ind, :].detach().numpy(), color='violet', linestyle='dashed')
-    plt.plot(np.arange(0, 24), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
-    plt.plot(np.arange(0, 24), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
+    plt.plot(np.arange(0, 192), np.concatenate((targets_all_input[ind, :], targets_all.iloc[ind, :])),
+             color='blue')
+    plt.vlines(168, ymin=0, ymax=max(targets_all[ind, :], targets_all_input[ind, :]), colors='lightblue', linestyles="dashed")
+    plt.plot(np.arange(168, 192), targets_all[ind, :].detach().numpy(), color='blue')
+    plt.plot(np.arange(168, 192), pred_lstm[ind, :].detach().numpy(), color='red', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_attn[ind, :].detach().numpy(), color='violet', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
 
     plt.title(args.exp_name)
     plt.xlabel('TimeSteps')

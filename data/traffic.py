@@ -130,8 +130,7 @@ class TrafficFormatter(GenericDataFormatter):
 
         for col in column_names:
             if col not in {'identifier'}:
-                '''output[col] = self._target_scaler.inverse_transform(predictions[col])'''
-                output[col] = predictions[col]
+                output[col] = self._target_scaler.inverse_transform(predictions[col])
 
         return output
 
