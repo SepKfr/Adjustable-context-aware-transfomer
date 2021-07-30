@@ -170,22 +170,21 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             json.dump(final_error, json_file)'''
 
     print("done reading the prediction")
-    normaliser = targets_all.abs().mean()
 
-    pred_lstm = torch.mean(predictions_lstm, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
-    pred_attn = torch.mean(predictions_attn, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
-    pred_attn_conv = torch.mean(predictions_attn_conv, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+    pred_lstm = torch.mean(predictions_lstm, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1)
+    pred_attn = torch.mean(predictions_attn, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1)
+    pred_attn_conv = torch.mean(predictions_attn_conv, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1)
     pred_attn_temp_cutoff = torch.mean(predictions_attn_temp_cutoff, dim=0).\
-        reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+        reshape(test_y.shape[0]*test_y.shape[1], -1)
 
-    targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+    targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1)
 
     loss = 10e-10
     ind = 0
     for i in range(8000):
-        loss_attn_conv = criterion(pred_attn_conv[i, :], targets_all[i, :])
+        loss_attn_conv = math.sqrt(criterion(pred_attn_conv[i, :], targets_all[i, :]))
         if loss_attn_conv > loss:
-            print(i)
+            print(loss_attn_conv)
             ind = i
             loss = loss_attn_conv
 
