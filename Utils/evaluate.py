@@ -72,14 +72,14 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
             output_map = inverse_output(output, test_y[j], test_id[j])
-            forecast = torch.from_numpy(extract_numerical_data(
-                formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))
+            '''forecast = torch.from_numpy(extract_numerical_data(
+                formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))'''
 
-            predictions[j, :, :] = forecast
-            targets = torch.from_numpy(extract_numerical_data(
-                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
+            predictions[j, :, :] = output[:, :, 0]
+            '''targets = torch.from_numpy(extract_numerical_data(
+                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))'''
 
-            targets_all[j, :, :] = targets
+            targets_all[j, :, :] = test_y[:, :, 0]
 
         return predictions
 
@@ -184,7 +184,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     for i in range(8000):
         loss_attn_conv = math.sqrt(criterion(pred_attn_conv[i, :], targets_all[i, :]))
         if loss_attn_conv > loss:
-            print(loss_attn_conv)
             ind = i
             loss = loss_attn_conv
 
