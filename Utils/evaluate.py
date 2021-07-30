@@ -89,13 +89,13 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
             predictions[j, :, :] = forecast
 
-            if targets_all[j, :, :] == torch.zeros(24, test_y.shape[2]):
+            if targets_all[j, :, :] == torch.zeros(64, 24):
                 targets = torch.from_numpy(extract_numerical_data(
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
                 targets_all[j, :, :] = targets
 
-            if targets_all_input[j, :, :] == torch.zeros(168, test_y.shape[2]):
+            if targets_all_input[j, :, :] == torch.zeros(64, 168):
                 out_2 = torch.from_numpy(extract_numerical_data(format_outputs(test_en[j])).to_numpy().astype('float32'))
                 targets_all_input[j, :, :] = out_2
 
