@@ -159,7 +159,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
         rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])'''
 
-        calculate_loss(predictions_lstm, "lstm")
+        '''calculate_loss(predictions_lstm, "lstm")
         calculate_loss(predictions_attn, "attn")
         calculate_loss(predictions_attn_conv, "attn_conv")
         calculate_loss(predictions_attn_temp_cutoff, "attn_temp_cutoff")
@@ -167,7 +167,36 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         config_path = "final_errors_{}.json".format(args.exp_name)
 
         with open(config_path, "w") as json_file:
-            json.dump(final_error, json_file)
+            json.dump(final_error, json_file)'''
+
+    normaliser = targets_all.abs().mean()
+
+    pred_lstm = torch.mean(predictions_lstm, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+    pred_attn = torch.mean(predictions_attn, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+    pred_attn_conv = torch.mean(predictions_attn_conv, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+    pred_attn_temp_cutoff = torch.mean(predictions_attn_temp_cutoff, dim=0).\
+        reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+
+    targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
+
+    ind = random.randint(0, 8000)
+
+    plt.rc('axes', labelsize=18)
+    plt.rc('axes', titlesize=18)
+    plt.rc('legend', fontsize=12)
+    plt.plot(np.arange(0, 24), targets_all[ind, :].detach().numpy(), color='blue')
+    plt.plot(np.arange(0, 24), pred_lstm[ind, :].detach().numpy(), color='red', linestyle='dashed')
+    plt.plot(np.arange(0, 24), pred_attn[ind, :].detach().numpy(), color='violet', linestyle='dashed')
+    plt.plot(np.arange(0, 24), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
+    plt.plot(np.arange(0, 24), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
+
+    plt.title(args.exp_name)
+    plt.xlabel('TimeSteps')
+    plt.ylabel('Y')
+    plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
+    plt.savefig('pred_plot_{}.png'.format(args.exp_name))
+    plt.close()
+
 
 
 def main():
