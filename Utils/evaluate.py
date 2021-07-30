@@ -71,15 +71,15 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
-            output_map = inverse_output(output, test_y[j], test_id[j])
+            #output_map = inverse_output(output, test_y[j], test_id[j])
             '''forecast = torch.from_numpy(extract_numerical_data(
                 formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))'''
 
             predictions[j, :, :] = output[:, :, 0]
             '''targets = torch.from_numpy(extract_numerical_data(
-                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))'''
+                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
-            targets_all[j, :, :] = test_y[:, :, 0]
+            targets_all[j, :, :] = targets'''
 
         return predictions
 
@@ -177,7 +177,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     pred_attn_temp_cutoff = torch.mean(predictions_attn_temp_cutoff, dim=0).\
         reshape(test_y.shape[0]*test_y.shape[1], -1)
 
-    targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1)
+    targets_all = test_y.reshape(test_y.shape[0]*test_y.shape[1], -1)
 
     loss = 10e-10
     ind = 0
