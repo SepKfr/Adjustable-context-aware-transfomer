@@ -183,10 +183,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     loss = 0
     ind = 0
     for i in range(8000):
-        loss_lstm = criterion(pred_lstm[i, :], targets_all[i, :])
-        if loss_lstm > loss:
+        loss_attn_conv = criterion(pred_attn_conv[i, :], targets_all[i, :])
+        if loss_attn_conv > loss:
             ind = i
-            loss = loss_lstm
+            loss = loss_attn_conv
 
     print("Done finding the ind...")
 
