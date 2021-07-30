@@ -180,12 +180,12 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
 
-    loss = 0
+    loss = 10e-10
     ind = 0
     for i in range(8000):
         loss_attn_conv = criterion(pred_attn_conv[i, :], targets_all[i, :])
-        print(loss_attn_conv)
         if loss_attn_conv > loss:
+            print(i)
             ind = i
             loss = loss_attn_conv
 
