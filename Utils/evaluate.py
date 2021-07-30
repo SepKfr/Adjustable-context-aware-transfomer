@@ -169,6 +169,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         with open(config_path, "w") as json_file:
             json.dump(final_error, json_file)'''
 
+    print("done reading the prediction")
     normaliser = targets_all.abs().mean()
 
     pred_lstm = torch.mean(predictions_lstm, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
@@ -179,7 +180,15 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1) / normaliser
 
-    ind = random.randint(0, 8000)
+    loss = 0
+    ind = 0
+    for i in range(8000):
+        loss_lstm = criterion(pred_lstm[i, :], targets_all[i, :])
+        if loss_lstm > loss:
+            ind = i
+            loss = loss_lstm
+
+    print("Done finding the ind...")
 
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
