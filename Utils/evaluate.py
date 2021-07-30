@@ -187,6 +187,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         if loss_attn_conv > loss:
             ind = i
             loss = loss_attn_conv
+            print(loss)
 
     print("Done finding the ind...")
 
