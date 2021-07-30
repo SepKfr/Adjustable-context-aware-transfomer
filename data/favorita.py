@@ -226,7 +226,8 @@ class FavoritaFormatter(base.GenericDataFormatter):
     mean, std = self._target_scaler
     for col in column_names:
       if col not in {'forecast_time', 'identifier'}:
-        output[col] = (predictions[col] * std) + mean
+        '''output[col] = (predictions[col] * std) + mean'''
+        output[col] = predictions[col]
 
     return output
 
