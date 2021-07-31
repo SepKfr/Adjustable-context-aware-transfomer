@@ -228,16 +228,20 @@ def main():
 
     model_params = formatter.get_default_model_params()
 
+    train_tgt = torch.zeros(train_x[:, seq_len:, :].shape)
+    train_tgt[:, 1:, :] = train_x[:, seq_len:-1, :]
     train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_x[:, :seq_len, :],
-                                                     torch.roll(train_x[:, seq_len:, :], shifts=1, dims=1)
-                                                     , train_y, train_id)
+                                                     train_tgt, train_y, train_id)
 
+    valid_tgt = torch.zeros(valid_x[:, seq_len:, :].shape)
+    valid_tgt[:, 1:, :] = valid_x[:, seq_len:-1, :]
     valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_x[:, :seq_len, :],
-                                                     torch.roll(valid_x[:, seq_len:, :], shifts=1, dims=1),
-                                                     valid_y, valid_id)
+                                                     valid_tgt, valid_y, valid_id)
 
+    test_tgt = torch.zeros(test_x[:, seq_len:, :].shape)
+    test_tgt[:, 1:, :] = test_x[:, seq_len:-1, :]
     test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
-                                                 torch.roll(test_x[:, seq_len:, :], shifts=1, dims=1), test_y, test_id)
+                                                 test_tgt, test_y, test_id)
 
     criterion = nn.MSELoss()
 
