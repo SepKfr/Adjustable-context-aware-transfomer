@@ -267,7 +267,7 @@ class FavoritaFormatter(base.GenericDataFormatter):
     Returns:
       Tuple of (training samples, validation samples)
     """
-    return 450000, 50000
+    return 64000, 8000
 
   def get_column_definition(self):
     """"Formats column definition in order expected by the TFT.
