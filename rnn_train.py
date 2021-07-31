@@ -121,9 +121,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
     model.to(device)
 
     mae = nn.L1Loss()
-    path_to_pred = "preds_{}_{}".format(args.exp_name, args.seq_len_pred)
-    if not os.path.exists(path_to_pred):
-        os.makedirs(path_to_pred)
 
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -139,7 +136,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 
     predictions = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
     targets_all = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
-    forecast_list = []
 
     for j in range(test_en.shape[0]):
         output = model(test_en[j], test_de[j])
@@ -150,9 +146,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
         predictions[j, :, :] = forecast
         targets = torch.from_numpy(extract_numerical_data(
             formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')).to(device)
-
-        out_2 = inverse_output(forecast.unsqueeze(-1), targets.unsqueeze(-1), test_id[j])
-        forecast_list.append(out_2["predictions"])
 
         targets_all[j, :, :] = targets
 
@@ -165,10 +158,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
     mae_loss = mae_loss / normaliser
 
     q_loss = []
-    forecasts = pd.concat(forecast_list, axis=0)
     for q in 0.5, 0.9:
         q_loss.append(quantile_loss(targets_all.to(device), predictions.to(device), q, device))
-    pickle.dump(forecasts, open(os.path.join(path_to_pred, args.name), "wb"))
 
     return test_loss, mae_loss, q_loss
 
