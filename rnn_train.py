@@ -265,7 +265,7 @@ def main():
 
         val_inner_loss = 1e10
         e = 0
-        for epoch in range(epoch_start, args.n_epochs, 1):
+        for epoch in range(epoch_start, params['num_epochs'], 1):
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en.to(device), train_de.to(device),
                       train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),

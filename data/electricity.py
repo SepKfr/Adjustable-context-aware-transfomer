@@ -207,6 +207,7 @@ class ElectricityFormatter(GenericDataFormatter):
         fixed_params = {
             'total_time_steps': 8 * 24,
             'num_encoder_steps': 7 * 24,
+            'num_epochs': 50,
         }
 
         return fixed_params

@@ -141,7 +141,7 @@ class TrafficFormatter(GenericDataFormatter):
         fixed_params = {
             'total_time_steps': 8 * 24,
             'num_encoder_steps': 7 * 24,
-            'num_epochs': 100,
+            'num_epochs': 50,
             'early_stopping_patience': 5,
             'multiprocessing_workers': 5
         }
