@@ -191,7 +191,7 @@ class ElectricityFormatter(GenericDataFormatter):
 
         model_params = {
             'dropout_rate': 0.3,
-            'hidden_layer_size': [160, 320],
+            'hidden_layer_size': [16, 32],
             'learning_rate': 0.001,
             'minibatch_size': 64,
             'max_gradient_norm': 100.,
