@@ -68,13 +68,19 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     id_col = utils.get_single_col_by_input_type(InputTypes.ID, column_definition)
     time_col = utils.get_single_col_by_input_type(InputTypes.TIME, column_definition)
     target_col = utils.get_single_col_by_input_type(InputTypes.TARGET, column_definition)
-    input_cols = [
+    enc_input_cols = [
         tup[0]
         for tup in column_definition
         if tup[2] not in {InputTypes.ID, InputTypes.TIME}
     ]
-    input_size = len(input_cols)
-    inputs = np.zeros((max_samples, time_steps, input_size))
+    dec_input_cols = [
+        tup[0]
+        for tup in column_definition
+        if tup[2] not in {InputTypes.ID, InputTypes.TIME, InputTypes.TARGET}
+    ]
+    input_size = len(enc_input_cols)
+    enc_inputs = np.zeros((max_samples, num_encoder_steps, input_size))
+    dec_inputs = np.zeros((max_samples, time_steps - num_encoder_steps, input_size - 1))
     outputs = np.zeros((max_samples, time_steps, 1))
     time = np.empty((max_samples, time_steps, 1), dtype=object)
     identifiers = np.empty((max_samples, time_steps, 1), dtype=object)
@@ -85,13 +91,15 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
         identifier, start_idx = tup
         sliced = split_data_map[identifier].iloc[start_idx -
                                                time_steps:start_idx]
-        inputs[i, :, :] = sliced[input_cols]
+        enc_inputs[i, :, :] = sliced[enc_input_cols].iloc[:num_encoder_steps]
+        dec_inputs[i, :, :] = sliced[dec_input_cols].iloc[num_encoder_steps:]
         outputs[i, :, :] = sliced[[target_col]]
         time[i, :, 0] = sliced[time_col]
         identifiers[i, :, 0] = sliced[id_col]
 
     sampled_data = {
-        'inputs': inputs,
+        'enc_inputs': enc_inputs,
+        'dec_inputs': dec_inputs,
         'outputs': outputs[:, num_encoder_steps:, :],
         'active_entries': np.ones_like(outputs[:, num_encoder_steps:, :]),
         'time': time,

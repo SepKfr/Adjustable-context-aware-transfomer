@@ -125,7 +125,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
         ]]
 
     model = Attn(src_input_size=test_en.shape[3],
-                 tgt_input_size=1,
+                 tgt_input_size=test_de.shape[3],
                  d_model=d_model,
                  d_ff=d_model * 4,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
@@ -220,38 +220,35 @@ def main():
 
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
                        params['num_encoder_steps'], params["column_definition"])
-    train_x, train_y, train_id = torch.from_numpy(sample_data['inputs']).to(device), \
+    train_en, train_de, train_y, train_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                  torch.from_numpy(sample_data['outputs']).to(device), \
                                  sample_data['identifier']
 
     sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    valid_x, valid_y, valid_id = torch.from_numpy(sample_data['inputs']).to(device), \
+    valid_en, valid_de, valid_y, valid_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                  torch.from_numpy(sample_data['outputs']).to(device), \
                                  sample_data['identifier']
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    test_x, test_y, test_id = torch.from_numpy(sample_data['inputs']).to(device), \
-                              torch.from_numpy(sample_data['outputs']).to(device), \
-                              sample_data['identifier']
+    test_en, test_de, test_y, test_id =torch.from_numpy(sample_data['enc_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['dec_inputs']).to(device), \
+                                 torch.from_numpy(sample_data['outputs']).to(device), \
+                                 sample_data['identifier']
 
-    seq_len = params['num_encoder_steps']
     model_params = formatter.get_default_model_params()
-    train_tgt = torch.zeros(train_x[:, seq_len:, :].shape)
-    train_tgt[:, 1:, :] = train_x[:, seq_len:-1, :]
-    train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_x[:, :seq_len, :],
-                                                     train_tgt, train_y, train_id)
 
-    valid_tgt = torch.zeros(valid_x[:, seq_len:, :].shape)
-    valid_tgt[:, 1:, :] = valid_x[:, seq_len:-1, :]
-    valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_x[:, :seq_len, :],
-                                                     valid_tgt, valid_y, valid_id)
+    train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_en,
+                                                     train_de, train_y, train_id)
 
-    test_tgt = torch.zeros(test_x[:, seq_len:, :].shape)
-    test_tgt[:, 1:, :] = test_x[:, seq_len:-1, :]
-    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
-                                                 test_tgt, test_y, test_id)
+    valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_en,
+                                                     valid_de, valid_y, valid_id)
+
+    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
+                                                 test_de, test_y, test_id)
 
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
@@ -271,7 +268,7 @@ def main():
         n_layers, n_heads, d_model, lr, dr, kernel = conf
         d_k = int(d_model / n_heads)
         model = Attn(src_input_size=train_en.shape[3],
-                     tgt_input_size=train_y.shape[3],
+                     tgt_input_size=train_de.shape[3],
                      d_model=d_model,
                      d_ff=d_model*4,
                      d_k=d_k, d_v=d_k, n_heads=n_heads,

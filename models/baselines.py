@@ -106,7 +106,8 @@ class RNConv(nn.Module):
 
 class RNN(nn.Module):
     def __init__(self, n_layers, hidden_size,
-                 input_size, rnn_type, seq_pred_len, device, d_r):
+                 src_input_size, tgt_input_size,
+                 rnn_type, device, d_r):
 
         super(RNN, self).__init__()
         self.enc_lstm = nn.LSTM(hidden_size, hidden_size, n_layers, dropout=d_r)
@@ -114,15 +115,15 @@ class RNN(nn.Module):
         self.n_layers = n_layers
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
-        self.linear1 = nn.Linear(input_size, hidden_size, bias=False)
+        self.linear_enc = nn.Linear(src_input_size, hidden_size, bias=False)
+        self.linear_dec = nn.Linear(tgt_input_size, hidden_size, bias=False)
         self.linear2 = nn.Linear(hidden_size, 1, bias=False)
-        self.pred_seq_len = seq_pred_len
         self.device = device
 
     def forward(self, x_en, x_de, hidden=None):
 
-        x_en = self.linear1(x_en).permute(1, 0, 2)
-        x_de = self.linear1(x_de).permute(1, 0, 2)
+        x_en = self.linear_enc(x_en).permute(1, 0, 2)
+        x_de = self.linear_dec(x_de).permute(1, 0, 2)
 
         if hidden is None:
             hidden = torch.zeros(self.n_layers, x_en.shape[1], self.hidden_size).to(self.device)

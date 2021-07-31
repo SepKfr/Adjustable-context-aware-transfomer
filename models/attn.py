@@ -416,14 +416,15 @@ class Attn(nn.Module):
             device=device,
             attn_type=attn_type, kernel=kernel)
 
-        self.embedding = nn.Linear(src_input_size, d_model)
+        self.enc_embedding = nn.Linear(src_input_size, d_model)
+        self.dec_embedding = nn.Linear(tgt_input_size, d_model)
         self.attn_type = attn_type
-        self.projection = nn.Linear(d_model, tgt_input_size, bias=False)
+        self.projection = nn.Linear(d_model, 1, bias=False)
 
     def forward(self, enc_inputs, dec_inputs):
 
-        enc_inputs = self.embedding(enc_inputs)
-        dec_inputs = self.embedding(dec_inputs)
+        enc_inputs = self.enc_embedding(enc_inputs)
+        dec_inputs = self.dec_embedding(dec_inputs)
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
