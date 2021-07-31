@@ -235,37 +235,16 @@ def main():
 
     seq_len = params['num_encoder_steps']
 
-    def format_outputs(preds):
-        flat_prediction = pd.DataFrame(
-            preds[:, :, 0],
-            columns=[
-                't+{}'.format(i)
-                for i in range(preds.shape[1])
-            ]
-        )
-        flat_prediction['identifier'] = test_id[:, 0, 0]
-        return flat_prediction
-
-    targets = formatter.format_predictions(format_outputs(test_y))
-
-    if not os.path.exists('y_true_{}.pkl'.format(args.exp_name)):
-        y_true = targets.iloc[:, seq_len:]
-        pickle.dump(y_true, open('y_true_{}.pkl'.format(args.exp_name), "wb"))
-    if not os.path.exists('y_true_input_{}.pkl'.format(args.exp_name)):
-        y_true_input = targets.iloc[:, :seq_len]
-        y_true_input.loc[:, 'identifier'] = targets['identifier'].values
-        pickle.dump(y_true_input, open('y_true_input_{}.pkl'.format(args.exp_name), "wb"))
-
     model_params = formatter.get_default_model_params()
 
     train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_x[:, :seq_len, :],
-                                                     train_x[:, seq_len:, :], train_y[:, seq_len:, :], train_id)
+                                                     train_x[:, seq_len:, :], train_y, train_id)
 
     valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_x[:, :seq_len, :],
-                                                     valid_x[:, seq_len:, :], valid_y[:, seq_len:, :], valid_id)
+                                                     valid_x[:, seq_len:, :], valid_y, valid_id)
 
     test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
-                                                 test_x[:, seq_len:, :], test_y[:, seq_len:, :], test_id)
+                                                 test_x[:, seq_len:, :], test_y, test_id)
 
     criterion = nn.MSELoss()
 
