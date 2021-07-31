@@ -34,9 +34,6 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
       Dictionary of batched data with the maximum samples specified.
     """
 
-    dec_step = time_steps - num_encoder_steps
-    total_time_steps = time_steps + dec_step
-
     if max_samples < 1:
         raise ValueError(
           'Illegal number of samples specified! samples={}'.format(max_samples))
@@ -50,10 +47,10 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     split_data_map = {}
     for identifier, df in data.groupby(id_col):
         num_entries = len(df)
-        if num_entries >= total_time_steps:
+        if num_entries >= time_steps:
             valid_sampling_locations += [
-                (identifier, total_time_steps + i)
-                for i in range(num_entries - total_time_steps + 1)
+                (identifier, time_steps + i)
+                for i in range(num_entries - time_steps + 1)
             ]
 
             split_data_map[identifier] = df
@@ -78,7 +75,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     ]
     input_size = len(input_cols)
     inputs = np.zeros((max_samples, time_steps, input_size))
-    outputs = np.zeros((max_samples, time_steps - num_encoder_steps, 1))
+    outputs = np.zeros((max_samples, time_steps, 1))
     time = np.empty((max_samples, time_steps, 1), dtype=object)
     identifiers = np.empty((max_samples, time_steps, 1), dtype=object)
 
@@ -87,17 +84,15 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
             print(i + 1, 'of', max_samples, 'samples done...')
         identifier, start_idx = tup
         sliced = split_data_map[identifier].iloc[start_idx -
-                                               total_time_steps:start_idx]
-        input_slice = sliced.iloc[:time_steps]
-        output_slice = sliced.iloc[time_steps:]
-        inputs[i, :, :] = input_slice[input_cols]
-        outputs[i, :, :] = output_slice[[target_col]]
-        time[i, :, 0] = input_slice[time_col]
-        identifiers[i, :, 0] = input_slice[id_col]
+                                               time_steps:start_idx]
+        inputs[i, :, :] = sliced[input_cols]
+        outputs[i, :, :] = sliced[[target_col]]
+        time[i, :, 0] = sliced[time_col]
+        identifiers[i, :, 0] = sliced[id_col]
 
     sampled_data = {
         'inputs': inputs,
-        'outputs': outputs,
+        'outputs': outputs[:, num_encoder_steps:, :],
         'active_entries': np.ones_like(outputs[:, num_encoder_steps:, :]),
         'time': time,
         'identifier': identifiers
