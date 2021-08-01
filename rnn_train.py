@@ -99,14 +99,14 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 
     elif args.deep_type == "rnn":
 
-        n_layers, hidden_size, dr, lr = config
+        batch_size, n_layers, hidden_size = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=test_en.shape[3],
                     tgt_input_size=test_de.shape[3],
                     rnn_type=args.rnn_type,
                     device=device,
-                    d_r=dr)
+                    d_r=0)
 
     elif args.deep_type == "mlp":
         n_layers, hidden_size, dr, lr = config
@@ -231,7 +231,7 @@ def main():
 
     criterion = nn.MSELoss()
 
-    hyper_param = list([args.n_layers, model_params['minibatch_size'], model_params['hidden_layer_size'], args.dr, args.lr])
+    hyper_param = list([args.n_layers, model_params['minibatch_size'], model_params['hidden_layer_size']])
 
     configs = create_config(hyper_param)
 
