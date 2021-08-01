@@ -241,7 +241,7 @@ def main():
 
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
-        batch_size, n_layers, hidden_size = conf
+        n_layers, batch_size, hidden_size = conf
 
         train_en, train_de, train_y, train_id = batching(batch_size, train_en,
                                                          train_de, train_y, train_id)

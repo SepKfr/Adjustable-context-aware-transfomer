@@ -114,7 +114,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    n_layers, n_heads, d_model, lr, dr, kernel = config
+    n_layers, n_heads, d_model, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
 
@@ -257,7 +257,7 @@ def main():
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
 
-        batch_size, n_layers, n_heads, d_model, kernel = conf
+        n_layers, batch_size, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
 
         train_en, train_de, train_y, train_id = batching(batch_size, train_en,
@@ -268,8 +268,6 @@ def main():
 
         test_en, test_de, test_y, test_id = batching(batch_size, test_en,
                                                      test_de, test_y, test_id)
-
-        print("done batching...")
 
         model = Attn(src_input_size=train_en.shape[3],
                      tgt_input_size=train_de.shape[3],
@@ -290,8 +288,6 @@ def main():
         val_inner_loss = 1e10
         e = 0
 
-        print("start training...")
-
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
             best_config, val_loss, val_inner_loss, stop, e = \
@@ -307,7 +303,7 @@ def main():
                                    test_de.to(device), test_y.to(device),
                                    test_id, criterion, formatter, path, device)
 
-    layers, heads, d_model, lr, dr, kernel = best_config
+    layers, heads, d_model, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
