@@ -114,7 +114,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    n_layers, n_heads, d_model, kernel = config
+    n_layers, batch_size, n_heads, d_model, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
 
@@ -260,17 +260,17 @@ def main():
         n_layers, batch_size, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
 
-        train_en, train_de, train_y, train_id = batching(batch_size, train_en,
+        train_en_p, train_de_p, train_y_p, train_id_p = batching(batch_size, train_en,
                                                          train_de, train_y, train_id)
 
-        valid_en, valid_de, valid_y, valid_id = batching(batch_size, valid_en,
+        valid_en_p, valid_de_p, valid_y_p, valid_id_p = batching(batch_size, valid_en,
                                                          valid_de, valid_y, valid_id)
 
-        test_en, test_de, test_y, test_id = batching(batch_size, test_en,
+        test_en_p, test_de_p, test_y_p, test_id_p = batching(batch_size, test_en,
                                                      test_de, test_y, test_id)
 
-        model = Attn(src_input_size=train_en.shape[3],
-                     tgt_input_size=train_de.shape[3],
+        model = Attn(src_input_size=train_en_p.shape[3],
+                     tgt_input_size=train_de_p.shape[3],
                      d_model=d_model,
                      d_ff=d_model*4,
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
@@ -291,19 +291,19 @@ def main():
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
             best_config, val_loss, val_inner_loss, stop, e = \
-                train(args, model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), epoch, e, val_loss, val_inner_loss,
+                train(args, model, train_en_p.to(device), train_de_p.to(device),
+                      train_y_p.to(device), valid_en_p.to(device), valid_de_p.to(device),
+                      valid_y_p.to(device), epoch, e, val_loss, val_inner_loss,
                       optim, conf, i, best_config, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
 
-    test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en.to(device),
-                                   test_de.to(device), test_y.to(device),
-                                   test_id, criterion, formatter, path, device)
+    test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en_p.to(device),
+                                   test_de_p.to(device), test_y_p.to(device),
+                                   test_id_p, criterion, formatter, path, device)
 
-    layers, heads, d_model, kernel = best_config
+    layers, batch_size, heads, d_model, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()

@@ -99,7 +99,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 
     elif args.deep_type == "rnn":
 
-        batch_size, n_layers, hidden_size = config
+        n_layers, batch_size, hidden_size = config
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=test_en.shape[3],
@@ -243,19 +243,19 @@ def main():
         print('config: {}'.format(conf))
         n_layers, batch_size, hidden_size = conf
 
-        train_en, train_de, train_y, train_id = batching(batch_size, train_en,
+        train_en_p, train_de_p, train_y_p, train_id_p = batching(batch_size, train_en,
                                                          train_de, train_y, train_id)
 
-        valid_en, valid_de, valid_y, valid_id = batching(batch_size, valid_en,
+        valid_en_p, valid_de_p, valid_y_p, valid_id_p = batching(batch_size, valid_en,
                                                          valid_de, valid_y, valid_id)
 
-        test_en, test_de, test_y, test_id = batching(batch_size, test_en,
+        test_en_p, test_de_p, test_y_p, test_id_p = batching(batch_size, test_en,
                                                      test_de, test_y, test_id)
 
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
-                    src_input_size=train_en.shape[3],
-                    tgt_input_size=train_de.shape[3],
+                    src_input_size=train_en_p.shape[3],
+                    tgt_input_size=train_de_p.shape[3],
                     rnn_type=args.rnn_type,
                     device=device,
                     d_r=0)
@@ -269,18 +269,18 @@ def main():
 
         for epoch in range(epoch_start, params['num_epochs'], 1):
             best_config, val_loss, val_inner_loss, stop, e = \
-                train(args, model, train_en.to(device), train_de.to(device),
-                      train_y.to(device), train_id, valid_en.to(device), valid_de.to(device),
-                      valid_y.to(device), valid_id, epoch, e, val_loss, val_inner_loss,
+                train(args, model, train_en_p.to(device), train_de_p.to(device),
+                      train_y_p.to(device), train_id_p, valid_en_p.to(device), valid_de_p.to(device),
+                      valid_y_p.to(device), valid_id_p, epoch, e, val_loss, val_inner_loss,
                       optimizer, conf, i, best_config, path, criterion, formatter)
             if stop:
                 break
 
-    n_layers, hidden_size, dr, lr = best_config
+    n_layers,batch_size, hidden_size = best_config
     print("best_config: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args,
-                                   test_en.to(device), test_de.to(device), test_y.to(device), test_id,
+                                   test_en_p.to(device), test_de_p.to(device), test_y_p.to(device), test_id_p,
                                    criterion, formatter,path, device)
 
     erros[args.name] = list()
