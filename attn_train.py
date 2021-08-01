@@ -108,7 +108,8 @@ def train(args, model, train_en, train_de, train_y,
 
 def create_config(hyper_parameters):
     prod = list(itertools.product(*hyper_parameters))
-    return prod
+    num_samples = 6 if len(prod) > 6 else len(prod)
+    return list(random.sample(set(prod), num_samples))
 
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
@@ -241,20 +242,11 @@ def main():
 
     model_params = formatter.get_default_model_params()
 
-    train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_en,
-                                                     train_de, train_y, train_id)
-
-    valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_en,
-                                                     valid_de, valid_y, valid_id)
-
-    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
-                                                 test_de, test_y, test_id)
-
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
         args.kernel = [1]
-    hyper_param = list([args.n_layers, [model_params['num_heads']],
-                        model_params['hidden_layer_size'], args.lr, args.dr, args.kernel])
+    hyper_param = list([args.n_layers, model_params['minibatch_size'], [model_params['num_heads']],
+                        model_params['hidden_layer_size'], args.kernel])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
@@ -265,8 +257,18 @@ def main():
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
 
-        n_layers, n_heads, d_model, lr, dr, kernel = conf
+        batch_size, n_layers, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
+
+        train_en, train_de, train_y, train_id = batching(batch_size, train_en,
+                                                         train_de, train_y, train_id)
+
+        valid_en, valid_de, valid_y, valid_id = batching(batch_size, valid_en,
+                                                         valid_de, valid_y, valid_id)
+
+        test_en, test_de, test_y, test_id = batching(batch_size, test_en,
+                                                     test_de, test_y, test_id)
+
         model = Attn(src_input_size=train_en.shape[3],
                      tgt_input_size=train_de.shape[3],
                      d_model=d_model,
@@ -285,6 +287,7 @@ def main():
 
         val_inner_loss = 1e10
         e = 0
+
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
             best_config, val_loss, val_inner_loss, stop, e = \

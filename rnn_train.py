@@ -229,18 +229,9 @@ def main():
 
     model_params = formatter.get_default_model_params()
 
-    train_en, train_de, train_y, train_id = batching(model_params['minibatch_size'], train_en,
-                                                     train_de, train_y, train_id)
-
-    valid_en, valid_de, valid_y, valid_id = batching(model_params['minibatch_size'], valid_en,
-                                                     valid_de, valid_y, valid_id)
-
-    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
-                                                 test_de, test_y, test_id)
-
     criterion = nn.MSELoss()
 
-    hyper_param = list([args.n_layers, model_params['hidden_layer_size'], args.dr, args.lr])
+    hyper_param = list([args.n_layers, model_params['minibatch_size'], model_params['hidden_layer_size'], args.dr, args.lr])
 
     configs = create_config(hyper_param)
 
@@ -250,14 +241,24 @@ def main():
 
     for i, conf in enumerate(configs, config_num):
         print('config: {}'.format(conf))
-        n_layers, hidden_size, dr, lr = conf
+        batch_size, n_layers, hidden_size = conf
+
+        train_en, train_de, train_y, train_id = batching(batch_size, train_en,
+                                                         train_de, train_y, train_id)
+
+        valid_en, valid_de, valid_y, valid_id = batching(batch_size, valid_en,
+                                                         valid_de, valid_y, valid_id)
+
+        test_en, test_de, test_y, test_id = batching(batch_size, test_en,
+                                                     test_de, test_y, test_id)
+
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=train_en.shape[3],
                     tgt_input_size=train_de.shape[3],
                     rnn_type=args.rnn_type,
                     device=device,
-                    d_r=dr)
+                    d_r=0)
         model = model.to(device)
 
         optimizer = Adam(model.parameters())
@@ -265,6 +266,7 @@ def main():
 
         val_inner_loss = 1e10
         e = 0
+
         for epoch in range(epoch_start, params['num_epochs'], 1):
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en.to(device), train_de.to(device),
