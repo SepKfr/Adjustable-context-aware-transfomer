@@ -269,6 +269,8 @@ def main():
         test_en, test_de, test_y, test_id = batching(batch_size, test_en,
                                                      test_de, test_y, test_id)
 
+        print("done batching...")
+
         model = Attn(src_input_size=train_en.shape[3],
                      tgt_input_size=train_de.shape[3],
                      d_model=d_model,
