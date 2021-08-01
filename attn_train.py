@@ -290,6 +290,8 @@ def main():
         val_inner_loss = 1e10
         e = 0
 
+        print("start training...")
+
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
             best_config, val_loss, val_inner_loss, stop, e = \
