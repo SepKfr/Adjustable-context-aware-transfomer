@@ -21,9 +21,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         n_layers, hidden_size = conf
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
-                    input_size=test_en.shape[3],
+                    src_input_size=test_en.shape[3],
+                    tgt_input_size=test_en.shape[3],
                     rnn_type="lstm",
-                    seq_pred_len=24,
                     device=device,
                     d_r=0).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "lstm_{}".format(seed)))
@@ -223,7 +223,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.close()
 
 
-
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
@@ -250,14 +249,15 @@ def main():
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
 
-    test_x, test_y, test_id = torch.from_numpy(sample_data['inputs']).to(device), \
+    test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
+                                        torch.from_numpy(sample_data['dec_inputs']).to(device), \
                               torch.from_numpy(sample_data['outputs']).to(device), \
                               sample_data['identifier']
 
     seq_len = params['num_encoder_steps']
     model_params = formatter.get_default_model_params()
-    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_x[:, :seq_len, :],
-                                                 test_x[:, seq_len:, :], test_y[:, seq_len:, :], test_id)
+    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
+                                                 test_de, test_y[:, seq_len:, :], test_id)
 
     read_models(args, device, test_en.to(device), test_de.to(device), test_y.to(device),
                 test_id, formatter)
