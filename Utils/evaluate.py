@@ -35,7 +35,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         n_layers, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
         model = Attn(src_input_size=test_en.shape[3],
-                     tgt_input_size=1,
+                     tgt_input_size=test_de.shape[3],
                      d_model=d_model,
                      d_ff=d_model * 4,
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
