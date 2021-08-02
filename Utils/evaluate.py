@@ -22,7 +22,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=test_en.shape[3],
-                    tgt_input_size=test_en.shape[3],
+                    tgt_input_size=test_de.shape[3],
                     rnn_type="lstm",
                     device=device,
                     d_r=0).to(device)
