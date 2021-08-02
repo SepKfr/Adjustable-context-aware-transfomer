@@ -254,10 +254,9 @@ def main():
                               torch.from_numpy(sample_data['outputs']).to(device), \
                               sample_data['identifier']
 
-    seq_len = params['num_encoder_steps']
     model_params = formatter.get_default_model_params()
     test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
-                                                 test_de, test_y[:, seq_len:, :], test_id)
+                                                 test_de, test_y, test_id)
 
     read_models(args, device, test_en.to(device), test_de.to(device), test_y.to(device),
                 test_id, formatter)
