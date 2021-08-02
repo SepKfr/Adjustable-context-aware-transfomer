@@ -89,15 +89,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
             predictions[j, :, :] = forecast
 
-            if targets_all[j, :, :] == torch.zeros(64, 24):
-                targets = torch.from_numpy(extract_numerical_data(
-                    formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
+            targets = torch.from_numpy(extract_numerical_data(
+                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
-                targets_all[j, :, :] = targets
-
-            if targets_all_input[j, :, :] == torch.zeros(64, 168):
-                out_2 = torch.from_numpy(extract_numerical_data(format_outputs(test_en[j])).to_numpy().astype('float32'))
-                targets_all_input[j, :, :] = out_2
+            targets_all[j, :, :] = targets
 
         return predictions
 
@@ -177,7 +172,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
         rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])'''
 
-        '''calculate_loss(predictions_lstm, "lstm")
+        calculate_loss(predictions_lstm, "lstm")
         calculate_loss(predictions_attn, "attn")
         calculate_loss(predictions_attn_conv, "attn_conv")
         calculate_loss(predictions_attn_temp_cutoff, "attn_temp_cutoff")
@@ -185,7 +180,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         config_path = "final_errors_{}.json".format(args.exp_name)
 
         with open(config_path, "w") as json_file:
-            json.dump(final_error, json_file)'''
+            json.dump(final_error, json_file)
 
     print("done reading the prediction")
 
