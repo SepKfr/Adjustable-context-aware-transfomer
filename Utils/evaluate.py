@@ -101,7 +101,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
             targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j], test_id[j])).
                                                           to_numpy().astype('float32'))
-            df.iloc[k:k+test_en.shape[1]] = output_map["identifier"]
+            df.iloc[k:k+test_en.shape[1]] = output_map["predictions"]["identifier"]
             k += test_en.shape[1]
 
         return predictions
