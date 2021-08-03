@@ -226,9 +226,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.plot(np.arange(168, 192), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
 
-    plt.title(df.iloc[ind])
+    plt.title(df.iloc[ind, 0])
     plt.xlabel('TimeSteps')
-    plt.ylabel('Solute Concentrkation')
+    plt.ylabel('Solute Concentration')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
     plt.savefig('pred_plot_{}.png'.format(args.exp_name))
     plt.close()
