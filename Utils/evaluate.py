@@ -73,7 +73,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 if col not in {"forecast_time", "identifier"}
             ]]
 
-        def format_outputs(preds):
+        def format_outputs(preds, tid):
             flat_prediction = pd.DataFrame(
                 preds[:, :, 0],
                 columns=[
@@ -81,7 +81,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                     for i in range(preds.shape[1])
                 ]
             )
-            flat_prediction['identifier'] = test_id[:, 0, 0]
+            flat_prediction['identifier'] = tid[:, 0, 0]
             return flat_prediction
 
         for j in range(test_en.shape[0]):
@@ -97,7 +97,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
             targets_all[j, :, :] = targets
 
-            targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j])).to_numpy().astype('float32'))
+            targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j], test_id[j])).
+                                                          to_numpy().astype('float32'))
 
         return predictions
 
