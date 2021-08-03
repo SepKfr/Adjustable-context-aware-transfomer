@@ -59,7 +59,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_conv = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
     predictions_attn_temp_cutoff = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
     targets_all = torch.zeros(test_de.shape[0], test_de.shape[1], test_de.shape[2])
-    targets_all_input = torch.zeros(test_en.shape[0], test_en.shape[0], test_en.shape[2])
+    targets_all_input = torch.zeros(test_en.shape[0], test_en.shape[1], test_en.shape[2])
 
     def make_predictions(model):
 
