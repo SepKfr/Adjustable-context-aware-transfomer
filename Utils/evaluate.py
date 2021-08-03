@@ -196,13 +196,14 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     print("done reading the prediction")
 
-    pred_lstm = torch.mean(predictions_lstm, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1)
-    pred_attn = torch.mean(predictions_attn, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1)
-    pred_attn_conv = torch.mean(predictions_attn_conv, dim=0).reshape(test_y.shape[0]*test_y.shape[1], -1)
+    pred_lstm = torch.mean(predictions_lstm, dim=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
+    pred_attn = torch.mean(predictions_attn, dim=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
+    pred_attn_conv = torch.mean(predictions_attn_conv, dim=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
     pred_attn_temp_cutoff = torch.mean(predictions_attn_temp_cutoff, dim=0).\
-        reshape(test_y.shape[0]*test_y.shape[1], -1)
+        reshape(test_de.shape[0]*test_de.shape[1], -1)
 
-    targets_all = targets_all.reshape(test_y.shape[0]*test_y.shape[1], -1)
+    targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
+    targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
     loss = 10e5
     ind = 0
