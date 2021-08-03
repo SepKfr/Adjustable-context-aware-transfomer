@@ -16,6 +16,9 @@ import matplotlib.pyplot as plt
 
 def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
+    test_y_input = test_y[:, :, :test_en.shape[2], :]
+    test_y_output = test_y[:, :, test_en.shape[2]:, :]
+
     def load_lstm(seed, conf, mdl_path):
 
         n_layers, hidden_size = conf
@@ -51,12 +54,12 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         configs = json.load(json_file)
     models_path = "models_{}_24".format(args.exp_name)
 
-    predictions_lstm = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
-    predictions_attn = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
-    predictions_attn_conv = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
-    predictions_attn_temp_cutoff = torch.zeros(3, test_y.shape[0], test_y.shape[1], test_y.shape[2])
-    targets_all = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
-    targets_all_input = torch.zeros(test_y.shape[0], 168, test_y.shape[2])
+    predictions_lstm = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
+    predictions_attn = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
+    predictions_attn_conv = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
+    predictions_attn_temp_cutoff = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
+    targets_all = torch.zeros(test_de.shape[0], test_de.shape[1], test_de.shape[2])
+    targets_all_input = torch.zeros(test_en.shape[0], test_en.shape[0], test_en.shape[2])
 
     def make_predictions(model):
 
@@ -83,7 +86,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
-            output_map = inverse_output(output, test_y[j], test_id[j])
+            output_map = inverse_output(output, test_y_output[j], test_id[j])
             forecast = torch.from_numpy(extract_numerical_data(
                 formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))
 
@@ -93,6 +96,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
             targets_all[j, :, :] = targets
+
+            targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j])).to_numpy().astype('float32'))
 
         return predictions
 
@@ -217,7 +222,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     plt.title(args.exp_name)
     plt.xlabel('TimeSteps')
-    plt.ylabel('Y')
+    plt.ylabel('Solute Concentration')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
     plt.savefig('pred_plot_{}.png'.format(args.exp_name))
     plt.close()
