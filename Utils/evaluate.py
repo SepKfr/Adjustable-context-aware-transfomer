@@ -140,8 +140,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                               "conv_attn", "attn_conv")
         attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
                                      models_path, "temp_cutoff", "attn_temp_cutoff_2")
-
-        predictions_lstm[i, :, :, :] = make_predictions(lstm_model)
+        lstm_model_pred = make_predictions(lstm_model)
+        print(lstm_model_pred.shape)
+        print(predictions_lstm.shape)
+        predictions_lstm[i, :, :, :] = lstm_model_pred
         predictions_attn[i, :, :, :] = make_predictions(attn_model)
         predictions_attn_conv[i, :, :, :] = make_predictions(attn_conv_model)
         predictions_attn_temp_cutoff[i, :, :, :] = make_predictions(attn_temp_cutoff_model)
