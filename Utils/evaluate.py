@@ -60,6 +60,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_temp_cutoff = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
     targets_all = torch.zeros(test_de.shape[0], test_de.shape[1], test_de.shape[2])
     targets_all_input = torch.zeros(test_en.shape[0], test_en.shape[1], test_en.shape[2])
+    df = pd.DataFrame(columns=['id'], index=range(16000))
 
     def make_predictions(model):
 
@@ -84,6 +85,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             flat_prediction['identifier'] = tid[:, 0, 0]
             return flat_prediction
 
+        k =0
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
             output_map = inverse_output(output, test_y_output[j], test_id[j])
@@ -99,6 +101,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
             targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j], test_id[j])).
                                                           to_numpy().astype('float32'))
+            df.iloc[k] = output_map["identifier"]
+            k += test_en.shape[1]
 
         return predictions
 
@@ -202,7 +206,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     loss = 10e5
     ind = 0
-    for i in range(8000):
+    for i in range(16000):
         loss_attn_temp = math.sqrt(criterion(pred_attn_temp_cutoff[i, :], targets_all[i, :]))
         if loss_attn_temp < loss:
             ind = i
@@ -222,7 +226,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.plot(np.arange(168, 192), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
 
-    plt.title(args.exp_name)
+    plt.title(df.iloc[ind])
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentrkation')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
