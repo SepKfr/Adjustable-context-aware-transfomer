@@ -138,7 +138,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
                               "conv_attn", "attn_conv")
         attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
-                                     models_path, "temp_cutoff", "attn_temp_cutoff")
+                                     models_path, "temp_cutoff", "attn_temp_cutoff_2")
 
         predictions_lstm[i, :, :, :] = make_predictions(lstm_model)
         predictions_attn[i, :, :, :] = make_predictions(attn_model)
