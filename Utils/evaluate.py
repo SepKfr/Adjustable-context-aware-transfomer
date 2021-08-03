@@ -64,7 +64,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     def make_predictions(model):
 
         model.eval()
-        predictions = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
+        predictions = torch.zeros(test_de.shape[0], test_de.shape[1], test_de.shape[2])
 
         def extract_numerical_data(data):
             """Strips out forecast time and identifier columns."""
