@@ -134,6 +134,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     for i, seed in enumerate([21, 9, 1992]):
 
+        torch.manual_seed(seed)
+
         lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
         attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
         attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
@@ -232,12 +234,10 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument("--seed", type=int, default=21)
 
     args = parser.parse_args()
     np.random.seed(21)
     random.seed(21)
-    torch.manual_seed(args.seed)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
