@@ -166,12 +166,12 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument('--error_path', type=str, default='final_error_1992.json')
+    parser.add_argument('--error_path', type=str, default='final_error_9.json')
 
     args = parser.parse_args()
-    np.random.seed(1992)
-    random.seed(1992)
-    torch.manual_seed(1992)
+    np.random.seed(9)
+    random.seed(9)
+    torch.manual_seed(9)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
