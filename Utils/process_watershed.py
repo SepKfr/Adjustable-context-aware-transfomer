@@ -166,7 +166,7 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument('--error_path', type=str, default='final_error.json')
+    parser.add_argument('--error_path', type=str, default='final_error_1992.json')
 
     args = parser.parse_args()
     np.random.seed(1992)
