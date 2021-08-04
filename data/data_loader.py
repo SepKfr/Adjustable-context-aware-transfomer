@@ -64,7 +64,7 @@ class ExperimentConfig(object):
             'air_quality': air_quality.AirQualityFormatter,
             'watershed': watershed.WatershedFormatter,
             'solar': solar.SolarFormatter,
-            'favorita' : favorita.FavoritaFormatter,
+            'favorita': favorita.FavoritaFormatter,
         }
 
         return data_formatter_class[self.experiment]()

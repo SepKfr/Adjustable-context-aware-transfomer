@@ -85,7 +85,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             flat_prediction['identifier'] = tid[:, 0, 0]
             return flat_prediction
 
-        k =0
+        k = 0
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
             output_map = inverse_output(output, test_y_output[j], test_id[j])
