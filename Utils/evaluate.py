@@ -60,7 +60,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_temp_cutoff = torch.zeros(3, test_de.shape[0], test_de.shape[1], test_de.shape[2])
     targets_all = torch.zeros(test_de.shape[0], test_de.shape[1], test_de.shape[2])
     targets_all_input = torch.zeros(test_en.shape[0], test_en.shape[1], test_en.shape[2])
-    df = pd.DataFrame(columns=['id'], index=range(16000))
+    df = pd.DataFrame(columns=['id'], index=range(15872))
 
     def make_predictions(model):
 
@@ -205,13 +205,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
-    loss = 10e5
-    ind = 0
-    for i in range(15872):
-        loss_attn_temp = math.sqrt(criterion(pred_attn_temp_cutoff[i, :], targets_all[i, :]))
-        if loss_attn_temp < loss:
-            ind = i
-            loss = loss_attn_temp
+    ind = random.randint(0, 15872)
 
     print("Done finding the ind...")
 
@@ -220,14 +214,15 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.rc('legend', fontsize=12)
     plt.plot(np.arange(0, 192), np.concatenate((targets_all_input[ind, :], targets_all[ind, :])),
              color='blue')
-    plt.vlines(168, ymin=0, ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue', linestyles="dashed")
-    plt.plot(np.arange(168, 192), targets_all[ind, :].detach().numpy(), color='blue')
     plt.plot(np.arange(168, 192), pred_lstm[ind, :].detach().numpy(), color='red', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn[ind, :].detach().numpy(), color='violet', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
-
-    plt.title(df.iloc[ind, 0])
+    plt.vlines(168, ymin=0, ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
+               linestyles="dashed")
+    print(df.iloc[ind, 0])
+    title = df.iloc[ind, 0]
+    plt.title(title)
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
