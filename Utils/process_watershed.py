@@ -169,9 +169,9 @@ def main():
     parser.add_argument('--error_path', type=str, default='final_error.json')
 
     args = parser.parse_args()
-    np.random.seed(21)
-    random.seed(21)
-    torch.manual_seed(21)
+    np.random.seed(1992)
+    random.seed(1992)
+    torch.manual_seed(1992)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
