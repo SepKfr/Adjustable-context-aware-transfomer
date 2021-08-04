@@ -136,9 +136,6 @@ def calculate_loss(args, predictions, true_y_output, name, formatter):
     for id in forecasts.keys():
         mse_loss = mse(forecasts[id], true_y_s[id])
         mae_loss = mae(forecasts[id], true_y_s[id])
-        q_loss = []
-        for q in 0.5, 0.9:
-            q_loss.append(quantile_loss(true_y_s[id], forecasts[id], q))
 
         normalizer = true_y_s[id].abs().mean()
         mse_loss = math.sqrt(mse_loss) / normalizer
@@ -148,10 +145,8 @@ def calculate_loss(args, predictions, true_y_output, name, formatter):
 
         errors[id].append(float("{:.5f}".format(mse_loss)))
         errors[id].append(float("{:.5f}".format(mae_loss)))
-        errors_all[name].append(errors)
 
-        for q in q_loss:
-            errors[id].append(float("{:.5f}".format(q)))
+    errors_all[name].append(errors)
 
     if os.path.exists(args.error_path):
         with open(args.error_path) as json_file:
