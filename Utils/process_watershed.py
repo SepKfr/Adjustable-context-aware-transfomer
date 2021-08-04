@@ -70,13 +70,11 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
             output_map = inverse_output(output, test_y_output[j], test_id[j])
-            forecast = extract_numerical_data(
-                formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32')
+            forecast = output_map["predictions"]
 
             predictions.append(forecast)
 
-            targets = extract_numerical_data(
-                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
+            targets = output_map["targets"]
             targets_all.append(targets)
 
         return predictions, targets_all
@@ -98,10 +96,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
     prediction_attn_temp_cutoff = pd.concat(prediction_attn_temp_cutoff, axis=0)
     targets_all = pd.concat(targets_all, axis=0)
 
-    calculate_loss(args, prediction_lstm, targets_all, "lstm")
-    calculate_loss(args, prediction_attn, targets_all, "attn")
-    calculate_loss(args, prediction_attn_conv, targets_all, "attn_conv")
-    calculate_loss(args, prediction_attn_temp_cutoff, targets_all, "attn_temp_cutoff")
+    calculate_loss(args, prediction_lstm, targets_all, "lstm", formatter)
+    calculate_loss(args, prediction_attn, targets_all, "attn", formatter)
+    calculate_loss(args, prediction_attn_conv, targets_all, "attn_conv", formatter)
+    calculate_loss(args, prediction_attn_temp_cutoff, targets_all, "attn_temp_cutoff", formatter)
 
 
 def quantile_loss(y, y_pred, quantile):
@@ -115,7 +113,7 @@ def quantile_loss(y, y_pred, quantile):
     return 2 * q_loss / normaliser
 
 
-def calculate_loss(args, predictions, true_y_output, name):
+def calculate_loss(args, predictions, true_y_output, name, formatter):
 
     errors_all = dict()
     errors_all[name] = list()
@@ -135,11 +133,11 @@ def calculate_loss(args, predictions, true_y_output, name):
     true_y_s = {}
     for id, df in predictions.groupby('identifier'):
 
-        forecast = torch.from_numpy(extract_numerical_data(df).to_numpy().astype('float32'))
+        forecast = torch.from_numpy(extract_numerical_data(formatter.format_predictions(df)).to_numpy().astype('float32'))
         forecasts[id] = forecast
 
     for id, df in true_y_output.groupby('identifier'):
-        t_y = torch.from_numpy(extract_numerical_data(df).to_numpy().astype('float32'))
+        t_y = torch.from_numpy(extract_numerical_data(formatter.format_predictions(df)).to_numpy().astype('float32'))
         true_y_s[id] = t_y
 
     for id in forecasts.keys():
