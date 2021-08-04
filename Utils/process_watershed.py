@@ -70,13 +70,13 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
             output_map = inverse_output(output, test_y_output[j], test_id[j])
-            forecast = torch.from_numpy(extract_numerical_data(
-                formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32'))
+            forecast = extract_numerical_data(
+                formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32')
 
             predictions.append(forecast)
 
-            targets = torch.from_numpy(extract_numerical_data(
-                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
+            targets = extract_numerical_data(
+                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
             targets_all.append(targets)
 
         return predictions, targets_all
