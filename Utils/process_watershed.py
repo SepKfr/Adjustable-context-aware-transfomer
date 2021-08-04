@@ -62,7 +62,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
 
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
-            output_map = inverse_output(output.detach().to_numpy(), test_y_output[j].detach().to_numpy(), test_id[j])
+            output_map = inverse_output(output, test_y_output[j], test_id[j])
             forecast = output_map["predictions"]
 
             predictions.append(forecast)
