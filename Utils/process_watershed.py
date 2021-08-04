@@ -143,8 +143,8 @@ def calculate_loss(args, predictions, true_y_output, name, formatter):
 
         errors[id] = list()
 
-        errors[id].append(float("{:.5f}".format(mse_loss)))
-        errors[id].append(float("{:.5f}".format(mae_loss)))
+        errors[id].append(float("{:.4f}".format(mse_loss)))
+        errors[id].append(float("{:.4f}".format(mae_loss)))
 
     errors_all[name].append(errors)
 
