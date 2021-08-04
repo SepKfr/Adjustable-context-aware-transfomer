@@ -220,7 +220,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.rc('legend', fontsize=12)
     plt.plot(np.arange(0, 192), np.concatenate((targets_all_input[ind, :], targets_all[ind, :])),
              color='blue')
-    plt.vlines(168, ymin=0, ymax=max(targets_all[ind, :], targets_all_input[ind, :]), colors='lightblue', linestyles="dashed")
+    plt.vlines(168, ymin=0, ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue', linestyles="dashed")
     plt.plot(np.arange(168, 192), targets_all[ind, :].detach().numpy(), color='blue')
     plt.plot(np.arange(168, 192), pred_lstm[ind, :].detach().numpy(), color='red', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn[ind, :].detach().numpy(), color='violet', linestyle='dashed')
