@@ -62,7 +62,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
 
         for j in range(test_en.shape[0]):
             output = model(test_en[j], test_de[j])
-            output_map = inverse_output(output, test_y_output[j], test_id[j])
+            output_map = inverse_output(output.detach().cpu().numpy(), test_y_output[j].detach().cpu().numpy(), test_id[j])
             forecast = output_map["predictions"]
 
             predictions.append(forecast)
@@ -80,7 +80,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
                                        models_path, "temp_cutoff", "attn_temp_cutoff_2")
 
     prediction_lstm, targets_all = make_predictions(lstm_model)
-    print(type(prediction_lstm))
     prediction_attn, _ = make_predictions(attn_model)
     prediction_attn_conv, _ = make_predictions(attn_conv_model)
     prediction_attn_temp_cutoff, _ = make_predictions(attn_temp_cutoff_model)
