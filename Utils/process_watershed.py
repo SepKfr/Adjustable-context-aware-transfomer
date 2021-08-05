@@ -165,7 +165,7 @@ def calculate_loss(args, predictions, true_y_output, name, formatter):
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
-    parser.add_argument('--cuda', type=str, default='cuda:0')
+    parser.add_argument('--cuda', type=str, default='cuda:1')
     parser.add_argument('--error_path', type=str, default='final_error_9.json')
 
     args = parser.parse_args()
