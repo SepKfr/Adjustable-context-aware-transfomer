@@ -171,7 +171,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             mae_losses = np.zeros(3)
             MAE = nn.L1Loss()
             final_error[name] = list()
-            normalizer = targets_all.abs().mean()
+            normalizer = abs(targets_all).mean()
 
             for k in range(3):
 
