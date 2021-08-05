@@ -54,10 +54,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         configs = json.load(json_file)
     models_path = "models_{}_24".format(args.exp_name)
 
-    predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-    predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-    predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-    predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_lstm = np.zeros((1, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_attn = np.zeros((1, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_attn_conv = np.zeros((1, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_attn_temp_cutoff = np.zeros((1, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
     df = pd.DataFrame(columns=['id'], index=range(15872))
@@ -141,7 +141,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         plt.close()
 
     flag = False
-    for i, seed in enumerate([21, 1992, 9]):
+    for i, seed in enumerate([21]):
 
         torch.manual_seed(seed)
 
