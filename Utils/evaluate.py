@@ -141,7 +141,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         plt.close()
 
     flag = False
-    for i, seed in enumerate([21]):
+    for i, seed in enumerate([21, 1992, 9]):
 
         torch.manual_seed(seed)
 
@@ -211,6 +211,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
     ind = random.randint(0, 15872)
+    print(ind)
 
     print("Done finding the ind...")
 
