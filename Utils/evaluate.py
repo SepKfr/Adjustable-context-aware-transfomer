@@ -103,7 +103,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
                     to_numpy().astype('float32')
-                df.iloc[k:k+test_en.shape[1], 0] = output_map["predictions"]["identifier"]
+                preds = output_map["predictions"]
+                df.iloc[k:k+test_en.shape[1], 0] = preds["identifier"]
                 k += test_en.shape[1]
                 flg = False
 
@@ -140,7 +141,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         plt.close()
 
     flag = False
-    for i, seed in enumerate([21, 9, 1992]):
+    for i, seed in enumerate([21]):
 
         torch.manual_seed(seed)
 
@@ -224,7 +225,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :], color='orange', linestyle='dashed')
     plt.vlines(168, ymin=0, ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
                linestyles="dashed")
-    print(df.iloc[ind, 0])
     title = df.iloc[ind, 0]
     plt.title(title)
     plt.xlabel('TimeSteps')
@@ -241,7 +241,6 @@ def main():
 
     args = parser.parse_args()
     np.random.seed(21)
-    random.seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
