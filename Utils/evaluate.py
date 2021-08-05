@@ -187,7 +187,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
         rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])'''
 
-        calculate_loss(predictions_lstm, "lstm")
+       ''' calculate_loss(predictions_lstm, "lstm")
         calculate_loss(predictions_attn, "attn")
         calculate_loss(predictions_attn_conv, "attn_conv")
         calculate_loss(predictions_attn_temp_cutoff, "attn_temp_cutoff")
@@ -195,7 +195,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         config_path = "final_errors_{}.json".format(args.exp_name)
 
         with open(config_path, "w") as json_file:
-            json.dump(final_error, json_file)
+            json.dump(final_error, json_file)'''
 
     print("done reading the prediction")
 
