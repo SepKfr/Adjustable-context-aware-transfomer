@@ -100,9 +100,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
 
                 targets_all[j, :, :] = targets
-
-                targets_all_input[j, :, :] = extract_numerical_data(format_outputs(test_y_input[j], test_id[j])).to_numpy().astype('float32')
-                print(targets_all_input)
+                targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
+                                                                    (format_outputs(test_y_input[j], test_id[j]))).\
+                    to_numpy().astype('float32')
                 df.iloc[k:k+test_en.shape[1], 0] = output_map["predictions"]["identifier"]
                 k += test_en.shape[1]
                 flg = False
@@ -236,7 +236,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
-    parser.add_argument('--exp_name', type=str, default='traffic')
+    parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
 
     args = parser.parse_args()
