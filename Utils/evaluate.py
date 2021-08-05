@@ -217,10 +217,10 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.rc('legend', fontsize=12)
     plt.plot(np.arange(0, 192), np.concatenate((targets_all_input[ind, :], targets_all[ind, :])),
              color='blue')
-    plt.plot(np.arange(168, 192), pred_lstm[ind, :].detach().numpy(), color='red', linestyle='dashed')
-    plt.plot(np.arange(168, 192), pred_attn[ind, :].detach().numpy(), color='violet', linestyle='dashed')
-    plt.plot(np.arange(168, 192), pred_attn_conv[ind, :].detach().numpy(), color='seagreen', linestyle='dashed')
-    plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :].detach().numpy(), color='orange', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_lstm[ind, :], color='red', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_attn[ind, :], color='violet', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_attn_conv[ind, :], color='seagreen', linestyle='dashed')
+    plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :], color='orange', linestyle='dashed')
     plt.vlines(168, ymin=0, ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
                linestyles="dashed")
     print(df.iloc[ind, 0])
