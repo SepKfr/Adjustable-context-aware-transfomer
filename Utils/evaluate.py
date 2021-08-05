@@ -185,9 +185,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         '''rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :])
         rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :])
         rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
-        rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])'''
+        rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])
 
-       ''' calculate_loss(predictions_lstm, "lstm")
+        calculate_loss(predictions_lstm, "lstm")
         calculate_loss(predictions_attn, "attn")
         calculate_loss(predictions_attn_conv, "attn_conv")
         calculate_loss(predictions_attn_temp_cutoff, "attn_temp_cutoff")
