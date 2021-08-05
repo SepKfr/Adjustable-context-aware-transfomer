@@ -62,7 +62,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     targets_all_input = torch.zeros(test_en.shape[0], test_en.shape[1], test_en.shape[2])
     df = pd.DataFrame(columns=['id'], index=range(15872))
 
-    def make_predictions(model):
+    def make_predictions(model, flg):
 
         model.eval()
         predictions = torch.zeros(test_de.shape[0], test_de.shape[1], test_de.shape[2])
@@ -94,17 +94,19 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
             predictions[j, :, :] = forecast
 
-            targets = torch.from_numpy(extract_numerical_data(
-                formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
+            if not flg:
+                targets = torch.from_numpy(extract_numerical_data(
+                    formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32'))
 
-            targets_all[j, :, :] = targets
+                targets_all[j, :, :] = targets
 
-            targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j], test_id[j])).
-                                                          to_numpy().astype('float32'))
-            df.iloc[k:k+test_en.shape[1], 0] = output_map["predictions"]["identifier"]
-            k += test_en.shape[1]
+                targets_all_input[j, :, :] = torch.from_numpy(extract_numerical_data(format_outputs(test_y_input[j], test_id[j])).
+                                                              to_numpy().astype('float32'))
+                df.iloc[k:k+test_en.shape[1], 0] = output_map["predictions"]["identifier"]
+                k += test_en.shape[1]
+                flg = False
 
-        return predictions
+        return predictions, flg
 
     criterion = nn.MSELoss()
 
@@ -136,6 +138,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         plt.savefig('rmses_{}.png'.format(name))
         plt.close()
 
+    flag = False
     for i, seed in enumerate([21, 9, 1992]):
 
         torch.manual_seed(seed)
@@ -146,11 +149,11 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                               "conv_attn", "attn_conv")
         attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
                                      models_path, "temp_cutoff", "attn_temp_cutoff_2")
-        lstm_model_pred = make_predictions(lstm_model)
-        predictions_lstm[i, :, :, :] = lstm_model_pred
-        predictions_attn[i, :, :, :] = make_predictions(attn_model)
-        predictions_attn_conv[i, :, :, :] = make_predictions(attn_conv_model)
-        predictions_attn_temp_cutoff[i, :, :, :] = make_predictions(attn_temp_cutoff_model)
+
+        predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, flag)
+        predictions_attn[i, :, :, :], flag = make_predictions(attn_model, flag)
+        predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, flag)
+        predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, flag)
 
         def calculate_loss_per_step(predictions):
             rmses = np.zeros(24)
