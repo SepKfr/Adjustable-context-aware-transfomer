@@ -210,8 +210,13 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
-    ind = random.randint(0, 15872)
-    print(ind)
+    loss = 10e5
+    ind = 0
+    for i in range(15872):
+        loss_attn_temp = math.sqrt(criterion(pred_attn_temp_cutoff[i, :], targets_all[i, :]))
+        if loss_attn_temp < loss:
+            ind = i
+            loss = loss_attn_temp
 
     print("Done finding the ind...")
 
