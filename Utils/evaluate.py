@@ -210,14 +210,18 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
-    loss = 10e5
     ind = 0
     for i in range(15872):
         loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
                                              torch.from_numpy(targets_all[i, :])))
-        if loss_attn_temp < loss:
+        loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
+                                             torch.from_numpy(targets_all[i, :])))
+        loss_attn_conv = math.sqrt(criterion(torch.from_numpy(pred_attn_conv[i, :]),
+                                             torch.from_numpy(targets_all[i, :])))
+        loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
+                                             torch.from_numpy(targets_all[i, :])))
+        if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and loss_attn_temp < loss_lstm:
             ind = i
-            loss = loss_attn_temp
 
     print("Done finding the ind...")
 
