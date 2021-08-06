@@ -213,7 +213,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     loss = 10e5
     ind = 0
     for i in range(15872):
-        loss_attn_temp = math.sqrt(criterion(pred_attn_temp_cutoff[i, :], targets_all[i, :]))
+        loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
+                                             torch.from_numpy(targets_all[i, :])))
         if loss_attn_temp < loss:
             ind = i
             loss = loss_attn_temp
