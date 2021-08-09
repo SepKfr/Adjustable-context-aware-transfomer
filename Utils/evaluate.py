@@ -225,9 +225,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                                              torch.from_numpy(targets_all[i, :])))
         if loss_attn_temp < loss_attn and \
                 loss_attn_temp < loss_attn_conv and \
-                loss_attn_temp < loss_lstm and loss_attn < loss_lstm:
-            if loss_attn - loss_attn_temp > loss_diff:
-                loss_diff = loss_attn - loss_attn_temp
+                loss_attn_temp < loss_lstm and loss_attn < loss_lstm :
+            if loss_attn_conv - loss_attn_temp > loss_diff:
+                loss_diff = loss_attn_conv - loss_attn_temp
                 ind = i
 
     print("Done finding the ind...")
@@ -244,7 +244,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.vlines(168, ymin=min(min(targets_all[ind, :]), min(targets_all_input[ind, :])), ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
                linestyles="dashed")
     title = df_id.iloc[ind]
-    print(title)
     plt.title(title)
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
