@@ -104,8 +104,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
                     to_numpy().astype('float32')
                 preds = output_map["predictions"]
-                df.iloc[k:k+test_en.shape[1], 0] = preds["identifier"]
-                print(preds["identifier"])
+                df.loc[k:k+test_en.shape[1], 'id'] = preds["identifier"]
+                print(df.loc[k:k+test_en.shape[1], 'id'])
                 k += test_en.shape[1]
                 flg = False
 
