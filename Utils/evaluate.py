@@ -210,6 +210,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
+    print(df)
 
     ind = 0
     loss_diff = 0
@@ -243,7 +244,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.vlines(168, ymin=min(min(targets_all[ind, :]), min(targets_all_input[ind, :])), ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
                linestyles="dashed")
     title = df.loc[ind, 'id']
-    print(title)
     plt.title(title)
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
