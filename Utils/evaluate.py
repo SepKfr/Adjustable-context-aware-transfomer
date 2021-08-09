@@ -60,7 +60,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
-    df = pd.DataFrame(columns=['id'], index=range(15872))
+    df_list = []
 
     def make_predictions(model, flg):
 
@@ -104,8 +104,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
                     to_numpy().astype('float32')
                 preds = output_map["predictions"]
-                df.loc[k:k+test_en.shape[1], 'id'] = preds["identifier"]
-                print(df.loc[k:k+test_en.shape[1], 'id'])
+                df_list.append(preds["identifier"])
                 k += test_en.shape[1]
 
         flg = True
@@ -211,7 +210,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
-    print(df)
+    df_id = pd.concat(df_list, axis=0)
 
     ind = 0
     loss_diff = 0
@@ -244,7 +243,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :], color='orange', linestyle='dashed')
     plt.vlines(168, ymin=min(min(targets_all[ind, :]), min(targets_all_input[ind, :])), ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
                linestyles="dashed")
-    title = df.loc[ind, 'id']
+    title = df_id.loc[ind, 'identifier']
+    print(title)
     plt.title(title)
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
