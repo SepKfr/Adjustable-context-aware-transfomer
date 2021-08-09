@@ -248,7 +248,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
-    plt.savefig('pred_plot_{}.png'.format(args.exp_name))
+    plt.savefig('pred_plot_{}_2.png'.format(args.exp_name))
     plt.close()
 
 
