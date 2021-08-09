@@ -105,9 +105,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                     to_numpy().astype('float32')
                 preds = output_map["predictions"]
                 df.loc[k:k+test_en.shape[1], 'id'] = preds["identifier"]
-                print(df.loc[k:k+test_en.shape[1], 'id'])
                 k += test_en.shape[1]
-                flg = False
+
+        flg = True
 
         return predictions, flg
 
@@ -242,7 +242,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :], color='orange', linestyle='dashed')
     plt.vlines(168, ymin=min(min(targets_all[ind, :]), min(targets_all_input[ind, :])), ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
                linestyles="dashed")
-    title = df.iloc[ind, 0]
+    title = df.loc[ind, 'id']
+    print(title)
     plt.title(title)
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
