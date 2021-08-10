@@ -136,8 +136,9 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
-                 kernel=kernel).to(device)
+                 kernel=kernel)
     checkpoint = torch.load(os.path.join(path, args.name))
+    model = nn.DataParallel(model).to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     model.eval()
@@ -196,7 +197,7 @@ def main():
     parser.add_argument("--exp_name", type=str, default='air_quality')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
-    parser.add_argument("--cuda", type=str, default="cuda:0")
+    parser.add_argument("--cuda", type=str, default="cuda")
     parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
 
@@ -282,6 +283,7 @@ def main():
                      attn_type=args.attn_type,
                      kernel=kernel)
 
+        model = nn.DataParallel(model)
         model.to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
