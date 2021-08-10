@@ -196,10 +196,6 @@ def main():
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
 
-    path = "models_{}_{}".format(args.exp_name, args.seq_len_pred)
-    if not os.path.exists(path):
-        os.makedirs(path)
-
     data_csv_path = "{}.csv".format(args.exp_name)
     print("Loading & splitting data...")
     raw_data = pd.read_csv(data_csv_path, index_col=0)
@@ -233,6 +229,10 @@ def main():
     criterion = nn.MSELoss()
 
     hyper_param = list([args.n_layers, model_params['minibatch_size'], model_params['hidden_layer_size']])
+
+    path = "models_{}_{}".format(args.exp_name, params['total_time_steps'] - params['num_encoder_steps'])
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     configs = create_config(hyper_param)
 
@@ -279,7 +279,7 @@ def main():
             if stop:
                 break
 
-    n_layers,batch_size, hidden_size = best_config
+    n_layers, batch_size, hidden_size = best_config
     print("best_config: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args,
