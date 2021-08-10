@@ -120,12 +120,10 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                     seq_len_pred=args.seq_len_pred,
                     device=device,
                     dr=dr)
-
-    model.to(device)
-
     mae = nn.L1Loss()
 
     checkpoint = torch.load(os.path.join(path, args.name))
+    model = nn.DataParallel(model).to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     def extract_numerical_data(data):
@@ -262,7 +260,9 @@ def main():
                     rnn_type=args.rnn_type,
                     device=device,
                     d_r=0)
-        model = model.to(device)
+
+        model = nn.DataParallel(model)
+        model.to(device)
 
         optimizer = Adam(model.parameters())
         epoch_start = 0
