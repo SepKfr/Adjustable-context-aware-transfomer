@@ -23,11 +23,13 @@ class AirQualityFormatter(ElectricityFormatter):
         ('DEWP', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('RAIN', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('WSPM', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('WSPM', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wd', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
     ]
 
-    def split_data(self, df, valid_boundary=1257, test_boundary=1357):
+    def split_data(self, df, valid_boundary=1160, test_boundary=1310):
         print('Formatting train-valid-test splits.')
 
         index = df['days_from_start']
