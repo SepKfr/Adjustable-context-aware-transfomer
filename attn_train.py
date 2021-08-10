@@ -176,7 +176,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=24)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--d_model", type=int, default=[64, 128])
     parser.add_argument("--d_model_best", type=int)
@@ -212,9 +211,6 @@ def main():
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
 
-    path = "models_{}_{}".format(args.exp_name, args.seq_len_pred)
-    if not os.path.exists(path):
-        os.makedirs(path)
     data_csv_path = "{}.csv".format(args.exp_name)
 
     print("Loading & splitting data...")
@@ -245,6 +241,10 @@ def main():
                                  sample_data['identifier']
 
     model_params = formatter.get_default_model_params()
+
+    path = "models_{}_{}".format(args.exp_name, params['total_time_steps'] - params['num_encoder_steps'])
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
