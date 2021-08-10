@@ -24,7 +24,7 @@ class AirQualityFormatter(ElectricityFormatter):
         ('RAIN', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('WSPM', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('WSPM', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('wd', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('wd', DataTypes.CATEGORICAL, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
     ]
