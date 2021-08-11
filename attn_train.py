@@ -241,7 +241,8 @@ def main():
 
     model_params = formatter.get_default_model_params()
 
-    path = "models_{}_{}".format(args.exp_name, params['total_time_steps'] - params['num_encoder_steps'])
+    seq_len = params['total_time_steps'] - params['num_encoder_steps']
+    path = "models_{}_{}".format(args.exp_name, seq_len)
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -319,8 +320,8 @@ def main():
     config_file[args.name].append(d_model)
 
     print("test error for best config {:.4f}".format(test_loss))
-    error_path = "errors_{}_{}.json".format(args.exp_name, args.seq_len_pred)
-    config_path = "configs_{}_{}.json".format(args.exp_name, args.seq_len_pred)
+    error_path = "errors_{}_{}.json".format(args.exp_name, seq_len)
+    config_path = "configs_{}_{}.json".format(args.exp_name, seq_len)
 
     if os.path.exists(error_path):
         with open(error_path) as json_file:
