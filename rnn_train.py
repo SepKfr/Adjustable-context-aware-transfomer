@@ -109,7 +109,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                     tgt_input_size=test_de.shape[3],
                     rnn_type=args.rnn_type,
                     device=device,
-                    d_r=0)
+                    d_r=0).to(device)
 
     elif args.deep_type == "mlp":
         n_layers, hidden_size, dr, lr = config
@@ -166,7 +166,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 
 def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--seq_len_pred", type=int, default=24)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--hidden_size", type=int, default=100)
     parser.add_argument("--out_channel", type=int, default=32)
