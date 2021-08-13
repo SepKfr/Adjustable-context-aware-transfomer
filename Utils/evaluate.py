@@ -48,7 +48,13 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                      attn_type=attn_type,
                      kernel=kernel).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
-        model.load_state_dict(checkpoint["model_state_dict"])
+        state_dict = checkpoint["model_state_dict"]
+        new_state_dict = dict()
+        for k, v in state_dict.keys():
+            k_p = k.replace('module.', '')
+            new_state_dict[k_p] = v
+
+        model.load_state_dict(new_state_dict)
         return model
 
     with open('configs_{}_24.json'.format(args.exp_name), 'r') as json_file:
