@@ -245,8 +245,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         if loss_attn_temp < loss_attn and \
                 loss_attn_temp < loss_attn_conv and \
                 loss_attn_temp < loss_lstm and loss_attn < loss_lstm:
-            if loss_attn_conv - loss_attn_temp > loss_diff:
-                loss_diff = loss_attn_conv - loss_attn_temp
+            if loss_attn - loss_attn_temp > loss_diff:
+                loss_diff = loss_attn - loss_attn_temp
                 ind = i
 
     print("Done finding the ind...")
@@ -254,14 +254,14 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     if not os.path.exists(args.path_to_save):
         os.makedirs(args.path_to_save)
 
-    pickle.dump(os.path.join(args.path_to_save, 'conduct_prefix'), targets_all_input[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'conduct_postfix'), targets_all[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'flow_rate_prefix'), flow_rate_prefix[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'flow_rate_postfix'), flow_rate_postfix[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'lstm_pred'), pred_lstm[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'trns_pred'), pred_lstm[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'trns_conv_pred'), pred_lstm[ind, :])
-    pickle.dump(os.path.join(args.path_to_save, 'context_aware_trns_pred'), pred_lstm[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'conduct_prefix'), 'wb'), targets_all_input[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'conduct_postfix'), 'wb'), targets_all[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'flow_rate_prefix'), 'wb'), flow_rate_prefix[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'flow_rate_postfix'), 'wb'), flow_rate_postfix[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'lstm_pred'), 'wb'), pred_lstm[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'trns_pred'), 'wb'), pred_lstm[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'trns_conv_pred'), 'wb'), pred_lstm[ind, :])
+    pickle.dump(open(os.path.join(args.path_to_save, 'context_aware_trns_pred'), 'wb'), pred_lstm[ind, :])
 
     y_min = min(min(targets_all[ind, :]),
                 min(targets_all_input[ind, :]),
