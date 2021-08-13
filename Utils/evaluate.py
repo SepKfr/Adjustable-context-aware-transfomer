@@ -228,7 +228,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
     flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
-    flow_rate_postfix = flow_rate_prefix.reshape(test_en.shape[0]*test_en.shape[1], -1)
+    flow_rate_prefix = flow_rate_prefix.reshape(test_en.shape[0]*test_en.shape[1], -1)
     df_id = pd.concat(df_list, axis=0)
 
     ind = 0
@@ -254,22 +254,18 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     if not os.path.exists(args.path_to_save):
         os.makedirs(args.path_to_save)
 
-    pickle.dump(targets_all_input[ind, :],
-                open(os.path.join(args.path_to_save, 'conduct_prefix'), 'wb'))
-    pickle.dump(targets_all[ind, :],
-                open(os.path.join(args.path_to_save, 'conduct_postfix'), 'wb'))
-    pickle.dump(flow_rate_prefix[ind, :],
-                open(os.path.join(args.path_to_save, 'flow_rate_prefix'), 'wb'))
-    pickle.dump(flow_rate_postfix[ind, :],
-                open(os.path.join(args.path_to_save, 'flow_rate_postfix'), 'wb'))
-    pickle.dump(pred_lstm[ind, :],
-                open(os.path.join(args.path_to_save, 'lstm_pred'), 'wb'))
-    pickle.dump(pred_lstm[ind, :],
-                open(os.path.join(args.path_to_save, 'trns_pred'), 'wb'))
-    pickle.dump(pred_lstm[ind, :],
-                open(os.path.join(args.path_to_save, 'trns_conv_pred', 'wb')))
-    pickle.dump(pred_lstm[ind, :],
-                open(os.path.join(args.path_to_save, 'context_aware_trns_pred', 'wb')))
+    def write_to_file(res, name):
+        with open(os.path.join(args.path_to_save, name), 'wb') as f:
+            pickle.dump(f, res)
+
+    write_to_file(targets_all_input[ind, :], 'conduct_prefix.pkl')
+    write_to_file(targets_all[ind, :], 'conduct_postfix.pkl')
+    write_to_file(flow_rate_prefix[ind, :], 'flow_rate_prefix.pkl')
+    write_to_file(flow_rate_postfix[ind, :], 'flow_rate_postfix.pkl')
+    write_to_file(pred_lstm[ind, :], 'lstm_pred.pkl')
+    write_to_file(pred_attn[ind, :], 'trns_pred.pkl')
+    write_to_file(pred_attn_conv[ind, :], 'trns_conv_pred.pkl')
+    write_to_file(predictions_attn_temp_cutoff[ind, :], 'context_aware_trns_pred.pkl')
 
     y_min = min(min(targets_all[ind, :]),
                 min(targets_all_input[ind, :]),
@@ -299,7 +295,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
-    plt.savefig('pred_plot_{}_2.png'.format(args.exp_name))
+    plt.savefig(os.path.join(args.path_to_save,'pred_plot_{}_2.png').format(args.exp_name))
     plt.close()
 
 
