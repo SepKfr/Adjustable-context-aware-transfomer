@@ -50,7 +50,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
         new_state_dict = dict()
-        for k, v in state_dict.keys():
+        for k, v in state_dict.values():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
