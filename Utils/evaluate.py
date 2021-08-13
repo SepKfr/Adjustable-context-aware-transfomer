@@ -254,22 +254,22 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     if not os.path.exists(args.path_to_save):
         os.makedirs(args.path_to_save)
 
-    pickle.dump(open(r"{}".format(os.path.join(args.path_to_save, 'conduct_prefix'), 'wb')),
-                targets_all_input[ind, :])
-    pickle.dump(open(r"{}".format(os.path.join(args.path_to_save, 'conduct_postfix'), 'wb')),
-                targets_all[ind, :])
-    pickle.dump(open(r"{}".format(os.path.join(args.path_to_save, 'flow_rate_prefix'), 'wb')),
-                flow_rate_prefix[ind, :])
-    pickle.dump(open(r"{}".format(os.path.join(args.path_to_save, 'flow_rate_postfix'), 'wb')),
-                flow_rate_postfix[ind, :])
-    pickle.dump(open(r"{}".format(os.path.join(args.path_to_save, 'lstm_pred'), 'wb')),
-                pred_lstm[ind, :])
-    pickle.dump(open(r"{}".format(os.path.join(args.path_to_save, 'trns_pred'), 'wb')),
-                pred_lstm[ind, :])
-    pickle.dump(open("r{}".format(os.path.join(args.path_to_save, 'trns_conv_pred'), 'wb')),
-                pred_lstm[ind, :])
-    pickle.dump(open("r{}".format(os.path.join(args.path_to_save, 'context_aware_trns_pred'), 'wb')),
-                pred_lstm[ind, :])
+    pickle.dump(targets_all_input[ind, :],
+                open(r"{}".format(os.path.join(args.path_to_save, 'conduct_prefix'), 'wb')))
+    pickle.dump(targets_all[ind, :],
+                open(r"{}".format(os.path.join(args.path_to_save, 'conduct_postfix'), 'wb')))
+    pickle.dump(flow_rate_prefix[ind, :],
+                open(r"{}".format(os.path.join(args.path_to_save, 'flow_rate_prefix'), 'wb')))
+    pickle.dump(flow_rate_postfix[ind, :],
+                open(r"{}".format(os.path.join(args.path_to_save, 'flow_rate_postfix'), 'wb')))
+    pickle.dump(pred_lstm[ind, :],
+                open(r"{}".format(os.path.join(args.path_to_save, 'lstm_pred'), 'wb')))
+    pickle.dump(pred_lstm[ind, :],
+                open(r"{}".format(os.path.join(args.path_to_save, 'trns_pred'), 'wb')))
+    pickle.dump(pred_lstm[ind, :],
+                open("r{}".format(os.path.join(args.path_to_save, 'trns_conv_pred'), 'wb')))
+    pickle.dump(pred_lstm[ind, :],
+                open("r{}".format(os.path.join(args.path_to_save, 'context_aware_trns_pred'), 'wb')))
 
     y_min = min(min(targets_all[ind, :]),
                 min(targets_all_input[ind, :]),
