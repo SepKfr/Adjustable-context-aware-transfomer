@@ -245,8 +245,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         if loss_attn_temp < loss_attn and \
                 loss_attn_temp < loss_attn_conv and \
                 loss_attn_temp < loss_lstm and loss_attn < loss_lstm:
-            if loss_attn - loss_attn_temp > loss_diff:
-                loss_diff = loss_attn - loss_attn_temp
+            if loss_attn_conv - loss_attn_temp > loss_diff:
+                loss_diff = loss_attn_conv - loss_attn_temp
                 ind = i
 
     print("Done finding the ind...")
@@ -295,7 +295,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.xlabel('TimeSteps')
     plt.ylabel('Solute Concentration')
     plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
-    plt.savefig(os.path.join(args.path_to_save,'pred_plot_{}_2.png').format(args.exp_name))
+    plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_2.png').format(args.exp_name))
     plt.close()
 
 
@@ -303,7 +303,7 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument('--path_to_save', type=str, default='example_1')
+    parser.add_argument('--path_to_save', type=str, default='example_2')
 
     args = parser.parse_args()
     np.random.seed(21)
