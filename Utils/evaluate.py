@@ -255,21 +255,21 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         os.makedirs(args.path_to_save)
 
     pickle.dump(targets_all_input[ind, :],
-                open(r"{}".format(os.path.join(args.path_to_save, 'conduct_prefix'), 'wb')))
+                open(os.path.join(args.path_to_save, 'conduct_prefix'), 'wb'))
     pickle.dump(targets_all[ind, :],
-                open(r"{}".format(os.path.join(args.path_to_save, 'conduct_postfix'), 'wb')))
+                open(os.path.join(args.path_to_save, 'conduct_postfix'), 'wb'))
     pickle.dump(flow_rate_prefix[ind, :],
-                open(r"{}".format(os.path.join(args.path_to_save, 'flow_rate_prefix'), 'wb')))
+                open(os.path.join(args.path_to_save, 'flow_rate_prefix'), 'wb'))
     pickle.dump(flow_rate_postfix[ind, :],
-                open(r"{}".format(os.path.join(args.path_to_save, 'flow_rate_postfix'), 'wb')))
+                open(os.path.join(args.path_to_save, 'flow_rate_postfix'), 'wb'))
     pickle.dump(pred_lstm[ind, :],
-                open(r"{}".format(os.path.join(args.path_to_save, 'lstm_pred'), 'wb')))
+                open(os.path.join(args.path_to_save, 'lstm_pred'), 'wb'))
     pickle.dump(pred_lstm[ind, :],
-                open(r"{}".format(os.path.join(args.path_to_save, 'trns_pred'), 'wb')))
+                open(os.path.join(args.path_to_save, 'trns_pred'), 'wb'))
     pickle.dump(pred_lstm[ind, :],
-                open("r{}".format(os.path.join(args.path_to_save, 'trns_conv_pred'), 'wb')))
+                open(os.path.join(args.path_to_save, 'trns_conv_pred', 'wb')))
     pickle.dump(pred_lstm[ind, :],
-                open("r{}".format(os.path.join(args.path_to_save, 'context_aware_trns_pred'), 'wb')))
+                open(os.path.join(args.path_to_save, 'context_aware_trns_pred', 'wb')))
 
     y_min = min(min(targets_all[ind, :]),
                 min(targets_all_input[ind, :]),
