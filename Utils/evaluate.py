@@ -67,7 +67,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
-    flow_rate_prefix = np.zeros((test_en.shape[0], test_en.shape[1], test_de.shape[2]))
+    flow_rate_prefix = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
     flow_rate_postfix = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
     df_list = []
