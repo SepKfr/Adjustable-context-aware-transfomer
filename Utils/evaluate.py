@@ -12,6 +12,7 @@ import math
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import pickle
 
 
 def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
@@ -60,7 +61,21 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
     targets_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
+    flow_rate_prefix = np.zeros((test_en.shape[0], test_en.shape[1], 1))
+    flow_rate_postfix = np.zeros((test_de.shape[0], test_de.shape[1], 1))
+
     df_list = []
+
+    def format_outputs(preds, tid):
+        flat_prediction = pd.DataFrame(
+            preds[:, :, 0],
+            columns=[
+                't+{}'.format(i)
+                for i in range(preds.shape[1])
+            ]
+        )
+        flat_prediction['identifier'] = tid[:, 0, 0]
+        return flat_prediction
 
     def make_predictions(model, flg):
 
@@ -73,17 +88,6 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                 col for col in data.columns
                 if col not in {"forecast_time", "identifier"}
             ]]
-
-        def format_outputs(preds, tid):
-            flat_prediction = pd.DataFrame(
-                preds[:, :, 0],
-                columns=[
-                    't+{}'.format(i)
-                    for i in range(preds.shape[1])
-                ]
-            )
-            flat_prediction['identifier'] = tid[:, 0, 0]
-            return flat_prediction
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -98,7 +102,12 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             if not flg:
                 targets = extract_numerical_data(
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
-
+                flow_rate_prefix[j, :, :] = extract_numerical_data(
+                    formatter.format_predictions(format_outputs(test_en[j, 4], test_id[j]))
+                )
+                flow_rate_postfix[j, :, :] = extract_numerical_data(
+                    formatter.format_predictions(format_outputs(test_de[j, 3], test_id[j]))
+                )
                 targets_all[j, :, :] = targets
                 targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
@@ -209,7 +218,9 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
         reshape(test_de.shape[0]*test_de.shape[1], -1)
 
     targets_all = targets_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
+    flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0]*test_de.shape[1], -1)
     targets_all_input = targets_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
+    flow_rate_postfix = flow_rate_prefix.reshape(test_en.shape[0]*test_en.shape[1], -1)
     df_id = pd.concat(df_list, axis=0)
 
     ind = 0
@@ -232,6 +243,30 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     print("Done finding the ind...")
 
+    if not os.path.exists(args.path_to_save):
+        os.makedirs(args.path_to_save)
+
+    pickle.dump(os.path.join(args.path_to_save, 'conduct_prefix'), targets_all_input[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'conduct_postfix'), targets_all[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'flow_rate_prefix'), flow_rate_prefix[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'flow_rate_postfix'), flow_rate_postfix[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'lstm_pred'), pred_lstm[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'trns_pred'), pred_lstm[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'trns_conv_pred'), pred_lstm[ind, :])
+    pickle.dump(os.path.join(args.path_to_save, 'context_aware_trns_pred'), pred_lstm[ind, :])
+
+    y_min = min(min(targets_all[ind, :]),
+                min(targets_all_input[ind, :]),
+                min(pred_lstm[ind, :]),
+                min(pred_attn[ind, :]),
+                min(pred_attn_conv[ind, :]),
+                min(pred_attn_temp_cutoff[ind, :]))
+    y_max = max(max(targets_all[ind, :]),
+                max(targets_all_input[ind, :]),
+                max(pred_lstm[ind, :]),
+                max(pred_attn[ind, :]),
+                max(pred_attn_conv[ind, :]),
+                max(pred_attn_temp_cutoff[ind, :]))
     plt.rc('axes', labelsize=18)
     plt.rc('axes', titlesize=18)
     plt.rc('legend', fontsize=12)
@@ -241,7 +276,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     plt.plot(np.arange(168, 192), pred_attn[ind, :], color='violet', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn_conv[ind, :], color='seagreen', linestyle='dashed')
     plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :], color='orange', linestyle='dashed')
-    plt.vlines(168, ymin=min(min(targets_all[ind, :]), min(targets_all_input[ind, :])), ymax=max(max(targets_all[ind, :]), max(targets_all_input[ind, :])), colors='lightblue',
+    plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
                linestyles="dashed")
     title = df_id.iloc[ind]
     plt.title(title)
@@ -256,6 +291,7 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
+    parser.add_argument('--path_to_save', type=str, default='example_1')
 
     args = parser.parse_args()
     np.random.seed(21)
