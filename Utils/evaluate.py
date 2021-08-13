@@ -256,7 +256,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
 
     def write_to_file(res, name):
         with open(os.path.join(args.path_to_save, name), 'wb') as f:
-            pickle.dump(f, res)
+            pickle.dump(res, f)
 
     write_to_file(targets_all_input[ind, :], 'conduct_prefix.pkl')
     write_to_file(targets_all[ind, :], 'conduct_postfix.pkl')
