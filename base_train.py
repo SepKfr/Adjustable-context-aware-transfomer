@@ -100,7 +100,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     sampled_data = {
         'enc_inputs': enc_inputs,
         'dec_inputs': dec_inputs,
-        'outputs': outputs[:, num_encoder_steps:, :],
+        'outputs': outputs,
         'active_entries': np.ones_like(outputs[:, num_encoder_steps:, :]),
         'time': time,
         'identifier': identifiers
