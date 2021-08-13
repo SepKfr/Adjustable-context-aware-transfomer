@@ -108,6 +108,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
             if not flg:
                 targets = extract_numerical_data(
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
+                print(test_en.shape)
+                print(test_en[j, :, 4].shape)
                 x = extract_numerical_data(
                     formatter.format_predictions(format_outputs(test_en[j, :, 4].unsqueeze(-1), test_id[j]))
                 )
