@@ -110,11 +110,11 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
 
                 x = extract_numerical_data(
-                    formatter.format_predictions(format_outputs(test_en[j, :, :, 4], test_id[j]))
+                    formatter.format_predictions(format_outputs(test_en[j, :, :, 4].unsqueeze(-1), test_id[j]))
                 )
                 flow_rate_prefix[j, :, :] = x
                 flow_rate_postfix[j, :, :] = extract_numerical_data(
-                    formatter.format_predictions(format_outputs(test_de[j, :, :, 3], test_id[j]))
+                    formatter.format_predictions(format_outputs(test_de[j, :, :, 3].unsqueeze(-1), test_id[j]))
                 )
                 targets_all[j, :, :] = targets
                 targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
