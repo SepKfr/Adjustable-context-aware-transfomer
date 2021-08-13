@@ -265,7 +265,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
     write_to_file(pred_lstm[ind, :], 'lstm_pred.pkl')
     write_to_file(pred_attn[ind, :], 'trns_pred.pkl')
     write_to_file(pred_attn_conv[ind, :], 'trns_conv_pred.pkl')
-    write_to_file(predictions_attn_temp_cutoff[ind, :], 'context_aware_trns_pred.pkl')
+    write_to_file(pred_attn_temp_cutoff[ind, :], 'context_aware_trns_pred.pkl')
 
     y_min = min(min(targets_all[ind, :]),
                 min(targets_all_input[ind, :]),
