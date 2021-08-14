@@ -205,7 +205,7 @@ class ElectricityFormatter(GenericDataFormatter):
         """Returns fixed model parameters for experiments."""
 
         fixed_params = {
-            'total_time_steps': 9 * 24,
+            'total_time_steps': 10 * 24,
             'num_encoder_steps': 7 * 24,
             'num_epochs': 50,
         }
