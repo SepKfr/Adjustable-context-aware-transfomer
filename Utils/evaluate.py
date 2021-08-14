@@ -242,7 +242,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter):
                                              torch.from_numpy(targets_all[i, :])))
         loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
                                              torch.from_numpy(targets_all[i, :])))
-        if loss_attn_temp < loss_attn_conv < loss_lstm and loss_attn_temp < loss_attn:
+        if loss_attn_temp < loss_attn_conv < loss_lstm and loss_attn_temp < loss_attn and loss_attn_conv < loss_attn:
             if loss_lstm - loss_attn_temp > loss_diff:
                 loss_diff = loss_lstm - loss_attn_temp
                 ind = i
