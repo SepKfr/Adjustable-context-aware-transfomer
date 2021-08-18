@@ -423,6 +423,7 @@ def main():
 
     args = parser.parse_args()
     np.random.seed(21)
+    random.seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
