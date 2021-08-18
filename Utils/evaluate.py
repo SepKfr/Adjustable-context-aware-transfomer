@@ -354,13 +354,17 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                 dec_enc_attn_temp_cutoff_scores[i, :, :, :, :] = get_attn_scores(attn_temp_cutoff_model)
 
         self_attn_scores, dec_enc_attn_scores = \
-            np.mean(np.mean(self_attn_scores, axis=0), axis=-2), np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2)
+            np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
         self_attn_multi_scores, dec_enc_attn_multi_scores = \
-            np.mean(np.mean(self_attn_multi_scores, axis=0), axis=-2), np.mean(np.mean(dec_enc_attn_multi_scores, axis=0), axis=-2)
+            np.mean(np.mean(self_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
         self_attn_conv_scores, dec_enc_attn_conv_scores = \
-            np.mean(np.mean(self_attn_conv_scores, axis=0), axis=-2), np.mean(np.mean(dec_enc_attn_conv_scores, axis=0), axis=-2)
+            np.mean(np.mean(self_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
         self_attn_temp_cutoff_scores, dec_enc_attn_temp_cutoff_scores = \
-            np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2), np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2)
+            np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
 
         pred_attn = np.mean(predictions_attn, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
