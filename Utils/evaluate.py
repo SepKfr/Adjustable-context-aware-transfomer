@@ -410,7 +410,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.vlines(168, ymin=0, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
-        plt.title()
         plt.legend(['ground-truth', 'attn score of transformer', 'attn score of multi-layer transformer',
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_2.png').format(args.exp_name))
