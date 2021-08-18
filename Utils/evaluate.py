@@ -309,8 +309,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         for j in range(test_en.shape[0]):
             preds, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
             predictions[j, :, :, :] = preds.cpu().detach().numpy()
-            self_attn_scores[j, :, :, :] = self_attn_score.cpu().detach().numpy()
-            dec_enc_attn_scores[j, :, :, :] = dec_enc_attn_score[:, -1, :, :].cpu().detach().numpy()
+            self_attn_scores[j, :, :, :] = torch.mean(self_attn_score.squeeze(1), dim=2).squeeze(1).cpu().detach().numpy()
+            dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score[:, -1, :, :].squeeze(1), dim=2).squeeze(1).cpu().detach().numpy()
 
         return predictions, self_attn_scores, dec_enc_attn_scores
 
