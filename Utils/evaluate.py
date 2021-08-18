@@ -374,13 +374,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         loss_diff = 0
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
-                                                 torch.from_numpy(tgt_all[i, :])))
+                                                 tgt_all[i, :]))
             loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
-                                            torch.from_numpy(tgt_all[i, :])))
+                                            tgt_all[i, :]))
             loss_attn_conv = math.sqrt(criterion(torch.from_numpy(pred_attn_conv[i, :]),
-                                                 torch.from_numpy(tgt_all[i, :])))
+                                                 tgt_all[i, :]))
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
-                                            torch.from_numpy(tgt_all[i, :])))
+                                            tgt_all[i, :]))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
                 if loss_attn - loss_attn_temp > loss_diff:
