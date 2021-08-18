@@ -301,7 +301,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
     def get_attn_scores(model):
 
         model.eval()
-        predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2], 1))
+        predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         self_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1],
                                         test_de.shape[2], test_en.shape[2]))
