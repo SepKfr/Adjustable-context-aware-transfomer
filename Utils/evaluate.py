@@ -367,20 +367,20 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         pred_attn_conv = np.mean(predictions_attn_conv, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_temp_cutoff = np.mean(predictions_attn_temp_cutoff, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
 
-        tgt_input = test_y_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
-        tgt_all = test_y_output.reshape(test_de.shape[0]*test_de.shape[1], -1)
+        tgt_input = test_y_input.reshape(test_en.shape[0]*test_en.shape[1], -1).cpu().detach().numpy()
+        tgt_all = test_y_output.reshape(test_de.shape[0]*test_de.shape[1], -1).cpu().detach().numpy()
 
         ind = 0
         loss_diff = 0
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
-                                                 tgt_all[i, :]))
+                                                 torch.from_numpy(tgt_all[i, :])))
             loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
-                                            tgt_all[i, :]))
+                                            torch.from_numpy(tgt_all[i, :])))
             loss_attn_conv = math.sqrt(criterion(torch.from_numpy(pred_attn_conv[i, :]),
-                                                 tgt_all[i, :]))
+                                                 torch.from_numpy(tgt_all[i, :])))
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
-                                            tgt_all[i, :]))
+                                            torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
                 if loss_attn - loss_attn_temp > loss_diff:
