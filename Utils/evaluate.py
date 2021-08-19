@@ -298,7 +298,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_2.png').format(args.exp_name))
         plt.close()
 
-    def get_attn_scores(model, tgt_all_input, tgt_all, flag):
+    def get_attn_scores(model, tgt_all_input, tgt_all, flg):
 
         model.eval()
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
@@ -315,7 +315,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             predictions[j, :, :] = forecast
 
-            if not flag:
+            if not flg:
                 targets = extract_numerical_data(
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
 
@@ -327,7 +327,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
 
         flg = True
-        return predictions, self_attn_scores, dec_enc_attn_scores, flag
+        return predictions, self_attn_scores, dec_enc_attn_scores, flg
 
     def create_attn_score_plots():
 
@@ -389,6 +389,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_conv = np.mean(predictions_attn_conv, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_temp_cutoff = np.mean(predictions_attn_temp_cutoff, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
+        tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
+        tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
         ind = 0
         loss_diff = 0
@@ -433,6 +435,19 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
         plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}.png').format(args.exp_name))
         plt.close()
+
+        y_min = min(min(tgt_all[ind, :]),
+                    min(tgt_all_input[ind, :]),
+                    min(pred_attn[ind, :]),
+                    min(pred_attn_multi[ind, :]),
+                    min(pred_attn_conv[ind, :]),
+                    min(pred_attn_temp_cutoff[ind, :]))
+        y_max = max(max(tgt_all[ind, :]),
+                    max(tgt_all_input[ind, :]),
+                    max(pred_attn[ind, :]),
+                    max(pred_attn_multi[ind, :]),
+                    max(pred_attn_conv[ind, :]),
+                    max(pred_attn_temp_cutoff[ind, :]))
 
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
