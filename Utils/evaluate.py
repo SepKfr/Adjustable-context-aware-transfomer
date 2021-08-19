@@ -328,6 +328,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             self_attn_scores[j, :, :, :] = torch.mean(self_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             #dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             enc_attn_scores[j, :, :, :] = torch.mean(enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
+            del enc_attn_score
+            del self_attn_score
+            del output
 
         flg = True
         return predictions, enc_attn_scores, self_attn_scores, dec_enc_attn_scores, flg
