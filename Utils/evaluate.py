@@ -439,16 +439,16 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(enc_attn_multi_scores[ind, :]),
                     min(enc_attn_temp_cutoff_scores[ind, :]))
 
-        print(enc_attn_multi_scores)
+        print(dec_enc_attn_multi_scores)
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
         '''plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
                  color='blue')'''
-        plt.plot(np.arange(0, 168), enc_attn_scores[ind, :], color='red')
-        plt.plot(np.arange(0, 168), enc_attn_multi_scores[ind, :], color='violet')
-        plt.plot(np.arange(0, 168), enc_attn_conv_scores[ind, :], color='seagreen')
-        plt.plot(np.arange(0, 168), enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.plot(np.arange(0, 168), dec_enc_attn_scores[ind, :], color='red')
+        plt.plot(np.arange(0, 168), dec_enc_attn_multi_scores[ind, :], color='violet')
+        plt.plot(np.arange(0, 168), dec_enc_attn_conv_scores[ind, :], color='seagreen')
+        plt.plot(np.arange(0, 168), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
         plt.plot(np.arange(168, 192), self_attn_scores[ind, :], color='red')
         plt.plot(np.arange(168, 192), self_attn_multi_scores[ind, :], color='violet')
         plt.plot(np.arange(168, 192), self_attn_conv_scores[ind, :], color='seagreen')
