@@ -298,15 +298,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_2.png').format(args.exp_name))
         plt.close()
 
-    def get_attn_scores(model, flag):
+    def get_attn_scores(model, tgt_all_input, tgt_all, flag):
 
         model.eval()
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         self_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1],
                                         test_de.shape[2], test_en.shape[2]))
-        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
         for j in range(test_en.shape[0]):
             output, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
@@ -328,6 +326,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             self_attn_scores[j, :, :, :] = torch.mean(self_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
 
+        flg = True
         return predictions, self_attn_scores, dec_enc_attn_scores, flag
 
     def create_attn_score_plots():
@@ -349,6 +348,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
+        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
+
         for i, seed in enumerate([21, 9, 1992]):
 
             torch.manual_seed(seed)
@@ -362,13 +364,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             flg = False
             predictions_attn[i, :, :, :], self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_model, flg)
+                get_attn_scores(attn_model, tgt_all_input, tgt_all, flg)
             predictions_attn_multi[i, :, :, :], self_attn_multi_scores[i, :, :, :, :], \
-                dec_enc_attn_multi_scores[i, :, :, :, :], flg = get_attn_scores(attn_multi_model, flg)
+                dec_enc_attn_multi_scores[i, :, :, :, :], flg = get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, flg)
             predictions_attn_conv[i, :, :, :], self_attn_conv_scores[i, :, :, :, :], \
-                dec_enc_attn_conv_scores[i, :, :, :, :], flg = get_attn_scores(attn_conv_model, flg)
+                dec_enc_attn_conv_scores[i, :, :, :, :], flg = get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, flg)
             predictions_attn_conv[i, :, :, :], self_attn_temp_cutoff_scores[i, :, :, :, :], \
-                dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = get_attn_scores(attn_temp_cutoff_model, flg)
+                dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
 
         self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
@@ -387,9 +389,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_conv = np.mean(predictions_attn_conv, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_temp_cutoff = np.mean(predictions_attn_temp_cutoff, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
-
-        tgt_input = test_y_input.reshape(test_en.shape[0]*test_en.shape[1], -1).cpu().detach().numpy()
-        tgt_all = test_y_output.reshape(test_de.shape[0]*test_de.shape[1], -1).cpu().detach().numpy()
 
         ind = 0
         loss_diff = 0
@@ -459,7 +458,7 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument('--path_to_save', type=str, default='')
+    parser.add_argument('--path_to_save', type=str, default='traffic_plots')
 
     args = parser.parse_args()
     np.random.seed(21)
