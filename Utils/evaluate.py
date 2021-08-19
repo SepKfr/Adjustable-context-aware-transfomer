@@ -401,8 +401,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
-        plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
-                 color='blue')
+        '''plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
+                 color='blue')'''
         plt.plot(np.arange(0, 168), dec_enc_attn_scores[ind, :], color='red')
         plt.plot(np.arange(0, 168), dec_enc_attn_multi_scores[ind, :], color='violet')
         plt.plot(np.arange(0, 168), dec_enc_attn_conv_scores[ind, :], color='seagreen')
