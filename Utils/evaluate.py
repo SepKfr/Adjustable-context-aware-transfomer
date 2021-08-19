@@ -305,9 +305,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         self_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1],
                                         test_de.shape[2], test_en.shape[2]))
+        enc_attn_scores = np.zeros((test_en.shape[0], test_en.shape[1],
+                                   test_en.shape[2], test_en.shape[2]))
 
         for j in range(test_en.shape[0]):
-            output, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
+            output, enc_attn_score, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
             output_map = inverse_output(output.cpu().detach().numpy(),
                                         test_y_output[j].cpu().detach().numpy(), test_id[j])
             forecast = extract_numerical_data(
@@ -324,24 +326,29 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                                                     (format_outputs(test_y_input[j], test_id[j]))). \
                     to_numpy().astype('float32')
             self_attn_scores[j, :, :, :] = torch.mean(self_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
-            dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
+            dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
+            enc_attn_scores[j, :, :, :] = torch.mean(enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
 
         flg = True
-        return predictions, self_attn_scores, dec_enc_attn_scores, flg
+        return predictions, enc_attn_scores, self_attn_scores, dec_enc_attn_scores, flg
 
     def create_attn_score_plots():
 
         self_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
+        enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))
 
         self_attn_multi_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_multi_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
+        enc_attn_multi_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))
 
         self_attn_conv_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_conv_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
+        enc_attn_conv_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))
 
         self_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
+        enc_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))
 
         predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
@@ -363,25 +370,34 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                                models_path, "temp_cutoff", "attn_temp_cutoff_2")
 
             flg = False
-            predictions_attn[i, :, :, :], self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :], flg = \
+            predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
+                self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_model, tgt_all_input, tgt_all, flg)
-            predictions_attn_multi[i, :, :, :], self_attn_multi_scores[i, :, :, :, :], \
-                dec_enc_attn_multi_scores[i, :, :, :, :], flg = get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, flg)
-            predictions_attn_conv[i, :, :, :], self_attn_conv_scores[i, :, :, :, :], \
-                dec_enc_attn_conv_scores[i, :, :, :, :], flg = get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, flg)
-            predictions_attn_temp_cutoff[i, :, :, :], self_attn_temp_cutoff_scores[i, :, :, :, :], \
-                dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
+            predictions_attn_multi[i, :, :, :], enc_attn_multi_scores[i, :, :, :],\
+                self_attn_multi_scores[i, :, :, :, :], dec_enc_attn_multi_scores[i, :, :, :, :], flg = \
+                get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, flg)
+            predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
+                self_attn_conv_scores[i, :, :, :, :], dec_enc_attn_conv_scores[i, :, :, :, :], flg = \
+                get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, flg)
+            predictions_attn_temp_cutoff[i, :, :, :], enc_attn_temp_cutoff_scores[i, :, :, :],\
+                self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
+                get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
 
-        self_attn_scores, dec_enc_attn_scores = \
+        enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
+            np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
             np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
             np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
-        self_attn_multi_scores, dec_enc_attn_multi_scores = \
+        enc_attn_multi_scores, self_attn_multi_scores, dec_enc_attn_multi_scores = \
+            np.mean(np.mean(enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
             np.mean(np.mean(self_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
             np.mean(np.mean(dec_enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
-        self_attn_conv_scores, dec_enc_attn_conv_scores = \
+        enc_attn_conv_scores, self_attn_conv_scores, dec_enc_attn_conv_scores = \
+            np.mean(np.mean(enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
             np.mean(np.mean(self_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
             np.mean(np.mean(dec_enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
-        self_attn_temp_cutoff_scores, dec_enc_attn_temp_cutoff_scores = \
+        enc_attn_temp_cutoff_scores, self_attn_temp_cutoff_scores, dec_enc_attn_temp_cutoff_scores = \
+            np.mean(np.mean(enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1],
+                                                                                    -1),\
             np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
             np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
 
@@ -409,25 +425,25 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     loss_diff = loss_attn - loss_attn_temp
                     ind = i
 
-        y_max = max(max(dec_enc_attn_scores[ind, :]),
-                    max(dec_enc_attn_conv_scores[ind, :]),
-                    max(dec_enc_attn_multi_scores[ind, :]),
-                    max(dec_enc_attn_temp_cutoff_scores[ind, :]))
+        y_max = max(max(enc_attn_scores[ind, :]),
+                    max(enc_attn_conv_scores[ind, :]),
+                    max(enc_attn_multi_scores[ind, :]),
+                    max(enc_attn_temp_cutoff_scores[ind, :]))
 
-        y_min = min(min(dec_enc_attn_scores[ind, :]),
-                    min(dec_enc_attn_conv_scores[ind, :]),
-                    min(dec_enc_attn_multi_scores[ind, :]),
-                    min(dec_enc_attn_temp_cutoff_scores[ind, :]))
+        y_min = min(min(enc_attn_scores[ind, :]),
+                    min(enc_attn_conv_scores[ind, :]),
+                    min(enc_attn_multi_scores[ind, :]),
+                    min(enc_attn_temp_cutoff_scores[ind, :]))
 
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
         '''plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
                  color='blue')'''
-        plt.plot(np.arange(0, 168), dec_enc_attn_scores[ind, :], color='red')
-        plt.plot(np.arange(0, 168), dec_enc_attn_multi_scores[ind, :], color='violet')
-        plt.plot(np.arange(0, 168), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        plt.plot(np.arange(168, 192), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.plot(np.arange(0, 168), enc_attn_scores[ind, :], color='red')
+        plt.plot(np.arange(0, 168), enc_attn_multi_scores[ind, :], color='violet')
+        plt.plot(np.arange(0, 168), enc_attn_conv_scores[ind, :], color='seagreen')
+        plt.plot(np.arange(168, 192), enc_attn_temp_cutoff_scores[ind, :], color='orange')
         plt.plot(np.arange(168, 192), self_attn_scores[ind, :], color='red')
         plt.plot(np.arange(168, 192), self_attn_multi_scores[ind, :], color='violet')
         plt.plot(np.arange(168, 192), self_attn_conv_scores[ind, :], color='seagreen')
