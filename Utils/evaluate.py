@@ -422,7 +422,7 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument('--path_to_save', type=str, default='example_2')
+    parser.add_argument('--path_to_save', type=str, default='')
 
     args = parser.parse_args()
     np.random.seed(21)
