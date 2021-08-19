@@ -427,7 +427,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.plot(np.arange(0, 168), dec_enc_attn_scores[ind, :], color='red')
         plt.plot(np.arange(0, 168), dec_enc_attn_multi_scores[ind, :], color='violet')
         plt.plot(np.arange(0, 168), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        plt.plot(np.arange(0, 168), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.plot(np.arange(168, 192), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.plot(np.arange(168, 192), self_attn_scores[ind, :], color='red')
+        plt.plot(np.arange(168, 192), self_attn_multi_scores[ind, :], color='violet')
+        plt.plot(np.arange(168, 192), self_attn_conv_scores[ind, :], color='seagreen')
+        plt.plot(np.arange(168, 192), self_attn_temp_cutoff_scores[ind, :], color='orange')
         plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
