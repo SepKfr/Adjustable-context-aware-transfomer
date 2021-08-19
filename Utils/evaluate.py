@@ -412,7 +412,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.legend(['ground-truth', 'attn score of transformer', 'attn score of multi-layer transformer',
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
-        plt.savefig(os.path.join(args.path_to_save, 'attn_score.png').format(args.exp_name))
+        plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}.png').format(args.exp_name))
         plt.close()
 
     create_attn_score_plots()
