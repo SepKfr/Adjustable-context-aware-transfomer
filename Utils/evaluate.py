@@ -474,8 +474,11 @@ def main():
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
     parser.add_argument('--path_to_save', type=str, default='traffic_plots')
-
     args = parser.parse_args()
+
+    if not os.path.exists(args.path_to_save):
+        os.makedirs(args.path_to_save)
+
     np.random.seed(21)
     random.seed(21)
 
