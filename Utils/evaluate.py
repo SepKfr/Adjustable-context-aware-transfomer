@@ -437,7 +437,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
-        plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
+        plt.plot(np.arange(0, 192), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
         plt.plot(np.arange(168, 192), pred_attn[ind, :], color='red')
         plt.plot(np.arange(168, 192), pred_attn_multi[ind, :], color='violet')
@@ -446,7 +446,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
-        plt.legend(['ransformer', 'multi-layer transformer',
+        plt.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left")
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}.png').format(args.exp_name))
         plt.close()
