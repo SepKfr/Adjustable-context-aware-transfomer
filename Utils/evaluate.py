@@ -396,6 +396,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(dec_enc_attn_multi_scores[ind, :]),
                     max(dec_enc_attn_temp_cutoff_scores[ind, :]))
 
+        y_min = min(min(dec_enc_attn_scores[ind, :]),
+                    min(dec_enc_attn_conv_scores[ind, :]),
+                    min(dec_enc_attn_multi_scores[ind, :]),
+                    min(dec_enc_attn_temp_cutoff_scores[ind, :]))
+
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
@@ -405,10 +410,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.plot(np.arange(0, 168), dec_enc_attn_multi_scores[ind, :], color='violet')
         plt.plot(np.arange(0, 168), dec_enc_attn_conv_scores[ind, :], color='seagreen')
         plt.plot(np.arange(0, 168), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
-        plt.vlines(168, ymin=0, ymax=y_max, colors='lightblue',
+        plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
-        plt.legend(['ground-truth', 'attn score of transformer', 'attn score of multi-layer transformer',
+        plt.legend(['attn score of transformer', 'attn score of multi-layer transformer',
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
         plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}.png').format(args.exp_name))
         plt.close()
