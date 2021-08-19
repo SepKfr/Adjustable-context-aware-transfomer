@@ -20,6 +20,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
     test_y_input = test_y[:, :, :test_en.shape[2], :]
     test_y_output = test_y[:, :, test_en.shape[2]:, :]
 
+    def extract_numerical_data(data):
+        """Strips out forecast time and identifier columns."""
+        return data[[
+            col for col in data.columns
+            if col not in {"forecast_time", "identifier"}
+        ]]
+
     def load_lstm(seed, conf, mdl_path):
 
         n_layers, hidden_size = conf
@@ -74,17 +81,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         flat_prediction['identifier'] = tid[:, 0, 0]
         return flat_prediction
 
-    def make_predictions(model, flow_rate_prefix, flow_rate_postfix, targets_all, targets_all_input, flg):
+    def make_predictions(model, targets_all, targets_all_input, flg):
 
         model.eval()
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-
-        def extract_numerical_data(data):
-            """Strips out forecast time and identifier columns."""
-            return data[[
-                col for col in data.columns
-                if col not in {"forecast_time", "identifier"}
-            ]]
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -100,13 +100,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                 targets = extract_numerical_data(
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
 
-                x = extract_numerical_data(
+                '''x = extract_numerical_data(
                     formatter.format_predictions(format_outputs(test_en[j, :, :, 4].unsqueeze(-1), test_id[j]))
-                )
-                flow_rate_prefix[j, :, :] = x
+                )'''
+                '''flow_rate_prefix[j, :, :] = x
                 flow_rate_postfix[j, :, :] = extract_numerical_data(
                     formatter.format_predictions(format_outputs(test_de[j, :, :, 3].unsqueeze(-1), test_id[j]))
-                )
+                )'''
                 targets_all[j, :, :] = targets
                 targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
@@ -298,21 +298,37 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_2.png').format(args.exp_name))
         plt.close()
 
-    def get_attn_scores(model):
+    def get_attn_scores(model, flag):
 
         model.eval()
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         self_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((test_de.shape[0], test_de.shape[1],
                                         test_de.shape[2], test_en.shape[2]))
+        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
         for j in range(test_en.shape[0]):
-            preds, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
-            predictions[j, :, :] = preds.squeeze(-1).cpu().detach().numpy()
+            output, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
+            output_map = inverse_output(output.cpu().detach().numpy(),
+                                        test_y_output[j].cpu().detach().numpy(), test_id[j])
+            forecast = extract_numerical_data(
+                formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32')
+
+            predictions[j, :, :] = forecast
+
+            if not flag:
+                targets = extract_numerical_data(
+                    formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
+
+                tgt_all[j, :, :] = targets
+                tgt_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
+                                                                    (format_outputs(test_y_input[j], test_id[j]))). \
+                    to_numpy().astype('float32')
             self_attn_scores[j, :, :, :] = torch.mean(self_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
 
-        return predictions, self_attn_scores, dec_enc_attn_scores
+        return predictions, self_attn_scores, dec_enc_attn_scores, flag
 
     def create_attn_score_plots():
 
@@ -344,14 +360,15 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
                                                models_path, "temp_cutoff", "attn_temp_cutoff_2")
 
-            predictions_attn[i, :, :, :], self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :] = \
-                get_attn_scores(attn_model)
+            flg = False
+            predictions_attn[i, :, :, :], self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :], flg = \
+                get_attn_scores(attn_model, flg)
             predictions_attn_multi[i, :, :, :], self_attn_multi_scores[i, :, :, :, :], \
-                dec_enc_attn_multi_scores[i, :, :, :, :] = get_attn_scores(attn_multi_model)
+                dec_enc_attn_multi_scores[i, :, :, :, :], flg = get_attn_scores(attn_multi_model, flg)
             predictions_attn_conv[i, :, :, :], self_attn_conv_scores[i, :, :, :, :], \
-                dec_enc_attn_conv_scores[i, :, :, :, :] = get_attn_scores(attn_conv_model)
+                dec_enc_attn_conv_scores[i, :, :, :, :], flg = get_attn_scores(attn_conv_model, flg)
             predictions_attn_conv[i, :, :, :], self_attn_temp_cutoff_scores[i, :, :, :, :], \
-                dec_enc_attn_temp_cutoff_scores[i, :, :, :, :] = get_attn_scores(attn_temp_cutoff_model)
+                dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = get_attn_scores(attn_temp_cutoff_model, flg)
 
         self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
@@ -416,6 +433,23 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.legend(['attn score of transformer', 'attn score of multi-layer transformer',
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
         plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}.png').format(args.exp_name))
+        plt.close()
+
+        plt.rc('axes', labelsize=18)
+        plt.rc('axes', titlesize=18)
+        plt.rc('legend', fontsize=8)
+        plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
+                 color='blue')
+        plt.plot(np.arange(0, 168), pred_attn[ind, :], color='red')
+        plt.plot(np.arange(0, 168), pred_attn_multi[ind, :], color='violet')
+        plt.plot(np.arange(0, 168), predictions_attn_conv[ind, :], color='seagreen')
+        plt.plot(np.arange(0, 168), predictions_attn_temp_cutoff[ind, :], color='orange')
+        plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
+                   linestyles="dashed")
+
+        plt.legend(['ransformer', 'multi-layer transformer',
+                    'CNN-transformer', 'ours'], loc="upper left")
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}.png').format(args.exp_name))
         plt.close()
 
     create_attn_score_plots()
