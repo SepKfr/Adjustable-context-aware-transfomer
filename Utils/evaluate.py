@@ -369,7 +369,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                 dec_enc_attn_multi_scores[i, :, :, :, :], flg = get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, flg)
             predictions_attn_conv[i, :, :, :], self_attn_conv_scores[i, :, :, :, :], \
                 dec_enc_attn_conv_scores[i, :, :, :, :], flg = get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, flg)
-            predictions_attn_conv[i, :, :, :], self_attn_temp_cutoff_scores[i, :, :, :, :], \
+            predictions_attn_temp_cutoff[i, :, :, :], self_attn_temp_cutoff_scores[i, :, :, :, :], \
                 dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
 
         self_attn_scores, dec_enc_attn_scores = \
