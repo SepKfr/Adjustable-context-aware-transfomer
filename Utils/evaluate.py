@@ -309,7 +309,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                    test_en.shape[2], test_en.shape[2]))
 
         for j in range(test_en.shape[0]):
-            output, enc_attn_score, self_attn_score = model(test_en[j], test_de[j])
+            output, enc_attn_score, self_attn_score, dec_enc_attn_score = model(test_en[j], test_de[j])
             output_map = inverse_output(output.cpu().detach().numpy(),
                                         test_y_output[j].cpu().detach().numpy(), test_id[j])
             forecast = extract_numerical_data(
@@ -326,10 +326,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                                                     (format_outputs(test_y_input[j], test_id[j]))). \
                     to_numpy().astype('float32')
             self_attn_scores[j, :, :, :] = torch.mean(self_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
-            #dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
+            dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             enc_attn_scores[j, :, :, :] = torch.mean(enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             del enc_attn_score
             del self_attn_score
+            del dec_enc_attn_score
             del output
 
         flg = True
@@ -438,6 +439,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(enc_attn_multi_scores[ind, :]),
                     min(enc_attn_temp_cutoff_scores[ind, :]))
 
+        print(enc_attn_multi_scores)
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
