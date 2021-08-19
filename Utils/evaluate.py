@@ -440,10 +440,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('legend', fontsize=8)
         plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
                  color='blue')
-        plt.plot(np.arange(0, 168), pred_attn[ind, :], color='red')
-        plt.plot(np.arange(0, 168), pred_attn_multi[ind, :], color='violet')
-        plt.plot(np.arange(0, 168), predictions_attn_conv[ind, :], color='seagreen')
-        plt.plot(np.arange(0, 168), predictions_attn_temp_cutoff[ind, :], color='orange')
+        plt.plot(np.arange(168, 192), pred_attn[ind, :], color='red')
+        plt.plot(np.arange(168, 192), pred_attn_multi[ind, :], color='violet')
+        plt.plot(np.arange(168, 192), predictions_attn_conv[ind, :], color='seagreen')
+        plt.plot(np.arange(168, 192), predictions_attn_temp_cutoff[ind, :], color='orange')
         plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
