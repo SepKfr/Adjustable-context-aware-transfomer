@@ -138,7 +138,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  attn_type=args.attn_type,
                  kernel=kernel)
     checkpoint = torch.load(os.path.join(path, args.name))
-    model = nn.DataParallel(model).to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     model.eval()
@@ -181,7 +180,7 @@ def main():
     parser.add_argument("--d_model_best", type=int)
     parser.add_argument("--n_heads", type=list, default=[8])
     parser.add_argument("--n_heads_best", type=int)
-    parser.add_argument("--n_layers", type=list, default=[3, 9])
+    parser.add_argument("--n_layers", type=list, default=[1])
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=int, default=[1, 3, 9])
     parser.add_argument("--kernel_best", type=int)
@@ -283,8 +282,6 @@ def main():
                      tgt_pad_index=0, device=device,
                      attn_type=args.attn_type,
                      kernel=kernel)
-
-        model = nn.DataParallel(model)
         model.to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
