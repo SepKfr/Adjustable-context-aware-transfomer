@@ -136,7 +136,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
-                 kernel=kernel)
+                 kernel=kernel).to(device)
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -281,8 +281,7 @@ def main():
                      n_layers=n_layers, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      attn_type=args.attn_type,
-                     kernel=kernel)
-        model.to(device)
+                     kernel=kernel).to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
 
