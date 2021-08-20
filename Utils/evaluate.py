@@ -17,6 +17,7 @@ import pickle
 
 def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatter):
 
+    len_of_pred = test_y.shape[2] - test_en.shape[2]
     test_y_input = test_y[:, :, :test_en.shape[2], :]
     test_y_output = test_y[:, :, test_en.shape[2]:, :]
 
@@ -64,9 +65,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         model.load_state_dict(new_state_dict)
         return model
 
-    with open('configs_{}_24.json'.format(args.exp_name), 'r') as json_file:
+    with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
         configs = json.load(json_file)
-    models_path = "models_{}_24".format(args.exp_name)
+    models_path = "models_{}_{}".format(args.exp_name, len_of_pred)
 
     df_list = []
 
@@ -453,7 +454,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.legend(['attn score of transformer', 'attn score of multi-layer transformer',
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
-        plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}.png').format(args.exp_name))
+        plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
         y_min = min(min(tgt_all[ind, :]),
@@ -483,7 +484,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left")
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}.png').format(args.exp_name))
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
     create_attn_score_plots()
