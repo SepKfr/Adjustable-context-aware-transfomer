@@ -125,7 +125,7 @@ def process_watershed(config):
     output.index = pd.to_datetime(output.Date)
     output.sort_index(inplace=True)
     output = output.dropna(axis=1, how='all')
-    output = output.fillna(0.)
+    output = output.fillna(method="ffill").fillna(method='bfill')
 
     start_date = pd.to_datetime('2013-03-28')
     earliest_time = start_date
