@@ -18,6 +18,8 @@ import pickle
 def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatter):
 
     len_of_pred = test_y.shape[2] - test_en.shape[2]
+    total_len = test_y.shape[2]
+    enc_step = test_en.shape[2]
     test_y_input = test_y[:, :, :test_en.shape[2], :]
     test_y_output = test_y[:, :, test_en.shape[2]:, :]
 
@@ -445,11 +447,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('legend', fontsize=8)
         '''plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
                  color='blue')'''
-        plt.plot(np.arange(0, 168), dec_enc_attn_scores[ind, :], color='red')
-        plt.plot(np.arange(0, 168), dec_enc_attn_multi_scores[ind, :], color='violet')
-        plt.plot(np.arange(0, 168), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        plt.plot(np.arange(0, 168), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
-        plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
+        plt.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
+        plt.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
+        plt.plot(np.arange(0, enc_step), dec_enc_attn_conv_scores[ind, :], color='seagreen')
+        plt.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
         plt.legend(['attn score of transformer', 'attn score of multi-layer transformer',
@@ -473,13 +475,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
-        plt.plot(np.arange(0, 192), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
+        plt.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
-        plt.plot(np.arange(168, 192), pred_attn[ind, :], color='red')
-        plt.plot(np.arange(168, 192), pred_attn_multi[ind, :], color='violet')
-        plt.plot(np.arange(168, 192), pred_attn_conv[ind, :], color='seagreen')
-        plt.plot(np.arange(168, 192), pred_attn_temp_cutoff[ind, :], color='orange')
-        plt.vlines(168, ymin=y_min, ymax=y_max, colors='lightblue',
+        plt.plot(np.arange(enc_step, total_len), pred_attn[ind, :], color='red')
+        plt.plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
+        plt.plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
+        plt.plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
+        plt.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
         plt.legend(['ground truth', 'transformer', 'multi-layer transformer',
