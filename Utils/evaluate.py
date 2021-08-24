@@ -414,7 +414,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         pred_attn_temp_cutoff = np.mean(predictions_attn_temp_cutoff, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
-        print(tgt_all)
+
         print(tgt_all_input)
 
         ind = 0
