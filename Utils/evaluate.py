@@ -415,8 +415,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
-        print(tgt_all_input)
-
         ind = 0
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
