@@ -432,15 +432,25 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     ind = i
                     loss_diff = loss_attn - loss_attn_temp
 
-        y_max = max(max(dec_enc_attn_scores[ind, :]),
-                    max(dec_enc_attn_conv_scores[ind, :]),
-                    max(dec_enc_attn_multi_scores[ind, :]),
-                    max(dec_enc_attn_temp_cutoff_scores[ind, :]))
+        y_max = max(max(enc_attn_scores[ind, :]),
+                    max(enc_attn_conv_scores[ind, :]),
+                    max(enc_attn_multi_scores[ind, :]),
+                    max(enc_attn_temp_cutoff_scores[ind, :]),
+                    max(self_attn_scores[ind, :]),
+                    max(self_attn_conv_scores[ind, :]),
+                    max(self_attn_multi_scores[ind, :]),
+                    max(self_attn_temp_cutoff_scores[ind, :])
+                    )
 
-        y_min = min(min(dec_enc_attn_scores[ind, :]),
-                    min(dec_enc_attn_conv_scores[ind, :]),
-                    min(dec_enc_attn_multi_scores[ind, :]),
-                    min(dec_enc_attn_temp_cutoff_scores[ind, :]))
+        y_min = min(min(enc_attn_scores[ind, :]),
+                    min(enc_attn_conv_scores[ind, :]),
+                    min(enc_attn_multi_scores[ind, :]),
+                    min(enc_attn_temp_cutoff_scores[ind, :]),
+                    min(self_attn_scores[ind, :]),
+                    min(self_attn_conv_scores[ind, :]),
+                    min(self_attn_multi_scores[ind, :]),
+                    min(self_attn_temp_cutoff_scores[ind, :])
+                    )
 
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
