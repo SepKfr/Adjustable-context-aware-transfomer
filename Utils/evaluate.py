@@ -416,6 +416,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
         ind = 0
+        loss_diff = 0
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
@@ -427,7 +428,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
+                if loss_attn - loss_attn_temp > loss_diff:
                     ind = i
+                    loss_diff = loss_attn - loss_attn_temp
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
@@ -444,16 +447,20 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('legend', fontsize=8)
         '''plt.plot(np.arange(0, 192), np.concatenate((tgt_input[ind, :], tgt_all[ind, :])),
                  color='blue')'''
-        plt.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
-        plt.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
-        plt.plot(np.arange(0, enc_step), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        plt.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
+        plt.plot(np.arange(0, enc_step), enc_attn_multi_scores[ind, :], color='violet')
+        plt.plot(np.arange(0, enc_step), enc_attn_conv_scores[ind, :], color='seagreen')
+        plt.plot(np.arange(0, enc_step), enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        plt.plot(np.arange(enc_step, total_len), self_attn_scores[ind, :], color='red')
+        plt.plot(np.arange(enc_step, total_len), self_attn_multi_scores[ind, :], color='violet')
+        plt.plot(np.arange(enc_step, total_len), self_attn_conv_scores[ind, :], color='seagreen')
+        plt.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :], color='orange')
         plt.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
         plt.legend(['attn score of transformer', 'attn score of multi-layer transformer',
                     'attn score of CNN-transformer', 'attn score of our model'], loc="upper left")
-        plt.savefig(os.path.join(args.path_to_save, 'attn_score_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
         y_min = min(min(tgt_all[ind, :]),
