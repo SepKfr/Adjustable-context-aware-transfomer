@@ -452,6 +452,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(self_attn_temp_cutoff_scores[ind, :])
                     )
 
+        print(enc_attn_multi_scores[ind, :])
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
