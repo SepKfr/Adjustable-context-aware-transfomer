@@ -428,8 +428,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-
-                ind = i
+                if loss_attn - loss_attn_temp > loss_diff:
+                    loss_diff = loss_attn - loss_attn_temp
+                    ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -451,7 +452,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(self_attn_temp_cutoff_scores[ind, :])
                     )
 
-        print(enc_attn_multi_scores[ind, :])
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
