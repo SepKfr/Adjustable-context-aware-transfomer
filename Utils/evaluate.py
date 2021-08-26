@@ -455,7 +455,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)
-        fig, (ax_1, ax_2, ax_3) = plt.subplots(3, sharex='True')
+        fig, (ax_1, ax_2, ax_3) = plt.subplots(3, sharex=True)
 
         ax_1.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(0, enc_step), enc_attn_multi_scores[ind, :], color='violet')
