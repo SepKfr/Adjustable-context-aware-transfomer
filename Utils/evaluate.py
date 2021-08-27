@@ -453,26 +453,26 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     )
 
         plt.rc('legend', fontsize=8)
-        fig = plt.figure()
-        gs = fig.add_gridspec(3, 1, hspace=0, wspace=0)
-        axs = gs.subplots(sharex=True)
+        fig, (ax_1, ax_2, ax_3) = plt.subplots(3, sharex=True)
 
-        axs[0].plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
-        axs[0].plot(np.arange(0, enc_step), enc_attn_multi_scores[ind, :], color='violet')
-        axs[0].plot(np.arange(0, enc_step), enc_attn_conv_scores[ind, :], color='seagreen')
-        axs[0].plot(np.arange(0, enc_step), enc_attn_temp_cutoff_scores[ind, :], color='orange')
-        axs[0].plot(np.arange(enc_step, total_len), self_attn_scores[ind, :], color='red')
-        axs[0].plot(np.arange(enc_step, total_len), self_attn_multi_scores[ind, :], color='violet')
-        axs[0].plot(np.arange(enc_step, total_len), self_attn_conv_scores[ind, :], color='seagreen')
-        axs[0].plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :], color='orange')
-        axs[0].vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
+        ax_1.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
+        ax_1.plot(np.arange(0, enc_step), enc_attn_multi_scores[ind, :], color='violet')
+        ax_1.plot(np.arange(0, enc_step), enc_attn_conv_scores[ind, :], color='seagreen')
+        ax_1.plot(np.arange(0, enc_step), enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        ax_1.plot(np.arange(enc_step, total_len), self_attn_scores[ind, :], color='red')
+        ax_1.plot(np.arange(enc_step, total_len), self_attn_multi_scores[ind, :], color='violet')
+        ax_1.plot(np.arange(enc_step, total_len), self_attn_conv_scores[ind, :], color='seagreen')
+        ax_1.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :], color='orange')
+        ax_1.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
+        ax_1.label_outer()
 
-        axs[0].legend(['self attn score of transformer', 'self attn score of multi-layer transformer',
+        ax_1.legend(['self attn score of transformer', 'self attn score of multi-layer transformer',
                     'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left")
         '''plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()'''
-        axs[0].set_ylabel("Ave. a(q)")
+        ax_1.set_ylabel("Ave. a(q)")
+        ax_1.label_outer()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
@@ -486,15 +486,16 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(dec_enc_attn_temp_cutoff_scores[ind, :])
                     )
 
-        axs[1].plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
-        axs[1].plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
-        axs[1].plot(np.arange(0, enc_step), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        axs[1].plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
-        axs[1].vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
+        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
+        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
+        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_conv_scores[ind, :], color='seagreen')
+        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        ax_2.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
-        axs[1].legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
+        ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
                      'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left")
-        axs[1].set_ylabel("Ave. a(q)")
+        ax_2.set_ylabel("Ave. a(q)")
+        ax_2.label_outer()
 
         y_min = min(min(tgt_all[ind, :]),
                     min(tgt_all_input[ind, :]),
@@ -512,25 +513,23 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         '''plt.rc('axes', labelsize=18)
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=8)'''
-        axs[2].plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
+        ax_3.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
-        axs[2].plot(np.arange(enc_step, total_len), pred_attn[ind, :], color='red')
-        axs[2].plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
-        axs[2].plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
-        axs[2].plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
-        axs[2].vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
+        ax_3.plot(np.arange(enc_step, total_len), pred_attn[ind, :], color='red')
+        ax_3.plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
+        ax_3.plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
+        ax_3.plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
+        ax_3.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
-        axs[2].legend(['ground truth', 'transformer', 'multi-layer transformer',
+        ax_3.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left")
 
-        axs[2].set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
-            else axs[2].set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
-            else axs[2].set_ylabel("Occupancy Rate")
+        ax_3.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
+            else ax_3.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
+            else ax_3.set_ylabel("Occupancy Rate")
 
-        for ax in axs:
-            ax.label_outer()
-
+        fig.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
