@@ -490,7 +490,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
         ax_2.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
-        ax_1.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
+        ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
                      'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left")
         ax_2.set_ylabel("Ave. a(q, t)")
 
