@@ -454,7 +454,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.rc('legend', fontsize=8)
         fig = plt.figure()
-        gs = fig.add_gridspec(3, hspace=0)
+        gs = fig.add_gridspec(3, 1, hspace=0, wspace=0)
         axs = gs.subplots(sharex=True)
 
         axs[0].plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
