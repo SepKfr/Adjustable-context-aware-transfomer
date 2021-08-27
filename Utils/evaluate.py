@@ -521,6 +521,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         ax_3.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left")
+
+        ax_3.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
+            else ax_3.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
+            else ax_3.set_ylabel("Occupancy rate")
+
         fig.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
