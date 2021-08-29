@@ -124,15 +124,60 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
     criterion = nn.MSELoss()
 
-    rmse_lstm = np.zeros((3, 24))
-    rmse_attn = np.zeros((3, 24))
-    rmse_attn_conv = np.zeros((3, 24))
-    rmse_attn_temp_cutoff = np.zeros((3, 24))
-
     def create_rmse_plot():
+
+        def calculate_loss_per_step(predictions):
+            rmses = np.zeros(24)
+            for j in range(24):
+                test_loss = criterion(predictions[:, :, j], tgt_all[:, :, j]).item()
+                normaliser = tgt_all[:, :, j].abs().mean()
+                test_loss = math.sqrt(test_loss) / normaliser
+                rmses[j] = test_loss
+            return rmses
+
+        predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
+
+        flag = False
+
+        rmse_lstm = np.zeros((3, 24))
+        rmse_attn = np.zeros((3, 24))
+        rmse_attn_multi = np.zeros((3, 24))
+        rmse_attn_conv = np.zeros((3, 24))
+        rmse_attn_temp_cutoff = np.zeros((3, 24))
+
+        for i, seed in enumerate([21, 9, 1992]):
+
+            torch.manual_seed(seed)
+
+            lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
+            attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
+            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn")
+            attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
+                                        "conv_attn", "attn_conv")
+            attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
+                                               models_path, "temp_cutoff", "attn_temp_cutoff_2")
+
+            predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag)
+            predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag)
+            predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag)
+            predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag)
+            predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, tgt_all, tgt_all_input, flag)
+
+            rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :])
+            rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :])
+            rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :])
+            rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
+            rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])
 
         lstm = np.mean(rmse_lstm, axis=0)
         attn = np.mean(rmse_attn, axis=0)
+        attn_multi = np.mean(rmse_attn_multi, axis=0)
         attn_conv = np.mean(rmse_attn_conv, axis=0)
         attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
 
@@ -141,22 +186,20 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', titlesize=18)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(x, attn_temp_cutoff, 'xb-', color='deepskyblue')
+        plt.plot(x, attn_temp_cutoff, 'xb-', color='orange')
         plt.plot(x, attn_conv, 'xb-', color='seagreen')
-        plt.plot(x, attn, 'xb-', color='orange')
+        plt.plot(x, attn, 'xb-', color='red')
+        plt.plot(x, attn_multi, 'xb-', color='violet')
         plt.plot(x, lstm, 'xb-', color='salmon')
         plt.xlabel("Future Timesteps")
         plt.ylabel("RMSE")
-        plt.legend(['ours', 'conv attn', 'attn', 'seq2seq-lstm'], loc="upper right")
-        name = args.exp_name if args.exp_name != "favorita" else "Retail"
+        plt.legend(['Context-Aware Trans', 'CNN Trans', 'Trans', 'Trans-Multi', 'LSTM'], loc="upper right")
+        name = args.exp_name
         plt.title(name)
         plt.savefig('rmses_{}.png'.format(name))
         plt.close()
 
-        '''rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :])
-        rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :])
-        rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
-        rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])
+        '''
 
         calculate_loss(predictions_lstm, "lstm")
         calculate_loss(predictions_attn, "attn")
@@ -174,6 +217,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
@@ -188,6 +232,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
             attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
+            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn")
             attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
                                         "conv_attn", "attn_conv")
             attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
@@ -195,17 +240,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, flag)
             predictions_attn[i, :, :, :], flag = make_predictions(attn_model, flag)
+            predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_model, flag)
             predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, flag)
             predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, flag)
 
-            def calculate_loss_per_step(predictions):
-                rmses = np.zeros(24)
-                for j in range(24):
-                    test_loss = criterion(predictions[:, :, j], tgt_all[:, :, j]).item()
-                    normaliser = tgt_all[:, :, j].abs().mean()
-                    test_loss = math.sqrt(test_loss) / normaliser
-                    rmses[j] = test_loss
-                return rmses
 
             final_error = dict()
 
@@ -533,7 +571,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
-    create_attn_score_plots()
+    #create_attn_score_plots()
+    create_rmse_plot()
 
 
 def main():
