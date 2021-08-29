@@ -157,7 +157,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
             attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
-            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn")
+            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn_multi")
             attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
                                         "conv_attn", "attn_conv")
             attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
