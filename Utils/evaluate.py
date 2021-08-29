@@ -33,7 +33,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
     def load_lstm(seed, conf, mdl_path):
 
         n_layers, hidden_size = conf
-        print(conf)
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=test_en.shape[3],
@@ -92,7 +91,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         k = 0
         for j in range(test_en.shape[0]):
-            output = model(test_en[j], test_de[j])
+            output, _, _, _ = model(test_en[j], test_de[j])
             output_map = inverse_output(output.cpu().detach().numpy(),
                                         test_y_output[j].cpu().detach().numpy(), test_id[j])
             forecast = extract_numerical_data(
