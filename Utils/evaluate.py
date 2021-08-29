@@ -129,9 +129,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             rmses = np.zeros(24)
             for j in range(24):
-                print(predictions.shape)
-                print(tgt_all.shape)
-                test_loss = criterion(predictions[:, :, j], tgt_all[:, :, j]).item()
+                test_loss = criterion(predictions[:, :, j], tgt_all[:, :, j])
                 normaliser = tgt_all[:, :, j].abs().mean()
                 test_loss = math.sqrt(test_loss) / normaliser
                 rmses[j] = test_loss
