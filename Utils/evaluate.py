@@ -33,6 +33,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
     def load_lstm(seed, conf, mdl_path):
 
         n_layers, hidden_size = conf
+        print(conf)
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=test_en.shape[3],
