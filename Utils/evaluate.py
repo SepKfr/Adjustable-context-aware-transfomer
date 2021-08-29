@@ -196,7 +196,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.legend(['Context-Aware Trans', 'CNN Trans', 'Trans', 'Trans-Multi', 'LSTM'], loc="upper right")
         name = args.exp_name
         plt.title(name)
-        plt.savefig('rmses_{}_{}.png'.format(name, total_len - enc_step))
+        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.png'.format(name, total_len - enc_step)))
         plt.close()
 
         '''
