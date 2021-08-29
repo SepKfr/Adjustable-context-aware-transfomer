@@ -22,6 +22,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
     enc_step = test_en.shape[2]
     test_y_input = test_y[:, :, :test_en.shape[2], :]
     test_y_output = test_y[:, :, test_en.shape[2]:, :]
+    criterion = nn.MSELoss()
 
     def extract_numerical_data(data):
         """Strips out forecast time and identifier columns."""
@@ -123,7 +124,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         return predictions, flg
 
     def create_rmse_plot():
-        criterion = nn.MSELoss()
 
         def calculate_loss_per_step(predictions):
 
@@ -243,7 +243,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_model, flag)
             predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, flag)
             predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, flag)
-
 
             final_error = dict()
 
@@ -571,8 +570,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
-    #create_attn_score_plots()
-    create_rmse_plot()
+    create_attn_score_plots()
+    #create_rmse_plot()
 
 
 def main():
