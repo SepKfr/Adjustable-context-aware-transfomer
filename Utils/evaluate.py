@@ -122,11 +122,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         return predictions, flg
 
-    criterion = nn.MSELoss()
-
     def create_rmse_plot():
+        criterion = nn.MSELoss()
 
         def calculate_loss_per_step(predictions):
+
             rmses = np.zeros(24)
             for j in range(24):
                 test_loss = criterion(predictions[:, :, j], tgt_all[:, :, j]).item()
