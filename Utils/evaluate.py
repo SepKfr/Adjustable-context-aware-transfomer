@@ -129,8 +129,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             rmses = np.zeros(24)
             for j in range(24):
-                test_loss = criterion(predictions[:, :, j], tgt_all[:, :, j])
-                normaliser = tgt_all[:, :, j].abs().mean()
+                test_loss = criterion(torch.from_numpy(predictions[:, :, j]), torch.from_numpy(tgt_all[:, :, j])).item()
+                normaliser = torch.from_numpy(tgt_all[:, :, j]).abs().mean()
                 test_loss = math.sqrt(test_loss) / normaliser
                 rmses[j] = test_loss
             return rmses
