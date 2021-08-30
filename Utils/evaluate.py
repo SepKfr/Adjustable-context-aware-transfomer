@@ -570,8 +570,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
-    create_attn_score_plots()
-    #create_rmse_plot()
+    #create_attn_score_plots()
+    create_rmse_plot()
 
 
 def main():
