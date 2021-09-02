@@ -502,7 +502,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :], color='orange')
         ax_1.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
-        ax_1.set_xticks([])
+        ax_1.set_xticklabels([])
 
         ax_1.legend(['self attn score of transformer', 'self attn score of multi-layer transformer',
                     'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left")
@@ -531,7 +531,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
                      'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left")
         ax_2.set_ylabel("Ave. a(q)")
-        ax_2.set_xticks([])
+        ax_2.set_xticklabels([])
 
         y_min = min(min(tgt_all[ind, :]),
                     min(tgt_all_input[ind, :]),
@@ -565,7 +565,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             else ax_3.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax_3.set_ylabel("Occupancy Rate")
 
-        plt.subplots_adjust(bottom=0)
+        plt.subplots_adjust(wspace=None, hspace=None)
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
