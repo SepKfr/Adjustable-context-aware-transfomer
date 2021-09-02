@@ -201,6 +201,7 @@ class ScaledDotProductAttention(nn.Module):
         if "temp" in self.attn_type:
 
             attn, index = torch.max(attn, dim=2)
+            attn = nn.Softmax(dim=-1)(attn)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
         else:
