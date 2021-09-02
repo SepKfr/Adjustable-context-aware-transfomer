@@ -509,7 +509,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         '''plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()'''
         ax_1.set_ylabel("Ave. a(q)")
-        ax_1.label_outer()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
