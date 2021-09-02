@@ -502,10 +502,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :], color='orange')
         ax_1.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
-        ax_1.set_xticklabels([])
 
         ax_1.legend(['self attn score of transformer', 'self attn score of multi-layer transformer',
-                    'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left")
+                    'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left",
+                    bbox_to_anchor=(0.5, 1.05))
         '''plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()'''
         ax_1.set_ylabel("Ave. a(q)")
@@ -529,9 +529,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
         ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
-                     'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left")
+                     'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left",
+                    bbox_to_anchor=(0.5, 1.05))
         ax_2.set_ylabel("Ave. a(q)")
-        ax_2.set_xticklabels([])
 
         y_min = min(min(tgt_all[ind, :]),
                     min(tgt_all_input[ind, :]),
@@ -559,7 +559,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                    linestyles="dashed")
 
         ax_3.legend(['ground truth', 'transformer', 'multi-layer transformer',
-                    'CNN-transformer', 'ours'], loc="upper left")
+                    'CNN-transformer', 'ours'], loc="upper left", bbox_to_anchor=(0.5, 1.05))
 
         ax_3.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax_3.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
