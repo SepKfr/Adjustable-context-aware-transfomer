@@ -137,7 +137,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
                  kernel=kernel).to(device)
-    model = nn.DataParallel(model)
     checkpoint = torch.load(os.path.join(path, args.name))
 
     state_dict = checkpoint["model_state_dict"]
