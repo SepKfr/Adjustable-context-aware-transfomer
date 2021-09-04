@@ -495,7 +495,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(0, enc_step), enc_attn_multi_scores[ind, :], color='violet')
         ax_1.plot(np.arange(0, enc_step), enc_attn_conv_scores[ind, :], color='seagreen')
-        ax_1.plot(np.arange(0, enc_step), enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        ax_1.plot(np.arange(0, enc_step), enc_attn_temp_cutoff_scores[ind, :] /
+                  np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_1.plot(np.arange(enc_step, total_len), self_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(enc_step, total_len), self_attn_multi_scores[ind, :], color='violet')
         ax_1.plot(np.arange(enc_step, total_len), self_attn_conv_scores[ind, :], color='seagreen')
@@ -525,7 +526,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :], color='orange')
+        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :] /
+                  np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_2.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
         ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
