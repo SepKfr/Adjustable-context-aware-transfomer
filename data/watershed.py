@@ -21,7 +21,6 @@ class WatershedFormatter(DataFormatter):
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
         ('SpConductivity', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('Conductivity', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Q', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
