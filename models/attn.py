@@ -133,8 +133,8 @@ class ScaledDotProductAttention(nn.Module):
                     K_p[:, :, ind, :, :] = k.reshape(b, h, l_k, d_k)
 
                 else:
-                    Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
-                    K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
+                    Q_p[:, :, ind, :, :] = F.relu(nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1))
+                    K_p[:, :, ind, :, :] = F.relu(nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1))
 
             '''w_q = nn.Parameter(torch.randn(b, h, len_n_k, l, d_k)).to(self.device)
             w_k = nn.Parameter(torch.randn(b, h, len_n_k, l_k, d_k)).to(self.device)
