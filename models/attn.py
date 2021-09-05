@@ -119,16 +119,9 @@ class ScaledDotProductAttention(nn.Module):
                 Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
                 K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
-            '''w_q = nn.Parameter(torch.randn(b, h, len_n_k, l, d_k)).to(self.device)
-            w_k = nn.Parameter(torch.randn(b, h, len_n_k, l_k, d_k)).to(self.device)
-            Q_f, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', Q_p, w_q), dim=2)
-            K_f, _ = torch.max(torch.einsum('bhwld, bhxjd-> bhwld', K_p, w_k), dim=2)'''
-
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
-
-            #scores = torch.einsum('bhqd,bhkd->bhqk', Q_f, K_f) / (np.sqrt(self.d_k))
 
         elif "conv" in self.attn_type:
 
@@ -184,7 +177,6 @@ class ScaledDotProductAttention(nn.Module):
         if "temp" in self.attn_type:
 
             attn, index = torch.max(attn, dim=2)
-            attn = nn.Softmax(dim=-1)(attn)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
         else:
@@ -412,5 +404,5 @@ class Attn(nn.Module):
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits
+        return dec_logits, enc_self_attns, dec_self_attns, dec_enc_attns
 
