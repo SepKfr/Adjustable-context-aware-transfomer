@@ -554,7 +554,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         fig, ax = plt.subplots()
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
-        plt.rc('legend', fontsize=12)
 
         ax.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
@@ -572,7 +571,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             else ax.set_ylabel("Occupancy Rate")
 
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
     create_attn_score_plots()
