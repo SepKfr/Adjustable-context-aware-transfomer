@@ -177,6 +177,9 @@ class ScaledDotProductAttention(nn.Module):
         if "temp" in self.attn_type:
 
             attn, index = torch.max(attn, dim=2)
+            norm = torch.sum(attn, dim=-1)
+            norm = norm.unsqueeze(-1).repeat(1, 1, 1, attn.shape[-1])
+            attn = attn / norm
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
         else:
@@ -404,5 +407,5 @@ class Attn(nn.Module):
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits, enc_self_attns, dec_self_attns, dec_enc_attns
+        return dec_logits
 
