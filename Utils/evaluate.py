@@ -513,7 +513,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.close()'''
         plt.ylabel("Ave. a(q)")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_join, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
         plt.rc('axes', labelsize=18)
@@ -543,7 +543,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                      'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left")
         plt.ylabel("Ave. a(q)")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_join, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
         y_min = min(min(tgt_all[ind, :]),
