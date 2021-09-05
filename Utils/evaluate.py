@@ -551,24 +551,25 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(pred_attn_conv[ind, :]),
                     max(pred_attn_temp_cutoff[ind, :]))
 
+        fig, ax = plt.subplots()
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
+        ax.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
-        plt.plot(np.arange(enc_step, total_len), pred_attn[ind, :], color='red')
-        plt.plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
-        plt.plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
-        plt.plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
-        plt.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
+        ax.plot(np.arange(enc_step, total_len), pred_attn[ind, :], color='red')
+        ax.plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
+        ax.plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
+        ax.plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
+        ax.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
 
-        plt.legend(['ground truth', 'transformer', 'multi-layer transformer',
+        ax.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left")
 
-        plt.ylabel("Solute Concentration") if args.exp_name == "watershed" \
-            else plt.ylabel("Electricity Consumption") if args.exp_name == "electricity" \
-            else plt.ylabel("Occupancy Rate")
+        ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
+            else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
+            else ax.set_ylabel("Occupancy Rate")
 
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
