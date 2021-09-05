@@ -500,7 +500,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.plot(np.arange(enc_step, total_len), self_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(enc_step, total_len), self_attn_multi_scores[ind, :], color='violet')
         ax_1.plot(np.arange(enc_step, total_len), self_attn_conv_scores[ind, :], color='seagreen')
-        ax_1.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :], color='orange')
+        ax_1.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :]/
+                  np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_1.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
 
