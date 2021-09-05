@@ -476,8 +476,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(self_attn_scores[ind, :]),
                     max(self_attn_conv_scores[ind, :]),
                     max(self_attn_multi_scores[ind, :]),
-                    max(self_attn_temp_cutoff_scores[ind, :])
-                    )
+                    max(self_attn_temp_cutoff_scores[ind, :] /
+                        np.sum(self_attn_temp_cutoff_scores[ind, :])
+                    ))
 
         y_min = min(min(enc_attn_scores[ind, :]),
                     min(enc_attn_conv_scores[ind, :]),
@@ -486,8 +487,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(self_attn_scores[ind, :]),
                     min(self_attn_conv_scores[ind, :]),
                     min(self_attn_multi_scores[ind, :]),
-                    min(self_attn_temp_cutoff_scores[ind, :])
-                    )
+                    min(self_attn_temp_cutoff_scores[ind, :] /
+                        np.sum(self_attn_temp_cutoff_scores[ind, :])
+                    ))
 
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
@@ -515,14 +517,15 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
                     max(dec_enc_attn_multi_scores[ind, :]),
-                    max(dec_enc_attn_temp_cutoff_scores[ind, :])
-                    )
+                    max(dec_enc_attn_temp_cutoff_scores[ind, :] /
+                        np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])
+                    ))
 
         y_min = min(min(dec_enc_attn_scores[ind, :]),
                     min(dec_enc_attn_conv_scores[ind, :]),
                     min(dec_enc_attn_multi_scores[ind, :]),
-                    min(dec_enc_attn_temp_cutoff_scores[ind, :])
-                    )
+                    min(dec_enc_attn_temp_cutoff_scores[ind, :] /
+                        dec_enc_attn_temp_cutoff_scores[ind, :]))
 
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
@@ -554,6 +557,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         fig, ax = plt.subplots()
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
+        plt.rc('legend', titlesize=10)
 
         ax.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
