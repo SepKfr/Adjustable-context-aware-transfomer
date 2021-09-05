@@ -557,7 +557,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         fig, ax = plt.subplots()
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
-        plt.rc('legend', titlesize=10)
+        plt.rc('legend', fontsize=10)
 
         ax.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
