@@ -560,8 +560,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_3.plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
         ax_3.plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
         ax_3.plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
-        ax_3.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
-                   linestyles="dashed")
+        ax_3.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
 
         ax_3.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left", bbox_to_anchor=(0, 1.5))
@@ -570,6 +569,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             else ax_3.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax_3.set_ylabel("Occupancy Rate")
 
+        plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
