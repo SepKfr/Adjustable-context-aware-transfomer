@@ -507,10 +507,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         ax_1.legend(['self attn score of transformer', 'self attn score of multi-layer transformer',
                     'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left",
-                    bbox_to_anchor=(0.5, 1.05))
+                    bbox_to_anchor=(0.5, 1.5))
         '''plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()'''
         ax_1.set_ylabel("Ave. a(q)")
+        ax_1.label_outer()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
@@ -533,8 +534,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     linestyles="dashed")
         ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
                      'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left",
-                    bbox_to_anchor=(0.5, 1.05))
+                    bbox_to_anchor=(0.5, 1.5))
         ax_2.set_ylabel("Ave. a(q)")
+        ax_2.label_outer()
 
         y_min = min(min(tgt_all[ind, :]),
                     min(tgt_all_input[ind, :]),
@@ -562,12 +564,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                    linestyles="dashed")
 
         ax_3.legend(['ground truth', 'transformer', 'multi-layer transformer',
-                    'CNN-transformer', 'ours'], loc="upper left", bbox_to_anchor=(0.5, 1.5))
+                    'CNN-transformer', 'ours'], loc="upper left", bbox_to_anchor=(1, 1.5))
 
         ax_3.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax_3.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax_3.set_ylabel("Occupancy Rate")
-
 
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_attn_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
