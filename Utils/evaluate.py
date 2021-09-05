@@ -511,7 +511,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left")
 
         ax_1.set_ylabel("Ave. a(q)")
-        ax_1.tight_layout()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
