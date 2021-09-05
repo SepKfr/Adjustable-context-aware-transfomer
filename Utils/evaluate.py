@@ -489,9 +489,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(self_attn_temp_cutoff_scores[ind, :])
                     )
 
-        plt.rc('axes', labelsize=18)
-        plt.rc('axes', titlesize=18)
-        plt.rc('legend', fontsize=12)
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
         fig, (ax_1, ax_2) = plt.subplots(2, sharex=True)
 
         ax_1.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
@@ -551,9 +550,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(pred_attn_conv[ind, :]),
                     max(pred_attn_temp_cutoff[ind, :]))
 
-        plt.rc('axes', labelsize=18)
-        plt.rc('axes', titlesize=18)
-        plt.rc('legend', fontsize=12)
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
 
         plt.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
