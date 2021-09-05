@@ -508,9 +508,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_1.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
+        ax_1.set_title("Self attn scores")
 
-        ax_1.legend(['self attn score of transformer', 'self attn score of multi-layer transformer',
-                    'self attn score of CNN-transformer', 'self attn score of our model'], loc="upper left")
+        ax_1.legend(['transformer', 'multi-layer transformer',
+                    'CNN-transformer', 'our model'], loc="upper left")
 
         ax_1.set_ylabel("Ave. a(q)")
 
@@ -525,7 +526,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(dec_enc_attn_conv_scores[ind, :]),
                     min(dec_enc_attn_multi_scores[ind, :]),
                     min(dec_enc_attn_temp_cutoff_scores[ind, :] /
-                        dec_enc_attn_temp_cutoff_scores[ind, :]))
+                        np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
@@ -534,9 +535,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_2.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
-        ax_2.legend(['cross-attn score of transformer', 'cross-attn score of multi-layer transformer',
-                     'cross-attn score of CNN-transformer', 'cross-attn score of our model'], loc="upper left")
+        ax_2.legend(['transformer', 'multi-layer transformer',
+                     'CNN-transformer', 'our model'], loc="upper right")
         ax_2.set_ylabel("Ave. a(q)")
+        ax_2.set_title("Cross attn scores")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
