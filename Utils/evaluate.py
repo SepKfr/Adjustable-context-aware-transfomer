@@ -491,6 +491,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
+
         fig, (ax_1, ax_2) = plt.subplots(2, sharex=True)
 
         ax_1.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
@@ -552,6 +553,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
+        plt.rc('legend', fontsize=10)
 
         plt.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
