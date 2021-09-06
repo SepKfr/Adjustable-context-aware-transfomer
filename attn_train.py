@@ -137,8 +137,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
                  kernel=kernel).to(device)
-    checkpoint = torch.load(os.path.join(path, args.name))
 
+    checkpoint = torch.load(os.path.join(path, args.name))
     state_dict = checkpoint["model_state_dict"]
     new_state_dict = dict()
     for k, v in state_dict.items():
@@ -289,7 +289,6 @@ def main():
                      tgt_pad_index=0, device=device,
                      attn_type=args.attn_type,
                      kernel=kernel).to(device)
-        model = nn.DataParallel(model)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
 
