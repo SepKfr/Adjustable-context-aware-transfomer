@@ -29,6 +29,7 @@ class SolarFormatter(ElectricityFormatter):
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('Power(MW)', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
