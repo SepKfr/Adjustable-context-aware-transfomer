@@ -109,7 +109,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                     tgt_input_size=test_de.shape[3],
                     rnn_type=args.rnn_type,
                     device=device,
-                    d_r=0).to(device)
+                    d_r=0)
+        model = nn.DataParallel(model).to(device)
 
     elif args.deep_type == "mlp":
         n_layers, hidden_size, dr, lr = config
@@ -259,6 +260,7 @@ def main():
                     rnn_type=args.rnn_type,
                     device=device,
                     d_r=0)
+        model = nn.DataParallel(model)
         model.to(device)
 
         optimizer = Adam(model.parameters())
