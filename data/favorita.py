@@ -14,6 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
+
 """Custom formatting functions for Favorita dataset.
 Defines dataset specific column definitions and data transformations.
 """

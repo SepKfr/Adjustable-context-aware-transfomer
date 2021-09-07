@@ -1,4 +1,3 @@
-import pickle
 from models.attn import Attn
 from torch.optim import Adam
 import torch.nn as nn
