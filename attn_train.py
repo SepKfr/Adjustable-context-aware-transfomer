@@ -202,6 +202,8 @@ def main():
     np.random.seed(21)
     random.seed(21)
     torch.manual_seed(args.seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
