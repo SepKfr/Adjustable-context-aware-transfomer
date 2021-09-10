@@ -410,7 +410,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn_multi")
             attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
                                         "conv_attn", "attn_conv")
-            attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
+            attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
                                                models_path, "temp_cutoff", "attn_temp_cutoff")
 
             flg = False
