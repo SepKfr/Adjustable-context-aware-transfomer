@@ -411,7 +411,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
                                         "conv_attn", "attn_conv")
             attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
-                                               models_path, "temp_cutoff", "attn_temp_cutoff_2")
+                                               models_path, "temp_cutoff", "attn_temp_cutoff")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
