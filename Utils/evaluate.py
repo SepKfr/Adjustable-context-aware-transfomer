@@ -493,7 +493,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
-        plt.rc('legend', fontsize=6)
+        plt.rc('legend', fontsize=8)
 
         fig, (ax_1, ax_2) = plt.subplots(2, sharex=True)
 
