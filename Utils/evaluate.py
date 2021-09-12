@@ -542,7 +542,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     linestyles="dashed")
         ax_2.legend(['transformer', 'multi-layer transformer',
                      'CNN-transformer', 'our model'], loc="upper right")
-        ax_2.margins(x=total_len - enc_step)
+        ax_2.plot(np.arange(0, total_len - enc_step), np.full(total_len - enc_step, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
