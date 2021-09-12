@@ -590,6 +590,7 @@ def main():
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:0')
     parser.add_argument('--path_to_save', type=str, default='traffic_plots')
+    parser.add_argument('--total_time_steps', type=int, default=192)
     args = parser.parse_args()
 
     if not os.path.exists(args.path_to_save):
@@ -609,6 +610,7 @@ def main():
     train_data, valid, test = formatter.split_data(raw_data)
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
+    params['total_time_steps'] = args.total_time_steps
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
