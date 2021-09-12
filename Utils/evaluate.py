@@ -454,7 +454,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
         ind = 0
-        diff = 0
+
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
@@ -466,9 +466,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                #if loss_attn - loss_attn_temp > diff:
-                    ind = i
-                    #diff = loss_attn - loss_attn_temp
+                ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
