@@ -511,7 +511,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                    linestyles="dashed")
 
         ax_1.legend(['transformer', 'multi-layer transformer',
-                    'CNN-transformer', 'our model'], loc="upper left")
+                    'CNN-transformer', 'our model'], loc="upper right")
 
         ax_1.set_ylabel("Ave. a(h, q)")
         plt.tight_layout()
