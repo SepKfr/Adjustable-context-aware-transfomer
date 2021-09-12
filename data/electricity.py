@@ -210,7 +210,7 @@ class ElectricityFormatter(GenericDataFormatter):
             'dropout_rate': 0.3,
             'hidden_layer_size': [16, 32],
             'learning_rate': 0.001,
-            'minibatch_size': [256],
+            'minibatch_size': 256,
             'max_gradient_norm': 100.,
             'num_heads': 8,
             'stack_size': 1
@@ -222,7 +222,7 @@ class ElectricityFormatter(GenericDataFormatter):
         """Returns fixed model parameters for experiments."""
 
         fixed_params = {
-            'total_time_steps': 8 * 24,
+            'total_time_steps': 9 * 24,
             'num_encoder_steps': 7 * 24,
             'num_epochs': 50,
         }
