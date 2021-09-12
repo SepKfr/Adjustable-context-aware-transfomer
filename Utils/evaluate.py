@@ -496,26 +496,28 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=8)
 
-        fig, (ax_1, ax_2) = plt.subplots(2, sharex=True)
+        fig, ax_1 = plt.subplots()
 
-        ax_1.plot(np.arange(0, enc_step), enc_attn_scores[ind, :], color='red')
-        ax_1.plot(np.arange(0, enc_step), enc_attn_multi_scores[ind, :], color='violet')
-        ax_1.plot(np.arange(0, enc_step), enc_attn_conv_scores[ind, :], color='seagreen')
-        ax_1.plot(np.arange(0, enc_step), enc_attn_temp_cutoff_scores[ind, :] /
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='red')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='violet')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='seagreen')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='orange')
-        ax_1.plot(np.arange(enc_step, total_len), self_attn_scores[ind, :], color='red')
-        ax_1.plot(np.arange(enc_step, total_len), self_attn_multi_scores[ind, :], color='violet')
-        ax_1.plot(np.arange(enc_step, total_len), self_attn_conv_scores[ind, :], color='seagreen')
-        ax_1.plot(np.arange(enc_step, total_len), self_attn_temp_cutoff_scores[ind, :]/
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='red')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='violet')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='seagreen')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
-        ax_1.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
+        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue',
                    linestyles="dashed")
-        ax_1.set_title("Self attn scores")
 
         ax_1.legend(['transformer', 'multi-layer transformer',
                     'CNN-transformer', 'our model'], loc="upper left")
 
-        ax_1.set_ylabel("Ave. a(q)")
+        ax_1.set_ylabel("Ave. a(h, q)")
+        plt.tight_layout()
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.close()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
@@ -530,19 +532,20 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(dec_enc_attn_temp_cutoff_scores[ind, :] /
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
-        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_scores[ind, :], color='red')
-        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_multi_scores[ind, :], color='violet')
-        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_conv_scores[ind, :], color='seagreen')
-        ax_2.plot(np.arange(0, enc_step), dec_enc_attn_temp_cutoff_scores[ind, :] /
+        fig, ax_2 = plt.subplots()
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='seagreen')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
-        ax_2.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue',
+        ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
         ax_2.legend(['transformer', 'multi-layer transformer',
                      'CNN-transformer', 'our model'], loc="upper right")
-        ax_2.set_ylabel("Ave. a(q)")
-        ax_2.set_title("Cross attn scores")
+        ax_2.margins(x=total_len - enc_step)
+        ax_2.set_ylabel("Ave. a(h, q)")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
 
         y_min = min(min(tgt_all[ind, :]),
@@ -563,13 +566,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=10)
 
-        ax.plot(np.arange(0, total_len), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
+        ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
-        ax.plot(np.arange(enc_step, total_len), pred_attn[ind, :], color='red')
-        ax.plot(np.arange(enc_step, total_len), pred_attn_multi[ind, :], color='violet')
-        ax.plot(np.arange(enc_step, total_len), pred_attn_conv[ind, :], color='seagreen')
-        ax.plot(np.arange(enc_step, total_len), pred_attn_temp_cutoff[ind, :], color='orange')
-        ax.vlines(enc_step, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='red')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='violet')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='seagreen')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
+        ax.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
 
         ax.legend(['ground truth', 'transformer', 'multi-layer transformer',
                     'CNN-transformer', 'ours'], loc="upper left")
