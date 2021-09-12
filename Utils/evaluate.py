@@ -428,6 +428,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                 self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
 
+        print(np.mean(dec_enc_attn_scores, axis=0)[0, 0, :])
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
             np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \

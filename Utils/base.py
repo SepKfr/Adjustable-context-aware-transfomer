@@ -23,6 +23,7 @@ import random
 np.random.seed(21)
 random.seed(21)
 
+
 # Type defintions
 class DataTypes(enum.IntEnum):
     """Defines numerical types of each column."""
