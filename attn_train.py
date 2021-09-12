@@ -197,6 +197,7 @@ def main():
     parser.add_argument("--lr_variate", type=str, default="True")
     parser.add_argument("--cuda", type=str, default="cuda")
     parser.add_argument("--seed", type=int, default=21)
+    parser.add_argument("--total_time_steps", type=int, default=192)
     args = parser.parse_args()
 
     np.random.seed(21)
@@ -219,6 +220,7 @@ def main():
     train_data, valid, test = formatter.split_data(raw_data)
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
+    params['total_time_steps'] = args.total_time_steps
 
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
                        params['num_encoder_steps'], params["column_definition"])
