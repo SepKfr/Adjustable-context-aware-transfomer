@@ -366,7 +366,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                                                     (format_outputs(test_y_input[j], test_id[j]))). \
                     to_numpy().astype('float32')
             self_attn_scores[j, :, :, :] = torch.mean(self_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
-            dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score.squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
+            dec_enc_attn_scores[j, :, :, :] = torch.mean(dec_enc_attn_score, dim=1).squeeze(1).cpu().detach().numpy()
             enc_attn_scores[j, :, :, :] = torch.mean(enc_attn_score[:, -1, :, :].squeeze(1), dim=1).squeeze(1).cpu().detach().numpy()
             del enc_attn_score
             del self_attn_score
