@@ -13,6 +13,8 @@ import pandas as pd
 import math
 from data.data_loader import ExperimentConfig
 from base_train import batching, batch_sampled_data, inverse_output, quantile_loss
+import time
+from time import ctime
 
 
 class NoamOpt:
@@ -61,8 +63,7 @@ def train(args, model, train_en, train_de, train_y,
     try:
         model.train()
         total_loss = 0
-        '''t = time()
-        print("start {}:".format(ctime(t)))'''
+        print("start {}:".format(time.ctime()))
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
@@ -70,8 +71,7 @@ def train(args, model, train_en, train_de, train_y,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step_and_update_lr()
-        '''t = time()
-        print("end {}:".format(ctime(t)))'''
+        print("end {}:".format(time.ctime()))
 
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
 
