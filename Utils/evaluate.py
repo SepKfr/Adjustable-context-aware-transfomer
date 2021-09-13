@@ -507,16 +507,16 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='seagreen')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
-        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue',
-                   linestyles="dashed")
+        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax_1.legend(['transformer', 'multi-layer transformer',
-                    'CNN-transformer', 'our model'], loc="upper left")
+        ax_1.legend(['Transformer', 'Multi-layer Transformer',
+                    'CNN-transformer', 'Ours'], loc="upper left")
 
         ax_1.set_ylabel("Ave. a(h, q)")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
+                    dpi=300)
         plt.close()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
@@ -538,15 +538,15 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='seagreen')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
-        ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue',
-                    linestyles="dashed")
+        ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Multi-layer Transformer',
-                     'CNN-transformer', 'Our model'], loc="upper right")
+                     'CNN-transformer', 'Ours'], loc="upper right")
         ax_2.plot(np.arange(0, total_len - enc_step), np.full(total_len - enc_step, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
+                    dpi=300)
         plt.close()
 
         y_min = min(min(tgt_all[ind, :]),
@@ -572,7 +572,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='violet')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='seagreen')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
-        ax.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
+        ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
         ax.legend(['Ground truth', 'Transformer', 'Multi-layer Transformer',
                     'CNN-transformer', 'Ours'], loc="upper left")
@@ -580,9 +580,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
-        ax.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)))
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)),
+                    dpi=300)
         plt.close()
 
     create_attn_score_plots()
