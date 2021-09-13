@@ -428,7 +428,6 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                 self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
 
-        print(np.mean(dec_enc_attn_scores, axis=0)[0, 0, :])
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
             np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
@@ -515,6 +514,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     'CNN-transformer', 'our model'], loc="upper left")
 
         ax_1.set_ylabel("Ave. a(h, q)")
+        ax_1.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
@@ -540,10 +540,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue',
                     linestyles="dashed")
-        ax_2.legend(['transformer', 'multi-layer transformer',
-                     'CNN-transformer', 'our model'], loc="upper right")
+        ax_2.legend(['Transformer', 'Multi-layer Transformer',
+                     'CNN-transformer', 'Our model'], loc="upper right")
         ax_2.plot(np.arange(0, total_len - enc_step), np.full(total_len - enc_step, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
+        ax_2.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
@@ -573,13 +574,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='lightblue', linestyles="dashed")
 
-        ax.legend(['ground truth', 'transformer', 'multi-layer transformer',
-                    'CNN-transformer', 'ours'], loc="upper left")
+        ax.legend(['Ground truth', 'Transformer', 'Multi-layer Transformer',
+                    'CNN-transformer', 'Ours'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
-
+        ax.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)))
         plt.close()
