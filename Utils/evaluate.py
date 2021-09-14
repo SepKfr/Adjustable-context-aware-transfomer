@@ -466,8 +466,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-
-                ind = i
+                if loss_attn_multi - loss_attn_temp > diff:
+                    diff = loss_attn_multi - loss_attn_temp
+                    ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -493,6 +494,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
+        plt.rcParams["figure.figsize"] = (8, 6)
 
         fig, ax_1 = plt.subplots()
 
@@ -512,6 +514,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     'CNN-transformer', 'Ours'], loc="upper left")
 
         ax_1.set_ylabel("Ave. a(h, q)")
+        ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
@@ -532,6 +535,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
         fig, ax_2 = plt.subplots()
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
+        plt.rcParams["figure.figsize"] = (8, 6)
+
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='seagreen')
@@ -542,6 +549,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                      'CNN-transformer', 'Ours'], loc="upper right")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
+        ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
@@ -564,6 +572,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         fig, ax = plt.subplots()
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
+        plt.rcParams["figure.figsize"] = (8, 6)
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
