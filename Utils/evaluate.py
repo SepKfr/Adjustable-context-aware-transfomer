@@ -509,7 +509,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
         ax_1.legend(['Transformer', 'Multi-layer Transformer',
-                    'CNN-transformer', 'Ours'], loc="upper left")
+                    'CNN-transformer', 'Ours'], loc="upper center")
 
         ax_1.set_ylabel("Ave. a(h, q)")
         ax_1.set_title("Self Attention Scores")
