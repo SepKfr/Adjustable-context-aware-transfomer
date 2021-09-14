@@ -493,8 +493,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     ))
 
         fig, ax_1 = plt.subplots(figsize=(3, 2))
-        plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=14)
+        plt.rc('axes', labelsize=4)
+        plt.rc('axes', titlesize=4)
 
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='violet')
@@ -533,8 +533,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
         fig, ax_2 = plt.subplots(figsize=(3, 2))
-        plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=14)
+        plt.rc('axes', labelsize=4)
+        plt.rc('axes', titlesize=4)
 
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
@@ -567,8 +567,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(pred_attn_temp_cutoff[ind, :]))
 
         fig, ax = plt.subplots(figsize=(3, 2))
-        plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=14)
+        plt.rc('axes', labelsize=4)
+        plt.rc('axes', titlesize=4)
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
