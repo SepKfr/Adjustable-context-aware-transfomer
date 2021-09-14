@@ -516,7 +516,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
-                    dpi=300)
+                    dpi=700)
         plt.close()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
@@ -546,7 +546,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
-                    dpi=300)
+                    dpi=700)
         plt.close()
 
         y_min = min(min(tgt_all[ind, :]),
@@ -582,7 +582,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)),
-                    dpi=300)
+                    dpi=700)
         plt.close()
 
     create_attn_score_plots()
