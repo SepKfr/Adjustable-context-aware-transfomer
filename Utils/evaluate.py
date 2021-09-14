@@ -515,7 +515,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.svg'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, len_of_pred)),
                     dpi=700)
         plt.close()
 
@@ -549,7 +549,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.svg'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.pdf'.format(args.exp_name, len_of_pred)),
                     dpi=700)
         plt.close()
 
@@ -585,7 +585,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.svg'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.pdf'.format(args.exp_name, len_of_pred)),
                     dpi=700)
         plt.close()
 
