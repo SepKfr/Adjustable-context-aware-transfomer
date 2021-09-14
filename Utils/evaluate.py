@@ -509,13 +509,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
         ax_1.legend(['Transformer', 'Multi-layer Transformer',
-                    'CNN-transformer', 'Ours'], loc="upper center")
+                    'CNN-transformer', 'Ours'], loc="best")
 
         ax_1.set_ylabel("Ave. a(h, q)")
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
                     dpi=1000)
         plt.close()
 
@@ -543,13 +543,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Multi-layer Transformer',
-                     'CNN-transformer', 'Ours'], loc="upper right")
+                     'CNN-transformer', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.pdf'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
                     dpi=1000)
         plt.close()
 
@@ -579,13 +579,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
         ax.legend(['Ground truth', 'Transformer', 'Multi-layer Transformer',
-                    'CNN-transformer', 'Ours'], loc="upper left")
+                    'CNN-transformer', 'Ours'], loc="best")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.pdf'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)),
                     dpi=1000)
         plt.close()
 
