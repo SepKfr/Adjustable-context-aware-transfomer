@@ -541,7 +541,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Multi-layer Transformer',
                      'CNN-transformer', 'Ours'], loc="upper right")
-        ax_2.plot(np.arange(0, total_len - enc_step), np.full(total_len - enc_step, 1 / enc_step), color='white')
+        ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
         ax_2.grid(True)
         plt.tight_layout()
