@@ -579,7 +579,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
         ax.legend(['Ground truth', 'Transformer', 'Multi-layer Transformer',
-                    'CNN-transformer', 'Ours'], loc="best")
+                    'CNN-transformer', 'Ours'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
