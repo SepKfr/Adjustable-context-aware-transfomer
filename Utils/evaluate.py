@@ -492,9 +492,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                         np.sum(self_attn_temp_cutoff_scores[ind, :])
                     ))
 
-        fig, ax_1 = plt.subplots(figsize=(3, 2))
-        plt.rc('axes', labelsize=4)
-        plt.rc('axes', titlesize=4)
+        fig, ax_1 = plt.subplots(figsize=(6, 4))
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
 
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='violet')
@@ -515,7 +515,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.svg'.format(args.exp_name, len_of_pred)),
                     dpi=700)
         plt.close()
 
@@ -532,9 +532,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(dec_enc_attn_temp_cutoff_scores[ind, :] /
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
-        fig, ax_2 = plt.subplots(figsize=(3, 2))
-        plt.rc('axes', labelsize=4)
-        plt.rc('axes', titlesize=4)
+        fig, ax_2 = plt.subplots()
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
 
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
@@ -549,7 +549,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.svg'.format(args.exp_name, len_of_pred)),
                     dpi=700)
         plt.close()
 
@@ -566,9 +566,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(pred_attn_conv[ind, :]),
                     max(pred_attn_temp_cutoff[ind, :]))
 
-        fig, ax = plt.subplots(figsize=(3, 2))
-        plt.rc('axes', labelsize=4)
-        plt.rc('axes', titlesize=4)
+        fig, ax = plt.subplots()
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
@@ -585,7 +585,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.svg'.format(args.exp_name, len_of_pred)),
                     dpi=700)
         plt.close()
 
