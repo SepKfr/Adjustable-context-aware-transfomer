@@ -531,7 +531,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-            if loss_attn_multi - loss_attn_temp > diff:
+                if loss_attn_multi - loss_attn_temp > diff:
                     diff = loss_attn_multi - loss_attn_temp
                     ind = i
 
