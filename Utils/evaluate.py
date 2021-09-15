@@ -19,7 +19,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def get_test_data(timestps):
 
-        params['total_time_steps'] = timestps + 168
+        params['total_time_steps'] = timestps
 
         sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                          params['num_encoder_steps'], params["column_definition"])
@@ -166,7 +166,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             rmse_attn_temp_cutoff = np.zeros((3, timesteps))
 
             configs, models_path = get_config(timesteps)
-            test_en, test_de, test_y, test_id = get_test_data(timesteps)
+            test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
             test_y_output = test_y[:, -timesteps:, :]
             test_y_input = test_y[:, :-timesteps, :]
             tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], timesteps))
@@ -428,7 +428,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def create_attn_score_plots(total_len):
 
-        test_en, test_de, test_y, test_id = get_test_data(get_test_data)
+        test_en, test_de, test_y, test_id = get_test_data(total_len)
         configs, models_path = get_config(total_len)
         enc_step = total_len - test_de.shape[2]
         len_pred = total_len - enc_step
