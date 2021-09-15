@@ -167,7 +167,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
             configs, models_path = get_config(timesteps)
             test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
-            test_y_input = test_y[:, :, -timesteps, :]
+            test_y_input = test_y[:, :, :-timesteps, :]
             test_y_output = test_y[:, :, -timesteps:, :]
             tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], timesteps))
             tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
