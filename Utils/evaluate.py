@@ -492,7 +492,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                         np.sum(self_attn_temp_cutoff_scores[ind, :])
                     ))
 
-        plt.rc('axes', labelsize=16)
+        plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
         fig, ax_1 = plt.subplots(figsize=(6, 4))
@@ -533,7 +533,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(dec_enc_attn_temp_cutoff_scores[ind, :] /
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
-        plt.rc('axes', labelsize=16)
+        plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
         fig, ax_2 = plt.subplots(figsize=(6, 4))
@@ -569,7 +569,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(pred_attn_temp_cutoff[ind, :]))
 
         plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=16)
+        plt.rc('axes', titlesize=14)
 
         fig, ax = plt.subplots(figsize=(6, 4))
 
