@@ -191,9 +191,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                              test_de.shape[3], models_path, "attn", "attn_multi")
                 attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], test_en.shape[3], test_de.shape[3],
                                             models_path, "conv_attn", "attn_conv")
-                attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
+                attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
                                                    test_en.shape[3], test_de.shape[3],
-                                                   models_path, "temp_cutoff", "attn_temp_cutoff_2")
+                                                   models_path, "temp_cutoff", "attn_temp_cutoff")
 
                 predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
@@ -656,10 +656,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
 
-    create_attn_score_plots(24)
+    '''create_attn_score_plots(24)
     print("Done exp 1")
     create_attn_score_plots(48)
-    print("Done exp 2")
+    print("Done exp 2")'''
     create_rmse_plot()
     print("Done exp rmse")
     #create_rmse_plot()
