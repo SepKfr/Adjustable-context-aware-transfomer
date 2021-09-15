@@ -15,13 +15,31 @@ import matplotlib.pyplot as plt
 import pickle
 
 
-def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatter):
+def perform_evaluation(args, device, params, test, valid_max, formatter):
 
-    len_of_pred = test_y.shape[2] - test_en.shape[2]
+    def get_test_data(timestps):
+
+        params['total_time_steps'] = timestps + 168
+
+        sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
+                                         params['num_encoder_steps'], params["column_definition"])
+
+        test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['dec_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['outputs']).to(device), \
+                                            sample_data['identifier']
+
+        model_params = formatter.get_default_model_params()
+        test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
+                                                     test_de, test_y, test_id)
+
+        return test_en, test_de, test_y, test_id
+
+    '''len_of_pred = test_y.shape[2] - test_en.shape[2]
     total_len = test_y.shape[2]
     enc_step = test_en.shape[2]
     test_y_input = test_y[:, :, :test_en.shape[2], :]
-    test_y_output = test_y[:, :, test_en.shape[2]:, :]
+    test_y_output = test_y[:, :, test_en.shape[2]:, :]'''
     criterion = nn.MSELoss()
 
     def extract_numerical_data(data):
@@ -31,13 +49,13 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
             if col not in {"forecast_time", "identifier"}
         ]]
 
-    def load_lstm(seed, conf, mdl_path):
-        print(conf)
+    def load_lstm(seed, conf, input_size, output_size, mdl_path):
+
         n_layers, hidden_size = conf
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
-                    src_input_size=test_en.shape[3],
-                    tgt_input_size=test_de.shape[3],
+                    src_input_size=input_size,
+                    tgt_input_size=output_size,
                     rnn_type="lstm",
                     device=device,
                     d_r=0).to(device)
@@ -45,12 +63,12 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
 
-    def load_attn(seed, conf, mdl_path, attn_type, name):
+    def load_attn(seed, conf, input_size, output_size, mdl_path, attn_type, name):
 
         n_layers, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
-        model = Attn(src_input_size=test_en.shape[3],
-                     tgt_input_size=test_de.shape[3],
+        model = Attn(src_input_size=input_size,
+                     tgt_input_size=output_size,
                      d_model=d_model,
                      d_ff=d_model * 4,
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
@@ -68,9 +86,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         model.load_state_dict(new_state_dict)
         return model
 
-    with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
-        configs = json.load(json_file)
-    models_path = "models_{}_{}".format(args.exp_name, len_of_pred)
+    def get_config(len_of_pred):
+        with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
+            configs = json.load(json_file)
+        models_path = "models_{}_{}".format(args.exp_name, len_of_pred)
+        return configs, models_path
 
     df_list = []
 
@@ -85,9 +105,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         flat_prediction['identifier'] = tid[:, 0, 0]
         return flat_prediction
 
-    def make_predictions(model, targets_all, targets_all_input, flg):
+    def make_predictions(model, targets_all, targets_all_input, flg,
+                         test_en, test_de, test_id, test_y_output, test_y_input):
 
         model.eval()
+
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
         k = 0
@@ -125,78 +147,103 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
     def create_rmse_plot():
 
-        def calculate_loss_per_step(predictions):
+        def calculate_loss_per_step(predictions, tgt_all, ln_pred):
 
-            rmses = np.zeros(24)
-            for j in range(24):
+            rmses = np.zeros(ln_pred)
+            for j in range(ln_pred):
                 test_loss = criterion(torch.from_numpy(predictions[:, :, j]), torch.from_numpy(tgt_all[:, :, j])).item()
                 normaliser = torch.from_numpy(tgt_all[:, :, j]).abs().mean()
                 test_loss = math.sqrt(test_loss) / normaliser
                 rmses[j] = test_loss
             return rmses
 
-        predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
+        def get_preds_steps(timesteps):
 
-        flag = False
+            rmse_lstm = np.zeros((3, timesteps))
+            rmse_attn = np.zeros((3, timesteps))
+            rmse_attn_multi = np.zeros((3, timesteps))
+            rmse_attn_conv = np.zeros((3, timesteps))
+            rmse_attn_temp_cutoff = np.zeros((3, timesteps))
 
-        rmse_lstm = np.zeros((3, 24))
-        rmse_attn = np.zeros((3, 24))
-        rmse_attn_multi = np.zeros((3, 24))
-        rmse_attn_conv = np.zeros((3, 24))
-        rmse_attn_temp_cutoff = np.zeros((3, 24))
+            configs, models_path = get_config(timesteps)
+            test_en, test_de, test_y, test_id = get_test_data(timesteps)
+            test_y_output = test_y[:, -timesteps:, :]
+            test_y_input = test_y[:, :-timesteps, :]
+            tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], timesteps))
+            tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
-        for i, seed in enumerate([21, 9, 1992]):
+            predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
 
-            torch.manual_seed(seed)
+            flag = False
+            for i, seed in enumerate([21, 9, 1992]):
 
-            lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
-            attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
-            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn_multi")
-            attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
-                                        "conv_attn", "attn_conv")
-            attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
-                                               models_path, "temp_cutoff", "attn_temp_cutoff_2")
+                torch.manual_seed(seed)
 
-            predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag)
-            predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag)
-            predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag)
-            predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag)
-            predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, tgt_all, tgt_all_input, flag)
+                lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)],
+                                       test_en.shape[3], test_de.shape[3], models_path)
+                attn_model = load_attn(seed, configs["attn_{}".format(seed)], test_en.shape[3], test_de.shape[3],
+                                       models_path, "attn", "attn")
+                attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], test_en.shape[3],
+                                             test_de.shape[3], models_path, "attn", "attn_multi")
+                attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], test_en.shape[3], test_de.shape[3],
+                                            models_path, "conv_attn", "attn_conv")
+                attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
+                                                   test_en.shape[3], test_de.shape[3],
+                                                   models_path, "temp_cutoff", "attn_temp_cutoff_2")
 
-            rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :])
-            rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :])
-            rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :])
-            rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :])
-            rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :])
+                predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                                                                      test_en, test_de, test_id, test_y_output, test_y_input)
+                predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
+                                                                      test_en, test_de, test_id, test_y_output, test_y_input)
+                predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
+                                                                            test_en, test_de, test_id, test_y_output, test_y_input)
+                predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
+                                                                           test_en, test_de, test_id, test_y_output, test_y_input)
+                predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, tgt_all,
+                                                                                  tgt_all_input, flag, test_en,
+                                                                                  test_de, test_id, test_y_output, test_y_input)
 
-        lstm = np.mean(rmse_lstm, axis=0)
-        attn = np.mean(rmse_attn, axis=0)
-        attn_multi = np.mean(rmse_attn_multi, axis=0)
-        attn_conv = np.mean(rmse_attn_conv, axis=0)
-        attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+                rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :], tgt_all, timesteps)
+                rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :], tgt_all, timesteps)
+                rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :], tgt_all, timesteps)
+                rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
+                rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)
 
-        x = np.arange(0, 24)
-        plt.rc('axes', labelsize=18)
-        plt.rc('axes', titlesize=18)
-        plt.rc('legend', fontsize=12)
+            lstm = np.mean(rmse_lstm, axis=0)
+            attn = np.mean(rmse_attn, axis=0)
+            attn_multi = np.mean(rmse_attn_multi, axis=0)
+            attn_conv = np.mean(rmse_attn_conv, axis=0)
+            attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
 
-        plt.plot(x, attn_temp_cutoff, 'xb-', color='orange')
-        plt.plot(x, attn_conv, 'xb-', color='seagreen')
-        plt.plot(x, attn, 'xb-', color='red')
-        plt.plot(x, attn_multi, 'xb-', color='violet')
-        plt.plot(x, lstm, 'xb-', color='salmon')
-        plt.xlabel("Future Timesteps")
+            return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
+
+        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
+        lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48 = get_preds_steps(48)
+        x_1 = np.arange(0, 24)
+        x_2 = np.arange(0, 48)
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
+
+        plt.plot(x_1, attn_temp_cutoff_24, 'o', color='orange')
+        plt.plot(x_1, attn_conv_24, 'o', color='seagreen')
+        plt.plot(x_1, attn_24, 'o', color='red')
+        plt.plot(x_1, attn_multi_24, 'o', color='violet')
+        plt.plot(x_1, lstm_24, 'o', color='salmon')
+        plt.plot(x_2, attn_temp_cutoff_48, 'D', color='orange')
+        plt.plot(x_2, attn_conv_48, 'D', color='seagreen')
+        plt.plot(x_2, attn_48, 'D', color='red')
+        plt.plot(x_2, attn_multi_48, 'D', color='violet')
+        plt.plot(x_2, lstm_48, 'D', color='salmon')
+        plt.xlabel("Output Length")
         plt.ylabel("RMSE")
-        plt.legend(['Context-Aware Trans', 'CNN Trans', 'Trans', 'Trans-Multi', 'LSTM'], loc="upper right")
+        plt.legend(['Ours', 'CNN-Trans', 'Transformer', 'Trans-Multi', 'LSTM'], loc="best")
         name = args.exp_name
         plt.title(name)
-        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.png'.format(name, total_len - enc_step)))
+        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(name)))
         plt.close()
 
         '''
@@ -213,7 +260,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
     print("done reading the prediction")
 
-    def create_plots():
+    '''def create_plots():
 
         predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
@@ -336,9 +383,11 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.ylabel('Solute Concentration')
         plt.legend(['ground-truth', 'seq2seq-lstm', 'attn', 'conv attn', 'ours'], loc="upper left")
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_2.png').format(args.exp_name))
-        plt.close()
+        plt.close()'''
 
-    def get_attn_scores(model, tgt_all_input, tgt_all, flg):
+    def get_attn_scores(model, tgt_all_input, tgt_all,
+                        test_de, test_en, test_id,
+                        test_y_output, test_y_input, flg):
 
         model.eval()
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
@@ -377,7 +426,16 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         flg = True
         return predictions, enc_attn_scores, self_attn_scores, dec_enc_attn_scores, flg
 
-    def create_attn_score_plots():
+    def create_attn_score_plots(total_len):
+
+        test_en, test_de, test_y, test_id = get_test_data(get_test_data)
+        configs, models_path = get_config(total_len)
+        enc_step = total_len - test_de.shape[2]
+        len_pred = total_len - enc_step
+        test_y_input = test_y[:, :-len_pred, :]
+        test_y_output = test_y[:, -len_pred:, :]
+        input_size = test_en.shape[3]
+        output_size = test_de.shape[3]
 
         self_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
@@ -407,26 +465,33 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
 
             torch.manual_seed(seed)
 
-            attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
-            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], models_path, "attn", "attn_multi")
+            attn_model = load_attn(seed, configs["attn_{}".format(seed)],
+                                   input_size, output_size, models_path, "attn", "attn")
+            attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)],
+                                         input_size, output_size, models_path, "attn", "attn_multi")
             attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
-                                        "conv_attn", "attn_conv")
+                                        input_size, output_size, "conv_attn", "attn_conv")
             attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
+                                               input_size, output_size,
                                                models_path, "temp_cutoff", "attn_temp_cutoff")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
                 self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_model, tgt_all_input, tgt_all, flg)
+                get_attn_scores(attn_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
+                        test_y_output, test_y_input, flg)
             predictions_attn_multi[i, :, :, :], enc_attn_multi_scores[i, :, :, :],\
                 self_attn_multi_scores[i, :, :, :, :], dec_enc_attn_multi_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, flg)
+                get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
+                        test_y_output, test_y_input, flg)
             predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
                 self_attn_conv_scores[i, :, :, :, :], dec_enc_attn_conv_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, flg)
+                get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
+                        test_y_output, test_y_input, flg)
             predictions_attn_temp_cutoff[i, :, :, :], enc_attn_temp_cutoff_scores[i, :, :, :],\
                 self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all, flg)
+                get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all,test_de, test_en, test_id,
+                        test_y_output, test_y_input, flg)
 
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
@@ -466,7 +531,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                ind = i
+            if loss_attn_multi - loss_attn_temp > diff:
+                    diff = loss_attn_multi - loss_attn_temp
+                    ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -506,15 +573,14 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-
-        ax_1.legend(['Transformer', 'Multi-layer Transformer',
-                    'CNN-transformer', 'Ours'], loc="best")
+        ax_1.legend(['Transformer', 'Trans-Multi',
+                    'CNN-Trans', 'Ours'], loc="best")
 
         ax_1.set_ylabel("Ave. a(h, q)")
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -542,14 +608,14 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_2.legend(['Transformer', 'Multi-layer Transformer',
-                     'CNN-transformer', 'Ours'], loc="best")
+        ax_2.legend(['Transformer', 'Trans-Multi',
+                    'CNN-Trans', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel("Ave. a(h, q)")
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -579,18 +645,23 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground truth', 'Transformer', 'Multi-layer Transformer',
-                    'CNN-transformer', 'Ours'], loc="upper left")
+        ax.legend(['Transformer', 'Trans-Multi',
+                    'CNN-Trans', 'Ours'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_of_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
-    create_attn_score_plots()
+    create_attn_score_plots(192)
+    print("Done exp 1")
+    create_attn_score_plots(216)
+    print("Done exp 2")
+    create_rmse_plot()
+    print("Done exp rmse")
     #create_rmse_plot()
 
 
@@ -619,22 +690,8 @@ def main():
     train_data, valid, test = formatter.split_data(raw_data)
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
-    params['total_time_steps'] = args.total_time_steps
 
-    sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
-                                     params['num_encoder_steps'], params["column_definition"])
-
-    test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
-                                        torch.from_numpy(sample_data['dec_inputs']).to(device), \
-                              torch.from_numpy(sample_data['outputs']).to(device), \
-                              sample_data['identifier']
-
-    model_params = formatter.get_default_model_params()
-    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
-                                                 test_de, test_y, test_id)
-
-    perform_evaluation(args, device, test_en.to(device), test_de.to(device), test_y.to(device),
-                test_id, formatter)
+    perform_evaluation(args, device, params, test, valid_max, formatter)
 
 
 if __name__ == '__main__':
