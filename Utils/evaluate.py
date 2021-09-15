@@ -426,12 +426,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         flg = True
         return predictions, enc_attn_scores, self_attn_scores, dec_enc_attn_scores, flg
 
-    def create_attn_score_plots(total_len):
+    def create_attn_score_plots(len_pred):
 
+        total_len = len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, models_path = get_config(total_len)
-        enc_step = total_len - test_de.shape[2]
-        len_pred = total_len - enc_step
+        configs, models_path = get_config(len_pred)
+        enc_step = total_len - len_pred
         test_y_input = test_y[:, :-len_pred, :]
         test_y_output = test_y[:, -len_pred:, :]
         input_size = test_en.shape[3]
@@ -656,9 +656,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
 
-    create_attn_score_plots(192)
+    create_attn_score_plots(24)
     print("Done exp 1")
-    create_attn_score_plots(216)
+    create_attn_score_plots(48)
     print("Done exp 2")
     create_rmse_plot()
     print("Done exp rmse")
