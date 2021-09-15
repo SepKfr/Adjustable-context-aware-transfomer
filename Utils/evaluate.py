@@ -432,7 +432,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_en, test_de, test_y, test_id = get_test_data(total_len)
         configs, models_path = get_config(len_pred)
         enc_step = total_len - len_pred
-        test_y_input = test_y[:, :, -len_pred, :]
+        test_y_input = test_y[:, :, :-len_pred, :]
         test_y_output = test_y[:, :, -len_pred:, :]
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
