@@ -495,7 +495,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
-        fig, ax_1 = plt.subplots(figsize=(6, 4))
+        fig, ax_1 = plt.subplots()
 
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='violet')
@@ -536,7 +536,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
-        fig, ax_2 = plt.subplots(figsize=(6, 4))
+        fig, ax_2 = plt.subplots()
 
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
@@ -571,7 +571,7 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots()
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
