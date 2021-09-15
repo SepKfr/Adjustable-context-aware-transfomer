@@ -466,7 +466,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-               ind = i
+                if loss_attn_multi - loss_attn_temp > diff:
+                    diff = loss_attn_multi - loss_attn_temp
+                    ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -491,9 +493,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     ))
 
         plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=14)
+        plt.rc('axes', titlesize=16)
 
-        fig, ax_1 = plt.subplots()
+        fig, ax_1 = plt.subplots(figsize=(6, 4))
 
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='red')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='violet')
@@ -531,10 +533,10 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     min(dec_enc_attn_temp_cutoff_scores[ind, :] /
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
-        plt.rc('axes', labelsize=14)
+        plt.rc('axes', labelsize=16)
         plt.rc('axes', titlesize=14)
 
-        fig, ax_2 = plt.subplots()
+        fig, ax_2 = plt.subplots(figsize=(6, 4))
 
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
@@ -567,9 +569,9 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                     max(pred_attn_temp_cutoff[ind, :]))
 
         plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=14)
+        plt.rc('axes', titlesize=16)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(6, 4))
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='blue')
