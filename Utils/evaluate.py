@@ -492,8 +492,8 @@ def perform_evaluation(args, device, test_en, test_de, test_y, test_id, formatte
                         np.sum(self_attn_temp_cutoff_scores[ind, :])
                     ))
 
-        plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=16)
+        plt.rc('axes', labelsize=16)
+        plt.rc('axes', titlesize=14)
 
         fig, ax_1 = plt.subplots(figsize=(6, 4))
 
