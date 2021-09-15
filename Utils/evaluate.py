@@ -645,7 +645,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Transformer', 'Trans-Multi',
+        ax.legend(['Ground Truth','Transformer', 'Trans-Multi',
                     'CNN-Trans', 'Ours'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
@@ -656,8 +656,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
 
-    '''create_attn_score_plots(24)
-    print("Done exp 1")'''
+    create_attn_score_plots(24)
+    print("Done exp 1")
     create_attn_score_plots(48)
     print("Done exp 2")
     create_rmse_plot()
