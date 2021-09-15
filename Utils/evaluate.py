@@ -33,7 +33,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
                                                      test_de, test_y, test_id)
 
-        return test_en.to(device), test_de.to(device), test_y.to(device), test_id.to(device)
+        return test_en.to(device), test_de.to(device), test_y.to(device), test_id
 
     '''len_of_pred = test_y.shape[2] - test_en.shape[2]
     total_len = test_y.shape[2]
