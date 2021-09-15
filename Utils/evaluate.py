@@ -434,6 +434,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         enc_step = total_len - len_pred
         test_y_input = test_y[:, :-len_pred, :]
         test_y_output = test_y[:, -len_pred:, :]
+        print(test_y_output.shape)
+        print(test_y_input.shape)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
 
