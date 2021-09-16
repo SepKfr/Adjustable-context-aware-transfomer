@@ -227,6 +227,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         x_2 = [0, 8, 16, 24, 32, 40, 48]
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
+        plt.rc('legend', fontsize=12)
 
         plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='orange')
         plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='seagreen')
@@ -240,14 +241,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='salmon')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
-        plt.legend(['Ours (t=24)', 'CNN-Trans(t=24)',
-                    'Transformer(t=24)',
-                    'Trans-Multi(t=24)',
-                    'LSTM(t=24)',
-                    'Ours (t=48)', 'CNN-Trans(t=48)',
-                    'Transformer(t=48)',
-                    'Trans-Multi(t=48)',
-                    'LSTM(t=48)',
+        plt.legend(['Ours (t=24)', 'CNN-Trans (t=24)',
+                    'Transformer (t=24)',
+                    'Trans-Multi (t=24)',
+                    'LSTM (t=24)',
+                    'Ours (t=48)', 'CNN-Trans (t=48)',
+                    'Transformer (t=48)',
+                    'Trans-Multi (t=48)',
+                    'LSTM (t=48)',
                     ],  bbox_to_anchor=(1, 1), loc='upper left')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(args.exp_name)), dpi=1000)
@@ -667,10 +668,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     '''create_attn_score_plots(24)
     print("Done exp 1")'''
-    create_attn_score_plots(48)
-    print("Done exp 2")
-    '''create_rmse_plot()
-    print("Done exp rmse")'''
+    '''create_attn_score_plots(48)
+    print("Done exp 2")'''
+    create_rmse_plot()
+    print("Done exp rmse")
     #create_rmse_plot()
 
 
