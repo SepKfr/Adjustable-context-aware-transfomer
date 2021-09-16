@@ -249,6 +249,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     'Trans-Multi(horizon=48)',
                     'LSTM(horizon=48)',
                     ],  bbox_to_anchor=(1, 1), loc='upper left')
+        plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(args.exp_name)), dpi=1000)
         plt.close()
 
