@@ -240,14 +240,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='salmon')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
-        plt.legend(['Ours (horizon=24)', 'CNN-Trans(horizon=24)',
-                    'Transformer(horizon=24)',
-                    'Trans-Multi(horizon=24)',
-                    'LSTM(horizon=24)',
-                    'Ours (horizon=48)', 'CNN-Trans(horizon=48)',
-                    'Transformer(horizon=48)',
-                    'Trans-Multi(horizon=48)',
-                    'LSTM(horizon=48)',
+        plt.legend(['Ours (t=24)', 'CNN-Trans(t=24)',
+                    'Transformer(t=24)',
+                    'Trans-Multi(t=24)',
+                    'LSTM(t=24)',
+                    'Ours (t=48)', 'CNN-Trans(t=48)',
+                    'Transformer(t=48)',
+                    'Trans-Multi(t=48)',
+                    'LSTM(t=48)',
                     ],  bbox_to_anchor=(1, 1), loc='upper left')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(args.exp_name)), dpi=1000)
