@@ -242,7 +242,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.ylabel("RMSE")
         plt.legend(['Ours', 'CNN-Trans', 'Transformer', 'Trans-Multi', 'LSTM'], loc="best")
         name = args.exp_name
-        plt.title(name)
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(name)))
         plt.close()
 
