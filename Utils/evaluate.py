@@ -228,19 +228,27 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="*", linestyle="-", color='orange')
-        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="*", linestyle="-", color='seagreen')
-        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="*", linestyle="-", color='red')
-        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="*", linestyle="-", color='violet')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="*", linestyle="-", color='salmon')
-        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="+", linestyle="-", color='orange')
-        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="+", linestyle="-", color='seagreen')
-        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="+", linestyle="-", color='red')
-        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="+", linestyle="-", color='violet')
-        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="+", linestyle="-", color='salmon')
+        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='orange')
+        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='seagreen')
+        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='red')
+        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='violet')
+        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='salmon')
+        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='orange')
+        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='seagreen')
+        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='red')
+        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='violet')
+        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='salmon')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
-        plt.legend(['Ours', 'CNN-Trans', 'Transformer', 'Trans-Multi', 'LSTM'], loc="best")
+        plt.legend(['Ours (horizon=24)', 'CNN-Trans(horizon=24)',
+                    'Transformer(horizon=24)',
+                    'Trans-Multi(horizon=24)',
+                    'LSTM(horizon=24)',
+                    'Ours (horizon=48)', 'CNN-Trans(horizon=48)',
+                    'Transformer(horizon=48)',
+                    'Trans-Multi(horizon=48)',
+                    'LSTM(horizon=48)',
+                    ],  bbox_to_anchor=(1, 1), loc='upper left')
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(args.exp_name)), dpi=1000)
         plt.close()
 
