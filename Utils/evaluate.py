@@ -662,7 +662,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_one_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
