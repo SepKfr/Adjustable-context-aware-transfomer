@@ -678,7 +678,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
-    parser.add_argument('--cuda', type=str, default='cpu')
+    parser.add_argument('--cuda', type=str, default='cuda:1')
     parser.add_argument('--path_to_save', type=str, default='traffic_plots')
     parser.add_argument('--total_time_steps', type=int, default=192)
     args = parser.parse_args()
@@ -689,7 +689,7 @@ def main():
     np.random.seed(21)
     random.seed(21)
 
-    device = args.cuda
+    device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
