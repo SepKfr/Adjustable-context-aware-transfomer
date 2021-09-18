@@ -502,22 +502,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         test_y_output, test_y_input, flg)
 
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
-            np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
-            np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(enc_attn_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1], -1),\
+            np.mean(self_attn_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_multi_scores, self_attn_multi_scores, dec_enc_attn_multi_scores = \
-            np.mean(np.mean(enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
-            np.mean(np.mean(self_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(enc_attn_multi_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1], -1), \
+            np.mean(self_attn_multi_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_multi_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_conv_scores, self_attn_conv_scores, dec_enc_attn_conv_scores = \
-            np.mean(np.mean(enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
-            np.mean(np.mean(self_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(enc_attn_conv_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1], -1), \
+            np.mean(self_attn_conv_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_conv_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_temp_cutoff_scores, self_attn_temp_cutoff_scores, dec_enc_attn_temp_cutoff_scores = \
-            np.mean(np.mean(enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1],
+            np.mean(enc_attn_temp_cutoff_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1],
                                                                                     -1),\
-            np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(self_attn_temp_cutoff_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_temp_cutoff_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
 
         pred_attn = np.mean(predictions_attn, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
@@ -540,7 +540,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                ind = i
+                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
+                    diff_1 = loss_attn - loss_attn_temp
+                    diff_2 = loss_attn_multi - loss_attn_temp
+                    ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -583,11 +586,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.legend(['Transformer', 'Trans-Multi',
                     'CNN-Trans', 'Ours'], loc="best")
 
-        ax_1.set_ylabel("Ave. a(h, q)")
+        ax_1.set_ylabel("attn weight")
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_one_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -618,11 +621,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.legend(['Transformer', 'Trans-Multi',
                     'CNN-Trans', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
-        ax_2.set_ylabel("Ave. a(h, q)")
+        ax_2.set_ylabel("attn weight")
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_one_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -675,7 +678,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
-    parser.add_argument('--cuda', type=str, default='cuda:0')
+    parser.add_argument('--cuda', type=str, default='cpu')
     parser.add_argument('--path_to_save', type=str, default='traffic_plots')
     parser.add_argument('--total_time_steps', type=int, default=192)
     args = parser.parse_args()
@@ -686,7 +689,7 @@ def main():
     np.random.seed(21)
     random.seed(21)
 
-    device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
+    device = args.cuda
 
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
