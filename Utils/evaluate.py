@@ -251,7 +251,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     'LSTM (t=48)',
                     ],  bbox_to_anchor=(1, 1), loc='upper left')
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.png'.format(args.exp_name)), dpi=1000)
+        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.pdf'.format(args.exp_name)), dpi=1000)
         plt.close()
 
         '''
@@ -590,7 +590,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_one_{}_{}.png'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_one_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -625,7 +625,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_one_{}_{}.png'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_one_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -662,7 +662,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_one_{}_{}.png'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_one_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
