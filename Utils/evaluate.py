@@ -655,7 +655,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth','Transformer', 'Trans-multi',
+        ax.legend(['Ground Truth', 'Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
