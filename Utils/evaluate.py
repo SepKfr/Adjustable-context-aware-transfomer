@@ -241,13 +241,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='salmon')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
-        plt.legend(['Ours (t=24)', 'CNN-Trans (t=24)',
+        plt.legend(['Ours (t=24)', 'CNN-trans (t=24)',
                     'Transformer (t=24)',
-                    'Trans-Multi (t=24)',
+                    'Trans-multi (t=24)',
                     'LSTM (t=24)',
-                    'Ours (t=48)', 'CNN-Trans (t=48)',
+                    'Ours (t=48)', 'CNN-trans (t=48)',
                     'Transformer (t=48)',
-                    'Trans-Multi (t=48)',
+                    'Trans-multi (t=48)',
                     'LSTM (t=48)',
                     ],  bbox_to_anchor=(1, 1), loc='upper left')
         plt.tight_layout()
@@ -583,10 +583,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_1.legend(['Transformer', 'Trans-Multi',
-                    'CNN-Trans', 'Ours'], loc="best")
+        ax_1.legend(['Transformer', 'Trans-multi',
+                    'CNN-trans', 'Ours'], loc="best")
 
-        ax_1.set_ylabel("attn weight")
+        ax_1.set_ylabel("Ave. a(Q)")
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
@@ -618,10 +618,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_2.legend(['Transformer', 'Trans-Multi',
-                    'CNN-Trans', 'Ours'], loc="best")
+        ax_2.legend(['Transformer', 'Trans-multi',
+                    'CNN-trans', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
-        ax_2.set_ylabel("attn weight")
+        ax_2.set_ylabel("Ave. a(Q)")
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
@@ -655,8 +655,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth','Transformer', 'Trans-Multi',
-                    'CNN-Trans', 'Ours'], loc="upper left")
+        ax.legend(['Ground Truth','Transformer', 'Trans-multi',
+                    'CNN-trans', 'Ours'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
@@ -670,8 +670,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     print("Done exp 1")
     create_attn_score_plots(48)
     print("Done exp 2")
-    '''create_rmse_plot()
-    print("Done exp rmse")'''
+    create_rmse_plot()
+    print("Done exp rmse")
     #create_rmse_plot()
 
 
