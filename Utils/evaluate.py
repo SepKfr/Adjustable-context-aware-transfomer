@@ -540,9 +540,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
+                if loss_attn_multi - loss_attn_temp > diff_1:
                     diff_1 = loss_attn - loss_attn_temp
-                    diff_2 = loss_attn_multi - loss_attn_temp
                     ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
@@ -666,12 +665,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
 
-    '''create_attn_score_plots(24)
+    create_attn_score_plots(24)
     print("Done exp 1")
     create_attn_score_plots(48)
-    print("Done exp 2")'''
-    create_rmse_plot()
-    print("Done exp rmse")
+    print("Done exp 2")
+    '''create_rmse_plot()
+    print("Done exp rmse")'''
     #create_rmse_plot()
 
 
