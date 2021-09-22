@@ -212,7 +212,7 @@ class ScaledDotProductAttention(nn.Module):
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
             if "cat" in self.attn_type:
-                attns = torch.ones(b, h, l, l_k)/l_k
+                attns = (torch.ones(b, h, l, l_k)/l_k).type_as(attn).to(self.device)
                 contexts = V.cumsum(dim=-2)
                 attns[torch.arange(b)[:, None, None], torch.arange(h)[None, :, None], q_index, :] = attn
                 contexts[torch.arange(b)[:, None, None],
