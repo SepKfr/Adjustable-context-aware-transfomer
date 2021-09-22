@@ -670,8 +670,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     print("Done exp 1")
     create_attn_score_plots(48)
     print("Done exp 2")
-    create_rmse_plot()
-    print("Done exp rmse")
+    '''create_rmse_plot()
+    print("Done exp rmse")'''
     #create_rmse_plot()
 
 
