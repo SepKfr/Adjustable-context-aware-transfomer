@@ -502,22 +502,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         test_y_output, test_y_input, flg)
 
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
-            np.mean(enc_attn_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1], -1),\
-            np.mean(self_attn_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(dec_enc_attn_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
+            np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_multi_scores, self_attn_multi_scores, dec_enc_attn_multi_scores = \
-            np.mean(enc_attn_multi_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1], -1), \
-            np.mean(self_attn_multi_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(dec_enc_attn_multi_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(np.mean(enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
+            np.mean(np.mean(self_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_conv_scores, self_attn_conv_scores, dec_enc_attn_conv_scores = \
-            np.mean(enc_attn_conv_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1], -1), \
-            np.mean(self_attn_conv_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(dec_enc_attn_conv_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(np.mean(enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
+            np.mean(np.mean(self_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_temp_cutoff_scores, self_attn_temp_cutoff_scores, dec_enc_attn_temp_cutoff_scores = \
-            np.mean(enc_attn_temp_cutoff_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0] * test_de.shape[1],
+            np.mean(np.mean(enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1],
                                                                                     -1),\
-            np.mean(self_attn_temp_cutoff_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(dec_enc_attn_temp_cutoff_scores, axis=0)[:, :, -1, :].reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
 
         pred_attn = np.mean(predictions_attn, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
@@ -540,8 +540,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                if loss_attn_multi - loss_attn_temp > diff_1:
+                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
                     diff_1 = loss_attn - loss_attn_temp
+                    diff_2 = loss_attn_multi - loss_attn_temp
                     ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
@@ -589,7 +590,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_one_{}_{}.pdf'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -624,7 +625,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_one_{}_{}.pdf'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -661,7 +662,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_one_{}_{}.pdf'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.png'.format(args.exp_name, len_pred)),
                     dpi=1000)
         plt.close()
 
