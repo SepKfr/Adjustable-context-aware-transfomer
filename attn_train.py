@@ -190,7 +190,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='cat_q_reduced')
+    parser.add_argument("--attn_type", type=str, default='attn_temp_cutoff')
     parser.add_argument("--name", type=str, default='attn_21')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
