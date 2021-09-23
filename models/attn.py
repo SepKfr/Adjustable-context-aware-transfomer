@@ -308,7 +308,7 @@ class DecoderLayer(nn.Module):
             d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, attn_type="attn", kernel=kernel)
+            d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
