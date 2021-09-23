@@ -87,7 +87,7 @@ def main():
     normaliser = targets.abs().mean()
     mae_loss = mae_loss / normaliser
 
-    print("RMSE loss {.4f}, MAE loss {.4f}", mae_loss, test_loss)
+    print("MAE loss {.4f},  RMSE loss {.4f}".format(mae_loss, test_loss))
 
 
 if __name__ == '__main__':
