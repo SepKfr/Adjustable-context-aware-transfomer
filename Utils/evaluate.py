@@ -564,6 +564,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         np.sum(self_attn_temp_cutoff_scores[ind, :])
                     ))
 
+        params = {'mathtext.default': 'regular'}
+        plt.rcParams.update(params)
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
@@ -583,7 +585,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
 
-        ax_1.set_ylabel("Ave. a(Q)")
+        ax_1.set_ylabel('$Ave. a_{h, q}$)')
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
@@ -604,6 +606,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     min(dec_enc_attn_temp_cutoff_scores[ind, :] /
                         np.sum(dec_enc_attn_temp_cutoff_scores[ind, :])))
 
+        params = {'mathtext.default': 'regular'}
+        plt.rcParams.update(params)
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
@@ -618,7 +622,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
-        ax_2.set_ylabel("Ave. a(Q)")
+        ax_2.set_ylabel('$Ave. a_{h, q}$)')
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
@@ -639,6 +643,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     max(pred_attn_conv[ind, :]),
                     max(pred_attn_temp_cutoff[ind, :]))
 
+        params = {'mathtext.default': 'regular'}
+        plt.rcParams.update(params)
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
 
