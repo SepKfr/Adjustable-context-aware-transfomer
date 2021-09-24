@@ -588,7 +588,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
 
-        ax_1.set_ylabel('$Ave. a_{h, q}$)')
+        ax_1.set_ylabel('$Ave. a_{h, q}$')
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
@@ -625,7 +625,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
-        ax_2.set_ylabel('$Ave. a_{h, q}$)')
+        ax_2.set_ylabel('$Ave. a_{h, q}$')
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
@@ -672,8 +672,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
 
-    '''create_attn_score_plots(24)
-    print("Done exp 1")'''
+    create_attn_score_plots(24)
+    print("Done exp 1")
     create_attn_score_plots(48)
     print("Done exp 2")
     '''create_rmse_plot()
