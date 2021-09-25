@@ -232,7 +232,7 @@ class ScaledDotProductAttention(nn.Module):
             attn, index = torch.max(attn, dim=2)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
-        elif "cat" in self.attn_type:
+        elif "cat_q_reduced" in self.attn_type:
 
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
             attns = (torch.ones(b, h, l, l_k)/l_k).type_as(attn).to(self.device)
