@@ -120,6 +120,25 @@ class ScaledDotProductAttention(nn.Module):
         q_index = None
         u = None
 
+        if "cat_q" in self.attn_type:
+
+            n_k = [1, 3, 9]
+            len_n_k = len(n_k)
+            Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
+            K_p = torch.zeros(b, h, len_n_k, l_k, d_k).to(self.device)
+
+            for ind, k in enumerate(n_k):
+                Q_g = get_con_vecs(Q, k)
+                K_g = get_con_vecs(K, k)
+                Q_loc = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
+                K_loc = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
+                Q_p[:, :, ind, :, :] = Q_loc
+                K_p[:, :, ind, :, :] = K_loc
+            Q_p, _ = torch.max(Q_p, dim=2)
+            K_p, _ = torch.max(K_p, dim=2)
+
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q_p, K_p) / np.sqrt(self.d_k)
+
         if "cat_q_reduced" in self.attn_type:
 
             B, H, L_Q, D = Q.shape
@@ -345,14 +364,14 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device,attn_type, kernel):
+                 n_heads, device,attn_type, attn_type_2, kernel):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, attn_type='attn', kernel=kernel)
+            d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type_2, kernel=kernel)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
@@ -372,7 +391,7 @@ class Decoder(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device,
-                 attn_type, kernel):
+                 attn_type, attn_type_2, kernel):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -387,7 +406,8 @@ class Decoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
                 n_heads=n_heads, device=device,
-                attn_type=attn_type, kernel=kernel)
+                attn_type=attn_type,
+                attn_type_2=attn_type_2, kernel=kernel)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.d_k = d_k
@@ -421,7 +441,7 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, attn_type, kernel):
+                 tgt_pad_index, device, attn_type, attn_type_2, kernel):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -434,7 +454,7 @@ class Attn(nn.Module):
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=1, pad_index=tgt_pad_index,
             device=device,
-            attn_type=attn_type, kernel=kernel)
+            attn_type=attn_type, attn_type_2=attn_type_2, kernel=kernel)
 
         self.enc_embedding = nn.Linear(src_input_size, d_model)
         self.dec_embedding = nn.Linear(tgt_input_size, d_model)
