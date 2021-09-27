@@ -213,7 +213,8 @@ class ElectricityFormatter(GenericDataFormatter):
             'minibatch_size': [256],
             'max_gradient_norm': 100.,
             'num_heads': 8,
-            'stack_size': 1
+            'stack_size': 1,
+            'kernel': [3]
         }
 
         return model_params
