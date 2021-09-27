@@ -67,7 +67,7 @@ def train(args, model, train_en, train_de, train_y,
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
-            train_loss_list.append(loss)
+            train_loss_list.append(loss.item())
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -308,6 +308,7 @@ def main():
                       train_y_p.to(device), valid_en_p.to(device), valid_de_p.to(device),
                       valid_y_p.to(device), epoch, e, params['num_epochs'], val_loss, val_inner_loss,
                       optim, train_loss_list, conf, i, best_config, criterion, path)
+            print(train_loss_list)
             if stop:
                 break
 
