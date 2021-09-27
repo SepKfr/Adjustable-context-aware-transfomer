@@ -188,7 +188,7 @@ def main():
     parser.add_argument("--n_heads_best", type=int)
     parser.add_argument("--n_layers", type=int, default=1)
     parser.add_argument("--n_layers_best", type=int)
-    parser.add_argument("--kernel", type=int, default=[1, 3, 9])
+    parser.add_argument("--kernel", type=int, default=3)
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=[0])
     parser.add_argument("--dr_best", type=float)
@@ -260,7 +260,7 @@ def main():
     if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
         args.kernel = [1]
     hyper_param = list([[args.n_layers], model_params['minibatch_size'], [model_params['num_heads']],
-                        model_params['hidden_layer_size'], args.kernel])
+                        model_params['hidden_layer_size'], [args.kernel]])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
