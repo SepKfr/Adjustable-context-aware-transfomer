@@ -67,6 +67,7 @@ def train(args, model, train_en, train_de, train_y,
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
+            train_loss_list.append(loss)
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -74,7 +75,6 @@ def train(args, model, train_en, train_de, train_y,
         #print("end {}:".format(time.ctime()))
 
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
-        train_loss_list.append(total_loss)
 
         model.eval()
         test_loss = 0
