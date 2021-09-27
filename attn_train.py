@@ -89,11 +89,12 @@ def train(args, model, train_en, train_de, train_y,
                 val_loss = val_inner_loss
                 best_config = config
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
-                if epoch == num_epochs - 1:
-                    torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
-                    del train_loss_list
 
             e = epoch
+
+        if epoch == num_epochs - 1:
+            torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
+            del train_loss_list
 
         '''if epoch - e > 5:
             stop = True
