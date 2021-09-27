@@ -92,11 +92,10 @@ def train(args, model, train_en, train_de, train_y,
 
             e = epoch
 
-        if epoch - e > 5:
+        '''if epoch - e > 5:
             stop = True
             if val_inner_loss < val_loss:
-                torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
-
+                '''
         print("Average loss: {:.4f}".format(test_loss))
 
     except KeyboardInterrupt:
@@ -308,6 +307,8 @@ def main():
                       optim, train_loss_list, conf, i, best_config, criterion, path)
             if stop:
                 break
+
+        torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
         print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en_p.to(device),
