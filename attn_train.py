@@ -55,7 +55,7 @@ config_file = dict()
 
 
 def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch, e, val_loss,
+          test_en, test_de, test_y, epoch, e, num_epochs, val_loss,
           val_inner_loss, optimizer, train_loss_list,
           config, config_num, best_config, criterion, path):
 
@@ -89,6 +89,8 @@ def train(args, model, train_en, train_de, train_y,
                 val_loss = val_inner_loss
                 best_config = config
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
+                if epoch == num_epochs - 1:
+                    torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
 
             e = epoch
 
@@ -308,7 +310,6 @@ def main():
             if stop:
                 break
 
-        torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
         print("best config so far: {}".format(best_config))
 
     test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en_p.to(device),
