@@ -305,7 +305,7 @@ def main():
             best_config, val_loss, val_inner_loss, stop, e, train_loss_list = \
                 train(args, model, train_en_p.to(device), train_de_p.to(device),
                       train_y_p.to(device), valid_en_p.to(device), valid_de_p.to(device),
-                      valid_y_p.to(device), epoch, e, val_loss, val_inner_loss,
+                      valid_y_p.to(device), epoch, e, params['num_epochs'], val_loss, val_inner_loss,
                       optim, train_loss_list, conf, i, best_config, criterion, path)
             if stop:
                 break
