@@ -68,14 +68,13 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, attn_type, kernel, factor=5):
+    def __init__(self, d_k, device, attn_type, kernel):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.factor = factor
 
     @staticmethod
     def get_fft(Q, K):
@@ -92,93 +91,12 @@ class ScaledDotProductAttention(nn.Module):
 
         return Q, K
 
-    def _prob_QK(self, Q, K, sample_k, n_top):
-        # informer github: https://github.com/zhouhaoyi/Informer2020/blob/main/models/attn.py
-        # Q [B, H, L, D]
-        B, H, L_K, E = K.shape
-        _, _, L_Q, _ = Q.shape
-
-        # calculate the sampled Q_K
-        K_expand = K.unsqueeze(-3).expand(B, H, L_Q, L_K, E)
-        index_sample = torch.randint(L_K, (L_Q, sample_k))  # real U = U_part(factor*ln(L_k))*L_q
-        K_sample = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
-        Q_K_sample = torch.matmul(Q.unsqueeze(-2), K_sample.transpose(-2, -1)).squeeze()
-
-        # find the Top_k query with sparisty measurement
-        M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K)
-        M_top = M.topk(n_top, sorted=False)[1]
-        # use the reduced Q to calculate Q_K
-        Q_reduce = Q[torch.arange(B)[:, None, None],
-                     torch.arange(H)[None, :, None],
-                     M_top, :]  # factor*ln(L_q)
-        return Q_reduce, M_top
-
     def forward(self, Q, K, V, attn_mask):
 
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
-        q_index = None
-        u = None
 
-        if "cat_q" in self.attn_type:
-
-            n_k = [1, 3, 9]
-            len_n_k = len(n_k)
-            Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
-            K_p = torch.zeros(b, h, len_n_k, l_k, d_k).to(self.device)
-
-            for ind, k in enumerate(n_k):
-                Q_g = get_con_vecs(Q, k)
-                K_g = get_con_vecs(K, k)
-                Q_loc = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
-                K_loc = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
-                Q_p[:, :, ind, :, :] = Q_loc
-                K_p[:, :, ind, :, :] = K_loc
-            Q_p, _ = torch.max(Q_p, dim=2)
-            K_p, _ = torch.max(K_p, dim=2)
-
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q_p, K_p) / np.sqrt(self.d_k)
-
-        if "cat_q_reduced" in self.attn_type:
-
-            B, H, L_Q, D = Q.shape
-            _, _, L_K, _ = K.shape
-            U_part = self.factor * np.ceil(np.log(L_K)).astype('int').item()  # c*ln(L_k)
-            u = self.factor * np.ceil(np.log(L_Q)).astype('int').item()  # c*ln(L_q)
-
-            U_part = U_part if U_part < L_K else L_K
-            u = u if u < L_Q else L_Q
-
-            def rec_q(Q, K):
-
-                Q_rec, index = self._prob_QK(Q, K, sample_k=U_part, n_top=u)
-                return Q_rec, index
-
-            n_k = [1, 3, 9]
-            len_n_k = len(n_k)
-            Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
-            K_p = torch.zeros(b, h, len_n_k, l_k, d_k).to(self.device)
-
-            for ind, k in enumerate(n_k):
-
-                Q_g = get_con_vecs(Q, k)
-                K_g = get_con_vecs(K, k)
-                Q_loc = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
-                K_loc = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
-                Q_p[:, :, ind, :, :] = Q_loc
-                K_p[:, :, ind, :, :] = K_loc
-            Q_m, _ = torch.max(Q_p, dim=2)
-            K_p, _ = torch.max(K_p, dim=2)
-            Q_p, q_index = rec_q(Q_m, K_p)
-
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q_p, K_p) / np.sqrt(self.d_k)
-
-            if attn_mask is not None:
-                attn_mask = attn_mask[torch.arange(b)[:, None, None],
-                         torch.arange(h)[None, :, None],
-                         q_index, :]
-
-        elif "temp_cutoff" in self.attn_type:
+        if "temp_cutoff" in self.attn_type:
 
             n_k = [1, 3, 9]
             len_n_k = len(n_k)
@@ -217,10 +135,26 @@ class ScaledDotProductAttention(nn.Module):
                 Q, K = get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
+            elif "temp" in self.attn_type:
+
+                n_k = [1, 3, 6, 9]
+                len_n_k = len(n_k)
+                Q_p = torch.zeros(b, h, len_n_k, l, d_k)
+                K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
+
+                for ind, k in enumerate(n_k):
+                    Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
+
+                scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
+
+                if attn_mask is not None:
+                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
         if attn_mask is not None:
+
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
@@ -232,16 +166,6 @@ class ScaledDotProductAttention(nn.Module):
             attn, index = torch.max(attn, dim=2)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
 
-        elif "cat_q_reduced" in self.attn_type:
-
-            context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
-            attns = (torch.ones(b, h, l, l_k)/l_k).type_as(attn).to(self.device)
-            contexts = V.cumsum(dim=-2)
-            attns[torch.arange(b)[:, None, None], torch.arange(h)[None, :, None], q_index, :] = attn
-            contexts[torch.arange(b)[:, None, None],
-               torch.arange(h)[None, :, None],
-               q_index, :] = context
-            attn, context = attns, contexts
         else:
 
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
@@ -364,14 +288,14 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device,attn_type, attn_type_2, kernel):
+                 n_heads, device,attn_type, kernel):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type_2, kernel=kernel)
+            d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
@@ -391,7 +315,7 @@ class Decoder(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device,
-                 attn_type, attn_type_2, kernel):
+                 attn_type, kernel):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -406,8 +330,7 @@ class Decoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
                 n_heads=n_heads, device=device,
-                attn_type=attn_type,
-                attn_type_2=attn_type_2, kernel=kernel)
+                attn_type=attn_type, kernel=kernel)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.d_k = d_k
@@ -441,7 +364,7 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, attn_type, attn_type_2, kernel):
+                 tgt_pad_index, device, attn_type, kernel):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
@@ -454,7 +377,7 @@ class Attn(nn.Module):
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=1, pad_index=tgt_pad_index,
             device=device,
-            attn_type=attn_type, attn_type_2=attn_type_2, kernel=kernel)
+            attn_type=attn_type, kernel=kernel)
 
         self.enc_embedding = nn.Linear(src_input_size, d_model)
         self.dec_embedding = nn.Linear(tgt_input_size, d_model)

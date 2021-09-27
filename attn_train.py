@@ -56,7 +56,7 @@ config_file = dict()
 
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
-          val_inner_loss, optimizer,
+          val_inner_loss, optimizer, train_loss_list,
           config, config_num, best_config, criterion, path):
 
     stop = False
@@ -74,6 +74,7 @@ def train(args, model, train_en, train_de, train_y,
         #print("end {}:".format(time.ctime()))
 
         print("Train epoch: {}, loss: {:.4f}".format(epoch, total_loss))
+        train_loss_list.append(total_loss)
 
         model.eval()
         test_loss = 0
@@ -93,6 +94,8 @@ def train(args, model, train_en, train_de, train_y,
 
         if epoch - e > 5:
             stop = True
+            if val_inner_loss < val_loss:
+                torch.save({'train_loss': train_loss_list}, os.path.join(path, args.name))
 
         print("Average loss: {:.4f}".format(test_loss))
 
@@ -105,7 +108,7 @@ def train(args, model, train_en, train_de, train_y,
         }, os.path.join(path, "{}_continue".format(args.name)))
         sys.exit(0)
 
-    return best_config, val_loss, val_inner_loss, stop, e
+    return best_config, val_loss, val_inner_loss, stop, e, train_loss_list
 
 
 def create_config(hyper_parameters):
@@ -135,7 +138,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  n_layers=n_layers, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
-                 attn_type_2=args.attn_type_2,
                  kernel=kernel).to(device)
 
     checkpoint = torch.load(os.path.join(path, args.name))
@@ -191,8 +193,7 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='cat_q_reduced')
-    parser.add_argument("--attn_type_2", type=str, default='cat_q')
+    parser.add_argument("--attn_type", type=str, default='attn')
     parser.add_argument("--name", type=str, default='attn_21')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
@@ -287,7 +288,6 @@ def main():
                      n_layers=n_layers, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      attn_type=args.attn_type,
-                     attn_type_2=args.attn_type_2,
                      kernel=kernel)
         model.to(device)
 
@@ -297,14 +297,15 @@ def main():
 
         val_inner_loss = 1e10
         e = 0
+        train_loss_list = list()
 
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
-            best_config, val_loss, val_inner_loss, stop, e = \
+            best_config, val_loss, val_inner_loss, stop, e, train_loss_list = \
                 train(args, model, train_en_p.to(device), train_de_p.to(device),
                       train_y_p.to(device), valid_en_p.to(device), valid_de_p.to(device),
                       valid_y_p.to(device), epoch, e, val_loss, val_inner_loss,
-                      optim, conf, i, best_config, criterion, path)
+                      optim, train_loss_list, conf, i, best_config, criterion, path)
             if stop:
                 break
         print("best config so far: {}".format(best_config))
