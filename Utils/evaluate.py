@@ -690,10 +690,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            input_size, output_size,
                                            models_path, "temp_cutoff", "attn_temp_cutoff_test")
 
-        attn_loss = np.append(attn_loss[0::500], attn_loss[-1])
-        attn_multi_loss = np.append(attn_multi_loss[0::500], attn_multi_loss[-1])
-        attn_conv_loss = np.append(attn_conv_loss[0::500], attn_conv_loss[-1])
-        attn_temp_cutoff_loss = np.append(attn_temp_cutoff_loss[0::500], attn_temp_cutoff_loss[-1])
+        attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
+        attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
+        attn_conv_loss = [sum(attn_conv_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
+        attn_temp_cutoff_loss = [sum(attn_temp_cutoff_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
         plt.rc('axes', labelsize=14)
