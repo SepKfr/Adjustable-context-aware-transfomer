@@ -77,6 +77,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      attn_type=attn_type,
                      kernel=kernel).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
+        loss = checkpoint["train_loss"]
         state_dict = checkpoint["model_state_dict"]
         new_state_dict = dict()
         for k, v in state_dict.items():
@@ -84,7 +85,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model
+        return model, loss
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -669,12 +670,46 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
 
+    def plot_train_loss(len_pred):
+        seed = 9
+        torch.manual_seed(seed)
+
+        total_len = len_pred + 168
+        test_en, test_de, test_y, test_id = get_test_data(total_len)
+        configs, models_path = get_config(len_pred)
+        input_size = test_en.shape[3]
+        output_size = test_de.shape[3]
+
+        _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
+                               input_size, output_size, models_path, "attn", "attn_test")
+        _, attn_multi_loss = load_attn(seed, configs["attn_multi_test_{}".format(seed)],
+                                     input_size, output_size, models_path, "attn", "attn_multi_test")
+        _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
+                                    input_size, output_size, models_path, "conv_attn", "attn_conv_test")
+        _, attn_temp_cutoff_loss = load_attn(seed, configs["attn_temp_cutoff_test_{}".format(seed)],
+                                           input_size, output_size,
+                                           models_path, "temp_cutoff", "attn_temp_cutoff_test")
+
+        params = {'mathtext.default': 'regular'}
+        plt.rcParams.update(params)
+        plt.rc('axes', labelsize=16)
+        plt.rc('axes', titlesize=16)
+
+        fig, ax = plt.subplots()
+        ax.plot(attn_temp_cutoff_loss)
+        plt.tight_layout()
+        plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
+                    dpi=1000)
+        plt.close()
+
+
     '''create_attn_score_plots(24)
     print("Done exp 1")'''
-    create_attn_score_plots(48)
-    print("Done exp 2")
+    '''create_attn_score_plots(48)
+    print("Done exp 2")'''
     '''create_rmse_plot()
     print("Done exp rmse")'''
+    plot_train_loss(48)
     #create_rmse_plot()
 
 
