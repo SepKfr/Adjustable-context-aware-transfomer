@@ -701,7 +701,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         fig, ax = plt.subplots()
         ax.set_ylabel("training loss (MSE)")
-        ax.set_xlabel("iter")
+        ax.set_xlabel("epoch")
         ax.plot(attn_loss, color='red')
         ax.plot(attn_multi_loss, color='violet')
         ax.plot(attn_conv_loss, color='seagreen')
