@@ -690,16 +690,28 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            input_size, output_size,
                                            models_path, "temp_cutoff", "attn_temp_cutoff_test")
 
+        attn_loss = np.append(attn_loss[0::500], attn_loss[-1])
+        attn_multi_loss = np.append(attn_multi_loss[0::500], attn_multi_loss[-1])
+        attn_conv_loss = np.append(attn_conv_loss[0::500], attn_conv_loss[-1])
+        attn_temp_cutoff_loss = np.append(attn_temp_cutoff_loss[0::500], attn_temp_cutoff_loss[-1])
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
-        plt.rc('axes', labelsize=16)
-        plt.rc('axes', titlesize=16)
+        plt.rc('axes', labelsize=14)
+        plt.rc('axes', titlesize=14)
 
         fig, ax = plt.subplots()
-        ax.plot(attn_temp_cutoff_loss)
+        ax.set_ylabel("training loss (MSE)")
+        ax.set_xlabel("iter")
+        ax.plot(attn_loss, color='red')
+        ax.plot(attn_multi_loss, color='violet')
+        ax.plot(attn_conv_loss, color='seagreen')
+        ax.plot(attn_temp_cutoff_loss, color='orange')
+        ax.legend(['Transformer', 'Trans-multi',
+                   'CNN-trans', 'Ours'], loc="best")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
+
         plt.close()
 
 
