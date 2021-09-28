@@ -703,7 +703,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.set_ylabel("training loss (MSE)")
         ax.set_xlabel("epoch")
         ax.plot(attn_loss, color='lightcoral')
-        ax.plot(attn_multi_loss, color='yellow')
+        ax.plot(attn_multi_loss, color='green')
         ax.plot(attn_conv_loss, color='deepskyblue')
         ax.plot(attn_temp_cutoff_loss, color='orchid')
         ax.legend(['Transformer', 'Trans-multi',
