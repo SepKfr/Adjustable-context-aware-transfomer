@@ -761,7 +761,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tickz = norm_bins[:-1] + diff / 2
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
-        cmap = plt.get_cmap('RdBu', np.max(index)-np.min(index)+1)
+        cmap = plt.get_cmap('RdPu', np.max(index)-np.min(index)+1)
         mat = plt.matshow(index, cmap=cmap, norm=norm)
         # tell the colorbar to tick at integers
         cax = plt.colorbar(mat, format=fmt, ticks=tickz)
