@@ -165,12 +165,13 @@ class ScaledDotProductAttention(nn.Module):
 
             attn, index = torch.max(attn, dim=2)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+            return context, attn, index
 
         else:
 
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
 
-        return context, attn
+            return context, attn
 
 
 class MultiHeadAttention(nn.Module):
@@ -237,13 +238,13 @@ class EncoderLayer(nn.Module):
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
-        out, attn = self.enc_self_attn(
+        out, attn, index = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
             V=enc_inputs, attn_mask=enc_self_attn_mask)
         out = self.layer_norm(out + enc_inputs)
         out_2 = self.pos_ffn(out)
         out_2 = self.layer_norm(out_2 + out)
-        return out_2, attn
+        return out_2, attn, index
 
 
 class Encoder(nn.Module):
@@ -288,7 +289,7 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device,attn_type, kernel):
+                 n_heads, device, attn_type, kernel):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
@@ -302,13 +303,13 @@ class DecoderLayer(nn.Module):
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask=None, dec_enc_attn_mask=None):
 
-        out, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
+        out, dec_self_attn, dec_index = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
         out = self.layer_norm(dec_inputs + out)
-        out2, dec_enc_attn = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
+        out2, dec_enc_attn, dec_enc_index = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
         out2 = self.layer_norm(out + out2)
         out3 = self.pos_ffn(out2)
         out3 = self.layer_norm(out2 + out3)
-        return out3, dec_self_attn, dec_enc_attn
+        return out3, dec_self_attn, dec_enc_attn, dec_enc_index
 
 
 class Decoder(nn.Module):
@@ -388,8 +389,8 @@ class Attn(nn.Module):
 
         enc_inputs = self.enc_embedding(enc_inputs)
         dec_inputs = self.dec_embedding(dec_inputs)
-        enc_outputs, enc_self_attns = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
+        enc_outputs, enc_self_attns, _ = self.encoder(enc_inputs)
+        dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits
+        return dec_logits, dec_enc_index
 

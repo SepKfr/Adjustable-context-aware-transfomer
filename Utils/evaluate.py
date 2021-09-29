@@ -85,7 +85,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model, loss
+        return model
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -718,6 +718,31 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
+    def create_attn_matrix(len_pred):
+
+        total_len = len_pred + 168
+        test_en, test_de, test_y, test_id = get_test_data(total_len)
+        configs, models_path = get_config(len_pred)
+        input_size = test_en.shape[3]
+        output_size = test_de.shape[3]
+        seed = 9
+        model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
+                                           input_size, output_size,
+                                           models_path, "temp_cutoff", "attn_temp_cutoff")
+        model.eval()
+
+        ind = random.randint(0, test_en.shape[0])
+        output, dec_enc_index = model(test_en[ind], test_de[ind])
+        index = dec_enc_index[-1, :, :]
+        index = index.detach().cpu().numpy()
+        plt.matshow(index)
+        plt.tight_layout()
+        plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
+                    dpi=1000)
+
+        plt.close()
+
+
 
     '''create_attn_score_plots(24)
     print("Done exp 1")'''
@@ -725,8 +750,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     print("Done exp 2")'''
     '''create_rmse_plot()
     print("Done exp rmse")'''
-    plot_train_loss(48)
+    #plot_train_loss(48)
     #create_rmse_plot()
+    create_attn_matrix(48)
 
 
 def main():
