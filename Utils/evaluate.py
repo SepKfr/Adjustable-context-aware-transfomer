@@ -732,8 +732,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "temp_cutoff", "attn_temp_cutoff")
         model.eval()
 
-        output, dec_enc_index = model(test_en[-1], test_de[-1])
-        index = dec_enc_index[-1, -1, :, :]
+        ind = random.randint(0, 500)
+        output, dec_enc_index = model(test_en[ind], test_de[ind])
+        ind_2 = random.randint(0, 256)
+        ind3 = random.randint(0, 8)
+        index = dec_enc_index[ind_2, ind3, :, :]
         index = index.detach().cpu().numpy()
         index = index[:, -48:]
         '''mask = np.triu(np.ones(index.shape), k=1)
@@ -744,7 +747,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 2, 9, index)
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.matshow(index, cmap=plt.get_cmap('RdPu'))
+        ax.matshow(index, cmap=plt.get_cmap('cool'))
         plt.tight_layout()
         plt.axis('off')
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
@@ -775,7 +778,6 @@ def main():
         os.makedirs(args.path_to_save)
 
     np.random.seed(21)
-    random.seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
