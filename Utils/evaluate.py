@@ -732,7 +732,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "temp_cutoff", "attn_temp_cutoff")
         model.eval()
 
-        ind = random.randint(0, 500)
+        ind = random.randint(0, test_en.shape[0])
         output, dec_enc_index = model(test_en[ind], test_de[ind])
         ind_2 = random.randint(0, 256)
         ind3 = random.randint(0, 8)
