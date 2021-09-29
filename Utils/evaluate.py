@@ -1,5 +1,8 @@
 import argparse
 import json
+
+import matplotlib
+
 from models.baselines import RNN
 import torch
 from data.data_loader import ExperimentConfig
@@ -748,10 +751,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 2, 9, index)
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
+        norm_bins = np.sort([1, 3, 9]) + 0.5
+        norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
+
+        norm = matplotlib.colors.BoundaryNorm(norm_bins, 3, clip=True)
+
+        diff = norm_bins[1:] - norm_bins[:-1]
+        tickz = norm_bins[:-1] + diff / 2
+
         cmap = plt.get_cmap('RdBu', np.max(index)-np.min(index)+1)
-        mat = plt.matshow(index, cmap=cmap, vmin=np.min(index) - .5, vmax=np.max(index) + .5)
+        mat = plt.matshow(index, cmap=cmap, norm=norm)
         # tell the colorbar to tick at integers
-        cax = plt.colorbar(mat, ticks=np.arange(np.min(index), np.max(index) + 1))
+        cax = plt.colorbar(mat, ticks=tickz)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
