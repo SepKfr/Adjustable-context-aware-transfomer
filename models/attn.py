@@ -203,12 +203,12 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
-        context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
+        context, attn, index = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
                                                   attn_type=self.attn_type, kernel=self.kernel)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
-        return output, attn
+        return output, attn, index
 
 
 class PoswiseFeedForwardNet(nn.Module):
