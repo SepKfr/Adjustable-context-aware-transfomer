@@ -737,7 +737,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = index.reshape(index.shape[1], index.shape[0])
         index = index.detach().cpu().numpy()
         cmap = ListedColormap(['plum', 'violet', 'purple'])
-        fig, ax = plt.subplots(6, 4)
+        fig, ax = plt.subplots(figsize=(6, 4))
         ax.matshow(index, cmap=cmap)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
