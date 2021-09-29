@@ -736,7 +736,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = index.reshape(-1, 1)
         index = index.detach().cpu().numpy()
         plt.matshow(index)
-        plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
 
