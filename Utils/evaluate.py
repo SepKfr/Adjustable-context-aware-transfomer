@@ -757,12 +757,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         norm = matplotlib.colors.BoundaryNorm(norm_bins, 3, clip=True)
         labels = np.array(["1", "3", "9"])
 
+        col_dict = {1: "khaki",
+                    3: "indianred",
+                    9: "maroon"}
+
+        # We create a colormar from our list of colors
+        cm = ListedColormap([col_dict[x] for x in col_dict.keys()])
+
         diff = norm_bins[1:] - norm_bins[:-1]
         tickz = norm_bins[:-1] + diff / 2
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
-        cmap = plt.get_cmap('cool', np.max(index)-np.min(index)+1)
-        mat = plt.matshow(index, cmap=cmap, norm=norm)
+        mat = plt.matshow(index, cmap=cm, norm=norm)
         # tell the colorbar to tick at integers
         cax = plt.colorbar(mat, format=fmt, ticks=tickz)
         plt.tight_layout()
