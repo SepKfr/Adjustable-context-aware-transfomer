@@ -12,6 +12,7 @@ import math
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import pickle
 
 
@@ -734,9 +735,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         output, dec_enc_index = model(test_en[ind], test_de[ind])
         index = dec_enc_index[-1, -1, :, :]
         index = index.reshape(index.shape[1], index.shape[0])
-        print(index.shape)
         index = index.detach().cpu().numpy()
-        plt.matshow(index)
+        cmap = ListedColormap(['plum', 'violet', 'purple'])
+        plt.matshow(index, cmap=cmap)
+        plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
 
