@@ -732,15 +732,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "temp_cutoff", "attn_temp_cutoff")
         model.eval()
 
-        ind = random.randint(0, test_en.shape[0])
-        output, dec_enc_index = model(test_en[ind], test_de[ind])
+        output, dec_enc_index = model(test_en[0], test_de[0])
         index = dec_enc_index[-1, -1, :, :]
         index = index.detach().cpu().numpy()
         mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 3
         index = index + mask
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.matshow(index)
+        ax.matshow(index, cmap=plt.get_cmap('rainbow'))
         plt.tight_layout()
         plt.axis('off')
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
