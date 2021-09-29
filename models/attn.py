@@ -309,7 +309,7 @@ class DecoderLayer(nn.Module):
         out2 = self.layer_norm(out + out2)
         out3 = self.pos_ffn(out2)
         out3 = self.layer_norm(out2 + out3)
-        return out3, dec_self_attn, dec_enc_attn, dec_enc_index
+        return out3, dec_self_attn, dec_enc_attn, dec_index
 
 
 class Decoder(nn.Module):
@@ -344,7 +344,7 @@ class Decoder(nn.Module):
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
-            dec_outputs, dec_self_attn, dec_enc_attn, dec_enc_index = layer(
+            dec_outputs, dec_self_attn, dec_enc_attn, dec_index = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
                 dec_self_attn_mask=dec_self_attn_subsequent_mask,
@@ -358,7 +358,7 @@ class Decoder(nn.Module):
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
-        return dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index
+        return dec_outputs, dec_self_attns, dec_enc_attns, dec_index
 
 
 class Attn(nn.Module):
@@ -390,7 +390,7 @@ class Attn(nn.Module):
         enc_inputs = self.enc_embedding(enc_inputs)
         dec_inputs = self.dec_embedding(dec_inputs)
         enc_outputs, enc_self_attns, _ = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index = self.decoder(dec_inputs, enc_outputs)
+        dec_outputs, dec_self_attns, dec_enc_attns, dec_index = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits, dec_enc_index
+        return dec_logits, dec_index
 

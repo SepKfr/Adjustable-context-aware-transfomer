@@ -712,6 +712,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(attn_temp_cutoff_loss, color='orchid')
         ax.legend(['Transformer', 'Trans-multi',
                    'CNN-trans', 'Ours'], loc="best")
+        plt.axis('off')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
