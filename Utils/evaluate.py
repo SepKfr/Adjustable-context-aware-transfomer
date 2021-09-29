@@ -748,10 +748,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 2, 9, index)
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
-        bounds = [1, 3, 9]
-        cmap = plt.get_cmap('cool')
-        norm = colors.BoundaryNorm(bounds, cmap.N)
-        cax = ax.matshow(index, cmap=cmap, norm=norm, origin='lower')
+        cmap = cmap = plt.get_cmap('RdBu', np.max(index)-np.min(index)+1)
+        mat = plt.matshow(index, cmap=cmap, vmin=np.min(index) - .5, vmax=np.max(index) + .5)
+        # tell the colorbar to tick at integers
+        cax = plt.colorbar(mat, ticks=np.arange(np.min(index), np.max(index) + 1))
         fig.colorbar(cax)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
