@@ -732,16 +732,17 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "temp_cutoff", "attn_temp_cutoff")
         model.eval()
 
-        output, dec_enc_index = model(test_en[10], test_de[10])
-        index = dec_enc_index[-156, -3, :, :]
+        output, dec_enc_index = model(test_en[-1], test_de[-1])
+        index = dec_enc_index[-1, -1, :, :]
         index = index.detach().cpu().numpy()
-        mask = np.triu(np.ones(index.shape), k=1)
+        index = index[:, :48]
+        '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
-        index = index + mask
+        index = index + mask'''
         index = np.where(index == 1, 3, index)
         index = np.where(index == 0, 1, index)
         index = np.where(index == 2, 9, index)
-        index = np.where(index == 5, -2, index)
+        #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.matshow(index, cmap=plt.get_cmap('PuRd'))
         plt.tight_layout()
