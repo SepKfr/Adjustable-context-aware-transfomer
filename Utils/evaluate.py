@@ -743,7 +743,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 2, 9, index)
         index = np.where(index == 5, 0, index)
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.matshow(index, cmap=plt.get_cmap('hot'))
+        ax.matshow(index, cmap=plt.get_cmap('PuRd'))
         plt.tight_layout()
         plt.axis('off')
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
