@@ -735,12 +735,15 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ind = random.randint(0, test_en.shape[0])
         output, dec_enc_index = model(test_en[ind], test_de[ind])
         index = dec_enc_index[-1, -1, :, :]
-        index = index.reshape(index.shape[1], index.shape[0])
         index = index.detach().cpu().numpy()
-        cmap = ListedColormap(['plum', 'violet', 'purple'])
+        mask = np.triu(np.ones(index.shape), k=1)
+        mask = mask * 100
+        index = index + mask
+        cmap = ListedColormap(['plum', 'violet', 'purple', 'black'])
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.matshow(index, cmap=cmap)
         plt.tight_layout()
+        plt.axis('off')
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
 
