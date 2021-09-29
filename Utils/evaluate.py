@@ -737,7 +737,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = dec_enc_index[-1, -1, :, :]
         index = index.detach().cpu().numpy()
         mask = np.triu(np.ones(index.shape), k=1)
-        mask = mask * 100
+        mask = mask * 3
         index = index + mask
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.matshow(index)
