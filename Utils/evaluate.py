@@ -77,7 +77,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      attn_type=attn_type,
                      kernel=kernel).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
-        loss = checkpoint["train_loss"]
         state_dict = checkpoint["model_state_dict"]
         new_state_dict = dict()
         for k, v in state_dict.items():
