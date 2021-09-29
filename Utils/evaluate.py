@@ -732,8 +732,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "temp_cutoff", "attn_temp_cutoff")
         model.eval()
 
-        output, dec_enc_index = model(test_en[-1], test_de[-1])
-        index = dec_enc_index[-1, -1, :, :]
+        output, dec_enc_index = model(test_en[10], test_de[10])
+        index = dec_enc_index[-15, -3, :, :]
         index = index.detach().cpu().numpy()
         mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
