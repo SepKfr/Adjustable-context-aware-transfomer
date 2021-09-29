@@ -739,9 +739,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 100
         index = index + mask
-        cmap = ListedColormap(['plum', 'violet', 'purple', 'black'])
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.matshow(index, cmap=cmap)
+        ax.matshow(index)
         plt.tight_layout()
         plt.axis('off')
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
