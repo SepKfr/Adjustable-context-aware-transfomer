@@ -733,6 +733,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ind = random.randint(0, test_en.shape[0])
         output, dec_enc_index = model(test_en[ind], test_de[ind])
         index = dec_enc_index[-1, :, :]
+        print(index.shape)
         index = index.detach().cpu().numpy()
         plt.matshow(index)
         plt.tight_layout()
