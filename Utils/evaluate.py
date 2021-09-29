@@ -16,6 +16,7 @@ from matplotlib.colors import ListedColormap
 import pickle
 
 
+
 def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def get_test_data(timestps):
@@ -747,7 +748,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 2, 9, index)
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
-        cax = ax.matshow(index, cmap=plt.get_cmap('cool'))
+        cax = ax.matshow(index, levels=[1, 3, 9], cmap=plt.get_cmap('cool'))
         fig.colorbar(cax)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
