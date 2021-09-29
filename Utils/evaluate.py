@@ -755,15 +755,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
 
         norm = matplotlib.colors.BoundaryNorm(norm_bins, 3, clip=True)
+        labels = np.array(["1", "3", "9"])
 
         diff = norm_bins[1:] - norm_bins[:-1]
         tickz = norm_bins[:-1] + diff / 2
-        fmt = matplotlib.ticker.FuncFormatter([1, 3, 9])
+        fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
         cmap = plt.get_cmap('RdBu', np.max(index)-np.min(index)+1)
         mat = plt.matshow(index, cmap=cmap, norm=norm)
         # tell the colorbar to tick at integers
-        cax = plt.colorbar(mat, ticks=tickz, format=fmt)
+        cax = plt.colorbar(mat, format=fmt, ticks=tickz)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
