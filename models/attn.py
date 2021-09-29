@@ -278,12 +278,12 @@ class Encoder(nn.Module):
 
         enc_self_attns = []
         for layer in self.layers:
-            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
+            enc_outputs, enc_self_attn, enc_index = layer(enc_outputs, enc_self_attn_mask)
             enc_self_attns.append(enc_self_attn)
 
         enc_self_attns = torch.stack(enc_self_attns)
         enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])
-        return enc_outputs, enc_self_attns
+        return enc_outputs, enc_self_attns, enc_index
 
 
 class DecoderLayer(nn.Module):
@@ -344,7 +344,7 @@ class Decoder(nn.Module):
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
-            dec_outputs, dec_self_attn, dec_enc_attn = layer(
+            dec_outputs, dec_self_attn, dec_enc_attn, dec_enc_index = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
                 dec_self_attn_mask=dec_self_attn_subsequent_mask,
@@ -358,7 +358,7 @@ class Decoder(nn.Module):
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
-        return dec_outputs, dec_self_attns, dec_enc_attns
+        return dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index
 
 
 class Attn(nn.Module):
