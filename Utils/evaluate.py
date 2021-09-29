@@ -755,7 +755,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
 
         norm = matplotlib.colors.BoundaryNorm(norm_bins, 3, clip=True)
-        labels = np.array(["1", "3", "9"])
+        labels = np.array(["l=1", "l=3", "l=9"])
 
         col_dict = {1: "darksalmon",
                     3: "indianred",
