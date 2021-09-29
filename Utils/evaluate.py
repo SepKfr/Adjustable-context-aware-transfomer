@@ -756,8 +756,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         norm = matplotlib.colors.BoundaryNorm(norm_bins, 3, clip=True)
 
-        diff = norm_bins[1:] - norm_bins[:-1]
-        tickz = norm_bins[:-1] + diff / 2
+        tickz = [1, 3, 9]
 
         cmap = plt.get_cmap('RdBu', np.max(index)-np.min(index)+1)
         mat = plt.matshow(index, cmap=cmap, norm=norm)
