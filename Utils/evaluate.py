@@ -749,7 +749,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.matshow(index, cmap=plt.get_cmap('cool'))
         plt.tight_layout()
-        plt.axis('off')
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
 
