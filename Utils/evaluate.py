@@ -734,6 +734,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         output, dec_enc_index = model(test_en[ind], test_de[ind])
         index = dec_enc_index[-1, -1, :, :]
         index = index.reshape(-1, 1)
+        print(index.shape)
         index = index.detach().cpu().numpy()
         plt.matshow(index)
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
