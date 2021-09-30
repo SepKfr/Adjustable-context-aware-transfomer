@@ -68,7 +68,7 @@ def train(args, model, train_en, train_de, train_y,
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
-            train_loss_list.append(loss.item())
+            #train_loss_list.append(loss.item())
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -89,19 +89,13 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 val_loss = val_inner_loss
                 best_config = config
-                model_state_dict = model.state_dict()
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
             e = epoch
 
-        if epoch == num_epochs - 1:
-            torch.save({'model_state_dict': model_state_dict,'train_loss': train_loss_list}, os.path.join(path, args.name))
-            del train_loss_list
-
-        '''if epoch - e > 5:
+        if epoch - e > 5:
             stop = True
-            if val_inner_loss < val_loss:
-                '''
+
         print("Average loss: {:.4f}".format(test_loss))
 
     except KeyboardInterrupt:
