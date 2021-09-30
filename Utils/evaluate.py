@@ -698,8 +698,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "temp_cutoff", "attn_temp_cutoff_test")
 
         attn_multi_loss = np.mean(attn_multi_losses, axis=0)
-        attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
-        attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
+        #attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
+        #attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_conv_loss = [sum(attn_conv_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_temp_cutoff_loss = [sum(attn_temp_cutoff_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         params = {'mathtext.default': 'regular'}
@@ -710,13 +710,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax = plt.subplots()
         ax.set_ylabel("training loss (MSE)")
         ax.set_xlabel("epoch")
-        ax.plot(attn_loss, color='lightcoral')
-        ax.plot(attn_multi_loss, color='green')
         ax.plot(attn_conv_loss, color='deepskyblue')
         ax.plot(attn_temp_cutoff_loss, color='orchid')
-        ax.legend(['Transformer', 'Trans-multi',
-                   'CNN-trans', 'Ours'], loc="best")
-        plt.axis('off')
+        ax.legend(['CNN-trans', 'Ours'], loc="best")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
