@@ -107,8 +107,8 @@ class ScaledDotProductAttention(nn.Module):
 
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
-                Q_p[:, :, ind, :, :] = F.elu(nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1))
-                K_p[:, :, ind, :, :] = F.elu(nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1))
+                Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
+                K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
