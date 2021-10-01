@@ -713,11 +713,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax = plt.subplots()
         ax.set_ylabel("training loss (MSE)")
         ax.set_xlabel("epoch")
-        ax.plot(attn_loss, color='violet')
-        ax.plot(attn_multi_loss, color='orange')
+        ax.plot(attn_loss, color='lightcoral')
+        ax.plot(attn_multi_loss, color='green')
         ax.plot(attn_conv_loss, color='deepskyblue')
         ax.plot(attn_temp_cutoff_loss, color='orchid')
-        ax.legend(['Transformer', 'Trans-multi', 'CNN-trans', 'Ours'], loc="best")
+        ax.legend(['Transformer', 'Trans-multi',
+                   'CNN-trans', 'Ours'], loc="best")
+        plt.axis('off')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
