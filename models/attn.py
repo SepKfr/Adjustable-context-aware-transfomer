@@ -135,20 +135,12 @@ class ScaledDotProductAttention(nn.Module):
                 Q, K = get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
-            elif "temp" in self.attn_type:
+        elif "f_linear" in self.attn_type:
 
-                n_k = [1, 3, 6, 9]
-                len_n_k = len(n_k)
-                Q_p = torch.zeros(b, h, len_n_k, l, d_k)
-                K_p = torch.zeros(b, h, len_n_k, l_k, d_k)
-
-                for ind, k in enumerate(n_k):
-                    Q_p[:, :, ind, :, :], K_p[:, :, ind, :, :] = get_conv(k, Q, K)
-
-                scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p.to(self.device), K_p.to(self.device)) / np.sqrt(self.d_k)
-
-                if attn_mask is not None:
-                    attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+            Q, K = get_con_vecs(Q, self.kernel),  get_con_vecs(K, self.kernel)
+            Q = nn.Linear(self.kernel, 1).to(self.device)(Q.transpose(-2, -1)).squeeze(-1)
+            K = nn.Linear(self.kernel, 1).to(self.device)(K.transpose(-2, -1)).squeeze(-1)
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))

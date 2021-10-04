@@ -198,8 +198,8 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=1)
     parser.add_argument("--run_num", type=int, default=1)
     parser.add_argument("--pos_enc", type=str, default='sincos')
-    parser.add_argument("--attn_type", type=str, default='temp_cutoff')
-    parser.add_argument("--name", type=str, default='attn_21')
+    parser.add_argument("--attn_type", type=str, default='f_linear')
+    parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--server", type=str, default="c01")
     parser.add_argument("--lr_variate", type=str, default="True")
@@ -259,10 +259,10 @@ def main():
         os.makedirs(path)
 
     criterion = nn.MSELoss()
-    if args.attn_type != "conv_attn" and args.attn_type != "tmp_fft":
-        model_params['kernel'] = [1]
+    if args.attn_type != "conv_attn" and args.attn_type != "f_linear":
+        args.kernel = 1
     hyper_param = list([[args.n_layers], model_params['minibatch_size'], [model_params['num_heads']],
-                        model_params['hidden_layer_size'], model_params['kernel']])
+                        model_params['hidden_layer_size'], [args.kernel]])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
