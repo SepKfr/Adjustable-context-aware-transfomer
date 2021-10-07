@@ -236,13 +236,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
         plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='darksalmon')
-        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='plum')
-        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='lightgreen')
+        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='lightgreen')
+        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='plum')
         plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='lightblue')
         plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='darkblue')
         plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
-        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='plum')
-        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='lightgreen')
+        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
+        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
         plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
@@ -576,16 +576,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         fig, ax_1 = plt.subplots()
 
-        ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='red')
-        ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='violet')
-        ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='seagreen')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='plum')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='lightgreen')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='darksalmon')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_temp_cutoff_scores[ind, :] /
-                  np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='orange')
-        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='red')
-        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='violet')
-        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='seagreen')
+                  np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='plum')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='lightgreen')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='darksalmon')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
-                  np.sum(self_attn_temp_cutoff_scores[ind, :]), color='orange')
+                  np.sum(self_attn_temp_cutoff_scores[ind, :]), color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_1.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
@@ -618,11 +618,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         fig, ax_2 = plt.subplots()
 
-        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='red')
-        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='violet')
-        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='seagreen')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='plum')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='lightgreen')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='darksalmon')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_temp_cutoff_scores[ind, :] /
-                  np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='orange')
+                  np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
@@ -656,11 +656,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax = plt.subplots()
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
-                 color='blue')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='red')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='violet')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='seagreen')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='orange')
+                 color='gray')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='plum')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='lightgreen')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
         ax.legend(['Ground Truth', 'Transformer', 'Trans-multi',
