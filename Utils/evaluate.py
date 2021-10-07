@@ -90,7 +90,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model, train_loss
+        return model
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -235,12 +235,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='orange')
+        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
         plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='seagreen')
         plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='red')
         plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='violet')
         plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='salmon')
-        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='orange')
+        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='darkblue')
         plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='seagreen')
         plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='red')
         plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='violet')
@@ -783,9 +783,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     print("Done exp 1")'''
     '''create_attn_score_plots(48)
     print("Done exp 2")'''
-    '''create_rmse_plot()
-    print("Done exp rmse")'''
-    plot_train_loss(48)
+    create_rmse_plot()
+    print("Done exp rmse")
+    #plot_train_loss(48)
     #create_rmse_plot()
     #create_attn_matrix(48)
 
@@ -802,6 +802,7 @@ def main():
         os.makedirs(args.path_to_save)
 
     np.random.seed(21)
+    random.seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
