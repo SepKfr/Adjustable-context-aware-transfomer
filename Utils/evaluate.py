@@ -439,14 +439,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         flg = True
         return predictions, enc_attn_scores, self_attn_scores, dec_enc_attn_scores, flg
 
-    def create_attn_score_plots(len_pred):
+    def create_attn_score_plots():
 
-        total_len = len_pred + 168
+        total_len = args.len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, models_path = get_config(len_pred)
-        enc_step = total_len - len_pred
-        test_y_input = test_y[:, :, :-len_pred, :]
-        test_y_output = test_y[:, :, -len_pred:, :]
+        configs, models_path = get_config(args.len_pred)
+        enc_step = total_len - args.len_pred
+        test_y_input = test_y[:, :, :-args.len_pred, :]
+        test_y_output = test_y[:, :, -args.len_pred:, :]
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
 
@@ -576,13 +576,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         fig, ax_1 = plt.subplots()
 
-        ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='plum')
-        ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='lightgreen')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='lightgreen')
+        ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='darksalmon')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
-        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='plum')
-        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='lightgreen')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='lightgreen')
+        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='darksalmon')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='darkblue')
@@ -594,7 +594,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -618,8 +618,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         fig, ax_2 = plt.subplots()
 
-        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='plum')
-        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='lightgreen')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='lightgreen')
+        ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='plum')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='darksalmon')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_temp_cutoff_scores[ind, :] /
                   np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
@@ -631,7 +631,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.pdf'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -657,8 +657,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='gray')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='plum')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='lightgreen')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='lightgreen')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='plum')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
@@ -670,7 +670,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
             else ax.set_ylabel("Occupancy Rate")
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.pdf'.format(args.exp_name, len_pred)),
+        plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
         plt.close()
 
@@ -778,12 +778,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    '''create_attn_score_plots(24)
-    print("Done exp 1")'''
-    '''create_attn_score_plots(48)
-    print("Done exp 2")'''
-    create_rmse_plot()
-    print("Done exp rmse")
+    create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))
+    '''create_rmse_plot()
+    print("Done exp rmse")'''
     #plot_train_loss(48)
     #create_rmse_plot()
     #create_attn_matrix(48)
@@ -795,6 +793,7 @@ def main():
     parser.add_argument('--cuda', type=str, default='cuda:1')
     parser.add_argument('--path_to_save', type=str, default='traffic_plots')
     parser.add_argument('--total_time_steps', type=int, default=192)
+    parser.add_argument('--len_pred', type=int, default=24)
     args = parser.parse_args()
 
     if not os.path.exists(args.path_to_save):
