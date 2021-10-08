@@ -83,13 +83,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      kernel=kernel).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
+        train_loss = checkpoint["train_loss"]
         new_state_dict = dict()
         for k, v in state_dict.items():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model
+        return model, train_loss
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -694,7 +695,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                      input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_multi_losses[1, :] = load_attn(seed, configs["attn_multi_test_{}".format(1992)],
                                        input_size, output_size, models_path, "attn", "attn_multi_test")
-        _, attn_multi_losses[2, :] = load_attn(seed, configs["attn_multi_test_{}".format(9)],
+        _, attn_multi_losses[2, :] = load_attn(seed, configs["attn_multi_test_{}".format(21)],
                                                input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
                                     input_size, output_size, models_path, "conv_attn", "attn_conv_test")
@@ -715,10 +716,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax = plt.subplots()
         ax.set_ylabel("training loss (MSE)")
         ax.set_xlabel("epoch")
-        ax.plot(attn_loss, color='lightcoral')
-        ax.plot(attn_multi_loss, color='green')
-        ax.plot(attn_conv_loss, color='deepskyblue')
-        ax.plot(attn_temp_cutoff_loss, color='orchid')
+        ax.plot(attn_loss, color='lightgreen')
+        ax.plot(attn_multi_loss, color='plum')
+        ax.plot(attn_conv_loss, color='darksalmon')
+        ax.plot(attn_temp_cutoff_loss, color='darkblue')
         ax.legend(['Transformer', 'Trans-multi',
                    'CNN-trans', 'Ours'], loc="best")
         plt.tight_layout()
@@ -783,9 +784,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
-    create_rmse_plot()
-    print("Done exp rmse")
-    #plot_train_loss(48)
+    '''create_rmse_plot()
+    print("Done exp rmse")'''
+    plot_train_loss(48)
     #create_rmse_plot()
     #create_attn_matrix(48)
 
