@@ -687,23 +687,17 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         configs, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
-        attn_multi_losses = np.zeros((3, 25000))
 
         _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
                                input_size, output_size, models_path, "attn", "attn_test")
-        _, attn_multi_losses[0, :] = load_attn(seed, configs["attn_multi_test_{}".format(9)],
+        _, attn_multi_loss = load_attn(seed, configs["attn_multi_test_{}".format(9)],
                                      input_size, output_size, models_path, "attn", "attn_multi_test")
-        _, attn_multi_losses[1, :] = load_attn(seed, configs["attn_multi_test_{}".format(1992)],
-                                       input_size, output_size, models_path, "attn", "attn_multi_test")
-        _, attn_multi_losses[2, :] = load_attn(seed, configs["attn_multi_test_{}".format(21)],
-                                               input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
                                     input_size, output_size, models_path, "conv_attn", "attn_conv_test")
         _, attn_temp_cutoff_loss = load_attn(seed, configs["attn_temp_cutoff_test_{}".format(seed)],
                                            input_size, output_size,
                                            models_path, "temp_cutoff", "attn_temp_cutoff_test")
 
-        attn_multi_loss = np.mean(attn_multi_losses, axis=0)
         attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_conv_loss = [sum(attn_conv_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
