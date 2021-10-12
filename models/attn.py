@@ -98,9 +98,9 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp_cutoff" in self.attn_type:
 
-            n_k = [1, 3, 9]
+            n_k = [1, 3, 6, 9]
             len_n_k = len(n_k)
-            stride = int(len_n_k / 2) + 1
+            stride = int(len_n_k / 2) if len_n_k % 2 == 0 else int(len_n_k / 2) + 1
             Q_p = torch.zeros(b, h, len_n_k, int(l/stride), d_k).to(self.device)
             K_p = torch.zeros(b, h, len_n_k, int(l_k/stride), d_k).to(self.device)
 
