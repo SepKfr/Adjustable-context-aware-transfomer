@@ -98,20 +98,25 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp_cutoff" in self.attn_type:
 
-            n_k = [1, 3, 9]
+            n_k = [1, 3, 6, 9]
             len_n_k = len(n_k)
-            Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
-            K_p = torch.zeros(b, h, len_n_k, l_k, d_k).to(self.device)
+            stride = int(len_n_k / 2)
+            Q_p = torch.zeros(b, h, len_n_k, int(l/stride), d_k).to(self.device)
+            K_p = torch.zeros(b, h, len_n_k, int(l_k/stride), d_k).to(self.device)
 
             for ind, k in enumerate(n_k):
 
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
-                Q_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
-                K_p[:, :, ind, :, :] = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
+                Q_l = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
+                K_l = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
+
+                Q_p[:, :, ind, :, :] = Q_l[:, :, 0::stride, :]
+                K_p[:, :, ind, :, :] = K_l[:, :, 0::stride, :]
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
+                attn_mask = attn_mask[:, :, 0::stride, 0::stride]
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
         elif "conv" in self.attn_type:
@@ -154,9 +159,10 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
 
         if "temp" in self.attn_type:
-
+            attn_f = (torch.ones(b, h, l, l_k)/l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
-            context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+            attn_f[:, :, 0::2, 0::2] = attn
+            context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn
 
         else:
