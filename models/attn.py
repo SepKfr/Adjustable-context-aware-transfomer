@@ -161,7 +161,7 @@ class ScaledDotProductAttention(nn.Module):
         if "temp" in self.attn_type:
             attn_f = (torch.ones(b, h, l, l_k)/l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
-            attn_f[:, :, 0::2, 0::2] = attn
+            attn_f[:, :, 0::stride, 0::stride] = attn
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn
 
