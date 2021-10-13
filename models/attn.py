@@ -163,7 +163,7 @@ class ScaledDotProductAttention(nn.Module):
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, 0::stride, 0::stride] = attn
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
-            return context, attn
+            return context, attn_f
 
         else:
 
