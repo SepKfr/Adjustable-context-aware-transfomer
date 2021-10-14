@@ -579,16 +579,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=16)
 
         fig, ax_1 = plt.subplots()
+        x = np.arange(-enc_step, 0)
+        x_1 = np.arange(-enc_step, 0)
 
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='lightgreen')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='darksalmon')
-        ax_1.plot(np.arange(-enc_step, 0), enc_attn_temp_cutoff_scores[ind, :] /
-                  np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
+        ax_1.plot(x[0::2], enc_attn_temp_cutoff_scores[ind, :] /
+                  np.sum(enc_attn_temp_cutoff_scores[ind, 0::2]), color='darkblue')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='lightgreen')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='darksalmon')
-        ax_1.plot(np.arange(0, total_len - enc_step), self_attn_temp_cutoff_scores[ind, :]/
+        ax_1.plot(x_1[0::2], self_attn_temp_cutoff_scores[ind, 0::2]/
                   np.sum(self_attn_temp_cutoff_scores[ind, :]), color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_1.legend(['Transformer', 'Trans-multi',
