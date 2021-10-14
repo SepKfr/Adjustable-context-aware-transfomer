@@ -586,12 +586,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='darksalmon')
         ax_1.plot(x[0::2], enc_attn_temp_cutoff_scores[ind, 0::2] /
-                  np.sum(enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
+                  2*np.sum(enc_attn_temp_cutoff_scores[ind, 0::2]), color='darkblue')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='lightgreen')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='darksalmon')
         ax_1.plot(x_1[0::2], self_attn_temp_cutoff_scores[ind, 0::2]/
-                  np.sum(self_attn_temp_cutoff_scores[ind, :]), color='darkblue')
+                  2*np.sum(self_attn_temp_cutoff_scores[ind, 0::2]), color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_1.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
@@ -628,7 +628,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='plum')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='darksalmon')
         ax_2.plot(x[0::2], dec_enc_attn_temp_cutoff_scores[ind, 0::2] /
-                  np.sum(dec_enc_attn_temp_cutoff_scores[ind, :]), color='darkblue')
+                  2*np.sum(dec_enc_attn_temp_cutoff_scores[ind, 0::2]), color='darkblue')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
