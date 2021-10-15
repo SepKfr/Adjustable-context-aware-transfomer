@@ -98,7 +98,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp_cutoff" in self.attn_type:
 
-            n_k = [3, 6, 9, 12]
+            n_k = [1, 3, 9]
             len_n_k = len(n_k)
             stride = int(len_n_k / 2) if len_n_k % 2 == 0 else int(len_n_k / 2) + 1
             Q_p = torch.zeros(b, h, len_n_k, int(l/stride), d_k).to(self.device)
@@ -164,6 +164,7 @@ class ScaledDotProductAttention(nn.Module):
             attn_f[:, :, 0::stride, 0::stride] = attn
             attn_avg = nn.AvgPool2d(stride, stride=1, padding=stride - 1).to(self.device)(attn)
             attn_f[:, :, 1::stride, 1::stride] = attn_avg[:, :, :-1, :-1]
+            attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn_f
 
