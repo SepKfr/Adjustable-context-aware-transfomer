@@ -98,10 +98,10 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp_cutoff" in self.attn_type:
 
-            n_k = [1, 3, 6, 9]
+            n_k = [1, 3, 9]
             len_n_k = len(n_k)
-            stride = int(len_n_k / 2) if len_n_k % 2 == 0 else int(len_n_k / 2) + 1
-            Q_p = torch.zeros(b, h, len_n_k, int(l/stride), d_k).to(self.device)
+            stride = len_n_k
+            Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
             K_p = torch.zeros(b, h, len_n_k, int(l_k/stride), d_k).to(self.device)
 
             for ind, k in enumerate(n_k):
@@ -111,12 +111,12 @@ class ScaledDotProductAttention(nn.Module):
                 Q_l = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
                 K_l = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
 
-                Q_p[:, :, ind, :, :] = Q_l[:, :, 0::stride, :]
+                Q_p[:, :, ind, :, :] = Q_l
                 K_p[:, :, ind, :, :] = K_l[:, :, 0::stride, :]
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
-                attn_mask = attn_mask[:, :, 0::stride, 0::stride]
+                attn_mask = attn_mask[:, :, :, 0::stride]
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
         elif "conv" in self.attn_type:
@@ -161,9 +161,10 @@ class ScaledDotProductAttention(nn.Module):
         if "temp" in self.attn_type:
             attn_f = torch.zeros(b, h, l, l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
-            attn_f[:, :, 0::stride, 0::stride] = attn
-            attn_avg = nn.AvgPool2d(2, stride=1, padding=1).to(self.device)(attn)
-            attn_f[:, :, 1::stride, 1::stride] = attn_avg[:, :, :-1, :-1]
+            attn_f[:, :, :, 0::stride] = attn
+            index = [i for i in range(l_k) if i % stride != 0]
+            attn_avg = nn.AvgPool2d(2, stride=1, padding=1).to(self.device)(attn)[:, :, :-1, :-1]
+            attn_f[:, :, :, index] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, -1)
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn_f
