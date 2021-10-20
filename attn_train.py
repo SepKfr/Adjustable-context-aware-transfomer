@@ -255,6 +255,8 @@ def main():
     criterion = nn.MSELoss()
     if args.attn_type != "conv_attn" and args.attn_type != "f_linear":
         args.kernel = [1]
+    if args.attn_type == "f_linear":
+        args.kernel = [12]
     hyper_param = list([[args.n_layers], model_params['minibatch_size'], [model_params['num_heads']],
                         model_params['hidden_layer_size'], args.kernel])
     configs = create_config(hyper_param)
