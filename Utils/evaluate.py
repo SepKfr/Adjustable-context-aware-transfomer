@@ -483,11 +483,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                    input_size, output_size, models_path, "attn", "attn")
             attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)],
                                          input_size, output_size, models_path, "attn", "attn_multi")
-            attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)],
-                                        input_size, output_size, models_path, "conv_attn", "attn_conv")
-            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_{}".format(seed)],
+            attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)],
+                                        input_size, output_size, models_path, "attn_conv_36912", "attn_conv")
+            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_36912_softmax_crt_avg_{}".format(seed)],
                                                input_size, output_size,
-                                               models_path, "temp_cutoff", "context_aware_eff")
+                                               models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
@@ -583,11 +583,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_scores[ind, :], color='lightgreen')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(-enc_step, 0), enc_attn_conv_scores[ind, :], color='darksalmon')
-        ax_1.plot(x[0::2], enc_attn_temp_cutoff_scores[ind, 0::2], color='darkblue')
+        ax_1.plot(x[0::4], enc_attn_temp_cutoff_scores[ind, 0::4], color='darkblue')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_scores[ind, :], color='lightgreen')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_multi_scores[ind, :], color='plum')
         ax_1.plot(np.arange(0, total_len - enc_step), self_attn_conv_scores[ind, :], color='darksalmon')
-        ax_1.plot(x_1[0::2], self_attn_temp_cutoff_scores[ind, 0::2], color='darkblue')
+        ax_1.plot(x_1[0::4], self_attn_temp_cutoff_scores[ind, 0::4], color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_1.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
@@ -621,7 +621,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_scores[ind, :], color='lightgreen')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_multi_scores[ind, :], color='plum')
         ax_2.plot(np.arange(-enc_step, 0), dec_enc_attn_conv_scores[ind, :], color='darksalmon')
-        ax_2.plot(x[0::2], dec_enc_attn_temp_cutoff_scores[ind, 0::2], color='darkblue')
+        ax_2.plot(x[0::4], dec_enc_attn_temp_cutoff_scores[ind, 0::4], color='darkblue')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
