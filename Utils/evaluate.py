@@ -1,6 +1,6 @@
 import argparse
 import json
-from scipy.interpolate import spline
+from scipy.interpolate import make_interp_spline, BSpline
 import matplotlib
 
 from models.baselines import RNN
@@ -618,7 +618,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         fig, ax_2 = plt.subplots()
         xnew = np.linspace(min(x), max(x), 300)
-        power_smooth = spline(x, dec_enc_attn_temp_cutoff_scores[ind, ], xnew)
+        spl = make_interp_spline(x, dec_enc_attn_temp_cutoff_scores[ind, ], k=3)
+        power_smooth = spl(xnew)
 
         ax_2.plot(x, dec_enc_attn_scores[ind, ], color='lightgreen')
         ax_2.plot(x, dec_enc_attn_multi_scores[ind, ], color='plum')
