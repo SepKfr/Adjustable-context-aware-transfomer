@@ -508,22 +508,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         test_y_output, test_y_input, flg)
 
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
-            np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
-            np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(enc_attn_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0] * test_de.shape[1], -1),\
+            np.mean(self_attn_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_multi_scores, self_attn_multi_scores, dec_enc_attn_multi_scores = \
-            np.mean(np.mean(enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
-            np.mean(np.mean(self_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_multi_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(enc_attn_multi_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0] * test_de.shape[1], -1), \
+            np.mean(self_attn_multi_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_multi_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_conv_scores, self_attn_conv_scores, dec_enc_attn_conv_scores = \
-            np.mean(np.mean(enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1), \
-            np.mean(np.mean(self_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_conv_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(enc_attn_conv_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0] * test_de.shape[1], -1), \
+            np.mean(self_attn_conv_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_conv_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         enc_attn_temp_cutoff_scores, self_attn_temp_cutoff_scores, dec_enc_attn_temp_cutoff_scores = \
-            np.mean(np.mean(enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1],
+            np.mean(enc_attn_temp_cutoff_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0] * test_de.shape[1],
                                                                                     -1),\
-            np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(self_attn_temp_cutoff_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1), \
+            np.mean(dec_enc_attn_temp_cutoff_scores[:, :, -1, :], axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
 
         pred_attn = np.mean(predictions_attn, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
