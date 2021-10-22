@@ -546,10 +546,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
-                    diff_1 = loss_attn - loss_attn_temp
-                    diff_2 = loss_attn_multi - loss_attn_temp
+                if args.exp_name == 'watershed':
                     ind = i
+                else:
+                    if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
+                        diff_1 = loss_attn - loss_attn_temp
+                        diff_2 = loss_attn_multi - loss_attn_temp
+                        ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -589,18 +592,17 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
-        ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
+        '''ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew, enc_self_smooth, color='darkblue')
         ax_1.plot(x_1, self_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x_1, self_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew_1, dec_self_smooth, color='darkblue')
-        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_1.legend(['Transformer', 'Trans-multi',
-                    'CNN-trans', 'Ours'], loc="best")
+        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')'''
+        ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
 
         ax_1.set_ylabel('$Ave. a_{h, q}$')
-        ax_1.set_title("Self Attention Scores")
+        #ax_1.set_title("Self Attention Scores")
         ax_1.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
@@ -637,7 +639,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     'CNN-trans', 'Ours'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel('$Ave. a_{h, q}$')
-        ax_2.set_title("Cross Attention Scores")
+        #ax_2.set_title("Cross Attention Scores")
         ax_2.grid(True)
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
