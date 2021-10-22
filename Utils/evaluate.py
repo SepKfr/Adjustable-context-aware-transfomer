@@ -590,16 +590,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         spl = make_interp_spline(x_1, self_attn_temp_cutoff_scores[ind,], k=3)
         dec_self_smooth = spl(xnew_1)
 
-        '''ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
+        ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
-        ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
+        '''ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew, enc_self_smooth, color='darkblue')
         ax_1.plot(x_1, self_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x_1, self_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew_1, dec_self_smooth, color='darkblue')
-        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
+        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')'''
+        '''ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
 
         ax_1.set_ylabel('$Ave. a_{h, q}$')
         #ax_1.set_title("Self Attention Scores")
@@ -684,7 +684,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
         plt.close()'''
-        return enc_attn_scores, enc_attn_multi_scores
+        return enc_attn_scores[ind, :], enc_attn_multi_scores[ind, :]
 
     def plot_train_loss(len_pred):
         seed = 9
@@ -788,33 +788,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    params = {'mathtext.default': 'regular'}
-    x = np.arange(-168, 0)
-    plt.rcParams.update(params)
-    plt.rc('axes', labelsize=16)
-    plt.rc('axes', titlesize=16)
-    fig, ax_1 = plt.subplots()
-
-    args.exp_name = "electricity"
-    enc_attn_scores, enc_attn_multi_scores = create_attn_score_plots()
-    ax_1.plot(x, enc_attn_scores[0, ], color='green')
-    ax_1.plot(x, enc_attn_multi_scores[0, ], color='plum')
-    args.exp_name = "traffic"
-    enc_attn_scores, enc_attn_multi_scores = create_attn_score_plots()
-    ax_1.plot(x, enc_attn_scores[0, ], color='lightcoral')
-    ax_1.plot(x, enc_attn_multi_scores[0, ], color='slateblue')
-    args.exp_name = "watershed"
-    enc_attn_scores, enc_attn_multi_scores = create_attn_score_plots()
-    ax_1.plot(x, enc_attn_scores[0, ], color='darkgoldenrod')
-    ax_1.plot(x, enc_attn_multi_scores[0, ], color='darkorange')
-
-    ax_1.legend(['Transformer: electricity', 'Trans-multi: electricity',
-               'Transformer: traffic', 'Trans-multi: traffic',
-                 'Transformer: watershed', 'Trans-multi: watershed'], loc="best")
-
-    print("Done exp {}".format(args.len_pred))
-    '''create_rmse_plot()
-    print("Done exp rmse")'''
+    enc_attn, enc_attn_multi = create_attn_score_plots()
+    return enc_attn, enc_attn_multi
+    #print("Done exp {}".format(args.len_pred))
+    #create_rmse_plot()
+    #print("Done exp rmse")
     #plot_train_loss(48)
     #create_rmse_plot()
     #create_attn_matrix(48)
@@ -837,17 +815,56 @@ def main():
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
-    config = ExperimentConfig(args.exp_name)
-    formatter = config.make_data_formatter()
+    params_plt = {'mathtext.default': 'regular'}
+    plt.rcParams.update(params_plt)
+    plt.rc('axes', labelsize=14)
+    plt.rc('axes', titlesize=14)
 
-    data_csv_path = "{}.csv".format(args.exp_name)
-    print("Loading & splitting data...")
-    raw_data = pd.read_csv(data_csv_path, index_col=0)
-    train_data, valid, test = formatter.split_data(raw_data)
-    train_max, valid_max = formatter.get_num_samples_for_calibration()
-    params = formatter.get_experiment_params()
+    fig, ax = plt.subplots()
+    x = np.arange(-168, 0)
 
-    perform_evaluation(args, device, params, test, valid_max, formatter)
+    def get_format(exp_name):
+        config = ExperimentConfig(exp_name)
+        formatter = config.make_data_formatter()
+
+        data_csv_path = "{}.csv".format(exp_name)
+        print("Loading & splitting data...")
+        raw_data = pd.read_csv(data_csv_path, index_col=0)
+        train_data, valid, test = formatter.split_data(raw_data)
+        train_max, valid_max = formatter.get_num_samples_for_calibration()
+        params = formatter.get_experiment_params()
+        return test, valid_max, formatter, params
+
+    test, valid_max, formatter, params = get_format("electricity")
+
+    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+
+    ax.plot(x, enc_attn, color='limegreen')
+    ax.plot(x, enc_attn_multi, color='plum')
+
+    test, valid_max, formatter, params = get_format("traffic")
+
+    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+
+    ax.plot(x, enc_attn, color='darkorange')
+    ax.plot(x, enc_attn_multi, color='slateblue')
+
+    test, valid_max, formatter, params = get_format("watershed")
+
+    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+
+    ax.plot(x, enc_attn, color='tomato')
+    ax.plot(x, enc_attn_multi, color='olive')
+
+    ax.legend(['Transformer: electricity', 'Trans-multi: electricity',
+               'Transformer: traffic', 'Trans-multi: traffic',
+               'Transformer: watershed', 'Trans-multi: watershed'], loc="best")
+    ax.set_ylabel('$Ave. a_{h, q}$')
+    ax.grid(True)
+    plt.tight_layout()
+    plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
+                dpi=1000)
+    plt.close()
 
 
 if __name__ == '__main__':
