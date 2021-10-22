@@ -749,6 +749,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ind3 = random.randint(0, 8)
         print(ind_2)
         print(ind3)
+        print(dec_enc_index.shape)
         index = dec_enc_index[ind_2, ind3, :, :]
         index = index.detach().cpu().numpy()
         index = index[:, 0::4]
