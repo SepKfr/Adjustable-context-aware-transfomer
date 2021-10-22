@@ -162,9 +162,9 @@ class ScaledDotProductAttention(nn.Module):
             attn_f = torch.zeros(b, h, l, l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, :, 0::stride] = attn
-            index = [i for i in range(l_k) if i % stride != 0]
+            ind = [i for i in range(l_k) if i % stride != 0]
             attn_avg = nn.AvgPool2d(2, stride=1, padding=1).to(self.device)(attn)[:, :, :-1, :-1]
-            attn_f[:, :, :, index] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, -1)
+            attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, -1)
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn_f, index
