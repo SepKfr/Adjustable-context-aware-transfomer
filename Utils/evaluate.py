@@ -736,10 +736,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         configs, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
-        seed = 9
+        seed = 21
         model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
                                            input_size, output_size,
-                                           models_path, "temp_cutoff", "attn_temp_cutoff")
+                                           models_path, "temp_cutoff",
+                          "context_aware_eff_36912_softmax_crt_avg")
         model.eval()
 
         ind = random.randint(0, test_en.shape[0])
