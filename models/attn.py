@@ -205,12 +205,12 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
-        context, attn, index = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
+        context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
                                                   attn_type=self.attn_type, kernel=self.kernel)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
-        return output, attn, index
+        return output, attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
@@ -246,7 +246,7 @@ class EncoderLayer(nn.Module):
         out = self.layer_norm(out + enc_inputs)
         out_2 = self.pos_ffn(out)
         out_2 = self.layer_norm(out_2 + out)
-        return out_2, attn, enc_index
+        return out_2, attn
 
 
 class Encoder(nn.Module):
@@ -280,12 +280,12 @@ class Encoder(nn.Module):
 
         enc_self_attns = []
         for layer in self.layers:
-            enc_outputs, enc_self_attn, enc_index = layer(enc_outputs, enc_self_attn_mask)
+            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
             enc_self_attns.append(enc_self_attn)
 
         enc_self_attns = torch.stack(enc_self_attns)
         enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])
-        return enc_outputs, enc_self_attns, enc_index
+        return enc_outputs, enc_self_attns
 
 
 class DecoderLayer(nn.Module):
@@ -305,13 +305,13 @@ class DecoderLayer(nn.Module):
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask=None, dec_enc_attn_mask=None):
 
-        out, dec_self_attn, dec_index = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
+        out, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
         out = self.layer_norm(dec_inputs + out)
-        out2, dec_enc_attn, dec_enc_index = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
+        out2, dec_enc_attn = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
         out2 = self.layer_norm(out + out2)
         out3 = self.pos_ffn(out2)
         out3 = self.layer_norm(out2 + out3)
-        return out3, dec_self_attn, dec_enc_attn, dec_enc_index
+        return out3, dec_self_attn, dec_enc_attn
 
 
 class Decoder(nn.Module):
@@ -346,7 +346,7 @@ class Decoder(nn.Module):
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
-            dec_outputs, dec_self_attn, dec_enc_attn, dec_enc_index = layer(
+            dec_outputs, dec_self_attn, dec_enc_attn = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
                 dec_self_attn_mask=dec_self_attn_subsequent_mask,
@@ -360,7 +360,7 @@ class Decoder(nn.Module):
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
-        return dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index
+        return dec_outputs, dec_self_attns, dec_enc_attns
 
 
 class Attn(nn.Module):
@@ -391,8 +391,8 @@ class Attn(nn.Module):
 
         enc_inputs = self.enc_embedding(enc_inputs)
         dec_inputs = self.dec_embedding(dec_inputs)
-        enc_outputs, enc_self_attns, enc_index = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index = self.decoder(dec_inputs, enc_outputs)
+        enc_outputs, enc_self_attns = self.encoder(enc_inputs)
+        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
         return dec_logits, enc_self_attns, dec_self_attns, dec_enc_attns
 
