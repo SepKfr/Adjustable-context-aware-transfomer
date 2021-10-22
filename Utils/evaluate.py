@@ -839,26 +839,26 @@ def main():
     args.exp_name = "traffic"
     test, valid_max, formatter, params = get_format("traffic")
 
-    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
 
-    ax.plot(x, enc_attn, color='darkorange')
-    ax.plot(x, enc_attn_multi, color='slateblue')
+    ax.plot(x, enc_attn_scores, color='darkorange')
+    ax.plot(x, enc_attn_multi_scores, color='slateblue')
 
     args.exp_name = "electricity"
     test, valid_max, formatter, params = get_format("electricity")
 
-    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
 
-    ax.plot(x, enc_attn, color='limegreen')
-    ax.plot(x, enc_attn_multi, color='plum')
+    ax.plot(x, enc_attn_scores, color='limegreen')
+    ax.plot(x, enc_attn_multi_scores, color='plum')
 
     args.exp_name = "watershed"
     test, valid_max, formatter, params = get_format("watershed")
 
-    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
 
-    ax.plot(x, enc_attn, color='tomato')
-    ax.plot(x, enc_attn_multi, color='olive')
+    ax.plot(x, enc_attn_scores, color='tomato')
+    ax.plot(x, enc_attn_multi_scores, color='olive')
 
     ax.legend(['Transformer: traffic', 'Trans-multi: traffic',
                 'Transformer: electricity', 'Trans-multi: electricity',
