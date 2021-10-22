@@ -737,7 +737,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
         seed = 21
-        model = load_attn(seed, configs["attn_temp_cutoff_{}".format(seed)],
+        model = load_attn(seed, configs["context_aware_eff_36912_softmax_crt_avg_{}".format(seed)],
                                            input_size, output_size,
                                            models_path, "temp_cutoff",
                           "context_aware_eff_36912_softmax_crt_avg")
