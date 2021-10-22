@@ -749,7 +749,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ind3 = random.randint(0, 8)
         index = dec_enc_index[ind_2, ind3, :, :]
         index = index.detach().cpu().numpy()
-        index = index[:, 0::4]
+        index = index[:, :]
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
