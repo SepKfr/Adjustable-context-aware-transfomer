@@ -240,7 +240,7 @@ class EncoderLayer(nn.Module):
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
-        out, attn, enc_index = self.enc_self_attn(
+        out, attn = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
             V=enc_inputs, attn_mask=enc_self_attn_mask)
         out = self.layer_norm(out + enc_inputs)
