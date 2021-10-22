@@ -754,9 +754,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         mask = mask * 5
         index = index + mask'''
         index = np.where(index == 1, 6, index)
+        index = np.where(index == 3, 12, index)
         index = np.where(index == 0, 3, index)
         index = np.where(index == 2, 9, index)
-        index = np.where(index == 3, 12, index)
+
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
         norm_bins = np.sort([3, 6, 9, 12]) + 0.5
