@@ -757,6 +757,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 3, 12, index)
         index = np.where(index == 0, 3, index)
         index = np.where(index == 2, 9, index)
+        print(index)
 
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
