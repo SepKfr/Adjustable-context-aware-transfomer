@@ -574,7 +574,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     min(self_attn_temp_cutoff_scores[ind, :]
                     ))
 
-        params = {'mathtext.default': 'regular'}
+        '''params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
         plt.rc('axes', labelsize=16)
         plt.rc('axes', titlesize=16)
@@ -591,7 +591,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         dec_self_smooth = spl(xnew_1)
 
         ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
-        ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
+        ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')'''
         '''ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew, enc_self_smooth, color='darkblue')
         ax_1.plot(x_1, self_attn_scores[ind, ], color='lightgreen')
@@ -820,9 +820,6 @@ def main():
     plt.rc('axes', labelsize=14)
     plt.rc('axes', titlesize=14)
 
-    fig, ax = plt.subplots()
-    x = np.arange(-168, 0)
-
     def get_format(exp_name):
         config = ExperimentConfig(exp_name)
         formatter = config.make_data_formatter()
@@ -835,14 +832,8 @@ def main():
         params = formatter.get_experiment_params()
         return test, valid_max, formatter, params
 
-
-    args.exp_name = "traffic"
-    test, valid_max, formatter, params = get_format("traffic")
-
-    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
-
-    ax.plot(x, enc_attn_scores, color='darkorange')
-    ax.plot(x, enc_attn_multi_scores, color='slateblue')
+    fig, ax = plt.subplots()
+    x = np.arange(-168, 0)
 
     args.exp_name = "electricity"
     test, valid_max, formatter, params = get_format("electricity")
@@ -852,6 +843,14 @@ def main():
     ax.plot(x, enc_attn_scores, color='limegreen')
     ax.plot(x, enc_attn_multi_scores, color='plum')
 
+    args.exp_name = "traffic"
+    test, valid_max, formatter, params = get_format("traffic")
+
+    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
+
+    ax.plot(x, enc_attn_scores, color='darkorange')
+    ax.plot(x, enc_attn_multi_scores, color='slateblue')
+
     args.exp_name = "watershed"
     test, valid_max, formatter, params = get_format("watershed")
 
@@ -860,8 +859,8 @@ def main():
     ax.plot(x, enc_attn_scores, color='tomato')
     ax.plot(x, enc_attn_multi_scores, color='olive')
 
-    ax.legend(['Transformer: traffic', 'Trans-multi: traffic',
-                'Transformer: electricity', 'Trans-multi: electricity',
+    ax.legend(['Transformer: electricity', 'Trans-multi: electricity',
+        'Transformer: traffic', 'Trans-multi: traffic',
                'Transformer: watershed', 'Trans-multi: watershed'], loc="best")
     ax.set_ylabel('$Ave. a_{h, q}$')
     ax.grid(True)
