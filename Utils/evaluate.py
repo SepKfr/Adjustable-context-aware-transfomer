@@ -835,6 +835,7 @@ def main():
         params = formatter.get_experiment_params()
         return test, valid_max, formatter, params
 
+    args.exp_name = "electricity"
     test, valid_max, formatter, params = get_format("electricity")
 
     enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
@@ -842,6 +843,7 @@ def main():
     ax.plot(x, enc_attn, color='limegreen')
     ax.plot(x, enc_attn_multi, color='plum')
 
+    args.exp_name = "traffic"
     test, valid_max, formatter, params = get_format("traffic")
 
     enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
@@ -849,6 +851,7 @@ def main():
     ax.plot(x, enc_attn, color='darkorange')
     ax.plot(x, enc_attn_multi, color='slateblue')
 
+    args.exp_name = "watershed"
     test, valid_max, formatter, params = get_format("watershed")
 
     enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
