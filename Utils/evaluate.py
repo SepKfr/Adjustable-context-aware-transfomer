@@ -483,11 +483,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                    input_size, output_size, models_path, "attn", "attn")
             attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)],
                                          input_size, output_size, models_path, "attn", "attn_multi")
-            attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)],
+            '''attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)],
                                         input_size, output_size, models_path, "conv_attn", "attn_conv_36912")
             attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_36912_softmax_crt_avg_{}".format(seed)],
                                                input_size, output_size,
-                                               models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")
+                                               models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")'''
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
@@ -498,14 +498,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 self_attn_multi_scores[i, :, :, :, :], dec_enc_attn_multi_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
                         test_y_output, test_y_input, flg)
-            predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
+            '''predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
                 self_attn_conv_scores[i, :, :, :, :], dec_enc_attn_conv_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
                         test_y_output, test_y_input, flg)
             predictions_attn_temp_cutoff[i, :, :, :], enc_attn_temp_cutoff_scores[i, :, :, :],\
                 self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all,test_de, test_en, test_id,
-                        test_y_output, test_y_input, flg)
+                        test_y_output, test_y_input, flg)'''
 
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
@@ -835,13 +835,6 @@ def main():
         params = formatter.get_experiment_params()
         return test, valid_max, formatter, params
 
-    args.exp_name = "electricity"
-    test, valid_max, formatter, params = get_format("electricity")
-
-    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
-
-    ax.plot(x, enc_attn, color='limegreen')
-    ax.plot(x, enc_attn_multi, color='plum')
 
     args.exp_name = "traffic"
     test, valid_max, formatter, params = get_format("traffic")
@@ -851,6 +844,14 @@ def main():
     ax.plot(x, enc_attn, color='darkorange')
     ax.plot(x, enc_attn_multi, color='slateblue')
 
+    args.exp_name = "electricity"
+    test, valid_max, formatter, params = get_format("electricity")
+
+    enc_attn, enc_attn_multi = perform_evaluation(args, device, params, test, valid_max, formatter)
+
+    ax.plot(x, enc_attn, color='limegreen')
+    ax.plot(x, enc_attn_multi, color='plum')
+
     args.exp_name = "watershed"
     test, valid_max, formatter, params = get_format("watershed")
 
@@ -859,8 +860,8 @@ def main():
     ax.plot(x, enc_attn, color='tomato')
     ax.plot(x, enc_attn_multi, color='olive')
 
-    ax.legend(['Transformer: electricity', 'Trans-multi: electricity',
-               'Transformer: traffic', 'Trans-multi: traffic',
+    ax.legend(['Transformer: traffic', 'Trans-multi: traffic',
+                'Transformer: electricity', 'Trans-multi: electricity',
                'Transformer: watershed', 'Trans-multi: watershed'], loc="best")
     ax.set_ylabel('$Ave. a_{h, q}$')
     ax.grid(True)
