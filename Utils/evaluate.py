@@ -195,11 +195,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                        models_path, "attn", "attn")
                 attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)], test_en.shape[3],
                                              test_de.shape[3], models_path, "attn", "attn_multi")
-                attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], test_en.shape[3], test_de.shape[3],
-                                            models_path, "conv_attn", "attn_conv")
-                attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_{}".format(seed)],
+                attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)], test_en.shape[3], test_de.shape[3],
+                                            models_path, "conv_attn", "attn_conv_36912")
+                attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_36912_softmax_crt_avg_{}".format(seed)],
                                                    test_en.shape[3], test_de.shape[3],
-                                                   models_path, "temp_cutoff", "context_aware_eff")
+                                                   models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")
 
                 predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
@@ -783,10 +783,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    create_attn_score_plots()
-    print("Done exp {}".format(args.len_pred))
-    '''create_rmse_plot()
-    print("Done exp rmse")'''
+    '''create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))'''
+    create_rmse_plot()
+    print("Done exp rmse")
     #plot_train_loss(48)
     #create_rmse_plot()
     #create_attn_matrix(48)
