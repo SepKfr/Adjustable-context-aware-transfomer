@@ -856,7 +856,7 @@ def main():
 
     enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
 
-    ax.plot(x, enc_attn_scores, color='tomato')
+    ax.plot(x, enc_attn_scores, color='purple')
     ax.plot(x, enc_attn_multi_scores, color='olive')
 
     ax.legend(['Transformer: electricity', 'Trans-multi: electricity',
