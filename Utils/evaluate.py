@@ -554,7 +554,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         diff_2 = loss_attn_multi - loss_attn_temp
                         ind = i
 
-        y_max = max(max(enc_attn_scores[ind, :]),
+        '''y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
                     max(enc_attn_multi_scores[ind, :]),
                     max(enc_attn_temp_cutoff_scores[ind, :]),
@@ -572,34 +572,34 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     min(self_attn_conv_scores[ind, :]),
                     min(self_attn_multi_scores[ind, :]),
                     min(self_attn_temp_cutoff_scores[ind, :]
-                    ))
+                    ))'''
 
-        '''params = {'mathtext.default': 'regular'}
+        params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
         plt.rc('axes', labelsize=16)
         plt.rc('axes', titlesize=16)
 
-        fig, ax_1 = plt.subplots()
+        #fig, ax_1 = plt.subplots()
         x = np.arange(-enc_step, 0)
-        x_1 = np.arange(0, total_len - enc_step)
+        '''x_1 = np.arange(0, total_len - enc_step)
         xnew = np.linspace(min(x), max(x), 300)
         spl = make_interp_spline(x, enc_attn_temp_cutoff_scores[ind,], k=3)
-        enc_self_smooth = spl(xnew)
+        #enc_self_smooth = spl(xnew)
 
         xnew_1 = np.linspace(min(x_1), max(x_1), 300)
         spl = make_interp_spline(x_1, self_attn_temp_cutoff_scores[ind,], k=3)
-        dec_self_smooth = spl(xnew_1)
+        dec_self_smooth = spl(xnew_1)'''
 
-        ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
-        ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')'''
-        '''ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
+        '''ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
+        ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
+        ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew, enc_self_smooth, color='darkblue')
         ax_1.plot(x_1, self_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x_1, self_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew_1, dec_self_smooth, color='darkblue')
-        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')'''
-        '''ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
+        ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
+        ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
 
         ax_1.set_ylabel('$Ave. a_{h, q}$')
         #ax_1.set_title("Self Attention Scores")
@@ -607,7 +607,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
-        plt.close()
+        plt.close()'''
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
@@ -674,8 +674,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth', 'Transformer', 'Trans-multi',
-                    'CNN-trans', 'Ours'], loc="upper left")
+        ax.legend(['Ground Truth', 'Transformer', 'Trans-multi', 'CNN-trans', 'Ours'], loc="best")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
@@ -683,8 +682,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'pred_plot_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
-        plt.close()'''
-        return enc_attn_scores[ind, :], enc_attn_multi_scores[ind, :]
+        plt.close()
 
     def plot_train_loss(len_pred):
         seed = 9
@@ -788,9 +786,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    enc_attn, enc_attn_multi = create_attn_score_plots()
-    return enc_attn, enc_attn_multi
-    #print("Done exp {}".format(args.len_pred))
+    create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
@@ -820,54 +817,17 @@ def main():
     plt.rc('axes', labelsize=14)
     plt.rc('axes', titlesize=14)
 
-    def get_format(exp_name):
-        config = ExperimentConfig(exp_name)
-        formatter = config.make_data_formatter()
+    config = ExperimentConfig(args.exp_name)
+    formatter = config.make_data_formatter()
 
-        data_csv_path = "{}.csv".format(exp_name)
-        print("Loading & splitting data...")
-        raw_data = pd.read_csv(data_csv_path, index_col=0)
-        train_data, valid, test = formatter.split_data(raw_data)
-        train_max, valid_max = formatter.get_num_samples_for_calibration()
-        params = formatter.get_experiment_params()
-        return test, valid_max, formatter, params
+    data_csv_path = "{}.csv".format(args.exp_name)
+    print("Loading & splitting data...")
+    raw_data = pd.read_csv(data_csv_path, index_col=0)
+    train_data, valid, test = formatter.split_data(raw_data)
+    train_max, valid_max = formatter.get_num_samples_for_calibration()
+    params = formatter.get_experiment_params()
 
-    fig, ax = plt.subplots()
-    x = np.arange(-168, 0)
-
-    args.exp_name = "electricity"
-    test, valid_max, formatter, params = get_format("electricity")
-
-    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
-
-    ax.plot(x, enc_attn_scores, color='limegreen')
-    ax.plot(x, enc_attn_multi_scores, color='plum')
-
-    args.exp_name = "traffic"
-    test, valid_max, formatter, params = get_format("traffic")
-
-    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
-
-    ax.plot(x, enc_attn_scores, color='darkorange')
-    ax.plot(x, enc_attn_multi_scores, color='slateblue')
-
-    args.exp_name = "watershed"
-    test, valid_max, formatter, params = get_format("watershed")
-
-    enc_attn_scores, enc_attn_multi_scores = perform_evaluation(args, device, params, test, valid_max, formatter)
-
-    ax.plot(x, enc_attn_scores, color='purple')
-    ax.plot(x, enc_attn_multi_scores, color='olive')
-
-    ax.legend(['Transformer: electricity', 'Trans-multi: electricity',
-        'Transformer: traffic', 'Trans-multi: traffic',
-               'Transformer: watershed', 'Trans-multi: watershed'], loc="best")
-    ax.set_ylabel('$Ave. a_{h, q}$')
-    ax.grid(True)
-    plt.tight_layout()
-    plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
-                dpi=1000)
-    plt.close()
+    perform_evaluation(args, device, params, test, valid_max, formatter)
 
 
 if __name__ == '__main__':
