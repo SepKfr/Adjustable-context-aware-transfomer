@@ -483,11 +483,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                    input_size, output_size, models_path, "attn", "attn")
             attn_multi_model = load_attn(seed, configs["attn_multi_{}".format(seed)],
                                          input_size, output_size, models_path, "attn", "attn_multi")
-            '''attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)],
+            attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)],
                                         input_size, output_size, models_path, "conv_attn", "attn_conv_36912")
             attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_36912_softmax_crt_avg_{}".format(seed)],
                                                input_size, output_size,
-                                               models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")'''
+                                               models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
@@ -498,14 +498,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 self_attn_multi_scores[i, :, :, :, :], dec_enc_attn_multi_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
                         test_y_output, test_y_input, flg)
-            '''predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
+            predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
                 self_attn_conv_scores[i, :, :, :, :], dec_enc_attn_conv_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
                         test_y_output, test_y_input, flg)
             predictions_attn_temp_cutoff[i, :, :, :], enc_attn_temp_cutoff_scores[i, :, :, :],\
                 self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
                 get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all,test_de, test_en, test_id,
-                        test_y_output, test_y_input, flg)'''
+                        test_y_output, test_y_input, flg)
 
         enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
@@ -554,7 +554,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         diff_2 = loss_attn_multi - loss_attn_temp
                         ind = i
 
-        '''y_max = max(max(enc_attn_scores[ind, :]),
+        y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
                     max(enc_attn_multi_scores[ind, :]),
                     max(enc_attn_temp_cutoff_scores[ind, :]),
@@ -572,25 +572,25 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     min(self_attn_conv_scores[ind, :]),
                     min(self_attn_multi_scores[ind, :]),
                     min(self_attn_temp_cutoff_scores[ind, :]
-                    ))'''
+                    ))
 
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
         plt.rc('axes', labelsize=16)
         plt.rc('axes', titlesize=16)
 
-        #fig, ax_1 = plt.subplots()
+        fig, ax_1 = plt.subplots()
         x = np.arange(-enc_step, 0)
-        '''x_1 = np.arange(0, total_len - enc_step)
+        x_1 = np.arange(0, total_len - enc_step)
         xnew = np.linspace(min(x), max(x), 300)
         spl = make_interp_spline(x, enc_attn_temp_cutoff_scores[ind,], k=3)
-        #enc_self_smooth = spl(xnew)
+        enc_self_smooth = spl(xnew)
 
         xnew_1 = np.linspace(min(x_1), max(x_1), 300)
         spl = make_interp_spline(x_1, self_attn_temp_cutoff_scores[ind,], k=3)
-        dec_self_smooth = spl(xnew_1)'''
+        dec_self_smooth = spl(xnew_1)
 
-        '''ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
+        ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(xnew, enc_self_smooth, color='darkblue')
@@ -607,7 +607,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'self_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
-        plt.close()'''
+        plt.close()
 
         y_max = max(max(dec_enc_attn_scores[ind, :]),
                     max(dec_enc_attn_conv_scores[ind, :]),
