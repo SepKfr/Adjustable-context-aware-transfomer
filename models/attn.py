@@ -165,7 +165,7 @@ class ScaledDotProductAttention(nn.Module):
             ind = [i for i in range(l_k) if i % stride != 0]
             attn = F.pad(attn, pad=(1, 0, 0, 0))
             attn_avg = attn.unfold(-1, 2, 1)
-            w_a = nn.Softmax(dim=-1)(nn.Parameter(torch.Tensor(b, h, l, 2, stride - 1)).to(self.device))
+            w_a = nn.Softmax(dim=-1)(nn.Parameter(torch.Tensor(b, h, l, 2, stride - 1), requires_grad=True).to(self.device))
             attn_avg = torch.einsum('bhqkn, bhqns -> bhqks', attn_avg, w_a)
             #attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn)[:, :, :-1, :-1]
             attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
