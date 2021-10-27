@@ -163,8 +163,14 @@ class ScaledDotProductAttention(nn.Module):
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, :, 0::stride] = attn
             ind = [i for i in range(l_k) if i % stride != 0]
-            attn_avg = nn.AvgPool2d(2, stride=1, padding=1).to(self.device)(attn)[:, :, :-1, :-1]
-            attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, -1)
+            attn = F.pad(attn, pad=(1, 0, 0, 0))
+            attn_avg = attn.unfold(-1, 2, 1)
+            w_a = nn.Softmax(dim=-1)(nn.Parameter(torch.Tensor(b, h, l, 2, stride - 1)).to(self.device))
+            attn_avg = torch.einsum('bhqkn, bhqns -> bhqks', attn_avg, w_a)
+            #attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn)[:, :, :-1, :-1]
+            attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
+            #attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, -1)
+            attn_f[:, :, :, ind] = attn_avg
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn_f
@@ -394,5 +400,5 @@ class Attn(nn.Module):
         enc_outputs, enc_self_attns = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits, enc_self_attns, dec_self_attns, dec_enc_attns
+        return dec_logits
 
