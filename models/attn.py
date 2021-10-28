@@ -98,7 +98,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if "temp_cutoff" in self.attn_type:
 
-            n_k = [3, 6, 9, 12]
+            n_k = [1, 3, 6, 9]
             len_n_k = len(n_k)
             stride = len_n_k
             Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
@@ -163,16 +163,17 @@ class ScaledDotProductAttention(nn.Module):
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, :, 0::stride] = attn
             ind = [i for i in range(l_k) if i % stride != 0]
-            '''attn = F.pad(attn, pad=(1, 0, 0, 0))
+
+            attn = F.pad(attn, pad=(1, 0, 0, 0))
             attn_avg = attn.unfold(-1, 2, 1)
             w_a = nn.Softmax(dim=-1)(nn.Parameter(torch.randn((b, h, l, 2, stride - 1), requires_grad=True,
                                                               device=self.device)).to(self.device))
-            attn_avg = torch.einsum('bhqkn, bhqns -> bhqks', attn_avg, w_a)'''
-            attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn.reshape(b*h, l, -1))
-            attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
-            #attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
-            attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, len(ind))
-            #attn_f[:, :, :, ind] = attn_avg
+            attn_avg = torch.einsum('bhqkn, bhqns -> bhqks', attn_avg, w_a)
+            '''attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn.reshape(b*h, l, -1))
+            attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]'''
+            attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
+            #attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, len(ind))
+            attn_f[:, :, :, ind] = attn_avg
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn_f
