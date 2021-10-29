@@ -170,7 +170,7 @@ class ScaledDotProductAttention(nn.Module):
                 attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
                 attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, len(ind))
 
-            if "weighted_avg" in self.attn_type:
+            elif "weighted_avg" in self.attn_type:
 
                 attn = F.pad(attn, pad=(1, 0, 0, 0))
                 attn_avg = attn.unfold(-1, 2, 1)

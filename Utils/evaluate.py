@@ -485,9 +485,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                          input_size, output_size, models_path, "attn", "attn_multi")
             attn_conv_model = load_attn(seed, configs["attn_conv_36912_{}".format(seed)],
                                         input_size, output_size, models_path, "conv_attn", "attn_conv_36912")
-            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_eff_36912_softmax_crt_avg_{}".format(seed)],
+            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_avg_simple{}".format(seed)],
                                                input_size, output_size,
-                                               models_path, "temp_cutoff", "context_aware_eff_36912_softmax_crt_avg")
+                                               models_path, "", "context_aware_avg_simple")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
