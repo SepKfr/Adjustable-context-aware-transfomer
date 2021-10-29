@@ -98,7 +98,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if "context_aware" in self.attn_type:
 
-            n_k = [1, 3, 6, 9]
+            n_k = [2, 3, 6, 9]
             len_n_k = len(n_k)
             stride = len_n_k
             Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
