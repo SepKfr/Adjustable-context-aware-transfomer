@@ -167,7 +167,8 @@ class ScaledDotProductAttention(nn.Module):
 
                 attn = F.pad(attn, pad=(1, 0, 0, 0))
                 attn_avg = attn.unfold(-1, 2, 1)
-                attn_avg = nn.Softmax(dim=-1)(self.w_c)(attn_avg)
+                w_norm = nn.Softmax(dim=-1)(self.w_c)
+                attn_avg = w_norm(attn_avg)
                 attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
                 attn_f[:, :, :, ind] = attn_avg
 
