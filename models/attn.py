@@ -112,6 +112,7 @@ class ScaledDotProductAttention(nn.Module):
                 Q_g = get_con_vecs(Q, k).to(self.device)
                 K_g = get_con_vecs(K, k).to(self.device)
 
+                print(Q_g)
                 Q_l = self.linear_list[ind](Q_g.transpose(-2, -1)).squeeze(-1)
                 K_l = self.linear_list[ind](K_g.transpose(-2, -1)).squeeze(-1)
 
