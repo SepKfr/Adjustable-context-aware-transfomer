@@ -107,13 +107,14 @@ class ScaledDotProductAttention(nn.Module):
             Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
             K_p = torch.zeros(b, h, len_n_k, int(l_k/stride), d_k).to(self.device)
 
-            for ind, linear in enumerate(self.linear_list):
+            for ind, k in enumerate(self.filter_length):
 
-                Q_g = get_con_vecs(Q, self.filter_length[ind]).to(self.device)
-                K_g = get_con_vecs(K, self.filter_length[ind]).to(self.device)
+                Q_g = get_con_vecs(Q, k).to(self.device)
+                K_g = get_con_vecs(K, k).to(self.device)
 
-                Q_l = linear(Q_g.transpose(-2, -1)).squeeze(-1)
-                K_l = linear(K_g.transpose(-2, -1)).squeeze(-1)
+                print(self.linear_list[ind])
+                Q_l = self.linear_list[ind](Q_g.transpose(-2, -1)).squeeze(-1)
+                K_l = self.linear_list[ind](K_g.transpose(-2, -1)).squeeze(-1)
 
                 Q_p[:, :, ind, :, :] = Q_l
                 K_p[:, :, ind, :, :] = K_l[:, :, 0::stride, :]
