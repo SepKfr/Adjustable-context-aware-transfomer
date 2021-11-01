@@ -111,11 +111,11 @@ class ScaledDotProductAttention(nn.Module):
 
             for ind, k in enumerate(self.filter_length):
 
-                Q_g = get_con_vecs(Q, k)
-                K_g = get_con_vecs(K, k)
+                Q_g = get_con_vecs(Q, k).to(self.device)
+                K_g = get_con_vecs(K, k).to(self.device)
 
-                Q_l = self.linear_s[ind]((Q_g.to(self.device).transpose(-2, -1))).squeeze(-1)
-                K_l = self.linear_s[ind]((K_g.to(self.device).transpose(-2, -1))).squeeze(-1)
+                Q_l = self.linear_s[ind]((Q_g.transpose(-2, -1))).squeeze(-1)
+                K_l = self.linear_s[ind]((K_g.transpose(-2, -1))).squeeze(-1)
 
                 Q_p[:, :, ind, :, :] = Q_l
                 K_p[:, :, ind, :, :] = K_l[:, :, 0::stride, :]
