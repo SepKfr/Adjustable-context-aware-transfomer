@@ -92,7 +92,7 @@ class WatershedFormatter(DataFormatter):
             'hidden_layer_size': [16, 32],
             'learning_rate': 0.001,
             'minibatch_size': [256],
-            'max_gradient_norm': 100.,
+            'max_gradient_norm': 100,
             'num_heads': 8,
             'stack_size': 1,
             'kernel': [1, 3, 9]
@@ -107,4 +107,4 @@ class WatershedFormatter(DataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 512, 256
+        return 128000, 16000
