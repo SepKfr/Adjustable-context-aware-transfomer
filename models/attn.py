@@ -68,28 +68,34 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, attn_type, kernel):
+    def __init__(self, d_k, device, attn_type, kernel, h):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
+        self.linear_s = list()
+        self.filter_length = [2, 3, 6, 9]
+        for f in self.filter_length:
+            self.linear_s.append(nn.Linear(f, 1))
+        self.w_c = nn.Parameter(torch.randn((h, 2, len(self.filter_length) - 1)))
+        self.conv1d = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel)
 
-    @staticmethod
-    def get_fft(Q, K):
+    def get_conv(self, kernel, q_p, k_p):
 
-        b, h, l, d_k = Q.shape
-        l_k = K.shape[2]
-
-        Q = Q.reshape(b, l, h * d_k)
-        K = K.reshape(b, l_k, h * d_k)
-        Q = torch.fft.fft(torch.fft.fft(Q, dim=-1), dim=-2).real
-        K = torch.fft.fft(torch.fft.fft(K, dim=-1), dim=-2).real
-        Q = Q.reshape(b, h, l, d_k)
-        K = K.reshape(b, h, l_k, d_k)
-
-        return Q, K
+        b, h, l, d_k = q_p.shape
+        l_k = k_p.shape[2]
+        q_p = q_p.reshape(b, l, h * d_k)
+        k_p = k_p.reshape(b, l_k, h * d_k)
+        padding = kernel - 1
+        q_p = F.pad(q_p.permute(0, 2, 1), (padding, 0))
+        k_p = F.pad(k_p.permute(0, 2, 1), (padding, 0))
+        q_p = self.conv1d(q_p).permute(0, 2, 1)
+        k_p = self.conv1d(k_p).permute(0, 2, 1)
+        q_p = q_p.reshape(b, h, l, d_k)
+        k_p = k_p.reshape(b, h, l_k, d_k)
+        return q_p, k_p
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -98,18 +104,18 @@ class ScaledDotProductAttention(nn.Module):
 
         if "context_aware" in self.attn_type:
 
-            n_k = [2, 3, 6, 9]
-            len_n_k = len(n_k)
+            len_n_k = len(self.filter_length)
             stride = len_n_k
             Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
             K_p = torch.zeros(b, h, len_n_k, int(l_k/stride), d_k).to(self.device)
 
-            for ind, k in enumerate(n_k):
+            for ind, k in enumerate(self.filter_length):
 
                 Q_g = get_con_vecs(Q, k)
                 K_g = get_con_vecs(K, k)
-                Q_l = nn.Linear(k, 1).to(self.device)(Q_g.transpose(-2, -1)).squeeze(-1)
-                K_l = nn.Linear(k, 1).to(self.device)(K_g.transpose(-2, -1)).squeeze(-1)
+
+                Q_l = self.linear_s[ind]((Q_g.transpose(-2, -1))).squeeze(-1)
+                K_l = self.linear_s[ind]((K_g.transpose(-2, -1))).squeeze(-1)
 
                 Q_p[:, :, ind, :, :] = Q_l
                 K_p[:, :, ind, :, :] = K_l[:, :, 0::stride, :]
@@ -121,23 +127,8 @@ class ScaledDotProductAttention(nn.Module):
 
         elif "conv" in self.attn_type:
 
-            def get_conv(kernel, q_p, k_p):
-
-                q_p = q_p.reshape(b, l, h * d_k)
-                k_p = k_p.reshape(b, l_k, h * d_k)
-                padding = kernel - 1
-                q_p = F.pad(q_p.permute(0, 2, 1), (padding, 0))
-                k_p = F.pad(k_p.permute(0, 2, 1), (padding, 0))
-                q_p = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(self.device) \
-                    (q_p).permute(0, 2, 1)
-                k_p = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(self.device) \
-                    (k_p).permute(0, 2, 1)
-                q_p = q_p.reshape(b, h, l, d_k)
-                k_p = k_p.reshape(b, h, l_k, d_k)
-                return q_p, k_p
-
             if self.attn_type == "conv_attn":
-                Q, K = get_conv(self.kernel, Q, K)
+                Q, K = self.get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
 
         elif "f_linear" in self.attn_type:
@@ -174,9 +165,8 @@ class ScaledDotProductAttention(nn.Module):
 
                 attn = F.pad(attn, pad=(1, 0, 0, 0))
                 attn_avg = attn.unfold(-1, 2, 1)
-                w_a = nn.Softmax(dim=-1)(nn.Parameter(torch.randn((b, h, l, 2, stride - 1), requires_grad=True,
-                                                                  device=self.device)).to(self.device))
-                attn_avg = torch.einsum('bhqkn, bhqns -> bhqks', attn_avg, w_a)
+                w_a = nn.Softmax(dim=-1)(self.w_c)
+                attn_avg = torch.einsum('bhqkn, hns -> bhqks', attn_avg, w_a)
                 attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
                 attn_f[:, :, :, ind] = attn_avg
 
@@ -221,7 +211,7 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
-                                                  attn_type=self.attn_type, kernel=self.kernel)(
+                                                  attn_type=self.attn_type, kernel=self.kernel, h=self.n_heads)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
