@@ -75,11 +75,10 @@ class ScaledDotProductAttention(nn.Module):
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.linear_s = []
+        self.linear_s = nn.ModuleList()
         self.filter_length = [2, 3, 6, 9]
         for f in self.filter_length:
             self.linear_s.append(nn.Linear(f, 1))
-        self.linear_s = nn.ModuleList(self.linear_s)
         self.w_c = nn.Parameter(torch.randn((2, len(self.filter_length) - 1)))
         self.conv1d = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel)
 
