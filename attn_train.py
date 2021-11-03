@@ -266,7 +266,7 @@ def main():
     config_num = 0
 
     for i, conf in enumerate(configs, config_num):
-        print('config: {}'.format(conf))
+        print('config {}: {}'.format(i+1, conf))
 
         n_layers, batch_size, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
