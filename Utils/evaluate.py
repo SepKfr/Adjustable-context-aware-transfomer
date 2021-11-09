@@ -597,11 +597,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
-        ax_1.plot(xnew, enc_self_smooth, color='darkblue')
+        ax_1.plot(x, enc_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_1.plot(x_1, self_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x_1, self_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
-        ax_1.plot(xnew_1, dec_self_smooth, color='darkblue')
+        ax_1.plot(x_1, self_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
 
@@ -637,7 +637,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.plot(x, dec_enc_attn_scores[ind, ], color='lightgreen')
         ax_2.plot(x, dec_enc_attn_multi_scores[ind, ], color='plum')
         ax_2.plot(x, dec_enc_attn_conv_scores[ind, ], color='darksalmon')
-        ax_2.plot(xnew, power_smooth, color='darkblue')
+        ax_2.plot(x, dec_enc_attn_temp_cutoff_scores[ind, ], color='darkblue')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Trans-multi',
                     'CNN-trans', 'Ours'], loc="best")
@@ -790,9 +790,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    '''create_attn_score_plots()
-    print("Done exp {}".format(args.len_pred))'''
-    create_rmse_plot()
+    create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))
+    #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
     #create_rmse_plot()
