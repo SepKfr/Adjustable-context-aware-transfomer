@@ -788,8 +788,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    create_attn_score_plots()
-    print("Done exp {}".format(args.len_pred))
+    '''create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))'''
     create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
