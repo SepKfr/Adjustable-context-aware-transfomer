@@ -743,7 +743,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model = load_attn(seed, configs["context_aware_avg_weighted_1369_{}".format(seed)],
                                            input_size, output_size,
                                            models_path, "context_aware_weighted_avg",
-                          "context_aware_avg_weighted_1369_")
+                          "context_aware_avg_weighted_1369")
         model.eval()
 
         ind = random.randint(0, test_en.shape[0])
@@ -756,23 +756,23 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
-        index = np.where(index == 1, 6, index)
-        index = np.where(index == 3, 12, index)
-        index = np.where(index == 0, 3, index)
-        index = np.where(index == 2, 9, index)
+        index = np.where(index == 3, 9, index)
+        index = np.where(index == 1, 3, index)
+        index = np.where(index == 0, 1, index)
+        index = np.where(index == 2, 6, index)
 
         #index = np.where(index == 5, -2, index)
         fig, ax = plt.subplots(figsize=(6, 4))
-        norm_bins = np.sort([3, 6, 9, 12]) + 0.5
+        norm_bins = np.sort([1, 3, 6, 9]) + 0.5
         norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
 
         norm = matplotlib.colors.BoundaryNorm(norm_bins, 4, clip=True)
-        labels = np.array(["l=3", "l=6", "l=9", "l=12"])
+        labels = np.array(["l=1", "l=3", "l=6", "l=9"])
 
-        col_dict = {3: "darksalmon",
-                    6: "indianred",
-                    9: "firebrick",
-                    12: "maroon"}
+        col_dict = {1: "darksalmon",
+                    3: "indianred",
+                    6: "firebrick",
+                    9: "maroon"}
 
         # We create a colormar from our list of colors
         cm = ListedColormap([col_dict[x] for x in col_dict.keys()])
@@ -790,13 +790,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    create_attn_score_plots()
-    print("Done exp {}".format(args.len_pred))
+    '''create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))'''
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
     #create_rmse_plot()
-    #create_attn_matrix(48)
+    create_attn_matrix(48)
 
 
 def main():
