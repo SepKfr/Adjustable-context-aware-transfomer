@@ -487,7 +487,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             attn_multi_model = load_attn(seed, configs_2["attn_multi_{}".format(seed)],
                                          input_size, output_size, models_path, "attn", "attn_multi")
             attn_conv_model = load_attn(seed, configs["attn_conv_1369_{}".format(seed)],
-                                        input_size, output_size, models_path, "conv_attn", "attn_conv_1369_")
+                                        input_size, output_size, models_path, "conv_attn", "attn_conv_1369")
             attn_temp_cutoff_model = load_attn(seed, configs["context_aware_avg_weighted_1369_{}".format(seed)],
                                                input_size, output_size,
                                                models_path, "context_aware_weighted_avg",
