@@ -109,7 +109,7 @@ class ScaledDotProductAttention(nn.Module):
             len_n_k = len(self.filter_length)
             stride = len_n_k
             Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
-            K_p = torch.zeros(b, h, len_n_k, int(l_k/stride), d_k).to(self.device)
+            K_p = torch.zeros(b, h, len_n_k, int(l_k/stride)+1, d_k).to(self.device)
 
             for ind, k in enumerate(self.filter_length):
 
@@ -120,11 +120,11 @@ class ScaledDotProductAttention(nn.Module):
                 K_l = self.linear_list_k[ind](K_g.transpose(-2, -1)).squeeze(-1)
 
                 Q_p[:, :, ind, :, :] = Q_l
-                K_p[:, :, ind, :, :] = K_l[:, :, 0::stride, :]
+                K_p[:, :, ind, :, :] = torch.cat((K_l[:, :, 0::stride, :], K_l[:, :, -1:, :]), dim=2)
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
-                attn_mask = attn_mask[:, :, :, 0::stride]
+                attn_mask = torch.cat((attn_mask[:, :, :, 0::stride], attn_mask[:, :, :, -1:]), dim=-1)
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
         elif "conv" in self.attn_type:
@@ -154,15 +154,26 @@ class ScaledDotProductAttention(nn.Module):
         if "context_aware" in self.attn_type:
             attn_f = torch.zeros(b, h, l, l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
-            attn_f[:, :, :, 0::stride] = attn
+            attn_f[:, :, :, 0::stride] = attn[:, :, :, :-1]
+            attn_f[:, :, :, -1] = attn[:, :, :, -1]
             ind = np.arange(0, l_k)
             ind = ind[np.where(ind % stride != 0)]
+            ind = ind[:-1]
+
+            if "repeat" in self.attn_type:
+                attn_tmp = attn[:, :, :, :-1].unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1)
+                attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(stride - 1))
+                attn_last = attn[:, :, :, -1:].unsqueeze(-1).repeat(1, 1, 1, 1, stride - 2)
+                attn_last = attn_last.reshape(b, h, l, attn_last.shape[3]*(stride - 2))
+                attn_f[:, :, :, ind] = torch.cat((attn_tmp[:, :, :, stride - 1:], attn_last), dim=-1)
 
             if "simple_avg" in self.attn_type:
 
                 attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn.reshape(b * h, l, -1))
                 attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
-                attn_f[:, :, :, ind] = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1).reshape(b, h, l, len(ind))
+                attn_tmp = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1)
+                attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[-2]*(stride - 1))
+                attn_f[:, :, :, ind] = attn_tmp[:, :, :, stride - 1:-1]
 
             elif "weighted_avg" in self.attn_type:
 
@@ -171,7 +182,7 @@ class ScaledDotProductAttention(nn.Module):
                 w_a = nn.Softmax(dim=0)(self.w_c)
                 attn_avg = torch.einsum('bhqkn, ns -> bhqks', attn_avg, w_a)
                 attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
-                attn_f[:, :, :, ind] = attn_avg
+                attn_f[:, :, :, ind] = attn_avg[:, :, :, stride - 1: -1]
 
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
@@ -402,5 +413,5 @@ class Attn(nn.Module):
         enc_outputs, enc_self_attns, enc_index = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns, dec_enc_index = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits, dec_enc_index
+        return dec_logits
 
