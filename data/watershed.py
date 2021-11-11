@@ -36,9 +36,8 @@ class WatershedFormatter(DataFormatter):
     _column_definition = [
         ('id', DataTypes.REAL_VALUED, InputTypes.ID),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.TIME),
-        ('SpConductivity', DataTypes.REAL_VALUED, InputTypes.TARGET),
+        ('Conductivity', DataTypes.REAL_VALUED, InputTypes.TARGET),
         ('TempC', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('Conductivity', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('Nitrate_mg', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('Q', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('pH', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
