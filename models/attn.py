@@ -83,6 +83,7 @@ class ScaledDotProductAttention(nn.Module):
         self.conv1d_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.linear_q = nn.Linear(kernel, 1).to(device)
         self.linear_k = nn.Linear(kernel, 1).to(device)
+        self.uncomp = nn.Linear(1, len(self.filter_length) - 1).to(device)
 
     def get_conv(self, kernel, q_p, k_p):
 
@@ -183,6 +184,11 @@ class ScaledDotProductAttention(nn.Module):
                 attn_avg = torch.einsum('bhqkn, ns -> bhqks', attn_avg[:, :, :, 1:, :], w_a)
                 attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
                 attn_f[:, :, :, ind] = attn_avg[:, :, :, :-1]
+
+            elif "weighted_comb" in self.attn_type:
+                attn_infer = self.uncomp(attn.unsqueeze(-1))
+                attn_infer = attn_infer.reshape(b, h, l, (stride - 1)*attn_infer.shape[3])
+                attn_f[:, :, :, ind] = attn_infer[:, :, :, (stride - 1):-1]
 
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
