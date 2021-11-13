@@ -75,7 +75,7 @@ class ScaledDotProductAttention(nn.Module):
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.filter_length = [1, 3, 6, 9]
+        self.filter_length = [1, 3, 6, 9, 12, 15]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.w_c = nn.Parameter(torch.randn((2, len(self.filter_length) - 1), device=device))
@@ -109,19 +109,13 @@ class ScaledDotProductAttention(nn.Module):
 
             len_n_k = len(self.filter_length)
             stride = len_n_k
-            Q_p = torch.zeros(b, h, len_n_k, l, d_k).to(self.device)
-            K_p = torch.zeros(b, h, len_n_k, int(l_k/stride)+1, d_k).to(self.device)
 
-            for ind, k in enumerate(self.filter_length):
-
-                Q_g = get_con_vecs(Q, k).to(self.device)
-                K_g = get_con_vecs(K, k).to(self.device)
-
-                Q_l = self.linear_list_q[ind](Q_g.transpose(-2, -1)).squeeze(-1)
-                K_l = self.linear_list_k[ind](K_g.transpose(-2, -1)).squeeze(-1)
-
-                Q_p[:, :, ind, :, :] = Q_l
-                K_p[:, :, ind, :, :] = torch.cat((K_l[:, :, 0::stride, :], K_l[:, :, -1:, :]), dim=2)
+            x = lambda a, b, ind: self.linear_list_q[ind](get_con_vecs(a, b).transpose(-2, -1)).squeeze(-1)
+            Q_l = [x(Q, k, i) for i, k in enumerate(self.filter_length)]
+            K_l = [x(K, k, i) for i, k in enumerate(self.filter_length)]
+            Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
+            K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
+            K_p = torch.cat((K_tmp[:, :, :, 0::stride, :], K_tmp[:, :, :, -1:, :]), dim=3)
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
