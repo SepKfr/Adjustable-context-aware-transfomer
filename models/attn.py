@@ -75,15 +75,15 @@ class ScaledDotProductAttention(nn.Module):
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.filter_length = [1, 3, 6, 9, 12, 15]
+        self.filter_length = [1, 3, 6, 9]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
-        self.w_c = nn.Parameter(torch.randn((2, len(self.filter_length) - 1), device=device))
+        self.w_c = nn.Parameter(torch.randn((2, max(self.filter_length) - 1), device=device))
         self.conv1d_q = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.conv1d_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.linear_q = nn.Linear(kernel, 1).to(device)
         self.linear_k = nn.Linear(kernel, 1).to(device)
-        self.uncomp = nn.Linear(1, len(self.filter_length) - 1).to(device)
+        self.uncomp = nn.Linear(1, max(self.filter_length) - 1).to(device)
 
     def get_conv(self, kernel, q_p, k_p):
 
@@ -115,11 +115,13 @@ class ScaledDotProductAttention(nn.Module):
             K_l = [x(K, k, i) for i, k in enumerate(self.filter_length)]
             Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
             K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
-            K_p = torch.cat((K_tmp[:, :, :, 0::stride, :], K_tmp[:, :, :, -1:, :]), dim=3)
+            m_f = max(self.filter_length)
+            K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
+            s = m_f - (l_k - int(l_k / m_f) * m_f) + 1
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
-                attn_mask = torch.cat((attn_mask[:, :, :, 0::stride], attn_mask[:, :, :, -1:]), dim=-1)
+                attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
         elif "conv" in self.attn_type:
@@ -149,26 +151,26 @@ class ScaledDotProductAttention(nn.Module):
         if "context_aware" in self.attn_type:
             attn_f = torch.zeros(b, h, l, l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
-            attn_f[:, :, :, 0::stride] = attn[:, :, :, :-1]
+            attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
             attn_f[:, :, :, -1] = attn[:, :, :, -1]
             ind = np.arange(0, l_k)
-            ind = ind[np.where(ind % stride != 0)]
+            ind = ind[np.where(ind % m_f != 0)]
             ind = ind[:-1]
 
             if "repeat" in self.attn_type:
-                attn_tmp = attn[:, :, :, :-1].unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1)
-                attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(stride - 1))
-                attn_last = attn[:, :, :, -1:].unsqueeze(-1).repeat(1, 1, 1, 1, stride - 2)
-                attn_last = attn_last.reshape(b, h, l, attn_last.shape[3]*(stride - 2))
-                attn_f[:, :, :, ind] = torch.cat((attn_tmp[:, :, :, stride - 1:], attn_last), dim=-1)
+                attn_tmp = attn[:, :, :, :-1].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
+                attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(m_f - 1))
+                attn_last = attn[:, :, :, -1:].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - s)
+                attn_last = attn_last.reshape(b, h, l, attn_last.shape[3]*(m_f - s))
+                attn_f[:, :, :, ind] = torch.cat((attn_tmp[:, :, :, m_f - 1:-1], attn_last), dim=-1)
 
             if "simple_avg" in self.attn_type:
 
                 attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn.reshape(b * h, l, -1))
                 attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
-                attn_tmp = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, stride - 1)
-                attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[-2]*(stride - 1))
-                attn_f[:, :, :, ind] = attn_tmp[:, :, :, stride - 1:-1]
+                attn_tmp = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
+                attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[-2]*(m_f - 1))
+                attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-s]
 
             elif "weighted_avg" in self.attn_type:
 
@@ -176,13 +178,13 @@ class ScaledDotProductAttention(nn.Module):
                 attn_avg = attn.unfold(-1, 2, 1)
                 w_a = nn.Softmax(dim=0)(self.w_c)
                 attn_avg = torch.einsum('bhqkn, ns -> bhqks', attn_avg[:, :, :, 1:, :], w_a)
-                attn_avg = attn_avg.reshape(b, h, l, (stride - 1)*attn_avg.shape[3])
-                attn_f[:, :, :, ind] = attn_avg[:, :, :, :-1]
+                attn_avg = attn_avg.reshape(b, h, l, (m_f - 1)*attn_avg.shape[3])
+                attn_f[:, :, :, ind] = attn_avg[:, :, :, :-s]
 
             elif "weighted_comb" in self.attn_type:
                 attn_infer = self.uncomp(attn.unsqueeze(-1))
-                attn_infer = attn_infer.reshape(b, h, l, (stride - 1)*attn_infer.shape[3])
-                attn_f[:, :, :, ind] = attn_infer[:, :, :, (stride - 1):-1]
+                attn_infer = attn_infer.reshape(b, h, l, (m_f - 1)*attn_infer.shape[3])
+                attn_f[:, :, :, ind] = attn_infer[:, :, :, (m_f - 1):-s]
 
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
