@@ -78,7 +78,7 @@ class ScaledDotProductAttention(nn.Module):
         self.filter_length = [1, 3, 6, 9]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
-        self.w_c = nn.Parameter(torch.randn((2, max(self.filter_length) - 1), device=device))
+        self.w_c = nn.Linear(2, max(self.filter_length) - 1, bias=False).to(device)
         self.conv1d_q = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.conv1d_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.linear_q = nn.Linear(kernel, 1).to(device)
@@ -176,8 +176,7 @@ class ScaledDotProductAttention(nn.Module):
 
                 attn = F.pad(attn, pad=(1, 0, 0, 0))
                 attn_avg = attn.unfold(-1, 2, 1)
-                w_a = nn.Softmax(dim=0)(self.w_c)
-                attn_avg = torch.einsum('bhqkn, ns -> bhqks', attn_avg[:, :, :, 1:, :], w_a)
+                attn_avg = self.w_c(attn_avg[:, :, :, 1:, :])
                 attn_avg = attn_avg.reshape(b, h, l, (m_f - 1)*attn_avg.shape[3])
                 attn_f[:, :, :, ind] = attn_avg[:, :, :, :-s]
 
