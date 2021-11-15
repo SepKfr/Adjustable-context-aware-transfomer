@@ -95,10 +95,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
             configs = json.load(json_file)
-        with open('../time_series_forecasting/Context-Aware-Transformer/configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
-            configs_2 = json.load(json_file)
         models_path = "models_{}_{}".format(args.exp_name, len_of_pred)
-        return configs, configs_2, models_path
+        return configs, models_path
 
     df_list = []
 
@@ -173,7 +171,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             rmse_attn_conv = np.zeros((3, timesteps))
             rmse_attn_temp_cutoff = np.zeros((3, timesteps))
 
-            configs, configs_2, models_path = get_config(timesteps)
+            configs, models_path = get_config(timesteps)
             test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
             test_y_input = test_y[:, :, :-timesteps, :]
             test_y_output = test_y[:, :, -timesteps:, :]
@@ -190,19 +188,21 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             for i, seed in enumerate([21, 9, 1992]):
 
                 torch.manual_seed(seed)
+                input_size = test_en.shape[3]
+                output_size = test_de.shape[3]
 
-                lstm_model = load_lstm(seed, configs_2["lstm_{}".format(seed)],
-                                       test_en.shape[3], test_de.shape[3], models_path)
-                attn_model = load_attn(seed, configs_2["attn_{}".format(seed)], test_en.shape[3], test_de.shape[3],
-                                       models_path, "attn", "attn")
-                attn_multi_model = load_attn(seed, configs_2["attn_multi_{}".format(seed)], test_en.shape[3],
-                                             test_de.shape[3], models_path, "attn", "attn_multi")
-                attn_conv_model = load_attn(seed, configs["attn_conv_1369_{}".format(seed)], test_en.shape[3], test_de.shape[3],
-                                            models_path, "conv_attn", "attn_conv_1369")
-                attn_temp_cutoff_model = load_attn(seed, configs["context_aware_avg_weighted_1369_{}".format(seed)],
-                                                   test_en.shape[3], test_de.shape[3],
+                lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)],
+                                       input_size, output_size, models_path)
+                attn_model = load_attn(seed, configs["attn_new_{}".format(seed)],
+                                       input_size, output_size, models_path, "attn", "attn_new")
+                attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)],
+                                             input_size, output_size, models_path, "attn", "attn_multi_new")
+                attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)],
+                                            input_size, output_size, models_path, "conv_attn", "attn_conv_1369_new")
+                attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+                                                   input_size, output_size,
                                                    models_path, "context_aware_weighted_avg",
-                                                   "context_aware_avg_weighted_1369")
+                                                   "context_aware_weighted_avg_max")
 
                 predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
@@ -447,7 +447,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         total_len = args.len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, configs_2, models_path = get_config(args.len_pred)
+        configs, models_path = get_config(args.len_pred)
         enc_step = total_len - args.len_pred
         test_y_input = test_y[:, :, :-args.len_pred, :]
         test_y_output = test_y[:, :, -args.len_pred:, :]
@@ -482,16 +482,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
             torch.manual_seed(seed)
 
-            attn_model = load_attn(seed, configs_2["attn_{}".format(seed)],
-                                   input_size, output_size, models_path, "attn", "attn")
-            attn_multi_model = load_attn(seed, configs_2["attn_multi_{}".format(seed)],
-                                         input_size, output_size, models_path, "attn", "attn_multi")
-            attn_conv_model = load_attn(seed, configs["attn_conv_1369_{}".format(seed)],
-                                        input_size, output_size, models_path, "conv_attn", "attn_conv_1369")
-            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_avg_weighted_1369_{}".format(seed)],
+            attn_model = load_attn(seed, configs["attn_new_{}".format(seed)],
+                                   input_size, output_size, models_path, "attn", "attn_new")
+            attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)],
+                                         input_size, output_size, models_path, "attn", "attn_multi_new")
+            attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)],
+                                        input_size, output_size, models_path, "conv_attn", "attn_conv_1369_new")
+            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
                                                input_size, output_size,
                                                models_path, "context_aware_weighted_avg",
-                                               "context_aware_avg_weighted_1369")
+                                               "context_aware_weighted_avg_max")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
@@ -550,13 +550,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             torch.from_numpy(tgt_all[i, :])))
             if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                if args.exp_name == 'watershed':
+                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
+                    diff_1 = loss_attn - loss_attn_temp
+                    diff_2 = loss_attn_multi - loss_attn_temp
                     ind = i
-                else:
-                    if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
-                        diff_1 = loss_attn - loss_attn_temp
-                        diff_2 = loss_attn_multi - loss_attn_temp
-                        ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -694,13 +691,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         total_len = len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, configs_2, models_path = get_config(len_pred)
+        configs, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
 
-        _, attn_loss = load_attn(seed, configs_2["attn_test_{}".format(seed)],
+        _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
                                input_size, output_size, models_path, "attn", "attn_test")
-        _, attn_multi_loss = load_attn(seed, configs_2["attn_multi_test_{}".format(9)],
+        _, attn_multi_loss = load_attn(seed, configs["attn_multi_test_{}".format(9)],
                                      input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
                                     input_size, output_size, models_path, "conv_attn", "attn_conv_test")
@@ -736,7 +733,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         total_len = len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, _, models_path = get_config(len_pred)
+        configs, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
         seed = 21
