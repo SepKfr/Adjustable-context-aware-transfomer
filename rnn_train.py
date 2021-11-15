@@ -204,6 +204,7 @@ def main():
     train_data, valid, test = formatter.split_data(raw_data)
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
+    params['total_time_steps'] = args.total_time_steps
 
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
