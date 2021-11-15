@@ -737,10 +737,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
         seed = 21
-        model = load_attn(seed, configs["context_aware_avg_weighted_1369_{}".format(seed)],
+        model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
                                            input_size, output_size,
                                            models_path, "context_aware_weighted_avg",
-                          "context_aware_avg_weighted_1369")
+                          "context_aware_weighted_avg_max")
         model.eval()
 
         ind = random.randint(0, test_en.shape[0])
@@ -787,13 +787,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    '''create_attn_score_plots()
-    print("Done exp {}".format(args.len_pred))'''
+    create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
     #create_rmse_plot()
-    create_attn_matrix(48)
+    #create_attn_matrix(48)
 
 
 def main():
