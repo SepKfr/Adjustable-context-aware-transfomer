@@ -183,7 +183,7 @@ def main():
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--cuda", type=str, default='cuda:0')
     parser.add_argument("--seed", type=int, default=21)
-    parser.add_argument("--total_time_steps", type=int, default=216)
+    parser.add_argument("--total_time_steps", type=int, default=192)
     args = parser.parse_args()
 
     np.random.seed(21)
