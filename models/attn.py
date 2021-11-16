@@ -117,7 +117,8 @@ class ScaledDotProductAttention(nn.Module):
             K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
             m_f = max(self.filter_length)
             K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
-            s = m_f - (l_k - int(l_k / m_f) * m_f) + 1
+            div = int(l_k / m_f) - 1 if l_k % m_f == 0 else int(l_k / m_f)
+            s = (l_k - 1) - div * m_f
 
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
@@ -160,9 +161,9 @@ class ScaledDotProductAttention(nn.Module):
             if "repeat" in self.attn_type:
                 attn_tmp = attn[:, :, :, :-1].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(m_f - 1))
-                attn_last = attn[:, :, :, -1:].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - s)
-                attn_last = attn_last.reshape(b, h, l, attn_last.shape[3]*(m_f - s))
-                attn_f[:, :, :, ind] = torch.cat((attn_tmp[:, :, :, m_f - 1:-1], attn_last), dim=-1)
+                attn_last = attn[:, :, :, -1:].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
+                attn_last = attn_last.reshape(b, h, l, attn_last.shape[3]*(m_f - 1))
+                attn_f[:, :, :, ind] = torch.cat((attn_tmp[:, :, :, m_f - 1:-(m_f - s)], attn_last), dim=-1)
 
             if "simple_avg" in self.attn_type:
 
@@ -170,7 +171,7 @@ class ScaledDotProductAttention(nn.Module):
                 attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
                 attn_tmp = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[-2]*(m_f - 1))
-                attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-s]
+                attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-(m_f - s)]
 
             elif "weighted_avg" in self.attn_type:
 
@@ -178,12 +179,12 @@ class ScaledDotProductAttention(nn.Module):
                 attn_avg = attn.unfold(-1, 2, 1)
                 attn_avg = self.w_c(attn_avg[:, :, :, 1:, :])
                 attn_avg = attn_avg.reshape(b, h, l, (m_f - 1)*attn_avg.shape[3])
-                attn_f[:, :, :, ind] = attn_avg[:, :, :, :-s]
+                attn_f[:, :, :, ind] = attn_avg[:, :, :, :-(m_f - s)]
 
             elif "weighted_comb" in self.attn_type:
                 attn_infer = self.uncomp(attn.unsqueeze(-1))
                 attn_infer = attn_infer.reshape(b, h, l, (m_f - 1)*attn_infer.shape[3])
-                attn_f[:, :, :, ind] = attn_infer[:, :, :, (m_f - 1):-s]
+                attn_f[:, :, :, ind] = attn_infer[:, :, :, (m_f - 1):-(m_f - s)]
 
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
