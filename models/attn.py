@@ -68,7 +68,7 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, attn_type, kernel, h):
+    def __init__(self, d_k, device, attn_type, kernel, h, l_k):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
@@ -78,7 +78,7 @@ class ScaledDotProductAttention(nn.Module):
         self.filter_length = [1, 3, 6, 9]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
-        self.w_c = nn.Linear(2, max(self.filter_length) - 1, bias=False).to(device)
+        self.w_c = nn.Linear(2, min(max(self.filter_length), int(math.log2(l_k))) - 1, bias=False).to(device)
         self.conv1d_q = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.conv1d_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.linear_q = nn.Linear(kernel, 1).to(device)
@@ -115,7 +115,7 @@ class ScaledDotProductAttention(nn.Module):
             K_l = [x(K, k, i) for i, k in enumerate(self.filter_length)]
             Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
             K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
-            m_f = max(self.filter_length)
+            m_f = min(max(self.filter_length), int(math.log2(l_k)))
             K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
             div = int(l_k / m_f) - 1 if l_k % m_f == 0 else int(l_k / m_f)
             s = (l_k - 1) - div * m_f
@@ -227,7 +227,9 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
-                                                  attn_type=self.attn_type, kernel=self.kernel, h=self.n_heads)(
+                                                  attn_type=self.attn_type,
+                                                  kernel=self.kernel, h=self.n_heads,
+                                                  l_k=K.shape[1])(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
