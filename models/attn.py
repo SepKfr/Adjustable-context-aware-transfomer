@@ -159,11 +159,9 @@ class ScaledDotProductAttention(nn.Module):
             ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
 
             if "repeat" in self.attn_type:
-                attn_tmp = attn[:, :, :, :-1].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
+                attn_tmp = attn.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(m_f - 1))
-                attn_last = attn[:, :, :, -1:].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
-                attn_last = attn_last.reshape(b, h, l, attn_last.shape[3]*(m_f - 1))
-                attn_f[:, :, :, ind] = torch.cat((attn_tmp[:, :, :, m_f - 1:-(m_f - s)], attn_last), dim=-1)
+                attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-(m_f - s)]
 
             if "simple_avg" in self.attn_type:
 
