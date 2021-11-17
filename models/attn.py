@@ -163,7 +163,7 @@ class ScaledDotProductAttention(nn.Module):
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(m_f - 1))
                 attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-(m_f - s)]
 
-            if "simple_avg" in self.attn_type:
+            elif "simple_avg" in self.attn_type:
 
                 attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn.reshape(b * h, l, -1))
                 attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
