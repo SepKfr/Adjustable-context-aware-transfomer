@@ -78,7 +78,7 @@ class ScaledDotProductAttention(nn.Module):
         self.filter_length = [1, 3, 6, 9]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
-        self.w_c = nn.Parameter(torch.randn((2, min(max(self.filter_length), int(math.log2(l_k))) - 1), device=device))
+        self.w_c = nn.Parameter(torch.randn((2, max(self.filter_length)), device=device))
         self.conv1d_q = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.conv1d_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h, kernel_size=kernel).to(device)
         self.linear_q = nn.Linear(kernel, 1).to(device)
@@ -115,7 +115,7 @@ class ScaledDotProductAttention(nn.Module):
             K_l = [x(K, k, i) for i, k in enumerate(self.filter_length)]
             Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
             K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
-            m_f = min(max(self.filter_length), int(math.log2(l_k)))
+            m_f = max(self.filter_length)
             K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
             div = int(l_k / m_f) - 1 if l_k % m_f == 0 else int(l_k / m_f)
             s = (l_k - 1) - div * m_f
