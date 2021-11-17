@@ -156,7 +156,7 @@ class ScaledDotProductAttention(nn.Module):
             attn_f[:, :, :, -1] = attn[:, :, :, -1]
             ind = np.arange(0, l_k)
             ind = ind[np.where(ind % m_f != 0)]
-            ind = ind[:-1]
+            ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
 
             if "repeat" in self.attn_type:
                 attn_tmp = attn[:, :, :, :-1].unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
