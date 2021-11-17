@@ -178,7 +178,7 @@ class ScaledDotProductAttention(nn.Module):
                 attn = F.pad(attn, pad=(1, 0, 0, 0))
                 attn_avg = attn.unfold(-1, 2, 1)
                 attn_avg = torch.einsum('bhlkn, nc -> bhlkc', attn_avg[:, :, :, 1:, :],
-                                        nn.Softmax(dim=-1)(self.w_c))
+                                        nn.Softmax(dim=0)(self.w_c))
                 attn_avg = attn_avg.reshape(b, h, l, (m_f - 1)*attn_avg.shape[3])
                 attn_f[:, :, :, ind] = attn_avg[:, :, :, :-(m_f - s)]
 
