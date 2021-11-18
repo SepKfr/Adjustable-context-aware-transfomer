@@ -165,11 +165,11 @@ class ScaledDotProductAttention(nn.Module):
 
             elif "simple_avg" in self.attn_type:
 
-                attn_avg = nn.AvgPool1d(2, stride=1, padding=1).to(self.device)(attn.reshape(b * h, l, -1))
-                attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, :-1]
+                attn_avg = nn.AvgPool1d(2, stride=1, padding=1)(attn.reshape(b * h, l, -1))
+                attn_avg = attn_avg.reshape(b, h, l, -1)[:, :, :, 1:-1]
                 attn_tmp = attn_avg.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[-2]*(m_f - 1))
-                attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-(m_f - s)]
+                attn_f[:, :, :, ind] = attn_tmp[:, :, :, :-(m_f - s)]
 
             elif "weighted_avg" in self.attn_type:
 
@@ -180,6 +180,7 @@ class ScaledDotProductAttention(nn.Module):
                 attn_f[:, :, :, ind] = attn_avg[:, :, :, :-(m_f - s)]
 
             elif "weighted_comb" in self.attn_type:
+
                 attn_infer = self.uncomp(attn.unsqueeze(-1))
                 attn_infer = attn_infer.reshape(b, h, l, (m_f - 1)*attn_infer.shape[3])
                 attn_f[:, :, :, ind] = attn_infer[:, :, :, (m_f - 1):-(m_f - s)]
