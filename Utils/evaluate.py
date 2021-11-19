@@ -117,6 +117,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        flow_rate_postfix = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -140,16 +141,21 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     formatter.format_predictions(format_outputs(test_de[j, :, :, 3].unsqueeze(-1), test_id[j]))
                 )'''
                 targets_all[j, :, :] = targets
-                targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
+
+                '''targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
-                    to_numpy().astype('float32')
+                    to_numpy().astype('float32')'''
+
+                flow_rate_postfix[j, :, :] = extract_numerical_data(
+                    formatter.format_predictions(format_outputs(test_de[j, :, :, 3].unsqueeze(-1), test_id[j])))
+
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
                 k += test_en.shape[1]
 
         flg = True
 
-        return predictions, flg
+        return predictions, flow_rate_postfix, flg
 
     def create_rmse_plot():
 
@@ -793,8 +799,88 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    create_attn_score_plots()
-    print("Done exp {}".format(args.len_pred))
+    def creat_c_q_plots(timesteps):
+
+        total_len = args.len_pred + 168
+        test_en, test_de, test_y, test_id = get_test_data(total_len)
+        configs, models_path = get_config(args.len_pred)
+        enc_step = total_len - args.len_pred
+        test_y_input = test_y[:, :, :-args.len_pred, :]
+        test_y_output = test_y[:, :, -args.len_pred:, :]
+        input_size = test_en.shape[3]
+        output_size = test_de.shape[3]
+
+        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
+
+        seed = 21
+        flag = False
+        torch.manual_seed(seed)
+
+        lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)],
+                               input_size, output_size, models_path)
+
+        attn_model = load_attn(seed, configs["attn_new_{}".format(seed)],
+                               input_size, output_size, models_path, "attn", "attn_new")
+        attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)],
+                                     input_size, output_size, models_path, "attn", "attn_multi_new")
+        attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)],
+                                    input_size, output_size, models_path, "conv_attn", "attn_conv_1369_new")
+        attn_context_aware_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+                                           input_size, output_size,
+                                           models_path, "context_aware_weighted_avg",
+                                           "context_aware_weighted_avg_max")
+
+        predictions_lstm, flow_rate_postfix, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                                                              test_en, test_de, test_id, test_y_output,
+                                                              test_y_input)
+        predictions_attn, _, flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
+                                                              test_en, test_de, test_id, test_y_output,
+                                                              test_y_input)
+        predictions_attn_multi, _, flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
+                                                                    test_en, test_de, test_id, test_y_output,
+                                                                    test_y_input)
+        predictions_attn_conv, _, flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
+                                                                   test_en, test_de, test_id, test_y_output,
+                                                                   test_y_input)
+        predictions_attn_context_aware, _, flag = make_predictions(attn_context_aware_model, tgt_all,
+                                                                          tgt_all_input, flag, test_en,
+                                                                          test_de, test_id, test_y_output,
+                                                                          test_y_input)
+        ind = 0
+        loss = 1e9
+        for i in range(15872):
+
+            loss_lstm = math.sqrt(criterion(torch.from_numpy(predictions_lstm[i, :]),
+                                                 torch.from_numpy(tgt_all[i, :])))
+            loss_attn_context_aware = math.sqrt\
+                (criterion(torch.from_numpy(predictions_attn_context_aware[i, :]),
+                                                 torch.from_numpy(tgt_all[i, :])))
+            loss_attn = math.sqrt(criterion(torch.from_numpy(predictions_attn[i, :]),
+                                            torch.from_numpy(tgt_all[i, :])))
+            loss_attn_conv = math.sqrt(criterion(torch.from_numpy(predictions_attn_conv[i, :]),
+                                                 torch.from_numpy(tgt_all[i, :])))
+            loss_attn_multi = math.sqrt(criterion(torch.from_numpy(predictions_attn_multi[i, :]),
+                                                  torch.from_numpy(tgt_all[i, :])))
+
+            if loss_attn_context_aware < loss and loss_attn_context_aware < loss_attn \
+                    and loss_attn_context_aware < loss_attn_conv and \
+                    loss_attn_context_aware < loss_attn_multi and loss_attn_context_aware < loss_lstm:
+                loss = loss_attn_context_aware
+                ind = i
+
+            predictions_lstm = predictions_lstm.reshape(test_de.shape[0]*test_de.shape[1], -1)
+            predictions_attn = predictions_attn.reshape(test_de.shape[0]*test_de.shape[1], -1)
+            predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0]*test_de.shape[1], -1)
+            predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0]*test_de.shape[1], -1)
+            predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0]*test_de.shape[1], -1)
+            plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :])
+            plt.savefig("q_c.pdf", dpi=1000)
+
+
+    '''create_attn_score_plots()
+    print("Done exp {}".format(args.len_pred))'''
+    creat_c_q_plots(48)
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
