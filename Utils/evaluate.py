@@ -877,7 +877,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 loss = loss_attn_context_aware
                 ind = i
 
-        plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :])
+        plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :], 'o')
         plt.savefig("q_c.pdf", dpi=1000)
 
 
