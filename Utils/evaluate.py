@@ -57,9 +57,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     def load_lstm(seed, conf, input_size, output_size, mdl_path):
 
         n_layers, hidden_size = conf
-        print(conf)
-        print(input_size)
-        print(output_size)
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=input_size,
@@ -67,7 +64,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     rnn_type="lstm",
                     device=device,
                     d_r=0).to(device)
-        checkpoint = torch.load(os.path.join(mdl_path, "lstm_{}".format(seed)))
+        checkpoint = torch.load(os.path.join(mdl_path, "lstm_new_{}".format(seed)))
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
 
