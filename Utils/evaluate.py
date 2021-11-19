@@ -856,8 +856,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0] * test_de.shape[1], -1)
 
         ind = np.random.randint(0, 15872)
-        loss = 1e9
-        '''for i in range(15872):
+        '''loss = 1e9
+        for i in range(15872):
 
             loss_lstm = math.sqrt(criterion(torch.from_numpy(predictions_lstm[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
