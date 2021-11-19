@@ -847,6 +847,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           tgt_all_input, flag, test_en,
                                                                           test_de, test_id, test_y_output,
                                                                           test_y_input)
+        predictions_lstm = predictions_lstm.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        predictions_attn = predictions_attn.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0] * test_de.shape[1], -1)
+
         ind = 0
         loss = 1e9
         for i in range(15872):
@@ -869,12 +876,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 loss = loss_attn_context_aware
                 ind = i
 
-        predictions_lstm = predictions_lstm.reshape(test_de.shape[0]*test_de.shape[1], -1)
-        predictions_attn = predictions_attn.reshape(test_de.shape[0]*test_de.shape[1], -1)
-        predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0]*test_de.shape[1], -1)
-        predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0]*test_de.shape[1], -1)
-        predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0]*test_de.shape[1], -1)
-        flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0]*test_de.shape[1], -1)
         plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :])
         plt.savefig("q_c.pdf", dpi=1000)
 
