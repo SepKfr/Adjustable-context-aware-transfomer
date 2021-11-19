@@ -874,6 +874,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0]*test_de.shape[1], -1)
             predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0]*test_de.shape[1], -1)
             predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0]*test_de.shape[1], -1)
+            flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0]*test_de.shape[1], -1)
             plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :])
             plt.savefig("q_c.pdf", dpi=1000)
 
