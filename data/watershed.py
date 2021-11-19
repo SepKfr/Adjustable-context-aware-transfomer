@@ -15,8 +15,9 @@
 
 # Lint as: python3
 
-from Utils import base
+from Utils import base, utils
 from data.electricity import ElectricityFormatter
+import pandas as pd
 
 DataFormatter = ElectricityFormatter
 DataTypes = base.DataTypes
@@ -69,6 +70,33 @@ class WatershedFormatter(DataFormatter):
         self.set_scalers(train)
 
         return (self.transform_inputs(data) for data in [train, valid, test])
+
+    def format_covariates(self, covariates):
+        """Reverts any normalisation to give predictions in original scale.
+        Args:
+          predictions: Dataframe of model predictions.
+        Returns:
+          Data frame of unnormalised predictions.
+        """
+
+        if self._real_scalers is None:
+            raise ValueError('Scalers have not been set!')
+
+        column_names = covariates.columns
+
+        df_list = []
+        for identifier, sliced in covariates.groupby('identifier'):
+            sliced_copy = sliced.copy()
+            target_scaler = self._target_scaler[identifier]
+
+            for col in column_names:
+                if col not in {'identifier'}:
+                    sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
+            df_list.append(sliced_copy)
+
+        output = pd.concat(df_list, axis=0)
+
+        return output
 
     def get_fixed_params(self):
         """Returns fixed model parameters for experiments."""

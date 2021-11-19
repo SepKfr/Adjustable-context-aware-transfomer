@@ -100,14 +100,17 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     df_list = []
 
-    def format_outputs(preds, tid):
-        flat_prediction = pd.DataFrame(
-            preds[:, :, 0],
-            columns=[
-                't+{}'.format(i)
-                for i in range(preds.shape[1])
-            ]
-        )
+    def format_outputs(vals, tid):
+        df_ls = []
+        for i in range(vals.shape[-1]):
+            df_ls.append(pd.DataFrame(
+                vals[:, :, i],
+                columns=[
+                    't+{}'.format(j)
+                    for j in range(vals.shape[1])
+                ]
+            ))
+        flat_prediction = pd.concat(df_ls, axis=0)
         flat_prediction['identifier'] = tid[:, 0, 0]
         return flat_prediction
 
@@ -117,7 +120,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        flow_rate_postfix = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        covariates = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]*test_de.shape[3]))
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -146,8 +149,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
                     to_numpy().astype('float32')'''
 
-                flow_rate_postfix[j, :, :] = extract_numerical_data(
-                    formatter.format_predictions(format_outputs(test_de[j, :, :, 3].unsqueeze(-1), test_id[j])))
+                covariates[j, :, :] = extract_numerical_data(
+                    formatter.format_covariates(format_outputs(test_de[j], test_id[j])))
 
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
@@ -155,7 +158,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         flg = True
 
-        return predictions, flow_rate_postfix, flg
+        return predictions, covariates, flg
 
     def create_rmse_plot():
 
@@ -853,7 +856,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0] * test_de.shape[1], -1)
-        flow_rate_postfix = flow_rate_postfix.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        flow_rate_postfix = flow_rate_postfix[:, :, 192:240].reshape(test_de.shape[0] * test_de.shape[1], -1)
 
         ind = np.random.randint(0, 15872)
         '''loss = 1e9

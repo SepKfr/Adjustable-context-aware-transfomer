@@ -203,6 +203,7 @@ class ElectricityFormatter(GenericDataFormatter):
 
         return output
 
+
     def get_default_model_params(self):
         """Returns default optimised model parameters."""
 
