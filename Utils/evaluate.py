@@ -878,8 +878,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 ind = i'''
 
         plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :], 'o')
+        plt.plot(flow_rate_postfix[ind, :], tgt_all[ind, :], 'o', color="red")
         plt.xlabel("c")
         plt.ylabel("q")
+        plt.legend('prediction', 'ground_truth')
         plt.savefig("q_c.pdf", dpi=1000)
 
 
