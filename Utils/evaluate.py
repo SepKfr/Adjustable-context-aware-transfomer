@@ -848,6 +848,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           test_de, test_id, test_y_output,
                                                                           test_y_input)
         predictions_lstm = predictions_lstm.reshape(test_de.shape[0] * test_de.shape[1], -1)
+        tgt_all = tgt_all.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn = predictions_attn.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0] * test_de.shape[1], -1)
