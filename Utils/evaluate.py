@@ -877,8 +877,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 loss = loss_attn_context_aware
                 ind = i'''
 
-        plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :], 'o')
-        plt.plot(flow_rate_postfix[ind, :], tgt_all[ind, :], 'o', color="red")
+        plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :], marker='o')
+        plt.plot(flow_rate_postfix[ind, :], tgt_all[ind, :], marker='o', color="red")
         plt.xlabel("c")
         plt.ylabel("q")
         plt.legend('prediction', 'ground_truth')
