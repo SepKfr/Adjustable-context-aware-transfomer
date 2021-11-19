@@ -57,6 +57,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     def load_lstm(seed, conf, input_size, output_size, mdl_path):
 
         n_layers, hidden_size = conf
+        print(conf)
+        print(input_size)
+        print(output_size)
         model = RNN(n_layers=n_layers,
                     hidden_size=hidden_size,
                     src_input_size=input_size,
@@ -799,7 +802,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         plt.close()
 
-    def creat_c_q_plots(timesteps):
+    def creat_c_q_plots():
 
         total_len = args.len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
@@ -880,7 +883,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
-    creat_c_q_plots(48)
+    creat_c_q_plots()
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
