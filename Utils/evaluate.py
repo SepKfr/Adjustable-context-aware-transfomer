@@ -885,7 +885,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
         flow_rate_postfix = covariates[:, :, 5::10].reshape(length, )
 
-        id = pd.concat(df_list, axis=0)
+        id = pd.concat(df_list, axis=0).to_numpy()
+        id = np.repeat(id, 48, axis=0)
         data_to_dump[0, :] = tgt_all
         data_to_dump[1, :] = flow_rate_postfix
         data_to_dump[2, :] = predictions_lstm
