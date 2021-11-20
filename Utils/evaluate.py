@@ -123,6 +123,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def format_outputs(vals, tid):
         df_ls = []
+        print(vals.shape)
         for i in range(vals.shape[-1]):
             df_ls.append(pd.DataFrame(
                 vals[:, :, i],
