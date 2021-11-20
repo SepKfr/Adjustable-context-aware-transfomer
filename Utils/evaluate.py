@@ -143,6 +143,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         covariates = np.zeros((test_input.shape[0], test_input.shape[1],
                                test_input.shape[2]*test_input.shape[3]))
+        print(covariates.shape)
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -171,8 +172,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
                     to_numpy().astype('float32')'''
 
-                covariates[j, :, :] = extract_numerical_data(
+                cov = extract_numerical_data(
                     formatter.format_covariates(format_outputs(test_input[j, :, :-1], test_id[j])))
+                print(cov.shape)
+                covariates[j, :, :] = cov
 
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
