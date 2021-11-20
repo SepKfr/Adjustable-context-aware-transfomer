@@ -91,7 +91,8 @@ class WatershedFormatter(DataFormatter):
 
             for col in column_names:
                 if col not in {'identifier'}:
-                    sliced_copy[col] = real_scalers.inverse_transform(sliced_copy[col])
+
+                    sliced_copy[col] = real_scalers[5].inverse_transform(sliced_copy[col])
             df_list.append(sliced_copy)
 
         output = pd.concat(df_list, axis=0)
