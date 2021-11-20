@@ -874,30 +874,32 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           tgt_all_input, flag, test_en,
                                                                           test_de, test_id, test_y_output,
                                                                           test_input)
-        data_to_dump = []
+        length = test_de.shape[0] * test_de.shape[1] * test_de.shape[2]
+        data_to_dump = np.zeros((8, length))
 
-        predictions_lstm = predictions_lstm.reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
-        tgt_all = tgt_all.reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
-        predictions_attn = predictions_attn.reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
-        predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
-        predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
-        predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
-        flow_rate_postfix = covariates[:, :, 5::10].reshape(test_de.shape[0] * test_de.shape[1] * test_de.shape[2], )
+        predictions_lstm = predictions_lstm.reshape(length, )
+        tgt_all = tgt_all.reshape(length, )
+        predictions_attn = predictions_attn.reshape(length, )
+        predictions_attn_multi = predictions_attn_multi.reshape(length, )
+        predictions_attn_conv = predictions_attn_conv.reshape(length, )
+        predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
+        flow_rate_postfix = covariates[:, :, 5::10].reshape(length, )
+
 
         id = pd.concat(df_list, axis=0)
-        data_to_dump.append(tgt_all)
-        data_to_dump.append(flow_rate_postfix)
-        data_to_dump.append(predictions_lstm)
-        data_to_dump.append(predictions_attn)
-        data_to_dump.append(predictions_attn_multi)
-        data_to_dump.append(predictions_attn_conv)
-        data_to_dump.append(predictions_attn_context_aware)
-        data_to_dump.append(id)
+        data_to_dump[0, :] = tgt_all
+        data_to_dump[1, :] = flow_rate_postfix
+        data_to_dump[2, :] = predictions_lstm
+        data_to_dump[3, :] = predictions_attn
+        data_to_dump[4, :] = predictions_attn_multi
+        data_to_dump[5, :] = predictions_attn_conv
+        data_to_dump[6, :] = predictions_attn_context_aware
+        data_to_dump[7, :] = id
 
         columns = ["Conductivity_ground_truth", "flow_rate_ground_truth", "LSTM", "Transformer",
                    "Multi-layer_Transformer", "Convolutional_Transformer", "Context-aware_Transformer", "Site_id"]
 
-        df_to_dump = pd.DataFrame(pd.concat(data_to_dump, axis=1), columns=columns)
+        df_to_dump = pd.DataFrame(data_to_dump, columns=columns)
         df_to_dump.to_csv(os.path.join(args.path_to_save, "watershed_prediction.csv"))
         '''ind = 0
         loss = 1e9
