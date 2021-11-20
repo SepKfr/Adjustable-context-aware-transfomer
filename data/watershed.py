@@ -87,11 +87,11 @@ class WatershedFormatter(DataFormatter):
         df_list = []
         for identifier, sliced in covariates.groupby('identifier'):
             sliced_copy = sliced.copy()
-            target_scaler = self._target_scaler[identifier]
+            real_scalers = self._real_scalers[identifier]
 
             for col in column_names:
                 if col not in {'identifier'}:
-                    sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
+                    sliced_copy[col] = real_scalers.inverse_transform(sliced_copy[col])
             df_list.append(sliced_copy)
 
         output = pd.concat(df_list, axis=0)
