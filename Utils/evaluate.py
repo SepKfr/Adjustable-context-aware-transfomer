@@ -875,7 +875,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           test_de, test_id, test_y_output,
                                                                           test_input)
         length = test_de.shape[0] * test_de.shape[1] * test_de.shape[2]
-        data_to_dump = np.zeros((8, length))
+        data_to_dump = np.empty((8, length), dtype=object)
 
         predictions_lstm = predictions_lstm.reshape(length, )
         tgt_all = tgt_all.reshape(length, )
@@ -884,7 +884,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_conv = predictions_attn_conv.reshape(length, )
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
         flow_rate_postfix = covariates[:, :, 5::10].reshape(length, )
-
 
         id = pd.concat(df_list, axis=0)
         data_to_dump[0, :] = tgt_all
@@ -922,10 +921,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_context_aware < loss_attn_multi and loss_attn_context_aware < loss_lstm:
                 loss = loss_attn_context_aware
                 ind = i'''
-
-
-
-
 
         '''plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :], marker='o')
         plt.plot(flow_rate_postfix[ind, :], tgt_all[ind, :], marker='o', color="red")
