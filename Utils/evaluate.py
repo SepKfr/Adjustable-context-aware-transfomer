@@ -134,7 +134,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         flat_prediction = pd.concat(df_ls, axis=1)
         flat_prediction['identifier'] = tid[:, 0, 0]
-        print(flat_prediction.shape)
         return flat_prediction
 
     def make_predictions(model, targets_all, targets_all_input, flg,
@@ -859,7 +858,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            models_path, "context_aware_weighted_avg",
                                            "context_aware_weighted_avg_max")
 
-        predictions_lstm, flow_rate_postfix, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+        predictions_lstm, covariates, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                               test_en, test_de, test_id, test_y_output,
                                                               test_input)
         predictions_attn, _, flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
@@ -881,7 +880,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0] * test_de.shape[1], -1)
-        flow_rate_postfix = flow_rate_postfix[:, :, 192:240].reshape(test_de.shape[0] * test_de.shape[1], -1)
+        flow_rate_postfix = covariates[:, :, 5::48].reshape(test_de.shape[0] * test_de.shape[1], -1)
 
         ind = np.random.randint(0, 15872)
         '''loss = 1e9
