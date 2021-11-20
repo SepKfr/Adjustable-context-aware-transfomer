@@ -880,7 +880,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_conv = predictions_attn_conv.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0] * test_de.shape[1], -1)
-        flow_rate_postfix = covariates[:, :, 5::48].reshape(test_de.shape[0] * test_de.shape[1], -1)
+        flow_rate_postfix = covariates[:, :, 5::10].reshape(test_de.shape[0] * test_de.shape[1], -1)
 
         ind = np.random.randint(0, 15872)
         '''loss = 1e9
