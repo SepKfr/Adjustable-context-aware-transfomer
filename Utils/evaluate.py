@@ -150,7 +150,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     to_numpy().astype('float32')'''
 
                 covariates[j, :, :] = extract_numerical_data(
-                    formatter.format_covariates(format_outputs(test_input[j, :, :, :-1], test_id[j])))
+                    formatter.format_covariates(format_outputs(test_input[j, :, :-1], test_id[j])))
 
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
