@@ -133,8 +133,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             ))
 
         flat_prediction = pd.concat(df_ls, axis=1)
-        print(flat_prediction.shape)
         flat_prediction['identifier'] = tid[:, 0, 0]
+        print(flat_prediction.shape)
         return flat_prediction
 
     def make_predictions(model, targets_all, targets_all_input, flg,
@@ -145,7 +145,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         covariates = np.zeros((test_input.shape[0], test_input.shape[1],
                                test_de.shape[2]*test_input.shape[3]))
-        print(covariates.shape)
 
         k = 0
         for j in range(test_en.shape[0]):
