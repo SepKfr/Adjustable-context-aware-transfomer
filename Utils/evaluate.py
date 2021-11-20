@@ -895,7 +895,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         data_to_dump[5, :] = predictions_attn_conv
         data_to_dump[6, :] = predictions_attn_context_aware
         data_to_dump[7, :] = id
-        data_to_dump = data_to_dump.reshape(-1, 1)
+        data_to_dump = data_to_dump.reshape(-1, 8)
 
         columns = ["Conductivity_ground_truth", "flow_rate_ground_truth", "LSTM", "Transformer",
                    "Multi-layer_Transformer", "Convolutional_Transformer", "Context-aware_Transformer", "Site_id"]
