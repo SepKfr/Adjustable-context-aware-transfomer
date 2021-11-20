@@ -7,7 +7,7 @@ from models.baselines import RNN
 import torch
 from data.data_loader import ExperimentConfig
 import pandas as pd
-from base_train import batching, batch_sampled_data, inverse_output
+from base_train import batch_sampled_data, inverse_output
 from models.attn import Attn
 import os
 import torch.nn as nn
@@ -18,6 +18,27 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import pickle
 from matplotlib import colors
+
+
+def batching(batch_size, x_en, x_de, y_t, test_id, tot_input):
+
+    batch_n = int(x_en.shape[0] / batch_size)
+    start = x_en.shape[0] % batch_n
+    X_en = torch.zeros(batch_n, batch_size, x_en.shape[1], x_en.shape[2])
+    X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
+    tot_input = torch.zeros(batch_n, batch_size, tot_input.shape[1], tot_input.shape[2])
+    Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
+    tst_id = np.empty((batch_n, batch_size, test_id.shape[1], x_en.shape[2]), dtype=object)
+
+    for i in range(batch_n):
+        X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
+        tot_input[i, :, :, :] = tot_input[start:start+batch_size, :, :]
+        X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
+        Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
+        tst_id[i, :, :, :] = test_id[start:start+batch_size, :, :]
+        start += batch_size
+
+    return X_en, X_de, Y_t, tst_id, tot_input
 
 
 def perform_evaluation(args, device, params, test, valid_max, formatter):
@@ -35,8 +56,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             sample_data['identifier'], torch.from_numpy(sample_data['inputs']).to(device)
 
         model_params = formatter.get_default_model_params()
-        test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
-                                                     test_de, test_y, test_id)
+        test_en, test_de, test_y, test_id, input_data = batching(model_params['minibatch_size'], test_en,
+                                                     test_de, test_y, test_id, input_data)
 
         return test_en.to(device), test_de.to(device), test_y.to(device), test_id, input_data
 
