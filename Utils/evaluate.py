@@ -132,6 +132,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 ]
             ))
         flat_prediction = pd.concat(df_ls, axis=1)
+        print(len(flat_prediction))
+        print(len(tid))
         flat_prediction['identifier'] = tid[:, 0, 0]
         return flat_prediction
 
