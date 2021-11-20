@@ -89,10 +89,10 @@ class WatershedFormatter(DataFormatter):
             sliced_copy = sliced.copy()
             real_scalers = self._real_scalers[identifier]
 
-            for i in range(9):
+            for i in range(48):
                 df_inner_list = []
-                for j in range(48):
-                    ind = 48*i + j
+                for j in range(9):
+                    ind = 48*j + i
                     col = column_names[ind]
                     df_inner_list.append(sliced_copy[col])
                 sliced_df = pd.concat(df_inner_list, axis=1)
