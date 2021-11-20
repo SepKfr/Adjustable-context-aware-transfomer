@@ -175,7 +175,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
                 cov = extract_numerical_data(
                     formatter.format_covariates(format_outputs(test_input[j, :, -test_de.shape[2]:, :], test_id[j])))
-                print(cov.shape)
                 covariates[j, :, :] = cov
 
                 preds = output_map["predictions"]
