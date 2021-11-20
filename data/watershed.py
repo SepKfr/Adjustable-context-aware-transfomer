@@ -98,12 +98,10 @@ class WatershedFormatter(DataFormatter):
                     col = column_names[ind]
                     df_inner_list.append(sliced_copy[col])
                 sliced_df = pd.concat(df_inner_list, axis=1)
-                print(sliced_df.shape)
                 sliced_df[column_names[inds]] = real_scalers.inverse_transform(sliced_df)
-                print(sliced_df.shape)
                 df_list.append(sliced_df)
 
-        output = pd.concat(df_list, axis=1)
+        output = pd.concat(df_list, axis=0)
 
         return output
 
