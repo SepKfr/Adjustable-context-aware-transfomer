@@ -882,8 +882,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(test_de.shape[0] * test_de.shape[1], -1)
         flow_rate_postfix = covariates[:, :, 5::10].reshape(test_de.shape[0] * test_de.shape[1], -1)
 
-        ind = np.random.randint(0, 15872)
-        '''loss = 1e9
+        ind = 0
+        loss = 1e9
         for i in range(15872):
 
             loss_lstm = math.sqrt(criterion(torch.from_numpy(predictions_lstm[i, :]),
@@ -902,7 +902,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     and loss_attn_context_aware < loss_attn_conv and \
                     loss_attn_context_aware < loss_attn_multi and loss_attn_context_aware < loss_lstm:
                 loss = loss_attn_context_aware
-                ind = i'''
+                ind = i
 
         plt.plot(flow_rate_postfix[ind, :], predictions_attn_context_aware[ind, :], marker='o')
         plt.plot(flow_rate_postfix[ind, :], tgt_all[ind, :], marker='o', color="red")
