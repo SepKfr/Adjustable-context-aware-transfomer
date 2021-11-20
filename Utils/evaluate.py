@@ -26,19 +26,19 @@ def batching(batch_size, x_en, x_de, y_t, test_id, tot_input):
     start = x_en.shape[0] % batch_n
     X_en = torch.zeros(batch_n, batch_size, x_en.shape[1], x_en.shape[2])
     X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
-    tot_input = torch.zeros(batch_n, batch_size, tot_input.shape[1], tot_input.shape[2])
+    Tot_input = torch.zeros(batch_n, batch_size, tot_input.shape[1], tot_input.shape[2])
     Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
     tst_id = np.empty((batch_n, batch_size, test_id.shape[1], x_en.shape[2]), dtype=object)
 
     for i in range(batch_n):
         X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
-        tot_input[i, :, :, :] = tot_input[start:start+batch_size, :, :]
+        Tot_input[i, :, :, :] = tot_input[start:start+batch_size, :, :]
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
         tst_id[i, :, :, :] = test_id[start:start+batch_size, :, :]
         start += batch_size
 
-    return X_en, X_de, Y_t, tst_id, tot_input
+    return X_en, X_de, Y_t, tst_id, Tot_input
 
 
 def perform_evaluation(args, device, params, test, valid_max, formatter):
