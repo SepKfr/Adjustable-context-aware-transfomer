@@ -131,8 +131,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     for j in range(vals.shape[1])
                 ]
             ))
-        print(df_ls[0].shape)
+
         flat_prediction = pd.concat(df_ls, axis=1)
+        print(flat_prediction.shape)
         flat_prediction['identifier'] = tid[:, 0, 0]
         return flat_prediction
 
