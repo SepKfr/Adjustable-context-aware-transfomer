@@ -174,8 +174,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     to_numpy().astype('float32')'''
 
                 cov = extract_numerical_data(
-                    formatter.format_covariates(format_outputs(np.expand_dims(test_input[j, :, -test_de.shape[2]:, 5],
-                                                                              axis=-1), test_id[j])))
+                    formatter.format_covariates(format_outputs(test_input[j, :, -test_de.shape[2]:, :], test_id[j])))
                 print(cov.shape)
                 covariates[j, :, :] = cov
 
