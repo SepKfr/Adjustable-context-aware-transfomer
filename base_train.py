@@ -95,6 +95,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
         if tup[2] not in {InputTypes.ID, InputTypes.TIME, InputTypes.TARGET}
     ]
     input_size = len(enc_input_cols)
+    inputs = np.zeros((max_samples, time_steps, input_size))
     enc_inputs = np.zeros((max_samples, num_encoder_steps, input_size))
     dec_inputs = np.zeros((max_samples, time_steps - num_encoder_steps, input_size - 1))
     outputs = np.zeros((max_samples, time_steps, 1))
@@ -109,11 +110,13 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
                                                time_steps:start_idx]
         enc_inputs[i, :, :] = sliced[enc_input_cols].iloc[:num_encoder_steps]
         dec_inputs[i, :, :] = sliced[dec_input_cols].iloc[num_encoder_steps:]
+        inputs[i, :, :] = sliced[enc_input_cols]
         outputs[i, :, :] = sliced[[target_col]]
         time[i, :, 0] = sliced[time_col]
         identifiers[i, :, 0] = sliced[id_col]
 
     sampled_data = {
+        'inputs': inputs,
         'enc_inputs': enc_inputs,
         'dec_inputs': dec_inputs,
         'outputs': outputs,

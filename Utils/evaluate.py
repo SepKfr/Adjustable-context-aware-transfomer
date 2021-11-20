@@ -29,16 +29,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                          params['num_encoder_steps'], params["column_definition"])
 
-        test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
+        test_en, test_de, test_y, test_id, input_data = torch.from_numpy(sample_data['enc_inputs']).to(device), \
                                             torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                             torch.from_numpy(sample_data['outputs']).to(device), \
-                                            sample_data['identifier']
+                                            sample_data['identifier'], torch.from_numpy(sample_data['inputs']).to(device)
 
         model_params = formatter.get_default_model_params()
         test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
                                                      test_de, test_y, test_id)
 
-        return test_en.to(device), test_de.to(device), test_y.to(device), test_id
+        return test_en.to(device), test_de.to(device), test_y.to(device), test_id, input_data
 
     '''len_of_pred = test_y.shape[2] - test_en.shape[2]
     total_len = test_y.shape[2]
@@ -115,12 +115,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         return flat_prediction
 
     def make_predictions(model, targets_all, targets_all_input, flg,
-                         test_en, test_de, test_id, test_y_output, test_y_input):
+                         test_en, test_de, test_id, test_y_output, test_input):
 
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        covariates = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]*test_de.shape[3]))
+        covariates = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]*test_en.shape[3]))
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -150,7 +150,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     to_numpy().astype('float32')'''
 
                 covariates[j, :, :] = extract_numerical_data(
-                    formatter.format_covariates(format_outputs(test_de[j], test_id[j])))
+                    formatter.format_covariates(format_outputs(test_input[j, :, :, :-1], test_id[j])))
 
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
@@ -805,7 +805,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     def creat_c_q_plots():
 
         total_len = args.len_pred + 168
-        test_en, test_de, test_y, test_id = get_test_data(total_len)
+        test_en, test_de, test_y, test_id, test_input = get_test_data(total_len)
         configs, models_path = get_config(args.len_pred)
         enc_step = total_len - args.len_pred
         test_y_input = test_y[:, :, :-args.len_pred, :]
@@ -836,20 +836,20 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         predictions_lstm, flow_rate_postfix, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                               test_en, test_de, test_id, test_y_output,
-                                                              test_y_input)
+                                                              test_input)
         predictions_attn, _, flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
                                                               test_en, test_de, test_id, test_y_output,
-                                                              test_y_input)
+                                                              test_input)
         predictions_attn_multi, _, flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
                                                                     test_en, test_de, test_id, test_y_output,
-                                                                    test_y_input)
+                                                                    test_input)
         predictions_attn_conv, _, flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
                                                                    test_en, test_de, test_id, test_y_output,
-                                                                   test_y_input)
+                                                                   test_input)
         predictions_attn_context_aware, _, flag = make_predictions(attn_context_aware_model, tgt_all,
                                                                           tgt_all_input, flag, test_en,
                                                                           test_de, test_id, test_y_output,
-                                                                          test_y_input)
+                                                                          test_input)
         predictions_lstm = predictions_lstm.reshape(test_de.shape[0] * test_de.shape[1], -1)
         tgt_all = tgt_all.reshape(test_de.shape[0] * test_de.shape[1], -1)
         predictions_attn = predictions_attn.reshape(test_de.shape[0] * test_de.shape[1], -1)
