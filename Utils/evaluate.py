@@ -123,7 +123,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def format_outputs(vals, tid):
         df_ls = []
-        print(vals.shape)
         for i in range(vals.shape[-1]):
             df_ls.append(pd.DataFrame(
                 vals[:, :, i],
@@ -132,10 +131,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     for j in range(vals.shape[1])
                 ]
             ))
-
+        print(df_ls[0].shape)
         flat_prediction = pd.concat(df_ls, axis=1)
-        print(len(flat_prediction))
-        print(len(tid))
         flat_prediction['identifier'] = tid[:, 0, 0]
         return flat_prediction
 
