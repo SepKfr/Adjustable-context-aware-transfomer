@@ -141,7 +141,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        covariates = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]*test_en.shape[3]))
+        covariates = np.zeros((test_input.shape[0], test_input.shape[1],
+                               test_input.shape[2]*test_input.shape[3]))
 
         k = 0
         for j in range(test_en.shape[0]):
