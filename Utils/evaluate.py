@@ -886,19 +886,19 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
         flow_rate = covariates[:, :, 3::11].reshape(length, )
 
-        def convert_to_time(time):
-            print(time)
-            year = int(time / 10000000000)
+        def convert_to_time(t):
+            print(t)
+            year = int(t / 10000000000)
             print(year)
-            time = time - year*10000000000
-            month = time / 100000000
-            time = time - month*100000000
-            day = time / 1000000
-            time = time - day*1000000
-            hour = time / 10000
-            time = time - hour*10000
-            minutes = time / 100
-            second = time - hour*100
+            t = t - year*10000000000
+            month = t / 100000000
+            t = t - month*100000000
+            day = t / 1000000
+            t = t - day*1000000
+            hour = t / 10000
+            t = t - hour*10000
+            minutes = t / 100
+            second = t - hour*100
             return "{}-{}-{} {}:{}:{}".format(year, month, day, hour, minutes, second)
 
         id = pd.concat(df_list, axis=0).to_numpy()
