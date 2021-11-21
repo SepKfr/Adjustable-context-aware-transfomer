@@ -886,22 +886,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
 
         def convert_to_time(t):
-            year = int(t / 10000000000)
-            t = t - year*10000000000
-            month = int(t / 100000000)
-            t = t - month*100000000
-            day = int(t / 1000000)
-            t = t - day*1000000
-            hour = int(t / 10000)
-            t = t - hour*10000
-            minutes = int(t / 100)
-            second = t - hour*100
-            return "{}-{}-{} {}:{}:{}".format(year, month, day, hour, minutes, second)
+            t = str(t)
+            print(t)
+            return "{}-{}-{} {}:{}:{}".format(t[0:4], t[4:6], t[6:8], t[8:10], t[10:12], t[12:14])
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
         time = covariates[:, :, -96:-48].reshape(length, )
-        data_to_dump[:, 0] = [datetime.datetime.fromtimestamp(x) for x in time]
+        data_to_dump[:, 0] = [convert_to_time(x) for x in time]
         data_to_dump[:, 1] = tgt_all
         data_to_dump[:, 2] = covariates[:, :, 48*3:48*4].reshape(length, )
         data_to_dump[:, 3] = predictions_lstm
