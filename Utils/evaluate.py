@@ -2,7 +2,7 @@ import argparse
 import json
 from scipy.interpolate import make_interp_spline, BSpline
 import matplotlib
-
+import datetime
 from models.baselines import RNN
 import torch
 from data.data_loader import ExperimentConfig
@@ -891,7 +891,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             month = int(t / 100000000)
             t = t - month*100000000
             day = int(t / 1000000)
-            print(day)
             t = t - day*1000000
             hour = int(t / 10000)
             t = t - hour*10000
@@ -902,7 +901,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
         time = covariates[:, :, -96:-48].reshape(length, )
-        data_to_dump[:, 0] = [convert_to_time(x) for x in time]
+        data_to_dump[:, 0] = [datetime.datetime.fromtimestamp(x) for x in time]
         data_to_dump[:, 1] = tgt_all
         data_to_dump[:, 2] = covariates[:, :, 48*3:48*4].reshape(length, )
         data_to_dump[:, 3] = predictions_lstm
