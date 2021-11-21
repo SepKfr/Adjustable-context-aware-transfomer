@@ -887,13 +887,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def convert_to_time(t):
             year = int(t / 10000000000)
-            print(year)
             t = t - year*10000000000
             month = int(t / 100000000)
             t = t - month*100000000
             day = int(t / 1000000)
             t = t - day*1000000
             hour = int(t / 10000)
+            print(hour)
             t = t - hour*10000
             minutes = int(t / 100)
             second = t - hour*100
