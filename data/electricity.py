@@ -42,6 +42,7 @@ class ElectricityFormatter(GenericDataFormatter):
       ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
       ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
       ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
+      ('Date', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
     def __init__(self):
