@@ -887,9 +887,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         flow_rate = covariates[:, :, 3::11].reshape(length, )
 
         def convert_to_time(t):
-            print(t)
             year = int(t / 10000000000)
-            print(year)
             t = t - year*10000000000
             month = t / 100000000
             t = t - month*100000000
