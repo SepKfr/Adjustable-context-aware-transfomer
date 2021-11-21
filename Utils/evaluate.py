@@ -884,10 +884,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(length, )
         predictions_attn_conv = predictions_attn_conv.reshape(length, )
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
-        flow_rate_postfix = covariates[:, :, 3::11].reshape(length, )
+        flow_rate = covariates[:, :, 3::11].reshape(length, )
 
         def convert_to_time(time):
+            print(time)
             year = time / 10000000000
+            print(year)
             time = time - year*10000000000
             month = time / 100000000
             time = time - month*100000000
@@ -904,7 +906,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         time = covariates[:, :, 9::11].reshape(length, )
         data_to_dump[:, 0] = [convert_to_time(x) for x in time]
         data_to_dump[:, 1] = tgt_all
-        data_to_dump[:, 2] = flow_rate_postfix
+        data_to_dump[:, 2] = flow_rate
         data_to_dump[:, 3] = predictions_lstm
         data_to_dump[:, 4] = predictions_attn
         data_to_dump[:, 5] = predictions_attn_multi
