@@ -884,7 +884,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(length, )
         predictions_attn_conv = predictions_attn_conv.reshape(length, )
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
-        flow_rate = covariates[:, :, 3::11].reshape(length, )
+        flow_rate = covariates[:, :, 48*3:48*4].reshape(length, )
 
         def convert_to_time(t):
             year = int(t / 10000000000)
@@ -901,8 +901,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        time = covariates[0, 0, :]
-        print(time)
+        time = covariates[0, 0, -96:-48]
         data_to_dump[:, 0] = [convert_to_time(x) for x in time]
         data_to_dump[:, 1] = tgt_all
         data_to_dump[:, 2] = flow_rate
