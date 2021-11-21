@@ -59,7 +59,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_en, test_de, test_y, test_id, input_data = batching(model_params['minibatch_size'], test_en,
                                                      test_de, test_y, test_id, input_data)
 
-        return test_en.to(device), test_de.to(device), test_y.to(device), test_id, input_data
+        return test_en[:, :, :, :-1].to(device), test_de[:, :, :, :-1].to(device), \
+               test_y[:, :, :, :-1].to(device), test_id, input_data
 
     '''len_of_pred = test_y.shape[2] - test_en.shape[2]
     total_len = test_y.shape[2]
@@ -142,8 +143,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        covariates = np.zeros((test_input.shape[0], test_input.shape[1],
-                               test_de.shape[2]*test_input.shape[3]))
+        covariates = np.empty((test_input.shape[0], test_input.shape[1],
+                               test_de.shape[2]*test_input.shape[3]), dtype=object)
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -875,7 +876,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           test_de, test_id, test_y_output,
                                                                           test_input)
         length = test_de.shape[0] * test_de.shape[1] * test_de.shape[2]
-        data_to_dump = np.empty((8, length), dtype=object)
+        data_to_dump = np.empty((9, length), dtype=object)
 
         predictions_lstm = predictions_lstm.reshape(length, )
         tgt_all = tgt_all.reshape(length, )
@@ -883,18 +884,19 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(length, )
         predictions_attn_conv = predictions_attn_conv.reshape(length, )
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
-        flow_rate_postfix = covariates[:, :, 3::10].reshape(length, )
+        flow_rate_postfix = covariates[:, :, 3::11].reshape(length, )
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        data_to_dump[:, 0] = tgt_all
-        data_to_dump[:, 1] = flow_rate_postfix
-        data_to_dump[:, 2] = predictions_lstm
-        data_to_dump[:, 3] = predictions_attn
-        data_to_dump[:, 4] = predictions_attn_multi
-        data_to_dump[:, 5] = predictions_attn_conv
-        data_to_dump[:, 6] = predictions_attn_context_aware
-        data_to_dump[:, 7] = id
+        data_to_dump[:, 0] = covariates[:, :, 10:11]
+        data_to_dump[:, 1] = tgt_all
+        data_to_dump[:, 2] = flow_rate_postfix
+        data_to_dump[:, 3] = predictions_lstm
+        data_to_dump[:, 4] = predictions_attn
+        data_to_dump[:, 5] = predictions_attn_multi
+        data_to_dump[:, 6] = predictions_attn_conv
+        data_to_dump[:, 7] = predictions_attn_context_aware
+        data_to_dump[:, 8] = id
 
         columns = ["Conductivity_ground_truth", "flow_rate_ground_truth", "LSTM", "Transformer",
                    "Multi-layer_Transformer", "Convolutional_Transformer", "Context-aware_Transformer", "Site_id"]
