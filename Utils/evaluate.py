@@ -886,9 +886,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
         flow_rate_postfix = covariates[:, :, 3::11].reshape(length, )
 
+        def convert_to_time(time):
+            year = time / 10000000000
+            time = time - year*10000000000
+            month = time / 100000000
+            time = time - month*100000000
+            day = time / 1000000
+            time = time - day*1000000
+            hour = time / 10000
+            time = time - hour*10000
+            minutes = time / 100
+            second = time - hour*100
+            return "{}-{}-{} {}:{}:{}".format(year, month, day, hour, minutes, second)
+
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        data_to_dump[:, 0] = covariates[:, :, 10:11]
+        data_to_dump[:, 0] = [covariates[:, :, 9*i] for i in range(1, covariates.shape[-1], 10)]
         data_to_dump[:, 1] = tgt_all
         data_to_dump[:, 2] = flow_rate_postfix
         data_to_dump[:, 3] = predictions_lstm

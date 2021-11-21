@@ -46,8 +46,8 @@ class WatershedFormatter(DataFormatter):
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
+        ('date', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
-        ('date', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
     def split_data(self, df, valid_boundary=1107, test_boundary=1607):
@@ -83,16 +83,12 @@ class WatershedFormatter(DataFormatter):
         if self._real_scalers is None:
             raise ValueError('Scalers have not been set!')
 
-        if self._cat_scalers is None:
-            raise ValueError('Scalers have not been set!')
-
         column_names = covariates.columns
 
         df_list = []
         for identifier, sliced in covariates.groupby('identifier'):
             sliced_copy = sliced.copy()
             real_scalers = self._real_scalers[identifier]
-            cat_scalers = self._cat_scalers[identifier]
 
             for i in range(48):
                 df_inner_list = []
@@ -104,17 +100,6 @@ class WatershedFormatter(DataFormatter):
                     df_inner_list.append(sliced_copy[col])
                 sliced_df = pd.concat(df_inner_list, axis=1)
                 sliced_copy[column_names[inds]] = real_scalers.inverse_transform(sliced_df)
-
-            for i in range(48):
-                df_inner_list = []
-                inds = []
-                for j in range(9, 11, 1):
-                    ind = 48 * j + i
-                    inds.append(ind)
-                    col = column_names[ind]
-                    df_inner_list.append(sliced_copy[col])
-                sliced_df = pd.concat(df_inner_list, axis=1)
-                sliced_copy[column_names[inds]] = cat_scalers.inverse_transform(sliced_df)
 
             df_list.append(sliced_copy)
 
