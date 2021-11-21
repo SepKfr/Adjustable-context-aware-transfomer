@@ -901,7 +901,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        data_to_dump[:, 0] = [covariates[:, :, 9*i] for i in range(1, covariates.shape[-1]/9, 10)]
+        data_to_dump[:, 0] = [covariates[:, :, 9*i] for i in range(1, int(covariates.shape[-1]/9), 10)]
         data_to_dump[:, 1] = tgt_all
         data_to_dump[:, 2] = flow_rate_postfix
         data_to_dump[:, 3] = predictions_lstm
