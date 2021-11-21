@@ -42,7 +42,6 @@ class ElectricityFormatter(GenericDataFormatter):
       ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
       ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
       ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
-      ('Date', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
     def __init__(self):
@@ -78,6 +77,7 @@ class ElectricityFormatter(GenericDataFormatter):
         return (self.transform_inputs(data) for data in [train, valid, test])
 
     def set_scalers(self, df):
+        print(df.head())
         """Calibrates scalers using the data supplied.
         Args:
           df: Data to use to calibrate scalers.
@@ -203,7 +203,6 @@ class ElectricityFormatter(GenericDataFormatter):
         output = pd.concat(df_list, axis=0)
 
         return output
-
 
     def get_default_model_params(self):
         """Returns default optimised model parameters."""
