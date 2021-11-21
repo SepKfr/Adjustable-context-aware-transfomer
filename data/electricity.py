@@ -77,7 +77,7 @@ class ElectricityFormatter(GenericDataFormatter):
         return (self.transform_inputs(data) for data in [train, valid, test])
 
     def set_scalers(self, df):
-        print(df.head())
+
         """Calibrates scalers using the data supplied.
         Args:
           df: Data to use to calibrate scalers.
