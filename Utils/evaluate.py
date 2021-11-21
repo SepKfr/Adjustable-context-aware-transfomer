@@ -876,7 +876,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           test_de, test_id, test_y_output,
                                                                           test_input)
         length = test_de.shape[0] * test_de.shape[1] * test_de.shape[2]
-        data_to_dump = np.empty((9, length), dtype=object)
+        data_to_dump = np.empty((length, 9), dtype=object)
 
         predictions_lstm = predictions_lstm.reshape(length, )
         tgt_all = tgt_all.reshape(length, )
@@ -901,7 +901,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        data_to_dump[:, 0] = [convert_to_time(x) for x in covariates[:, :, 9::10]]
+        time = covariates[:, :, 9::11].reshape(length, )
+        data_to_dump[:, 0] = [convert_to_time(x) for x in time]
         data_to_dump[:, 1] = tgt_all
         data_to_dump[:, 2] = flow_rate_postfix
         data_to_dump[:, 3] = predictions_lstm
