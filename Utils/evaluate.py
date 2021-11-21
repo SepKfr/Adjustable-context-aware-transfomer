@@ -901,7 +901,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        time = covariates[:, :, 9::11].reshape(length, )
+        time = covariates[:, :, 9].reshape(length, )
         print(time)
         data_to_dump[:, 0] = [convert_to_time(x) for x in time]
         data_to_dump[:, 1] = tgt_all
