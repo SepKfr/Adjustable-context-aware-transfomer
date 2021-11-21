@@ -883,20 +883,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(length, )
         predictions_attn_conv = predictions_attn_conv.reshape(length, )
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
-        print(covariates.shape)
         flow_rate_postfix = covariates[:, :, 3::10].reshape(length, )
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
-        data_to_dump[0, :] = tgt_all
-        data_to_dump[1, :] = flow_rate_postfix
-        data_to_dump[2, :] = predictions_lstm
-        data_to_dump[3, :] = predictions_attn
-        data_to_dump[4, :] = predictions_attn_multi
-        data_to_dump[5, :] = predictions_attn_conv
-        data_to_dump[6, :] = predictions_attn_context_aware
-        data_to_dump[7, :] = id
-        data_to_dump = data_to_dump.reshape(-1, 8)
+        data_to_dump[:, 0] = tgt_all
+        data_to_dump[:, 1] = flow_rate_postfix
+        data_to_dump[:, 2] = predictions_lstm
+        data_to_dump[:, 3] = predictions_attn
+        data_to_dump[:, 4] = predictions_attn_multi
+        data_to_dump[:, 5] = predictions_attn_conv
+        data_to_dump[:, 6] = predictions_attn_context_aware
+        data_to_dump[:, 7] = id
 
         columns = ["Conductivity_ground_truth", "flow_rate_ground_truth", "LSTM", "Transformer",
                    "Multi-layer_Transformer", "Convolutional_Transformer", "Context-aware_Transformer", "Site_id"]
