@@ -60,7 +60,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                      test_de, test_y, test_id, input_data)
 
         return test_en[:, :, :, :-1].to(device), test_de[:, :, :, :-1].to(device), \
-               test_y[:, :, :, :-1].to(device), test_id, input_data
+               test_y[:, :, :, :].to(device), test_id, input_data
 
     '''len_of_pred = test_y.shape[2] - test_en.shape[2]
     total_len = test_y.shape[2]
