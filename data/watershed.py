@@ -93,7 +93,7 @@ class WatershedFormatter(DataFormatter):
             for i in range(48):
                 df_inner_list = []
                 inds = []
-                for j in range(9):
+                for j in range(10):
                     ind = 48*j + i
                     inds.append(ind)
                     col = column_names[ind]
