@@ -912,7 +912,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         data_to_dump[:, 7] = predictions_attn_context_aware
         data_to_dump[:, 8] = id
 
-        columns = ["Conductivity_ground_truth", "flow_rate_ground_truth", "LSTM", "Transformer",
+        columns = ["Date","Conductivity_ground_truth", "flow_rate_ground_truth", "LSTM", "Transformer",
                    "Multi-layer_Transformer", "Convolutional_Transformer", "Context-aware_Transformer", "Site_id"]
 
         df_to_dump = pd.DataFrame(data_to_dump, columns=columns)
