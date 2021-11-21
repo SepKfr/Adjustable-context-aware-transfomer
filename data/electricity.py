@@ -123,8 +123,8 @@ class ElectricityFormatter(GenericDataFormatter):
         for col in categorical_inputs:
             # Set all to str so that we don't have mixed integer/string columns
           srs = df[col].apply(str)
-          categorical_scalers[col] = sklearn.preprocessing.LabelEncoder().fit(
-              srs.values)
+          categorical_scalers[col] = sklearn.preprocessing.LabelEncoder()
+          categorical_scalers[col].fit(srs.values)
           num_classes.append(srs.nunique())
 
         # Set categorical scaler outputs
