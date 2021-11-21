@@ -891,9 +891,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             month = int(t / 100000000)
             t = t - month*100000000
             day = int(t / 1000000)
+            print(day)
             t = t - day*1000000
             hour = int(t / 10000)
-            print(hour)
             t = t - hour*10000
             minutes = int(t / 100)
             second = t - hour*100
