@@ -883,7 +883,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         predictions_attn_multi = predictions_attn_multi.reshape(length, )
         predictions_attn_conv = predictions_attn_conv.reshape(length, )
         predictions_attn_context_aware = predictions_attn_context_aware.reshape(length, )
-        flow_rate_postfix = covariates[:, :, 5::10].reshape(length, )
+        flow_rate_postfix = covariates[:, :, 3::10].reshape(length, )
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
