@@ -47,7 +47,7 @@ class WatershedFormatter(DataFormatter):
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
-        ('Date', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
+        ('date', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
     def split_data(self, df, valid_boundary=1107, test_boundary=1607):

@@ -150,6 +150,7 @@ def process_watershed(config):
 
     date = output.index
     output['day_of_week'] = date.dayofweek
+    output['date'] = date
     output['hour'] = date.hour
     output['id'] = output['Site']
     output['categorical_id'] = output['Site']
