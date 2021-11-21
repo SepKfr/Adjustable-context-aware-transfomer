@@ -888,7 +888,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def convert_to_time(time):
             print(time)
-            year = time / 10000000000
+            year = int(time / 10000000000)
             print(year)
             time = time - year*10000000000
             month = time / 100000000
