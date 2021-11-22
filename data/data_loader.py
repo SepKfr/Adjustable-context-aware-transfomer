@@ -151,6 +151,7 @@ def process_watershed(config):
     date = pd.to_datetime(output.index)
     output['day_of_week'] = date.dayofweek
     d = date.strftime("%Y%m%d%H%M%S")
+    print(d)
     output['d'] = int(d)
     output['hour'] = date.hour
     output['id'] = output['Site']
