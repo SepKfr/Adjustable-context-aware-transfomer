@@ -150,7 +150,6 @@ def process_watershed(config):
 
     date = output.index
     output['day_of_week'] = date.dayofweek
-    print(date.minute)
     print(date.second)
     output['d'] = date.year*10000000000 + date.month*100000000 + date.day*1000000 + date.hour*10000 + date.minute*100 + date.second
     output['hour'] = date.hour
