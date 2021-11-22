@@ -887,7 +887,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def convert_to_time(t):
             t = str(t.item())
-            print(t)
             return "{}-{}-{} {}:{}:{}".format(t[0:4], t[4:6], t[6:8], t[8:10], t[10:12], t[12:14])
 
         id = pd.concat(df_list, axis=0).to_numpy()
@@ -937,7 +936,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.ylabel("q")
         plt.legend('prediction', 'ground_truth')
         plt.savefig("q_c.pdf", dpi=1000)'''
-
 
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
