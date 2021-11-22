@@ -151,7 +151,7 @@ def process_watershed(config):
 
     date = output.index
     output['day_of_week'] = date.dayofweek
-    d = datetime.datetime(date.year, date.month, date.day, date.minute, date.second).strftime("%Y%m%d%H%M%S")
+    d = datetime.datetime(int(str(date.year)), int(str(date.month)), int(str(date.day)), int(str(date.minute)), int(str(date.second))).strftime("%Y%m%d%H%M%S")
     print(d)
     output['d'] = int(d)
     output['hour'] = date.hour
