@@ -148,7 +148,7 @@ def process_watershed(config):
     start_date = pd.to_datetime('2013-03-28')
     earliest_time = start_date
     output = output[output.index >= start_date]
-    date = output.index.to_datetime64()
+    date = pd.to_datetime(output.index)
     output['day_of_week'] = date.dayofweek
     d = datetime.datetime(date.year, date.month, date.day, date.hour, date.minute, date.second).strftime("%Y%m%d%H%M%S")
     output['d'] = int(d)
