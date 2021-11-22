@@ -25,6 +25,7 @@ import sys
 import random
 import gc
 import glob
+import datetime
 
 
 from data import air_quality, electricity, traffic, watershed, solar, favorita
@@ -150,7 +151,7 @@ def process_watershed(config):
 
     date = output.index
     output['day_of_week'] = date.dayofweek
-    output['d'] = int(date.strftime("%Y%m%d%H%M%S"))
+    output['d'] = int(datetime.datetime(date.year, date.month, date.day, date.day, date.minute, date.second).timestamp())
     output['hour'] = date.hour
     output['id'] = output['Site']
     output['categorical_id'] = output['Site']
