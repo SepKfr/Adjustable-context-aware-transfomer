@@ -895,7 +895,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         time = covariates[:, :, -96:-48].reshape(length, )
         data_to_dump[:, 0] = [convert_to_time(x) for x in time]
         data_to_dump[:, 1] = tgt_all
-        data_to_dump[:, 2] = covariates[:, :, 48*3:48*4].reshape(length, )
+        flow = covariates[:, :, 48*3:48*4].reshape(length, )
+        data_to_dump[:, 2] = [x.item() for x in flow]
         data_to_dump[:, 3] = predictions_lstm
         data_to_dump[:, 4] = predictions_attn
         data_to_dump[:, 5] = predictions_attn_multi
