@@ -75,7 +75,7 @@ class ScaledDotProductAttention(nn.Module):
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.filter_length = [1, 3, 6, 9, 12]
+        self.filter_length = [1, 3, 6, 18]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.w_c = nn.Linear(2, max(self.filter_length) - 1, bias=False).to(device)
