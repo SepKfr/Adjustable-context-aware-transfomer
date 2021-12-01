@@ -68,14 +68,14 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, attn_type, kernel, h, l_k):
+    def __init__(self, d_k, device, attn_type, kernel, h, filter_length):
 
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.filter_length = [1, 3, 6, 18]
+        self.filter_length = [1, 3, 6, filter_length]
         self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.filter_length]).to(device)
         self.w_c = nn.Linear(2, max(self.filter_length) - 1, bias=False).to(device)
@@ -198,7 +198,7 @@ class ScaledDotProductAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
 
-    def __init__(self, d_model, d_k, d_v, n_heads, device, attn_type, kernel):
+    def __init__(self, d_model, d_k, d_v, n_heads, device, attn_type, kernel, filter_length):
 
         super(MultiHeadAttention, self).__init__()
 
@@ -215,6 +215,7 @@ class MultiHeadAttention(nn.Module):
         self.n_heads = n_heads
         self.attn_type = attn_type
         self.kernel = kernel
+        self.filter_length = filter_length
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -228,7 +229,7 @@ class MultiHeadAttention(nn.Module):
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
                                                   attn_type=self.attn_type,
                                                   kernel=self.kernel, h=self.n_heads,
-                                                  l_k=K.shape[1])(
+                                                  filter_length=self.filter_length)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
@@ -250,12 +251,12 @@ class PoswiseFeedForwardNet(nn.Module):
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
-                 device, attn_type, kernel):
+                 device, attn_type, kernel, filter_length):
         super(EncoderLayer, self).__init__()
         self.enc_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
             d_v=d_v, n_heads=n_heads, device=device,
-            attn_type=attn_type, kernel=kernel)
+            attn_type=attn_type, kernel=kernel, filter_length=filter_length)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
@@ -275,7 +276,7 @@ class Encoder(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
                  n_layers, pad_index, device,
-                 attn_type, kernel):
+                 attn_type, kernel, filter_length):
         super(Encoder, self).__init__()
         self.device = device
         self.pad_index = pad_index
@@ -290,7 +291,7 @@ class Encoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v, n_heads=n_heads,
                 device=device,
-                attn_type=attn_type, kernel=kernel)
+                attn_type=attn_type, kernel=kernel, filter_length=filter_length)
             self.layers.append(encoder_layer)
         self.layers = nn.ModuleList(self.layers)
 
@@ -313,14 +314,16 @@ class Encoder(nn.Module):
 class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
-                 n_heads, device, attn_type, kernel):
+                 n_heads, device, attn_type, kernel, filter_length):
         super(DecoderLayer, self).__init__()
         self.dec_self_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
+            d_v=d_v, n_heads=n_heads, device=device,
+            attn_type=attn_type, kernel=kernel, filter_length=filter_length)
         self.dec_enc_attn = MultiHeadAttention(
             d_model=d_model, d_k=d_k,
-            d_v=d_v, n_heads=n_heads, device=device, attn_type=attn_type, kernel=kernel)
+            d_v=d_v, n_heads=n_heads, device=device,
+            attn_type=attn_type, kernel=kernel, filter_length=filter_length)
         self.pos_ffn = PoswiseFeedForwardNet(
             d_model=d_model, d_ff=d_ff)
         self.layer_norm = nn.LayerNorm(d_model, elementwise_affine=False)
@@ -340,7 +343,7 @@ class Decoder(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v,
                  n_heads, n_layers, pad_index, device,
-                 attn_type, kernel):
+                 attn_type, kernel, filter_length):
         super(Decoder, self).__init__()
         self.pad_index = pad_index
         self.device = device
@@ -355,7 +358,7 @@ class Decoder(nn.Module):
                 d_model=d_model, d_ff=d_ff,
                 d_k=d_k, d_v=d_v,
                 n_heads=n_heads, device=device,
-                attn_type=attn_type, kernel=kernel)
+                attn_type=attn_type, kernel=kernel, filter_length=filter_length)
             self.layers.append(decoder_layer)
         self.layers = nn.ModuleList(self.layers)
         self.d_k = d_k
@@ -389,20 +392,21 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, attn_type, kernel):
+                 tgt_pad_index, device, attn_type, kernel, filter_length):
         super(Attn, self).__init__()
 
         self.encoder = Encoder(
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=n_layers, pad_index=src_pad_index,
-            device=device, attn_type=attn_type, kernel=kernel)
+            device=device, attn_type=attn_type, kernel=kernel,
+            filter_length=filter_length)
         self.decoder = Decoder(
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,
             n_layers=1, pad_index=tgt_pad_index,
             device=device,
-            attn_type=attn_type, kernel=kernel)
+            attn_type=attn_type, kernel=kernel, filter_length=filter_length)
 
         self.enc_embedding = nn.Linear(src_input_size, d_model)
         self.dec_embedding = nn.Linear(tgt_input_size, d_model)
