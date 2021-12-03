@@ -79,6 +79,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
     predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
     for i, seed in enumerate([21, 9, 1992]):
+        torch.manual_seed(seed)
         lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)], models_path)
         attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn_new")
         attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)], models_path, "attn", "attn_multi_new")
@@ -183,7 +184,6 @@ def main():
     args = parser.parse_args()
     np.random.seed(21)
     random.seed(21)
-    torch.manual_seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
