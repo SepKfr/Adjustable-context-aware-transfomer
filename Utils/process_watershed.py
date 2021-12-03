@@ -73,7 +73,8 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
         return predictions, targets_all
 
     lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)], models_path)
-    attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn")
+    attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn_new")
+    attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)], models_path, "attn", "attn_multi_new")
     attn_conv_model = load_attn(seed, configs["attn_conv_1369_new__{}".format(seed)], models_path,
                                 "conv_attn", "attn_conv_1369_new_")
     attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
@@ -81,6 +82,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
 
     prediction_lstm, targets_all = make_predictions(lstm_model)
     prediction_attn, _ = make_predictions(attn_model)
+    prediction_attn_multi, _ = make_predictions(attn_multi_model)
     prediction_attn_conv, _ = make_predictions(attn_conv_model)
     prediction_attn_temp_cutoff, _ = make_predictions(attn_temp_cutoff_model)
     prediction_lstm = pd.concat(prediction_lstm, axis=0)
@@ -91,6 +93,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
 
     calculate_loss(args, prediction_lstm, targets_all, "lstm", formatter)
     calculate_loss(args, prediction_attn, targets_all, "attn", formatter)
+    calculate_loss(args, prediction_attn, targets_all, "attn_multi", formatter)
     calculate_loss(args, prediction_attn_conv, targets_all, "attn_conv", formatter)
     calculate_loss(args, prediction_attn_temp_cutoff, targets_all, "attn_context_aware", formatter)
 
