@@ -887,7 +887,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def convert_to_time(t):
             t = str(t.item())
-            return "{}-{}-{} {}:{}:{}".format(t[0:4], t[4:6], t[6:8], t[8:10], '00', '00')
+            return "{}-{}-{} {}:{}:{}".format(t[0:4], t[4:6], t[6:8], t[8:10], t[10:12], t[12:14])
 
         id = pd.concat(df_list, axis=0).to_numpy()
         id = np.repeat(id, 48, axis=0)
