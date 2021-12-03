@@ -151,6 +151,7 @@ def calculate_loss(args, predictions, true_y_output, name, formatter):
 
     errors_all[name].append(errors)
 
+    args.error_path = "detailed_error_{}.json".format(args.len_pred)
     if os.path.exists(args.error_path):
         with open(args.error_path) as json_file:
             json_dat = json.load(json_file)
@@ -170,7 +171,6 @@ def main():
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--len_pred', type=int, default=24)
     parser.add_argument('--cuda', type=str, default='cuda:0')
-    parser.add_argument('--error_path', type=str, default='detailed_error.json')
 
     args = parser.parse_args()
     np.random.seed(21)
