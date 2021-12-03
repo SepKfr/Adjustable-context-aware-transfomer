@@ -72,23 +72,31 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
 
         return predictions, targets_all
 
-    lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)], models_path)
-    attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn_new")
-    attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)], models_path, "attn", "attn_multi_new")
-    attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)], models_path,
-                                "conv_attn", "attn_conv_1369_new")
-    attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
-                                       models_path, "context_aware_weighted_avg", "context_aware_weighted_avg_max")
+    predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+    predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
-    prediction_lstm, targets_all = make_predictions(lstm_model)
-    prediction_attn, _ = make_predictions(attn_model)
-    prediction_attn_multi, _ = make_predictions(attn_multi_model)
-    prediction_attn_conv, _ = make_predictions(attn_conv_model)
-    prediction_attn_temp_cutoff, _ = make_predictions(attn_temp_cutoff_model)
-    prediction_lstm = pd.concat(prediction_lstm, axis=0)
-    prediction_attn = pd.concat(prediction_attn, axis=0)
-    prediction_attn_conv = pd.concat(prediction_attn_conv, axis=0)
-    prediction_attn_temp_cutoff = pd.concat(prediction_attn_temp_cutoff, axis=0)
+    for i, seed in enumerate([21, 9, 1992]):
+        lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)], models_path)
+        attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn_new")
+        attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)], models_path, "attn", "attn_multi_new")
+        attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)], models_path,
+                                    "conv_attn", "attn_conv_1369_new")
+        attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+                                           models_path, "context_aware_weighted_avg", "context_aware_weighted_avg_max")
+
+        predictions_lstm[i, :, :, :], targets_all = make_predictions(lstm_model)
+        predictions_attn[i, :, :, :], _ = make_predictions(attn_model)
+        predictions_attn_multi[i, :, :, :], _ = make_predictions(attn_multi_model)
+        predictions_attn_conv[i, :, :, :], _ = make_predictions(attn_conv_model)
+        predictions_attn_temp_cutoff[i, :, :, :], _ = make_predictions(attn_temp_cutoff_model)
+
+    prediction_lstm = pd.concat(np.mean(predictions_lstm, axis=0), axis=0)
+    prediction_attn = pd.concat(np.mean(predictions_attn, axis=0), axis=0)
+    prediction_attn_conv = pd.concat(np.mean(predictions_attn_conv, axis=0), axis=0)
+    prediction_attn_temp_cutoff = pd.concat(np.mean(predictions_attn_temp_cutoff, axis=0), axis=0)
     targets_all = pd.concat(targets_all, axis=0)
 
     calculate_loss(args, prediction_lstm, targets_all, "lstm", formatter)
