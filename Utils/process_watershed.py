@@ -29,7 +29,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
                     rnn_type="lstm",
                     device=device,
                     d_r=0).to(device)
-        checkpoint = torch.load(os.path.join(mdl_path, "lstm_{}".format(seed)))
+        checkpoint = torch.load(os.path.join(mdl_path, "lstm_new_{}".format(seed)))
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
 
