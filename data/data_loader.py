@@ -152,6 +152,7 @@ def process_watershed(config):
     output['day_of_week'] = date.dayofweek
     output['d'] = [int("{}{}{}{}{}{}".format(str(x)[1:4], str(x)[6:7], str(x)[9:10],
                                          str(x)[12:13], str(x)[15:16], str(x)[18:19])) for x in date.values]
+    print(output['d'])
     output['hour'] = date.hour
     output['id'] = output['Site']
     output['categorical_id'] = output['Site']
