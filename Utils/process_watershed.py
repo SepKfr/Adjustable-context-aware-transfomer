@@ -17,7 +17,7 @@ InputTypes = base.InputTypes
 
 def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed):
 
-    test_y_output = test_y[:, :, test_en.shape[2]:, :]
+    test_y_output = test_y
 
     def load_lstm(seed, conf, mdl_path):
 
@@ -45,14 +45,14 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
                      n_layers=n_layers, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      attn_type=attn_type,
-                     kernel=kernel).to(device)
+                     kernel=kernel, filter_length=9).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
 
-    with open('configs_{}_24.json'.format(args.exp_name), 'r') as json_file:
+    with open('configs_{}_{}.json'.format(args.exp_name, args.len_pred), 'r') as json_file:
         configs = json.load(json_file)
-    models_path = "models_{}_24".format(args.exp_name)
+    models_path = "models_{}_{}".format(args.exp_name, args.len_pred)
 
     def make_predictions(model):
 
@@ -72,12 +72,12 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
 
         return predictions, targets_all
 
-    lstm_model = load_lstm(seed, configs["lstm_{}".format(seed)], models_path)
-    attn_model = load_attn(seed, configs["attn_{}".format(seed)], models_path, "attn", "attn")
-    attn_conv_model = load_attn(seed, configs["attn_conv_{}".format(seed)], models_path,
-                                "conv_attn", "attn_conv")
-    attn_temp_cutoff_model = load_attn(seed, configs["attn_temp_cutoff_2_{}".format(seed)],
-                                       models_path, "temp_cutoff", "attn_temp_cutoff_2")
+    lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)], models_path)
+    attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn")
+    attn_conv_model = load_attn(seed, configs["attn_conv_1369_new__{}".format(seed)], models_path,
+                                "conv_attn", "attn_conv_1369_new_")
+    attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+                                       models_path, "context_aware_weighted_avg", "context_aware_weighted_avg_max")
 
     prediction_lstm, targets_all = make_predictions(lstm_model)
     prediction_attn, _ = make_predictions(attn_model)
@@ -92,7 +92,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
     calculate_loss(args, prediction_lstm, targets_all, "lstm", formatter)
     calculate_loss(args, prediction_attn, targets_all, "attn", formatter)
     calculate_loss(args, prediction_attn_conv, targets_all, "attn_conv", formatter)
-    calculate_loss(args, prediction_attn_temp_cutoff, targets_all, "attn_temp_cutoff", formatter)
+    calculate_loss(args, prediction_attn_temp_cutoff, targets_all, "attn_context_aware", formatter)
 
 
 def quantile_loss(y, y_pred, quantile):
@@ -165,13 +165,14 @@ def calculate_loss(args, predictions, true_y_output, name, formatter):
 def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='traffic')
+    parser.add_argument('--len_pred', type=int, default=24)
     parser.add_argument('--cuda', type=str, default='cuda:1')
-    parser.add_argument('--error_path', type=str, default='final_error_9.json')
+    parser.add_argument('--error_path', type=str, default='detailed_error.json')
 
     args = parser.parse_args()
-    np.random.seed(9)
-    random.seed(9)
-    torch.manual_seed(9)
+    np.random.seed(21)
+    random.seed(21)
+    torch.manual_seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
@@ -194,7 +195,7 @@ def main():
                                         sample_data['identifier']
 
     model_params = formatter.get_default_model_params()
-    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'], test_en,
+    test_en, test_de, test_y, test_id = batching(model_params['minibatch_size'][0], test_en,
                                                  test_de, test_y, test_id)
 
     read_models(args, device, test_en.to(device), test_de.to(device), test_y.to(device),
