@@ -76,7 +76,7 @@ def read_models(args, device, test_en, test_de, test_y, test_id, formatter, seed
     attn_model = load_attn(seed, configs["attn_new_{}".format(seed)], models_path, "attn", "attn_new")
     attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)], models_path, "attn", "attn_multi_new")
     attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)], models_path,
-                                "conv_attn", "attn_conv_1369_new_")
+                                "conv_attn", "attn_conv_1369_new")
     attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
                                        models_path, "context_aware_weighted_avg", "context_aware_weighted_avg_max")
 
