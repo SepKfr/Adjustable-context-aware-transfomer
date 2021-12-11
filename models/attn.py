@@ -158,6 +158,9 @@ class ScaledDotProductAttention(nn.Module):
             ind = ind[np.where(ind % m_f != 0)]
             ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
 
+            if "uniform" in self.attn_type:
+                attn_f[:, :, :, ind] = torch.ones(attn_f[:, :, :, ind].shape) / l_k
+
             if "repeat" in self.attn_type:
                 attn_tmp = attn.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(m_f - 1))
