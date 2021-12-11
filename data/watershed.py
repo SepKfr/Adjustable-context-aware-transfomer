@@ -46,7 +46,6 @@ class WatershedFormatter(DataFormatter):
         ('day_of_week', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hour', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('hours_from_start', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
-        ('d', DataTypes.REAL_VALUED, InputTypes.KNOWN_INPUT),
         ('categorical_id', DataTypes.CATEGORICAL, InputTypes.STATIC_INPUT),
     ]
 
@@ -127,7 +126,7 @@ class WatershedFormatter(DataFormatter):
             'dropout_rate': 0.3,
             'hidden_layer_size': [16, 32],
             'learning_rate': 0.001,
-            'minibatch_size': 256,
+            'minibatch_size': [256],
             'max_gradient_norm': 100,
             'num_heads': 8,
             'stack_size': 1,
@@ -143,4 +142,4 @@ class WatershedFormatter(DataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 128000, 25600
+        return 128000, 16000

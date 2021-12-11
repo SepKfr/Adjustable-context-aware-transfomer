@@ -183,7 +183,7 @@ def main():
     parser.add_argument("--n_layers", type=int, default=1)
     parser.add_argument("--n_layers_best", type=int)
     parser.add_argument("--kernel", type=list, default=[1, 3, 6, 9])
-    parser.add_argument("--filter_length", type=int, default=18)
+    parser.add_argument("--filter_length", type=int, default=21)
     parser.add_argument("--filter", type=int, default=3)
     parser.add_argument("--kernel_best", type=int)
     parser.add_argument("--dr", type=list, default=[0])

@@ -59,6 +59,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_en, test_de, test_y, test_id, input_data = batching(model_params['minibatch_size'], test_en,
                                                      test_de, test_y, test_id, input_data)
 
+        n, b, l, f = test_y.shape
+        n_1, b_1, l_1, f_1 = test_id.shape
+        tgt = extract_numerical_data(
+            formatter.format_predictions(format_outputs(test_y.reshape(n*b, l, f).numpy(), test_id.reshape((n_1*b_1, l_1, f_1))))).to_numpy().astype('float32')
+
         return test_en[:, :, :, :-1].to(device), test_de[:, :, :, :-1].to(device), \
                test_y[:, :, :, :].to(device), test_id, input_data
 
@@ -206,7 +211,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             rmse_attn_temp_cutoff = np.zeros((3, timesteps))
 
             configs, models_path = get_config(timesteps)
-            test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
+            test_en, test_de, test_y, test_id, _ = get_test_data(timesteps+168)
             test_y_input = test_y[:, :, :-timesteps, :]
             test_y_output = test_y[:, :, -timesteps:, :]
             tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], timesteps))
@@ -238,15 +243,15 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                    models_path, "context_aware_weighted_avg",
                                                    "context_aware_weighted_avg_max")
 
-                predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                predictions_lstm[i, :, :, :], _, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
+                predictions_attn[i, :, :, :], _, flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
+                predictions_attn_multi[i, :, :, :], _, flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
                                                                             test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
+                predictions_attn_conv[i, :, :, :], _, flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
                                                                            test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, tgt_all,
+                predictions_attn_temp_cutoff[i, :, :, :], _, flag = make_predictions(attn_temp_cutoff_model, tgt_all,
                                                                                   tgt_all_input, flag, test_en,
                                                                                   test_de, test_id, test_y_output, test_y_input)
 
@@ -875,6 +880,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                           tgt_all_input, flag, test_en,
                                                                           test_de, test_id, test_y_output,
                                                                           test_input)
+
         length = test_de.shape[0] * test_de.shape[1] * test_de.shape[2]
         data_to_dump = np.empty((length, 9), dtype=object)
 
@@ -939,7 +945,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
-    creat_c_q_plots()
+    get_test_data(216)
+    #creat_c_q_plots()
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
@@ -972,7 +979,7 @@ def main():
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
 
-    data_csv_path = "{}.csv".format(args.exp_name)
+    data_csv_path = "../{}.csv".format(args.exp_name)
     print("Loading & splitting data...")
     raw_data = pd.read_csv(data_csv_path, index_col=0)
     train_data, valid, test = formatter.split_data(raw_data)
