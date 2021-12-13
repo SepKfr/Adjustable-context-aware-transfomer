@@ -150,7 +150,7 @@ class ScaledDotProductAttention(nn.Module):
         attn = nn.Softmax(dim=-1)(scores)
 
         if "context_aware" in self.attn_type:
-            attn_f = torch.zeros(b, h, l, l_k).to(self.device)
+            attn_f = torch.ones(b, h, l, l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
             attn_f[:, :, :, -1] = attn[:, :, :, -1]
@@ -159,7 +159,7 @@ class ScaledDotProductAttention(nn.Module):
             ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
 
             if "uniform" in self.attn_type:
-                attn_f[:, :, :, ind] = torch.ones(attn_f[:, :, :, ind].shape).to(self.device) / l_k
+                attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
 
             if "repeat" in self.attn_type:
                 attn_tmp = attn.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
