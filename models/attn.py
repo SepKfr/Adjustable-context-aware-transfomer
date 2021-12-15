@@ -161,7 +161,7 @@ class ScaledDotProductAttention(nn.Module):
             if "uniform" in self.attn_type:
                 attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
 
-            if "repeat" in self.attn_type:
+            elif "repeat" in self.attn_type:
                 attn_tmp = attn.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)
                 attn_tmp = attn_tmp.reshape(b, h, l, attn_tmp.shape[3]*(m_f - 1))
                 attn_f[:, :, :, ind] = attn_tmp[:, :, :, m_f - 1:-(m_f - s)]
