@@ -257,13 +257,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)'''
 
-            lstm = np.mean(rmse_lstm, axis=0)
+            '''lstm = np.mean(rmse_lstm, axis=0)
             attn = np.mean(rmse_attn, axis=0)
             attn_multi = np.mean(rmse_attn_multi, axis=0)
             attn_conv = np.mean(rmse_attn_conv, axis=0)
-            attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+            attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)'''
 
-            return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
+            #return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
+            return None, None, None, None, None
 
         lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
         lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48 = get_preds_steps(48)
