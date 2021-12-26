@@ -56,7 +56,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                             sample_data['identifier'], torch.from_numpy(sample_data['inputs']).to(device)
 
         model_params = formatter.get_default_model_params()
-        test_en, test_de, test_y, test_id, input_data = batching(model_params['minibatch_size'], test_en,
+        test_en, test_de, test_y, test_id, input_data = batching(model_params['minibatch_size'][0], test_en,
                                                      test_de, test_y, test_id, input_data)
 
         return test_en.to(device), test_de.to(device), \
