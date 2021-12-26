@@ -217,6 +217,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             flag = False
             for i, seed in enumerate([21, 9, 1992]):
 
+                print(seed)
                 torch.manual_seed(seed)
                 input_size = test_en.shape[3]
                 output_size = test_de.shape[3]
