@@ -120,6 +120,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         with open('configs_{}_{}_2.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
             configs_2 = json.load(json_file)
         models_path = "models_{}_{}".format(args.exp_name, len_of_pred)
+        if args.exp_name == "watershed":
+            configs_2 = configs
         return configs, configs_2, models_path
 
     df_list = []
