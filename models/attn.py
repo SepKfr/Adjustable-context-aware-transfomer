@@ -15,6 +15,13 @@ def get_attn_subsequent_mask(seq):
     return subsequent_mask
 
 
+def get_attn_subsequent_mask_2(size0, size1, size2):
+    attn_shape = [size0, size1, size2]
+    subsequent_mask = np.triu(np.ones(attn_shape), k=1)
+    subsequent_mask = torch.from_numpy(subsequent_mask).int()
+    return subsequent_mask
+
+
 def get_con_attn_subsequent_mask(seq, cutoff, d_k):
     attn_shape = [seq.size(1), seq.size(1), cutoff, d_k]
     subsequent_mask = np.tril(np.ones(attn_shape))
@@ -104,6 +111,28 @@ class ScaledDotProductAttention(nn.Module):
 
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
+
+        if "dynamic_context_aware" in self.attn_type:
+
+            '''Q_norm = Q / Q.norm(dim=-1)[:, :, :, None]
+            K_norm = K / K.norm(dim=-1)[:, :, :, None]'''
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+            attn_mask = get_attn_subsequent_mask_2(scores.shape[0], scores.shape[-2], scores.shape[-1])
+            attn_mask = attn_mask.unsqueeze(1).repeat(1, h, 1, 1)
+            attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+            attn_mask = attn_mask.to(self.device)
+            scores.masked_fill_(attn_mask, -1e9)
+            attn = nn.Softmax(dim=-1)(scores)
+            attn[attn < 1/l_k] = 0
+            attn[attn != 0] = 1
+            '''index = (attn == 1).nonzero(as_tuple=False)
+            print(index)
+            index = index.reshape(b, h, l, -1)'''
+            attn = attn.unsqueeze(-1).repeat(1, 1, 1, 1, d_k)
+            Q = Q.unsqueeze(2).repeat(1, 1, l_k, 1, 1)
+            Q = Q.reshape(b, h, l, l_k, d_k)
+            Q[attn == 0] = 0
+            Q = torch.mean(Q, dim=3)
 
         if "context_aware" in self.attn_type:
 

@@ -59,13 +59,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_en, test_de, test_y, test_id, input_data = batching(model_params['minibatch_size'], test_en,
                                                      test_de, test_y, test_id, input_data)
 
-        n, b, l, f = test_y.shape
-        n_1, b_1, l_1, f_1 = test_id.shape
-        tgt = extract_numerical_data(
-            formatter.format_predictions(format_outputs(test_y.reshape(n*b, l, f).numpy(), test_id.reshape((n_1*b_1, l_1, f_1))))).to_numpy().astype('float32')
-
-        return test_en[:, :, :, :-1].to(device), test_de[:, :, :, :-1].to(device), \
-               test_y[:, :, :, :].to(device), test_id, input_data
+        return test_en.to(device), test_de.to(device), \
+               test_y.to(device), test_id
 
     '''len_of_pred = test_y.shape[2] - test_en.shape[2]
     total_len = test_y.shape[2]
@@ -122,8 +117,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
             configs = json.load(json_file)
+        with open('configs_{}_{}_2.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
+            configs_2 = json.load(json_file)
         models_path = "models_{}_{}".format(args.exp_name, len_of_pred)
-        return configs, models_path
+        return configs, configs_2, models_path
 
     df_list = []
 
@@ -210,8 +207,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             rmse_attn_conv = np.zeros((3, timesteps))
             rmse_attn_temp_cutoff = np.zeros((3, timesteps))
 
-            configs, models_path = get_config(timesteps)
-            test_en, test_de, test_y, test_id, _ = get_test_data(timesteps+168)
+            configs, configs_2, models_path = get_config(timesteps)
+            test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
             test_y_input = test_y[:, :, :-timesteps, :]
             test_y_output = test_y[:, :, -timesteps:, :]
             tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], timesteps))
@@ -230,18 +227,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 input_size = test_en.shape[3]
                 output_size = test_de.shape[3]
 
-                lstm_model = load_lstm(seed, configs["lstm_new_{}".format(seed)],
+                lstm_model = load_lstm(seed, configs_2["lstm_new_{}".format(seed)],
                                        input_size, output_size, models_path)
-                attn_model = load_attn(seed, configs["attn_new_{}".format(seed)],
+                attn_model = load_attn(seed, configs_2["attn_new_{}".format(seed)],
                                        input_size, output_size, models_path, "attn", "attn_new")
-                attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)],
+                attn_multi_model = load_attn(seed, configs_2["attn_multi_new_{}".format(seed)],
                                              input_size, output_size, models_path, "attn", "attn_multi_new")
-                attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)],
+                attn_conv_model = load_attn(seed, configs_2["attn_conv_1369_new_{}".format(seed)],
                                             input_size, output_size, models_path, "conv_attn", "attn_conv_1369_new")
-                attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+                attn_temp_cutoff_model = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
                                                    input_size, output_size,
-                                                   models_path, "context_aware_weighted_avg",
-                                                   "context_aware_weighted_avg_max")
+                                                   models_path, "context_aware_uniform",
+                                                   "context_aware_uniform_1369")
 
                 predictions_lstm[i, :, :, :], _, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
@@ -289,7 +286,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
-        plt.legend(['Ours (t=24)', 'CNN-trans (t=24)',
+        plt.legend(['ACAT (t=24)', 'CNN-trans (t=24)',
                     'Transformer (t=24)',
                     'Trans-multi (t=24)',
                     'LSTM (t=24)',
@@ -486,7 +483,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         total_len = args.len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, models_path = get_config(args.len_pred)
+        configs, configs_2, models_path = get_config(args.len_pred)
         enc_step = total_len - args.len_pred
         test_y_input = test_y[:, :, :-args.len_pred, :]
         test_y_output = test_y[:, :, -args.len_pred:, :]
@@ -521,16 +518,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
             torch.manual_seed(seed)
 
-            attn_model = load_attn(seed, configs["attn_new_{}".format(seed)],
+            attn_model = load_attn(seed, configs_2["attn_new_{}".format(seed)],
                                    input_size, output_size, models_path, "attn", "attn_new")
-            attn_multi_model = load_attn(seed, configs["attn_multi_new_{}".format(seed)],
+            attn_multi_model = load_attn(seed, configs_2["attn_multi_new_{}".format(seed)],
                                          input_size, output_size, models_path, "attn", "attn_multi_new")
-            attn_conv_model = load_attn(seed, configs["attn_conv_1369_new_{}".format(seed)],
+            attn_conv_model = load_attn(seed, configs_2["attn_conv_1369_new_{}".format(seed)],
                                         input_size, output_size, models_path, "conv_attn", "attn_conv_1369_new")
-            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
                                                input_size, output_size,
-                                               models_path, "context_aware_weighted_avg",
-                                               "context_aware_weighted_avg_max")
+                                               models_path, "context_aware_uniform",
+                                               "context_aware_uniform_1369")
 
             flg = False
             predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
@@ -736,7 +733,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         total_len = len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, models_path = get_config(len_pred)
+        configs, _, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
 
@@ -746,9 +743,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                      input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
                                     input_size, output_size, models_path, "conv_attn", "attn_conv_test")
-        _, attn_temp_cutoff_loss = load_attn(seed, configs["attn_temp_cutoff_test_{}".format(seed)],
+        _, attn_temp_cutoff_loss = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
                                            input_size, output_size,
-                                           models_path, "temp_cutoff", "attn_temp_cutoff_test")
+                                           models_path, "context_aware_uniform", "context_aware_uniform_1369")
 
         attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
@@ -778,14 +775,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         total_len = len_pred + 168
         test_en, test_de, test_y, test_id = get_test_data(total_len)
-        configs, models_path = get_config(len_pred)
+        configs, _, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
         seed = 21
-        model = load_attn(seed, configs["context_aware_weighted_avg_max_{}".format(seed)],
+        model = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
                                            input_size, output_size,
-                                           models_path, "context_aware_weighted_avg",
-                          "context_aware_weighted_avg_max")
+                                           models_path, "context_aware_uniform",
+                          "context_aware_uniform_1369")
         model.eval()
 
         ind = random.randint(0, test_en.shape[0])
@@ -835,8 +832,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     def creat_c_q_plots():
 
         total_len = args.len_pred + 168
-        test_en, test_de, test_y, test_id, test_input = get_test_data(total_len)
-        configs, models_path = get_config(args.len_pred)
+        test_en, test_de, test_y, test_id = get_test_data(total_len)
+        configs, _, models_path = get_config(args.len_pred)
         enc_step = total_len - args.len_pred
         test_y_input = test_y[:, :, :-args.len_pred, :]
         test_y_output = test_y[:, :, -args.len_pred:, :]
@@ -945,9 +942,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
-    get_test_data(216)
     #creat_c_q_plots()
-    #create_rmse_plot()
+    create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
     #create_rmse_plot()
@@ -958,7 +954,7 @@ def main():
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:1')
-    parser.add_argument('--path_to_save', type=str, default='traffic_plots')
+    parser.add_argument('--path_to_save', type=str, default='plots')
     parser.add_argument('--total_time_steps', type=int, default=192)
     parser.add_argument('--len_pred', type=int, default=24)
     args = parser.parse_args()
