@@ -145,8 +145,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        covariates = np.empty((test_input.shape[0], test_input.shape[1],
-                               test_de.shape[2]*test_input.shape[3]), dtype=object)
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -175,17 +173,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                     (format_outputs(test_y_input[j], test_id[j]))).\
                     to_numpy().astype('float32')'''
 
-                cov = extract_numerical_data(
-                    formatter.format_covariates(format_outputs(test_input[j, :, -test_de.shape[2]:, :], test_id[j])))
-                covariates[j, :, :] = cov
-
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
                 k += test_en.shape[1]
 
         flg = True
 
-        return predictions, covariates, flg
+        return predictions, flg
 
     def create_rmse_plot():
 
@@ -240,15 +234,15 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                    models_path, "context_aware_uniform",
                                                    "context_aware_uniform_1369")
 
-                predictions_lstm[i, :, :, :], _, flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn[i, :, :, :], _, flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
+                predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn_multi[i, :, :, :], _, flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
+                predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
                                                                             test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn_conv[i, :, :, :], _, flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
+                predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
                                                                            test_en, test_de, test_id, test_y_output, test_y_input)
-                predictions_attn_temp_cutoff[i, :, :, :], _, flag = make_predictions(attn_temp_cutoff_model, tgt_all,
+                predictions_attn_temp_cutoff[i, :, :, :], flag = make_predictions(attn_temp_cutoff_model, tgt_all,
                                                                                   tgt_all_input, flag, test_en,
                                                                                   test_de, test_id, test_y_output, test_y_input)
 
