@@ -239,7 +239,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                    models_path, "context_aware_uniform",
                                                    "context_aware_uniform_1369")
 
-                '''predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
                 predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
@@ -255,18 +255,17 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
-                rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)'''
+                rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)
 
-            '''lstm = np.mean(rmse_lstm, axis=0)
+            lstm = np.mean(rmse_lstm, axis=0)
             attn = np.mean(rmse_attn, axis=0)
             attn_multi = np.mean(rmse_attn_multi, axis=0)
             attn_conv = np.mean(rmse_attn_conv, axis=0)
-            attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)'''
+            attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
 
-            #return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
-            return None, None, None, None, None
+            return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
 
-        #lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
+        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
         lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48 = get_preds_steps(48)
         x_1 = [0, 8, 16, 24]
         x_2 = [0, 8, 16, 24, 32, 40, 48]
@@ -274,11 +273,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        '''plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
+        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
         plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='darksalmon')
         plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='lightgreen')
         plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='plum')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='lightblue')'''
+        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='lightblue')
         plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='darkblue')
         plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
         plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
