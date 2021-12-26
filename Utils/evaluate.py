@@ -261,7 +261,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
             return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
 
-        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
+        #lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
         lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48 = get_preds_steps(48)
         x_1 = [0, 8, 16, 24]
         x_2 = [0, 8, 16, 24, 32, 40, 48]
@@ -269,11 +269,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
+        '''plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
         plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='darksalmon')
         plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='lightgreen')
         plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='plum')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='lightblue')
+        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='lightblue')'''
         plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='darkblue')
         plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
         plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
