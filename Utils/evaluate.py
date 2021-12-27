@@ -640,7 +640,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.plot(x_1, self_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_1.legend(['Transformer', 'Trans-multi'], loc="best")
+        ax_1.legend(['Transformer', 'Trans-multi', 'CNN-trans', 'ACAT'], loc="best")
 
         ax_1.set_ylabel('$Ave. a_{h, q}$')
         #ax_1.set_title("Self Attention Scores")
@@ -677,7 +677,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.plot(x, dec_enc_attn_temp_cutoff_scores[ind, ], color='darkblue')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         ax_2.legend(['Transformer', 'Trans-multi',
-                    'CNN-trans', 'Ours'], loc="best")
+                    'CNN-trans', 'ACAT'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel('$Ave. a_{h, q}$')
         #ax_2.set_title("Cross Attention Scores")
@@ -715,7 +715,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth', 'Transformer', 'Trans-multi', 'CNN-trans', 'Ours'], loc="best")
+        ax.legend(['Ground Truth', 'Transformer', 'Trans-multi', 'CNN-trans', 'ACAT'], loc="best")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
