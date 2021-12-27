@@ -820,7 +820,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         # tell the colorbar to tick at integers
         plt.colorbar(mat, format=fmt, ticks=tickz)
         plt.tight_layout()
-        plt.figure(figsize=(6, 4))
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
 
