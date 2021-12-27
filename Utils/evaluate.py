@@ -796,6 +796,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 1, 3, index)
         index = np.where(index == 0, 1, index)
         index = np.where(index == 2, 6, index)
+        index = index.reshape(index.shape[1], index.shape[2])
 
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
