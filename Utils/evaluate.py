@@ -789,7 +789,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ind3 = random.randint(0, 8)
         index = dec_enc_index[ind_2, ind3, :, :]
         index = index.detach().cpu().numpy()
-        index = index[:, :]
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
@@ -944,9 +943,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    create_attn_score_plots()
+    #create_attn_score_plots()
     #create_rmse_plot()
-    #create_attn_matrix(48)
+    create_attn_matrix(48)
 
 
 def main():
