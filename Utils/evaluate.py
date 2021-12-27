@@ -105,14 +105,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      kernel=kernel, filter_length=9).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
-        #train_loss = checkpoint["train_loss"]
+        train_loss = checkpoint["train_loss"]
         new_state_dict = dict()
         for k, v in state_dict.items():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model
+        return model, train_loss
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -727,7 +727,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.close()
 
     def plot_train_loss(len_pred):
-        seed = 9
+        seed = 21
         torch.manual_seed(seed)
 
         total_len = len_pred + 168
@@ -742,9 +742,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                      input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
                                     input_size, output_size, models_path, "conv_attn", "attn_conv_test")
-        _, attn_temp_cutoff_loss = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
+        _, attn_temp_cutoff_loss = load_attn(seed, configs["context_aware_uniform_test_{}".format(seed)],
                                            input_size, output_size,
-                                           models_path, "context_aware_uniform", "context_aware_uniform_1369")
+                                           models_path, "context_aware_uniform", "context_aware_uniform_test")
 
         attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
@@ -763,7 +763,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(attn_conv_loss, color='darksalmon')
         ax.plot(attn_temp_cutoff_loss, color='darkblue')
         ax.legend(['Transformer', 'Trans-multi',
-                   'CNN-trans', 'Ours'], loc="best")
+                   'CNN-trans', 'ACAT'], loc="best")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
@@ -942,9 +942,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    create_rmse_plot()
+    #create_rmse_plot()
     #print("Done exp rmse")
-    #plot_train_loss(48)
+    plot_train_loss(48)
     #create_rmse_plot()
     #create_attn_matrix(48)
 
