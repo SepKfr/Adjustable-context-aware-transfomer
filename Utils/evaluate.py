@@ -103,16 +103,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      tgt_pad_index=0, device=device,
                      attn_type=attn_type,
                      kernel=kernel, filter_length=9).to(device)
-        checkpoint = torch.load(os.path.join(mdl_path, "{}".format(name)))
+        checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
-        train_loss = checkpoint["train_loss"]
+        #train_loss = checkpoint["train_loss"]
         new_state_dict = dict()
         for k, v in state_dict.items():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model, train_loss
+        return model
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -221,7 +221,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             flag = False
             for i, seed in enumerate([21, 9, 1992]):
 
-                print(seed)
                 torch.manual_seed(seed)
                 input_size = test_en.shape[3]
                 output_size = test_de.shape[3]
@@ -624,9 +623,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax_1 = plt.subplots()
         x = np.arange(-enc_step, 0)
         x_1 = np.arange(0, total_len - enc_step)
-        xnew = np.linspace(min(x), max(x), 300)
+        '''xnew = np.linspace(min(x), max(x), 300)
         spl = make_interp_spline(x, enc_attn_temp_cutoff_scores[ind,], k=3)
-        enc_self_smooth = spl(xnew)
+        enc_self_smooth = spl(xnew)'''
 
         xnew_1 = np.linspace(min(x_1), max(x_1), 300)
         spl = make_interp_spline(x_1, self_attn_temp_cutoff_scores[ind,], k=3)
@@ -668,9 +667,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=16)
 
         fig, ax_2 = plt.subplots()
-        xnew = np.linspace(min(x), max(x), 300)
+        '''xnew = np.linspace(min(x), max(x), 300)
         spl = make_interp_spline(x, dec_enc_attn_temp_cutoff_scores[ind, ], k=3)
-        power_smooth = spl(xnew)
+        power_smooth = spl(xnew)'''
 
         ax_2.plot(x, dec_enc_attn_scores[ind, ], color='lightgreen')
         ax_2.plot(x, dec_enc_attn_multi_scores[ind, ], color='plum')
@@ -944,7 +943,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     #creat_c_q_plots()
     #create_rmse_plot()
     #print("Done exp rmse")
-    plot_train_loss(48)
+    #plot_train_loss(48)
+    create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
