@@ -584,9 +584,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
 
-            if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
+            if loss_attn_temp < loss and loss_attn - loss_attn_temp > diff_1 and loss_attn_conv - loss_attn_temp > diff_2 and \
                     loss_attn_temp < loss_attn_multi:
                 loss = loss_attn_temp
+                diff_1 = loss_attn - loss_attn_temp
+                diff_2 = loss_attn_conv - loss_attn_temp
                 ind = i
             '''if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
