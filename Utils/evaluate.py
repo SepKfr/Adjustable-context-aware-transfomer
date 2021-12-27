@@ -798,7 +798,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         index = np.where(index == 2, 6, index)
 
         #index = np.where(index == 5, -2, index)
-        fig, ax = plt.subplots(figsize=(6, 4))
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
         norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
 
@@ -819,8 +818,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         mat = plt.matshow(index, cmap=cm, norm=norm)
         # tell the colorbar to tick at integers
-        cax = plt.colorbar(mat, format=fmt, ticks=tickz)
+        plt.colorbar(mat, format=fmt, ticks=tickz)
         plt.tight_layout()
+        plt.figure(figsize=(6, 4))
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
 
