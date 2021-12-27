@@ -736,13 +736,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
 
-        _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
+        _, attn_loss = load_attn(seed, configs["attn_test"],
                                input_size, output_size, models_path, "attn", "attn_test")
-        _, attn_multi_loss = load_attn(seed, configs["attn_multi_test_{}".format(9)],
+        _, attn_multi_loss = load_attn(seed, configs["attn_multi_test"],
                                      input_size, output_size, models_path, "attn", "attn_multi_test")
-        _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
+        _, attn_conv_loss = load_attn(seed, configs["attn_conv_test"],
                                     input_size, output_size, models_path, "conv_attn", "attn_conv_test")
-        _, attn_temp_cutoff_loss = load_attn(seed, configs["context_aware_uniform_test_{}".format(seed)],
+        _, attn_temp_cutoff_loss = load_attn(seed, configs["context_aware_uniform_test"],
                                            input_size, output_size,
                                            models_path, "context_aware_uniform", "context_aware_uniform_test")
 
