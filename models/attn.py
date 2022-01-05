@@ -153,12 +153,14 @@ class ScaledDotProductAttention(nn.Module):
             if attn_mask is not None:
                 attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+            attn = scores
 
         elif "conv" in self.attn_type:
 
             if self.attn_type == "conv_attn":
                 Q, K = self.get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+                attn = nn.Softmax(dim=-1)(scores)
 
         elif "f_linear" in self.attn_type:
 
@@ -166,17 +168,17 @@ class ScaledDotProductAttention(nn.Module):
             Q = self.linear_q(Q.transpose(-2, -1)).squeeze(-1)
             K = self.linear_k(K.transpose(-2, -1)).squeeze(-1)
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+            attn = nn.Softmax(dim=-1)(scores)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+            attn = nn.Softmax(dim=-1)(scores)
 
         if attn_mask is not None:
 
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
-
-        attn = nn.Softmax(dim=-1)(scores)
 
         if "context_aware" in self.attn_type:
             attn_f = torch.ones(b, h, l, l_k).to(self.device)
