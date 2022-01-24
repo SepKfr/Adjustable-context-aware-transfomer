@@ -153,7 +153,7 @@ class ScaledDotProductAttention(nn.Module):
             if attn_mask is not None:
                 attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
-            attn = scores
+            attn = nn.Softmax(dim=-1)(scores)
 
         elif "conv" in self.attn_type:
 
@@ -181,7 +181,7 @@ class ScaledDotProductAttention(nn.Module):
             scores.masked_fill_(attn_mask, -1e9)
 
         if "context_aware" in self.attn_type:
-            attn_f = torch.ones(b, h, l, l_k).to(self.device)
+            attn_f = torch.ones(b, h, l, l_k).to(self.device) / l_k
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
             attn_f[:, :, :, -1] = attn[:, :, :, -1]
@@ -190,7 +190,7 @@ class ScaledDotProductAttention(nn.Module):
             ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
 
             if "uniform" in self.attn_type:
-                attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
+                pass
 
             elif "repeat" in self.attn_type:
                 attn_tmp = attn.unsqueeze(-1).repeat(1, 1, 1, 1, m_f - 1)

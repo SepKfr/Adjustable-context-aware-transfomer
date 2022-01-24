@@ -288,7 +288,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     'Transformer (t=24)',
                     'Trans-multi (t=24)',
                     'LSTM (t=24)',
-                    'Ours (t=48)', 'CNN-trans (t=48)',
+                    'ACAT (t=48)', 'CNN-trans (t=48)',
                     'Transformer (t=48)',
                     'Trans-multi (t=48)',
                     'LSTM (t=48)',
@@ -631,16 +631,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         spl = make_interp_spline(x_1, self_attn_temp_cutoff_scores[ind,], k=3)
         dec_self_smooth = spl(xnew_1)
 
+        ax_1.plot(x, enc_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_1.plot(x, enc_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x, enc_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x, enc_attn_conv_scores[ind, ], color='darksalmon')
-        ax_1.plot(x, enc_attn_temp_cutoff_scores[ind,], color='darkblue')
+        ax_1.plot(x_1, self_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_1.plot(x_1, self_attn_scores[ind, ], color='lightgreen')
         ax_1.plot(x_1, self_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
-        ax_1.plot(x_1, self_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_1.legend(['Transformer', 'Trans-multi', 'CNN-trans', 'ACAT'], loc="best")
+        ax_1.legend(['ACAT', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
 
         ax_1.set_ylabel('$Ave. a_{h, q}$')
         #ax_1.set_title("Self Attention Scores")
@@ -671,13 +671,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         spl = make_interp_spline(x, dec_enc_attn_temp_cutoff_scores[ind, ], k=3)
         power_smooth = spl(xnew)'''
 
+        ax_2.plot(x, dec_enc_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_2.plot(x, dec_enc_attn_scores[ind, ], color='lightgreen')
         ax_2.plot(x, dec_enc_attn_multi_scores[ind, ], color='plum')
         ax_2.plot(x, dec_enc_attn_conv_scores[ind, ], color='darksalmon')
-        ax_2.plot(x, dec_enc_attn_temp_cutoff_scores[ind, ], color='darkblue')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_2.legend(['Transformer', 'Trans-multi',
-                    'CNN-trans', 'ACAT'], loc="best")
+        ax_2.legend(['ACAT', 'Transformer', 'Trans-multi',
+                    'CNN-trans'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel('$Ave. a_{h, q}$')
         #ax_2.set_title("Cross Attention Scores")
@@ -709,13 +709,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='gray')
+        ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='lightgreen')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='plum')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth', 'Transformer', 'Trans-multi', 'CNN-trans', 'ACAT'], loc="best")
+        ax.legend(['Ground Truth', 'ACAT', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
@@ -757,12 +757,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fig, ax = plt.subplots()
         ax.set_ylabel("training loss (MSE)")
         ax.set_xlabel("epoch")
+        ax.plot(attn_temp_cutoff_loss, color='darkblue')
         ax.plot(attn_loss, color='lightgreen')
         ax.plot(attn_multi_loss, color='plum')
         ax.plot(attn_conv_loss, color='darksalmon')
-        ax.plot(attn_temp_cutoff_loss, color='darkblue')
-        ax.legend(['Transformer', 'Trans-multi',
-                   'CNN-trans', 'ACAT'], loc="best")
+        ax.legend(['ACAT', 'Transformer', 'Trans-multi',
+                   'CNN-trans'], loc="best")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
@@ -940,12 +940,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    #create_rmse_plot()
+    create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
     #create_attn_score_plots()
     #create_rmse_plot()
-    create_attn_matrix(48)
+    #create_attn_matrix(48)
 
 
 def main():
