@@ -219,7 +219,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
 
             flag = False
-            for i, seed in enumerate([9, 1992]):
+            for i, seed in enumerate([21, 9, 1992]):
 
                 torch.manual_seed(seed)
                 input_size = test_en.shape[3]
