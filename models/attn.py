@@ -197,7 +197,7 @@ class ScaledDotProductAttention(nn.Module):
 
             attn_f = nn.Softmax(dim=-1)(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
-            return context, attn_f, index
+            return context, attn_f
 
         else:
 
