@@ -112,28 +112,6 @@ class ScaledDotProductAttention(nn.Module):
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        if "dynamic_context_aware" in self.attn_type:
-
-            '''Q_norm = Q / Q.norm(dim=-1)[:, :, :, None]
-            K_norm = K / K.norm(dim=-1)[:, :, :, None]'''
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
-            attn_mask = get_attn_subsequent_mask_2(scores.shape[0], scores.shape[-2], scores.shape[-1])
-            attn_mask = attn_mask.unsqueeze(1).repeat(1, h, 1, 1)
-            attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-            attn_mask = attn_mask.to(self.device)
-            scores.masked_fill_(attn_mask, -1e9)
-            attn = nn.Softmax(dim=-1)(scores)
-            attn[attn < 1/l_k] = 0
-            attn[attn != 0] = 1
-            '''index = (attn == 1).nonzero(as_tuple=False)
-            print(index)
-            index = index.reshape(b, h, l, -1)'''
-            attn = attn.unsqueeze(-1).repeat(1, 1, 1, 1, d_k)
-            Q = Q.unsqueeze(2).repeat(1, 1, l_k, 1, 1)
-            Q = Q.reshape(b, h, l, l_k, d_k)
-            Q[attn == 0] = 0
-            Q = torch.mean(Q, dim=3)
-
         if "context_aware" in self.attn_type:
 
             len_n_k = len(self.filter_length)
@@ -153,14 +131,12 @@ class ScaledDotProductAttention(nn.Module):
             if attn_mask is not None:
                 attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
-            attn = nn.Softmax(dim=-1)(scores)
 
         elif "conv" in self.attn_type:
 
             if self.attn_type == "conv_attn":
                 Q, K = self.get_conv(self.kernel, Q, K)
                 scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
-                attn = nn.Softmax(dim=-1)(scores)
 
         elif "f_linear" in self.attn_type:
 
@@ -168,17 +144,17 @@ class ScaledDotProductAttention(nn.Module):
             Q = self.linear_q(Q.transpose(-2, -1)).squeeze(-1)
             K = self.linear_k(K.transpose(-2, -1)).squeeze(-1)
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
-            attn = nn.Softmax(dim=-1)(scores)
 
         else:
             scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
-            attn = nn.Softmax(dim=-1)(scores)
 
         if attn_mask is not None:
 
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
+
+        attn = nn.Softmax(dim=-1)(scores)
 
         if "context_aware" in self.attn_type:
             attn_f = torch.ones(b, h, l, l_k).to(self.device)
@@ -260,14 +236,14 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
-        context, attn, index = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
+        context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
                                                   attn_type=self.attn_type,
                                                   kernel=self.kernel, h=self.n_heads,
                                                   filter_length=self.filter_length)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
-        return output, attn, index
+        return output, attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
@@ -297,13 +273,13 @@ class EncoderLayer(nn.Module):
 
     def forward(self, enc_inputs, enc_self_attn_mask=None):
 
-        out, attn, index = self.enc_self_attn(
+        out, attn = self.enc_self_attn(
             Q=enc_inputs, K=enc_inputs,
             V=enc_inputs, attn_mask=enc_self_attn_mask)
         out = self.layer_norm(out + enc_inputs)
         out_2 = self.pos_ffn(out)
         out_2 = self.layer_norm(out_2 + out)
-        return out_2, attn, index
+        return out_2, attn
 
 
 class Encoder(nn.Module):
@@ -337,12 +313,12 @@ class Encoder(nn.Module):
 
         enc_self_attns = []
         for layer in self.layers:
-            enc_outputs, enc_self_attn, index = layer(enc_outputs, enc_self_attn_mask)
+            enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
             enc_self_attns.append(enc_self_attn)
 
         enc_self_attns = torch.stack(enc_self_attns)
         enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])
-        return enc_outputs, enc_self_attns, index
+        return enc_outputs, enc_self_attns
 
 
 class DecoderLayer(nn.Module):
@@ -364,13 +340,13 @@ class DecoderLayer(nn.Module):
 
     def forward(self, dec_inputs, enc_outputs, dec_self_attn_mask=None, dec_enc_attn_mask=None):
 
-        out, dec_self_attn, _ = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
+        out, dec_self_attn = self.dec_self_attn(dec_inputs, dec_inputs, dec_inputs, dec_self_attn_mask)
         out = self.layer_norm(dec_inputs + out)
-        out2, dec_enc_attn, index = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
+        out2, dec_enc_attn = self.dec_enc_attn(out, enc_outputs, enc_outputs, dec_enc_attn_mask)
         out2 = self.layer_norm(out + out2)
         out3 = self.pos_ffn(out2)
         out3 = self.layer_norm(out2 + out3)
-        return out3, dec_self_attn, dec_enc_attn, index
+        return out3, dec_self_attn, dec_enc_attn
 
 
 class Decoder(nn.Module):
@@ -405,7 +381,7 @@ class Decoder(nn.Module):
 
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:
-            dec_outputs, dec_self_attn, dec_enc_attn, index = layer(
+            dec_outputs, dec_self_attn, dec_enc_attn = layer(
                 dec_inputs=dec_outputs,
                 enc_outputs=enc_outputs,
                 dec_self_attn_mask=dec_self_attn_subsequent_mask,
@@ -419,7 +395,7 @@ class Decoder(nn.Module):
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
         dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
 
-        return dec_outputs, dec_self_attns, dec_enc_attns, index
+        return dec_outputs, dec_self_attns, dec_enc_attns
 
 
 class Attn(nn.Module):
@@ -451,8 +427,8 @@ class Attn(nn.Module):
 
         enc_inputs = self.enc_embedding(enc_inputs)
         dec_inputs = self.dec_embedding(dec_inputs)
-        enc_outputs, enc_self_attns, _ = self.encoder(enc_inputs)
-        dec_outputs, dec_self_attns, dec_enc_attns, index = self.decoder(dec_inputs, enc_outputs)
+        enc_outputs, enc_self_attns = self.encoder(enc_inputs)
+        dec_outputs, dec_self_attns, dec_enc_attns = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
         return dec_logits
 
