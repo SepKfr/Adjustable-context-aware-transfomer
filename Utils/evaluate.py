@@ -961,6 +961,7 @@ def main():
         os.makedirs(args.path_to_save)
 
     np.random.seed(21)
+    random.seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
