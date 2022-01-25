@@ -202,7 +202,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def cal_mse_mae(preds, y_true):
             normalizer = torch.from_numpy(y_true).abs().mean()
-            test_loss = criterion(torch.from_numpy(preds), torch.from_numpy(y_true)) / normalizer
+            test_loss = math.sqrt(criterion(torch.from_numpy(preds), torch.from_numpy(y_true))) / normalizer
             mae_loss = mae(torch.from_numpy(preds), torch.from_numpy(y_true)) / normalizer
             return test_loss.item(), mae_loss.item()
 
@@ -266,11 +266,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)
 
-                errors_new_test["lstm_{}".format(i)] = cal_mse_mae(predictions_lstm[i, :, :, :], tgt_all)
-                errors_new_test["attn_{}".format(i)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
-                errors_new_test["attn_multi_{}".format(i)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
-                errors_new_test["attn_conv_{}".format(i)] = cal_mse_mae(predictions_attn_conv[i, :, :, :], tgt_all)
-                errors_new_test["context_aware_{}".format(i)] = cal_mse_mae(predictions_attn_temp_cutoff[i, :, :, :], tgt_all)
+                errors_new_test["lstm_{}".format(seed)] = cal_mse_mae(predictions_lstm[i, :, :, :], tgt_all)
+                errors_new_test["attn_{}".format(seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
+                errors_new_test["attn_multi_{}".format(seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
+                errors_new_test["attn_conv_{}".format(seed)] = cal_mse_mae(predictions_attn_conv[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_{}".format(seed)] = cal_mse_mae(predictions_attn_temp_cutoff[i, :, :, :], tgt_all)
 
             lstm = np.mean(rmse_lstm, axis=0)
             attn = np.mean(rmse_attn, axis=0)
