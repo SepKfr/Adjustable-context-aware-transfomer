@@ -648,16 +648,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
 
-            if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
+            '''if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
                 loss = loss_attn_temp
-                ind = i
-            '''if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
+                ind = i'''
+            if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2 and loss_attn_temp - :
+                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
                     diff_1 = loss_attn - loss_attn_temp
                     diff_2 = loss_attn_multi - loss_attn_temp
-                    ind = i'''
+                    ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
@@ -1004,10 +1004,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    create_rmse_plot()
+    #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    #create_attn_score_plots()
+    create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
