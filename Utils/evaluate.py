@@ -204,8 +204,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             normalizer = torch.from_numpy(y_true).abs().mean()
             test_loss = math.sqrt(criterion(torch.from_numpy(preds), torch.from_numpy(y_true))) / normalizer
             mae_loss = mae(torch.from_numpy(preds), torch.from_numpy(y_true)) / normalizer
-            return test_loss.item(), mae_loss.item()
-
+            return "{:.4f}".format(test_loss.item()), "{:.4f}".format(mae_loss.item())
 
         def get_preds_steps(timesteps):
 
@@ -273,44 +272,80 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 errors_new_test["context_aware_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn_temp_cutoff[i, :, :, :], tgt_all)
 
             lstm = np.mean(rmse_lstm, axis=0)
+            lstm_err = np.std(rmse_lstm, axis=0)
             attn = np.mean(rmse_attn, axis=0)
+            attn_err = np.std(rmse_attn, axis=0)
             attn_multi = np.mean(rmse_attn_multi, axis=0)
+            attn_multi_err = np.std(rmse_attn_multi, axis=0)
             attn_conv = np.mean(rmse_attn_conv, axis=0)
+            attn_conv_err = np.std(rmse_attn_conv, axis=0)
             attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+            attn_temp_cutoff_err = np.std(rmse_attn_temp_cutoff, axis=0)
 
-            return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff
+            return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff, lstm_err, attn_err, attn_multi_err, \
+                   attn_conv_err, attn_temp_cutoff_err
 
-        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24 = get_preds_steps(24)
-        lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48 = get_preds_steps(48)
+        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24,  \
+            lstm_err_24, attn_err_24, attn_multi_err_24, attn_conv_err_24, attn_temp_cutoff_err_24 = get_preds_steps(24)
+        lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
+        lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)
         x_1 = [0, 8, 16, 24]
         x_2 = [0, 8, 16, 24, 32, 40, 48]
         plt.rc('axes', labelsize=14)
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="^", linestyle="-", color='darkblue')
-        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="^", linestyle="-", color='darksalmon')
-        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="^", linestyle="-", color='lightgreen')
-        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="^", linestyle="-", color='plum')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="^", linestyle="-", color='lightblue')
-        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-", color='darkblue')
-        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
-        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
-        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
-        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
+        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", color='darkblue')
+        plt.errorbar(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]),
+                     np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), fmt='o', color='darkblue')
+        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", color='darksalmon')
+        plt.errorbar(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]),
+                     np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), fmt='o', color='darksalmon')
+        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", color='lightgreen')
+        plt.errorbar(x_1, np.append(attn_24[0::8], attn_24[-1]),
+                     np.append(attn_err_24[0::8], attn_err_24[-1]), fmt='o', color='lightgreen')
+        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", color='plum')
+        plt.errorbar(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]),
+                     np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), fmt='o', color='plum')
+        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", color='lightblue')
+        plt.errorbar(x_1, np.append(lstm_24[0::8], lstm_24[-1]),
+                 np.append(lstm_err_24[0::8], lstm_err_24[-1]), fmt='o', color='lightblue')
+
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
-        plt.legend(['ACAT (t=24)', 'CNN-trans (t=24)',
-                    'Transformer (t=24)',
-                    'Trans-multi (t=24)',
-                    'LSTM (t=24)',
-                    'ACAT (t=48)', 'CNN-trans (t=48)',
-                    'Transformer (t=48)',
-                    'Trans-multi (t=48)',
-                    'LSTM (t=48)',
-                    ],  bbox_to_anchor=(1, 1), loc='upper left')
+        plt.legend(['ACAT', 'CNN-trans',
+                    'Transformer',
+                    'Trans-multi',
+                    ], bbox_to_anchor=(1, 1), loc='best')
         plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.pdf'.format(args.exp_name)), dpi=1000)
+        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
+        plt.close()
+
+        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
+                 color='darkblue')
+        plt.errorbar(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]),
+                     np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), fmt='o', color='darkblue')
+        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
+        plt.errorbar(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]),
+                     np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), fmt='o', color='darksalmon')
+        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
+        plt.errorbar(x_2, np.append(attn_48[0::8], attn_48[-1]),
+                     np.append(attn_err_48[0::8], attn_err_48[-1]), fmt='o', color='lightgreen')
+        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
+        plt.errorbar(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]),
+                     np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), fmt='o', color='plum')
+        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
+        plt.errorbar(x_2, np.append(lstm_48[0::8], lstm_48[-1]),
+                     np.append(lstm_err_48[0::8], lstm_err_48[-1]), fmt='o', color='lightblue')
+        plt.xlabel("Output Length")
+        plt.ylabel("RMSE Score")
+        plt.legend(['ACAT', 'CNN-trans',
+                    'Transformer',
+                    'Trans-multi',
+                    'LSTM',
+                    ],  bbox_to_anchor=(1, 1), loc='best')
+        plt.tight_layout()
+        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 48)), dpi=1000)
         plt.close()
 
         with open("{}_errors_new_test.json".format(args.exp_name), "w") as json_file:
