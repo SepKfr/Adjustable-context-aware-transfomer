@@ -295,26 +295,26 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", markersize=8, color='darkblue')
+        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", color='darkblue')
         eb1 = plt.errorbar(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]),
-                     np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), lw=2, errorevery=2, ls='-.', color='darkblue')
-        eb1[-1][0].set_linestyle('--')
-        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", markersize=8, color='darksalmon')
+                     np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), color='darkblue')
+        eb1[-1][0].set_linestyle('-.')
+        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", color='darksalmon')
         eb2 = plt.errorbar(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]),
-                     np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), lw=2, errorevery=2, ls='-.', color='darksalmon')
-        eb2[-1][0].set_linestyle('--')
-        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", markersize=8, color='lightgreen')
+                     np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), color='darksalmon')
+        eb2[-1][0].set_linestyle('-.')
+        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", color='lightgreen')
         eb3 = plt.errorbar(x_1, np.append(attn_24[0::8], attn_24[-1]),
-                     np.append(attn_err_24[0::8], attn_err_24[-1]), lw=2, errorevery=2, ls='-.', color='lightgreen')
-        eb3[-1][0].set_linestyle('--')
-        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", markersize=8, color='plum')
+                     np.append(attn_err_24[0::8], attn_err_24[-1]), color='lightgreen')
+        eb3[-1][0].set_linestyle('-.')
+        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", color='plum')
         eb4 = plt.errorbar(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]),
-                     np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), lw=2, errorevery=2, ls='-.', color='plum')
-        eb4[-1][0].set_linestyle('--')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", markersize=8, color='lightblue')
+                     np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), color='plum')
+        eb4[-1][0].set_linestyle('-.')
+        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", color='lightblue')
         eb5 = plt.errorbar(x_1, np.append(lstm_24[0::8], lstm_24[-1]),
-                 np.append(lstm_err_24[0::8], lstm_err_24[-1]), lw=2, errorevery=2, ls='-.', color='lightblue')
-        eb5[-1][0].set_linestyle('--')
+                 np.append(lstm_err_24[0::8], lstm_err_24[-1]), color='lightblue')
+        eb5[-1][0].set_linestyle('-.')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
         plt.legend(['ACAT', 'CNN-trans',
@@ -326,27 +326,27 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
         plt.close()
 
-        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", markersize=2, linestyle="-",
+        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
                  color='darkblue')
         eb1 = plt.errorbar(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]),
-                     np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), lw=2, errorevery=2, ls='-.', color='darkblue')
-        eb1[-1][0].set_linestyle('--')
-        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", markersize=8, color='darksalmon')
+                     np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), color='darkblue')
+        eb1[-1][0].set_linestyle('-.')
+        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
         eb2 = plt.errorbar(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]),
-                     np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), lw=2, errorevery=2, ls='-.', color='darksalmon')
-        eb2[-1][0].set_linestyle('--')
-        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", markersize=8, color='lightgreen')
+                     np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), color='darksalmon')
+        eb2[-1][0].set_linestyle('-.')
+        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
         eb3 = plt.errorbar(x_2, np.append(attn_48[0::8], attn_48[-1]),
-                     np.append(attn_err_48[0::8], attn_err_48[-1]), lw=2, errorevery=2, ls='-.', color='lightgreen')
-        eb3[-1][0].set_linestyle('--')
-        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", markersize=8, color='plum')
+                     np.append(attn_err_48[0::8], attn_err_48[-1]), color='lightgreen')
+        eb3[-1][0].set_linestyle('-.')
+        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
         eb4 = plt.errorbar(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]),
-                     np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), lw=2, errorevery=2, ls='-.', color='plum')
-        eb4[-1][0].set_linestyle('--')
-        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", markersize=8, color='lightblue')
+                     np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), color='plum')
+        eb4[-1][0].set_linestyle('-.')
+        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
         eb5 = plt.errorbar(x_2, np.append(lstm_48[0::8], lstm_48[-1]),
-                     np.append(lstm_err_48[0::8], lstm_err_48[-1]), lw=2, errorevery=2, ls='-.', color='lightblue')
-        eb5[-1][0].set_linestyle('--')
+                     np.append(lstm_err_48[0::8], lstm_err_48[-1]), color='lightblue')
+        eb5[-1][0].set_linestyle('-.')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
         plt.legend(['ACAT', 'CNN-trans',
