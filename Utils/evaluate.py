@@ -313,6 +313,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}.pdf'.format(args.exp_name)), dpi=1000)
         plt.close()
 
+        with open("{}_errors_new_test.json".format(args.exp_name), "w") as json_file:
+            json.dump(errors_new_test, json_file)
+
         '''
 
         calculate_loss(predictions_lstm, "lstm")
