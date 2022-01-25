@@ -202,9 +202,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def cal_mse_mae(preds, y_true):
             normalizer = torch.from_numpy(y_true).abs().mean()
-            test_loss = criterion(torch.from_numpy(preds), torch.from_numpy(y_true)).item() / normalizer
-            mae_loss = mae(torch.from_numpy(preds), torch.from_numpy(y_true)).item() / normalizer
-            return test_loss, mae_loss
+            test_loss = criterion(torch.from_numpy(preds), torch.from_numpy(y_true)) / normalizer
+            mae_loss = mae(torch.from_numpy(preds), torch.from_numpy(y_true)) / normalizer
+            return test_loss.item(), mae_loss.item()
 
 
         def get_preds_steps(timesteps):
