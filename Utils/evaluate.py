@@ -187,6 +187,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def create_rmse_plot():
 
+        errors_new_test = dict()
+        mae = nn.L1Loss()
+
         def calculate_loss_per_step(predictions, tgt_all, ln_pred):
 
             rmses = np.zeros(ln_pred)
@@ -196,6 +199,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 test_loss = math.sqrt(test_loss) / normaliser
                 rmses[j] = test_loss
             return rmses
+
+        def cal_mse_mae(preds, y_true):
+            normalizer = torch.from_numpy(y_true).abs().mean()
+            test_loss = criterion(torch.from_numpy(preds), torch.from_numpy(y_true)).item() / normalizer
+            mae_loss = mae(torch.from_numpy(preds), torch.from_numpy(y_true)).item() / normalizer
+            return test_loss, mae_loss
+
 
         def get_preds_steps(timesteps):
 
@@ -255,6 +265,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)
+
+                errors_new_test["lstm_{}".format(i)] = cal_mse_mae(predictions_lstm[i, :, :, :], tgt_all)
+                errors_new_test["attn_{}".format(i)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
+                errors_new_test["attn_multi_{}".format(i)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
+                errors_new_test["attn_conv_{}".format(i)] = cal_mse_mae(predictions_attn_conv[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_{}".format(i)] = cal_mse_mae(predictions_attn_temp_cutoff[i, :, :, :], tgt_all)
 
             lstm = np.mean(rmse_lstm, axis=0)
             attn = np.mean(rmse_attn, axis=0)
