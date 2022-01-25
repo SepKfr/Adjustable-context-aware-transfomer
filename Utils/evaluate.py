@@ -388,10 +388,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             # return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff, lstm_err, attn_err, attn_multi_err, \
             #        attn_conv_err, attn_temp_cutoff_err
 
-        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24,  \
-            lstm_err_24, attn_err_24, attn_multi_err_24, attn_conv_err_24, attn_temp_cutoff_err_24 = get_preds_steps(24)
-        lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
-        lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)
+        # lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24,  \
+        #     lstm_err_24, attn_err_24, attn_multi_err_24, attn_conv_err_24, attn_temp_cutoff_err_24 = get_preds_steps(24)
+        # lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
+        # lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)
         # x_1 = [0, 8, 16, 24]
         # x_2 = [0, 8, 16, 24, 32, 40, 48]
         # plt.rc('axes', labelsize=14)
