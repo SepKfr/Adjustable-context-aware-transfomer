@@ -965,6 +965,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
 
 def main():
+
     parser = argparse.ArgumentParser("Analysis of the models")
     parser.add_argument('--exp_name', type=str, default='watershed')
     parser.add_argument('--cuda', type=str, default='cuda:1')
@@ -996,7 +997,7 @@ def main():
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
 
-    perform_evaluation(args, device, params, test, valid_max, formatter)
+    perform_evaluation(args, device, params, test, valid_max*2, formatter)
 
 
 if __name__ == '__main__':
