@@ -266,11 +266,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
                 rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_attn_temp_cutoff[i, :, :, :], tgt_all, timesteps)
 
-                errors_new_test["lstm_{}".format(seed)] = cal_mse_mae(predictions_lstm[i, :, :, :], tgt_all)
-                errors_new_test["attn_{}".format(seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
-                errors_new_test["attn_multi_{}".format(seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
-                errors_new_test["attn_conv_{}".format(seed)] = cal_mse_mae(predictions_attn_conv[i, :, :, :], tgt_all)
-                errors_new_test["context_aware_{}".format(seed)] = cal_mse_mae(predictions_attn_temp_cutoff[i, :, :, :], tgt_all)
+                errors_new_test["lstm_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_lstm[i, :, :, :], tgt_all)
+                errors_new_test["attn_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
+                errors_new_test["attn_multi_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
+                errors_new_test["attn_conv_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn_conv[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn_temp_cutoff[i, :, :, :], tgt_all)
 
             lstm = np.mean(rmse_lstm, axis=0)
             attn = np.mean(rmse_attn, axis=0)
