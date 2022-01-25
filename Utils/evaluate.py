@@ -295,21 +295,21 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=14)
         plt.rc('legend', fontsize=12)
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", color='darkblue')
+        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", markersize=2, color='darkblue')
         plt.errorbar(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]),
-                     np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), fmt='o', color='darkblue')
-        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", color='darksalmon')
+                     np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), lw=2, errorevery=2, ls='-.', color='darkblue')
+        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", markersize=2, color='darksalmon')
         plt.errorbar(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]),
-                     np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), fmt='o', color='darksalmon')
-        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", color='lightgreen')
+                     np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), lw=2, errorevery=2, ls='-.', color='darksalmon')
+        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", markersize=2, color='lightgreen')
         plt.errorbar(x_1, np.append(attn_24[0::8], attn_24[-1]),
-                     np.append(attn_err_24[0::8], attn_err_24[-1]), fmt='o', color='lightgreen')
-        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", color='plum')
+                     np.append(attn_err_24[0::8], attn_err_24[-1]), lw=2, errorevery=2, ls='-.', color='lightgreen')
+        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", markersize=2, color='plum')
         plt.errorbar(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]),
-                     np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), fmt='o', color='plum')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", color='lightblue')
+                     np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), lw=2, errorevery=2, ls='-.', color='plum')
+        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", markersize=2, color='lightblue')
         plt.errorbar(x_1, np.append(lstm_24[0::8], lstm_24[-1]),
-                 np.append(lstm_err_24[0::8], lstm_err_24[-1]), fmt='o', color='lightblue')
+                 np.append(lstm_err_24[0::8], lstm_err_24[-1]), lw=2, errorevery=2, ls='-.', color='lightblue')
 
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
@@ -321,22 +321,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
         plt.close()
 
-        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
+        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", markersize=2, linestyle="-",
                  color='darkblue')
         plt.errorbar(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]),
-                     np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), fmt='o', color='darkblue')
-        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
+                     np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), lw=2, errorevery=2, ls='-.', color='darkblue')
+        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", markersize=2, color='darksalmon')
         plt.errorbar(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]),
-                     np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), fmt='o', color='darksalmon')
-        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
+                     np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), lw=2, errorevery=2, ls='-.', color='darksalmon')
+        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", markersize=2, color='lightgreen')
         plt.errorbar(x_2, np.append(attn_48[0::8], attn_48[-1]),
-                     np.append(attn_err_48[0::8], attn_err_48[-1]), fmt='o', color='lightgreen')
-        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
+                     np.append(attn_err_48[0::8], attn_err_48[-1]), lw=2, errorevery=2, ls='-.', color='lightgreen')
+        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", markersize=2, color='plum')
         plt.errorbar(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]),
-                     np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), fmt='o', color='plum')
-        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
+                     np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), lw=2, errorevery=2, ls='-.', color='plum')
+        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", markersize=2, color='lightblue')
         plt.errorbar(x_2, np.append(lstm_48[0::8], lstm_48[-1]),
-                     np.append(lstm_err_48[0::8], lstm_err_48[-1]), fmt='o', color='lightblue')
+                     np.append(lstm_err_48[0::8], lstm_err_48[-1]), lw=2, errorevery=2, ls='-.', color='lightblue')
         plt.xlabel("Output Length")
         plt.ylabel("RMSE Score")
         plt.legend(['ACAT', 'CNN-trans',
