@@ -1000,7 +1000,7 @@ def main():
     train_max, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
 
-    perform_evaluation(args, device, params, test, valid_max*2, formatter)
+    perform_evaluation(args, device, params, test, valid_max, formatter)
 
 
 if __name__ == '__main__':
