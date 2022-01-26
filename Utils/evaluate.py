@@ -1106,10 +1106,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    create_rmse_plot()
+    #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    #create_attn_score_plots()
+    create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
