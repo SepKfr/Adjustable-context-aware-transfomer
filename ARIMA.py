@@ -7,6 +7,9 @@ import math
 import numpy as np
 from base_train import batch_sampled_data
 from data.data_loader import ExperimentConfig
+import matplotlib.pyplot as plt
+import random
+from scipy.interpolate import make_interp_spline
 
 
 def extract_numerical_data(data):
@@ -38,7 +41,7 @@ def main():
     parser = argparse.ArgumentParser(description="preprocess argument parser")
     parser.add_argument("--name", type=str, default='attn_21')
     parser.add_argument("--exp_name", type=str, default='watershed')
-    parser.add_argument("--total_time_steps", type=int, default=192)
+    parser.add_argument("--total_time_steps", type=int, default=20*24)
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
@@ -60,7 +63,30 @@ def main():
     test_x, test_y = test_y[:, :params['num_encoder_steps'], :].squeeze(-1), \
                      test_y[:, params['num_encoder_steps']:, :].squeeze(-1),
 
-    forecast = torch.zeros(test_y.shape)
+    length = test_x.shape[0]
+    ind = random.randint(0, length)
+    y = test_x[ind]
+    y_smooth_1 = y[:110]
+    x_1 = np.arange(0, 110)
+    xnew_1 = np.linspace(min(x_1), max(x_1), 800)
+    spl = make_interp_spline(x_1, y_smooth_1, k=3)
+    y_smooth_1 = spl(xnew_1)
+
+    y_smooth_2 = y[330:432]
+    x_2 = np.arange(0, len(y_smooth_2))
+    xnew_2 = np.linspace(min(x_2), max(x_2), 800)
+    spl = make_interp_spline(x_2, y_smooth_2, k=3)
+    y_smooth_2 = spl(xnew_2)
+
+    y_final = np.concatenate((y_smooth_1, y[110:330], y_smooth_2))
+    plt.plot(np.arange(0, 1820), y_final*-1, color="black")
+    plt.xticks([])
+    plt.yticks([])
+    plt.tight_layout()
+    plt.savefig("watershed_eg.pdf", dpi=1000)
+    plt.close()
+
+    '''forecast = torch.zeros(test_y.shape)
     targets = torch.zeros(test_y.shape)
     for i in range(test_x.shape[0]):
 
@@ -87,7 +113,7 @@ def main():
     normaliser = targets.abs().mean()
     mae_loss = mae_loss / normaliser
 
-    print("MAE loss {:.4f},  RMSE loss {:.4f}".format(mae_loss, test_loss))
+    print("MAE loss {:.4f},  RMSE loss {:.4f}".format(mae_loss, test_loss))'''
 
 
 if __name__ == '__main__':

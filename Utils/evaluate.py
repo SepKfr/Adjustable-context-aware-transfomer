@@ -105,14 +105,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      kernel=kernel, filter_length=9).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
-        #train_loss = checkpoint["train_loss"]
+        train_loss = checkpoint["train_loss"]
         new_state_dict = dict()
         for k, v in state_dict.items():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model
+        return model, train_loss
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -829,7 +829,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(attn_loss, color='lightgreen')
         ax.plot(attn_multi_loss, color='plum')
         ax.plot(attn_conv_loss, color='darksalmon')
-        ax.legend(['ACAT', 'Transformer', 'Trans-multi',
+        ax.legend(['ACAT (Ours)', 'Transformer', 'Trans-multi',
                    'CNN-trans'], loc="best")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'train_loss_{}_{}.pdf'.format(args.exp_name, len_pred)),
@@ -1008,9 +1008,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    create_rmse_plot()
+    #create_rmse_plot()
     #print("Done exp rmse")
-    #plot_train_loss(48)
+    plot_train_loss(48)
     #create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
