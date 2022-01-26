@@ -660,7 +660,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss = loss_attn_temp
                     diff_1 = loss_attn - loss_attn_temp
                     diff_2 = loss_attn_multi - loss_attn_temp
-                    diff_2 = loss_attn_conv - loss_attn_temp
+                    diff_3 = loss_attn_conv - loss_attn_temp
                     ind = i
 
         y_max = max(max(enc_attn_scores[ind, :]),
@@ -1010,8 +1010,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     #creat_c_q_plots()
     #create_rmse_plot()
     #print("Done exp rmse")
-    plot_train_loss(48)
-    #create_attn_score_plots()
+    #plot_train_loss(48)
+    create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
