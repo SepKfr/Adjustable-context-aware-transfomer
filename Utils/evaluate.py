@@ -748,9 +748,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
             if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                if abs(loss_attn - loss_attn_multi) < diff_1 and abs(loss_attn - loss_attn_conv) < diff_2:
+                if abs(loss_attn - loss_attn_multi) < diff_1:
                     diff_1 = abs(loss_attn - loss_attn_multi)
-                    diff_2 = abs(loss_attn - loss_attn_conv)
                     loss = loss_attn_temp
                     ind = i
             '''if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
