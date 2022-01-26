@@ -806,7 +806,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_1.plot(x_1, self_attn_multi_scores[ind, ], color='plum')
         ax_1.plot(x_1, self_attn_conv_scores[ind, ], color='darksalmon')
         ax_1.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_1.legend(['ACAT', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
+        ax_1.legend(['ACAT (Ours)', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
 
         ax_1.set_ylabel('$Ave. a_{h, q}$')
         #ax_1.set_title("Self Attention Scores")
