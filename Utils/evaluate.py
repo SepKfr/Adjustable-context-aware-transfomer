@@ -277,22 +277,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                       "context_aware_uniform_13618")
                 f_linear_1_model = load_attn(seed, configs["f_linear_1_{}".format(seed) if
                                                         args.exp_name != "watershed" else "f_linear_1_new_{}".format(seed)],
-                                            input_size, output_size, models_path, "f_linear",
+                                            input_size+1, output_size, models_path, "f_linear",
                                        "f_linear_1" if args.exp_name != "watershed" else "f_linear_1_new")
 
                 f_linear_3_model = load_attn(seed, configs["f_linear_3_{}".format(seed) if
                 args.exp_name != "watershed" else "f_linear_3_new_{}".format(seed)],
-                                       input_size, output_size, models_path, "f_linear",
+                                       input_size+1, output_size, models_path, "f_linear",
                                        "f_linear_3" if args.exp_name != "watershed" else "f_linear_3_new")
 
                 f_linear_6_model = load_attn(seed, configs["f_linear_6_{}".format(seed) if
                 args.exp_name != "watershed" else "f_linear_6_new_{}".format(seed)],
-                                       input_size, output_size, models_path, "f_linear",
+                                       input_size+1, output_size, models_path, "f_linear",
                                        "f_linear_6" if args.exp_name != "watershed" else "f_linear_6_new")
 
                 f_linear_9_model = load_attn(seed, configs["f_linear_9_{}".format(seed) if
                 args.exp_name != "watershed" else "f_linear_9_new_{}".format(seed)],
-                                       input_size, output_size, models_path, "f_linear",
+                                       input_size+1, output_size, models_path, "f_linear",
                                    "f_linear_9" if args.exp_name != "watershed" else "f_linear_9_new")
 
                 predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
