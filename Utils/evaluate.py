@@ -285,10 +285,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 f_linear_6_model = load_attn(seed, configs["f_linear_6_{}".format(seed)],
                                        input_size, output_size, models_path, "f_linear", "f_linear_6")
 
-                f_linear_9_model = load_attn(seed, configs["f_linear_9_{}".format(seed) if
-                args.exp_name != "watershed" else "f_linear_9_new_{}".format(seed)],
-                                       input_size, output_size, models_path, "f_linear",
-                                   "f_linear_9" if args.exp_name != "watershed" else "f_linear_9_new")
+                f_linear_9_model = load_attn(seed, configs["f_linear_9_{}".format(seed)],
+                                       input_size, output_size, models_path, "f_linear", "f_linear_9")
 
                 predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
