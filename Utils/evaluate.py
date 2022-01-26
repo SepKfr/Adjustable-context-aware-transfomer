@@ -208,11 +208,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def get_preds_steps(timesteps):
 
-            rmse_lstm = np.zeros((3, timesteps))
+            """rmse_lstm = np.zeros((3, timesteps))
             rmse_attn = np.zeros((3, timesteps))
             rmse_attn_multi = np.zeros((3, timesteps))
             rmse_attn_conv = np.zeros((3, timesteps))
-            rmse_attn_temp_cutoff = np.zeros((3, timesteps))
+            rmse_attn_temp_cutoff = np.zeros((3, timesteps))"""
 
             configs, configs_2, models_path = get_config(timesteps)
             test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
@@ -1108,10 +1108,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    #create_rmse_plot()
+    create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    create_attn_score_plots()
+    #create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
