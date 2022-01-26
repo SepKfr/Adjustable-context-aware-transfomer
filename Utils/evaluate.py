@@ -841,7 +841,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax_2.plot(x, dec_enc_attn_multi_scores[ind, ], color='plum')
         ax_2.plot(x, dec_enc_attn_conv_scores[ind, ], color='darksalmon')
         ax_2.vlines(0, ymin=y_min, ymax=y_max, colors='black')
-        ax_2.legend(['ACAT', 'Transformer', 'Trans-multi',
+        ax_2.legend(['ACAT (Ours)', 'Transformer', 'Trans-multi',
                     'CNN-trans'], loc="best")
         ax_2.plot(np.arange(1, total_len - enc_step), np.full(total_len - enc_step - 1, 1 / enc_step), color='white')
         ax_2.set_ylabel('$Ave. a_{h, q}$')
@@ -880,7 +880,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth', 'ACAT', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
+        ax.legend(['Ground Truth', 'ACAT (Ours)', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
