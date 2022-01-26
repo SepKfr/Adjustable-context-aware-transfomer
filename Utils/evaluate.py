@@ -275,24 +275,19 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                       input_size, output_size,
                                                       models_path, "context_aware_uniform",
                                                       "context_aware_uniform_13618")
-                f_linear_1_model = load_attn(seed, configs["f_linear_1_{}".format(seed) if
-                                                        args.exp_name != "watershed" else "f_linear_1_new_{}".format(seed)],
-                                            input_size+1, output_size, models_path, "f_linear",
-                                       "f_linear_1" if args.exp_name != "watershed" else "f_linear_1_new")
 
-                f_linear_3_model = load_attn(seed, configs["f_linear_3_{}".format(seed) if
-                args.exp_name != "watershed" else "f_linear_3_new_{}".format(seed)],
-                                       input_size+1, output_size, models_path, "f_linear",
-                                       "f_linear_3" if args.exp_name != "watershed" else "f_linear_3_new")
+                f_linear_1_model = load_attn(seed, configs["f_linear_1_{}".format(seed)],
+                                            input_size, output_size, models_path, "f_linear", "f_linear_1")
 
-                f_linear_6_model = load_attn(seed, configs["f_linear_6_{}".format(seed) if
-                args.exp_name != "watershed" else "f_linear_6_new_{}".format(seed)],
-                                       input_size+1, output_size, models_path, "f_linear",
-                                       "f_linear_6" if args.exp_name != "watershed" else "f_linear_6_new")
+                f_linear_3_model = load_attn(seed, configs["f_linear_3_{}".format(seed)],
+                                       input_size, output_size, models_path, "f_linear", "f_linear_3")
+
+                f_linear_6_model = load_attn(seed, configs["f_linear_6_{}".format(seed)],
+                                       input_size, output_size, models_path, "f_linear", "f_linear_6")
 
                 f_linear_9_model = load_attn(seed, configs["f_linear_9_{}".format(seed) if
                 args.exp_name != "watershed" else "f_linear_9_new_{}".format(seed)],
-                                       input_size+1, output_size, models_path, "f_linear",
+                                       input_size, output_size, models_path, "f_linear",
                                    "f_linear_9" if args.exp_name != "watershed" else "f_linear_9_new")
 
                 predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
@@ -740,8 +735,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
         ind = 0
-        diff_1 = 0
-        diff_2 = 0
+        diff_1 = 1e9
+        diff_2 = 1e9
         loss = 1e9
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
@@ -755,8 +750,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
             if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
-                loss = loss_attn_temp
-                ind = i
+                if abs(loss_attn - loss_attn_multi) < diff_1 and abs(loss_attn - loss_attn_conv) < diff_2:
+                    diff_1 = abs(loss_attn - loss_attn_multi)
+                    diff_2 = abs(loss_attn - loss_attn_conv)
+                    loss = loss_attn_temp
+                    ind = i
             '''if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
                 if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2:
@@ -1110,10 +1108,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     '''create_attn_score_plots()
     print("Done exp {}".format(args.len_pred))'''
     #creat_c_q_plots()
-    create_rmse_plot()
+    #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    #create_attn_score_plots()
+    create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
