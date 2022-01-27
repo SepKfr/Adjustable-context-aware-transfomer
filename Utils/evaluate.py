@@ -802,6 +802,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         configs, _, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
+        seed = ""
 
         _, attn_loss = load_attn(seed, configs["attn_test"],
                                input_size, output_size, models_path, "attn", "attn_test")
