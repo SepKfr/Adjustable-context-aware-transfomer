@@ -98,8 +98,8 @@ def train(args, model, train_en, train_de, train_y,
             torch.save({'model_state_dict': model_state_dict,'train_loss': train_loss_list}, os.path.join(path, args.name))
             del train_loss_list
 
-        if epoch - e > 5:
-            stop = True
+        '''if epoch - e > 5:
+            stop = True'''
 
         print("Average loss: {:.4f}".format(test_loss))
 
