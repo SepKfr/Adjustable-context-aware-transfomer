@@ -783,7 +783,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth', 'ACAT (Ours)', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="best")
+        ax.legend(['Ground Truth', 'ACAT (Ours)', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
