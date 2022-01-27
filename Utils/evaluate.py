@@ -105,14 +105,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      kernel=kernel, filter_length=9).to(device)
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
-        #train_loss = checkpoint["train_loss"]
+        train_loss = checkpoint["train_loss"]
         new_state_dict = dict()
         for k, v in state_dict.items():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)
-        return model
+        return model, train_loss
 
     def get_config(len_of_pred):
         with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -1010,8 +1010,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     #creat_c_q_plots()
     #create_rmse_plot()
     #print("Done exp rmse")
-    #plot_train_loss(48)
-    create_attn_score_plots()
+    plot_train_loss(48)
+    #create_attn_score_plots()
     #create_rmse_plot()
     #create_attn_matrix(48)
 
