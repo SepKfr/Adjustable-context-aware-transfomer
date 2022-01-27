@@ -103,7 +103,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                      tgt_pad_index=0, device=device,
                      attn_type=attn_type,
                      kernel=kernel, filter_length=9).to(device)
-        checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
+        checkpoint = torch.load(os.path.join(mdl_path, "{}".format(name)))
         state_dict = checkpoint["model_state_dict"]
         train_loss = checkpoint["train_loss"]
         new_state_dict = dict()
@@ -802,7 +802,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         configs, _, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
-        seed = ""
 
         _, attn_loss = load_attn(seed, configs["attn_test"],
                                input_size, output_size, models_path, "attn", "attn_test")
