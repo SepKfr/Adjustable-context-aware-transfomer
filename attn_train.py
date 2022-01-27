@@ -60,6 +60,7 @@ def train(args, model, train_en, train_de, train_y,
           config, config_num, best_config, criterion, path):
 
     stop = False
+    model_state_dict = None
     try:
         model.train()
         total_loss = 0
@@ -88,13 +89,14 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 val_loss = val_inner_loss
                 best_config = config
+                model_state_dict = model.state_dict()
                 torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
 
             e = epoch
 
-        '''if epoch == num_epochs - 1:
+        if epoch == num_epochs - 1:
             torch.save({'model_state_dict': model_state_dict,'train_loss': train_loss_list}, os.path.join(path, args.name))
-            del train_loss_list'''
+            del train_loss_list
 
         if epoch - e > 5:
             stop = True
