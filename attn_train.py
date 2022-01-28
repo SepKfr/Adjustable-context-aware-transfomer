@@ -332,6 +332,7 @@ def main():
     erros[args.name].append(float("{:.5f}".format(mae_loss)))
     for q in q_loss:
         erros[args.name].append(float("{:.5f}".format(q)))'''
+    config_file[args.name] = list()
     config_file[args.name].append(layers)
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)

@@ -805,7 +805,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         seed = 21
         torch.manual_seed(seed)
 
-        '''for i, seed in enumerate([21, 9, 1992]):
+        for i, seed in enumerate([21, 9, 1992]):
             torch.manual_seed(seed)
             _, attn_multi_loss[i, :] = load_attn(seed, configs["attn_multi_test_{}".format(seed)],
                                        input_size, output_size, models_path, "attn", "attn_multi_test")
@@ -813,15 +813,15 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
                                input_size, output_size, models_path, "attn", "attn_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
-                                    input_size, output_size, models_path, "conv_attn", "attn_conv_test")'''
+                                    input_size, output_size, models_path, "conv_attn", "attn_conv_test")
         _, attn_temp_cutoff_loss = load_attn(seed, configs["context_aware_uniform_1369_test_{}".format(seed)],
                                            input_size, output_size,
                                            models_path, "context_aware_uniform", "context_aware_uniform_1369_test")
 
-        '''attn_multi_loss = np.mean(attn_multi_loss, axis=0)
+        attn_multi_loss = np.mean(attn_multi_loss, axis=0)
         attn_loss = [sum(attn_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_multi_loss = [sum(attn_multi_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
-        attn_conv_loss = [sum(attn_conv_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]'''
+        attn_conv_loss = [sum(attn_conv_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         attn_temp_cutoff_loss = [sum(attn_temp_cutoff_loss[j + 499 * j:j + 499 * j + 499]) for j in range(0, 50)]
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
@@ -832,9 +832,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ax.set_ylabel("training loss (MSE)")
         ax.set_xlabel("epoch")
         ax.plot(attn_temp_cutoff_loss, color='darkblue')
-        '''ax.plot(attn_loss, color='lightgreen')
+        ax.plot(attn_loss, color='lightgreen')
         ax.plot(attn_multi_loss, color='plum')
-        ax.plot(attn_conv_loss, color='darksalmon')'''
+        ax.plot(attn_conv_loss, color='darksalmon')
         ax.legend(['ACAT (Ours)', 'Transformer', 'Trans-multi',
                    'CNN-trans'], loc="best")
         plt.tight_layout()
