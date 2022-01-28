@@ -810,8 +810,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         seed = 21
         torch.manual_seed(seed)
 
-        _, attn_multi_loss = load_attn(seed, configs["attn_multi_test_{}".format(seed)],
-                                       input_size, output_size, models_path, "attn", "attn_multi_test")
+        '''_, attn_multi_loss = load_attn(seed, configs["attn_multi_test_{}".format(seed)],
+                                       input_size, output_size, models_path, "attn", "attn_multi_test")'''
         _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
                                input_size, output_size, models_path, "attn", "attn_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
