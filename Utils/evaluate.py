@@ -106,12 +106,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         checkpoint = torch.load(os.path.join(mdl_path, "{}_{}".format(name, seed)))
         state_dict = checkpoint["model_state_dict"]
         train_loss = checkpoint["train_loss"]
-        new_state_dict = dict()
+        '''new_state_dict = dict()
         for k, v in state_dict.items():
             k_p = k.replace('module.', '')
             new_state_dict[k_p] = v
 
-        model.load_state_dict(new_state_dict)
+        model.load_state_dict(new_state_dict)'''
         return model, train_loss
 
     def get_config(len_of_pred):
