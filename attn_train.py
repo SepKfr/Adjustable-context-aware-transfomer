@@ -60,7 +60,6 @@ def train(args, model, train_en, train_de, train_y,
           config, config_num, best_config, criterion, path):
 
     stop = False
-    model_state_dict = None
     try:
         model.train()
         total_loss = 0
