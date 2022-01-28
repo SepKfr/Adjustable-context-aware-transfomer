@@ -319,28 +319,28 @@ def main():
 
         print("best config so far: {}".format(best_config))
 
-    test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en_p.to(device),
+    '''test_loss, mae_loss, q_loss = evaluate(best_config, args, test_en_p.to(device),
                                    test_de_p.to(device), test_y_p.to(device),
-                                   test_id_p, criterion, formatter, path, device)
+                                   test_id_p, criterion, formatter, path, device)'''
 
     layers, batch_size, heads, d_model, kernel = best_config
     print("best_config: {}".format(best_config))
 
-    erros[args.name] = list()
+    '''erros[args.name] = list()
     config_file[args.name] = list()
     erros[args.name].append(float("{:.5f}".format(test_loss)))
     erros[args.name].append(float("{:.5f}".format(mae_loss)))
     for q in q_loss:
-        erros[args.name].append(float("{:.5f}".format(q)))
+        erros[args.name].append(float("{:.5f}".format(q)))'''
     config_file[args.name].append(layers)
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
 
-    print("test error for best config {:.4f}".format(test_loss))
-    error_path = "errors_{}_{}.json".format(args.exp_name, seq_len)
+    #print("test error for best config {:.4f}".format(test_loss))
+    #error_path = "errors_{}_{}.json".format(args.exp_name, seq_len)
     config_path = "configs_{}_{}.json".format(args.exp_name, seq_len)
 
-    if os.path.exists(error_path):
+    ''''if os.path.exists(error_path):
         with open(error_path) as json_file:
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
@@ -354,7 +354,7 @@ def main():
             json.dump(json_dat, json_file)
     else:
         with open(error_path, "w") as json_file:
-            json.dump(erros, json_file)
+            json.dump(erros, json_file)'''
 
     if os.path.exists(config_path):
         with open(config_path) as json_file:
