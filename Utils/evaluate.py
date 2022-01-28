@@ -800,17 +800,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         configs, _, models_path = get_config(len_pred)
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
-        attn_multi_loss = np.zeros((3, 25000))
+        #attn_multi_loss = np.zeros((3, 25000))
 
-
-        for i, seed in enumerate([21, 9, 1992]):
+        '''for i, seed in enumerate([21, 9, 1992]):
             torch.manual_seed(seed)
             _, attn_multi_loss[i, :] = load_attn(seed, configs["attn_multi_test_{}".format(seed)],
-                                       input_size, output_size, models_path, "attn", "attn_multi_test")
+                                       input_size, output_size, models_path, "attn", "attn_multi_test")'''
 
         seed = 21
         torch.manual_seed(seed)
 
+        _, attn_multi_loss= load_attn(seed, configs["attn_multi_test_{}".format(seed)],
+                                       input_size, output_size, models_path, "attn", "attn_multi_test")
         _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
                                input_size, output_size, models_path, "attn", "attn_test")
         _, attn_conv_loss = load_attn(seed, configs["attn_conv_test_{}".format(seed)],
