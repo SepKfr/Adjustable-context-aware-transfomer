@@ -115,7 +115,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         return model, train_loss
 
     def get_config(len_of_pred):
-        with open('configs_{}_{}.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
+        with open('configs_{}_{}_3.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
             configs = json.load(json_file)
         if args.exp_name == "watershed":
             configs_2 = configs
