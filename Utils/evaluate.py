@@ -802,13 +802,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         output_size = test_de.shape[3]
         attn_multi_loss = np.zeros((3, 25000))
 
-        seed = 21
-        torch.manual_seed(seed)
 
         for i, seed in enumerate([21, 9, 1992]):
             torch.manual_seed(seed)
             _, attn_multi_loss[i, :] = load_attn(seed, configs["attn_multi_test_{}".format(seed)],
                                        input_size, output_size, models_path, "attn", "attn_multi_test")
+
+        seed = 21
+        torch.manual_seed(seed)
 
         _, attn_loss = load_attn(seed, configs["attn_test_{}".format(seed)],
                                input_size, output_size, models_path, "attn", "attn_test")
