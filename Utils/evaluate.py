@@ -112,7 +112,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             new_state_dict[k_p] = v
 
         model.load_state_dict(new_state_dict)'''
-        return model, train_loss
+        return model
 
     def get_config(len_of_pred):
         with open('configs_{}_{}_3.json'.format(args.exp_name, len_of_pred), 'r') as json_file:
@@ -187,7 +187,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def create_rmse_plot():
 
-        #errors_new_test = dict()
+        errors_new_test = dict()
         mae = nn.L1Loss()
 
         def calculate_loss_per_step(predictions, tgt_all, ln_pred):
@@ -208,11 +208,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         def get_preds_steps(timesteps):
 
-            rmse_lstm = np.zeros((3, timesteps))
+            '''rmse_lstm = np.zeros((3, timesteps))
             rmse_attn = np.zeros((3, timesteps))
             rmse_attn_multi = np.zeros((3, timesteps))
             rmse_attn_conv = np.zeros((3, timesteps))
-            rmse_attn_temp_cutoff = np.zeros((3, timesteps))
+            rmse_attn_temp_cutoff = np.zeros((3, timesteps))'''
 
             configs, configs_2, models_path = get_config(timesteps)
             test_en, test_de, test_y, test_id = get_test_data(timesteps+168)
@@ -221,11 +221,20 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], timesteps))
             tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
-            predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            '''predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
             predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
             predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
             predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
             predictions_context_aware_1369 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_context_aware_13612 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_context_aware_13615 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_context_aware_13618 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))'''
+            predictions_context_aware_13621 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            predictions_context_aware_13624 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            '''f_linear_1 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            f_linear_3 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            f_linear_6 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))
+            f_linear_9 = np.zeros((3, test_de.shape[0], test_de.shape[1], timesteps))'''
 
             flag = False
             for i, seed in enumerate([21, 9, 1992]):
@@ -234,7 +243,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 input_size = test_en.shape[3]
                 output_size = test_de.shape[3]
 
-                lstm_model = load_lstm(seed, configs_2["lstm_new_{}".format(seed)],
+                '''lstm_model = load_lstm(seed, configs_2["lstm_new_{}".format(seed)],
                                        input_size, output_size, models_path)
                 attn_model = load_attn(seed, configs_2["attn_new_{}".format(seed)],
                                        input_size, output_size, models_path, "attn", "attn_new")
@@ -246,8 +255,40 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                    input_size, output_size,
                                                    models_path, "context_aware_uniform",
                                                    "context_aware_uniform_1369")
+                context_aware_model_13612 = load_attn(seed, configs["context_aware_uniform_13612_{}".format(seed)],
+                                                     input_size, output_size,
+                                                     models_path, "context_aware_uniform",
+                                                     "context_aware_uniform_13612")
+                context_aware_model_13615 = load_attn(seed, configs["context_aware_uniform_13615_{}".format(seed)],
+                                                      input_size, output_size,
+                                                      models_path, "context_aware_uniform",
+                                                      "context_aware_uniform_13615")
+                context_aware_model_13618 = load_attn(seed, configs["context_aware_uniform_13618_{}".format(seed)],
+                                                      input_size, output_size,
+                                                      models_path, "context_aware_uniform",
+                                                      "context_aware_uniform_13618")'''
+                context_aware_model_13621 = load_attn(seed, configs["context_aware_uniform_13621_{}".format(seed)],
+                                                      input_size, output_size,
+                                                      models_path, "context_aware_uniform",
+                                                      "context_aware_uniform_13621")
+                context_aware_model_13624 = load_attn(seed, configs["context_aware_uniform_13624_{}".format(seed)],
+                                                      input_size, output_size,
+                                                      models_path, "context_aware_uniform",
+                                                      "context_aware_uniform_13624")
 
-                predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                '''f_linear_1_model = load_attn(seed, configs["f_linear_1_{}".format(seed)],
+                                            input_size, output_size, models_path, "f_linear", "f_linear_1")
+
+                f_linear_3_model = load_attn(seed, configs["f_linear_3_{}".format(seed)],
+                                       input_size, output_size, models_path, "f_linear", "f_linear_3")
+
+                f_linear_6_model = load_attn(seed, configs["f_linear_6_{}".format(seed)],
+                                       input_size, output_size, models_path, "f_linear", "f_linear_6")
+
+                f_linear_9_model = load_attn(seed, configs["f_linear_9_{}".format(seed)],
+                                       input_size, output_size, models_path, "f_linear", "f_linear_9")'''
+
+                '''predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
                 predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
                                                                       test_en, test_de, test_id, test_y_output, test_y_input)
@@ -259,107 +300,164 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                                                   tgt_all_input, flag, test_en,
                                                                                   test_de, test_id, test_y_output, test_y_input)
 
-                rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :], tgt_all, timesteps)
-                rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :], tgt_all, timesteps)
-                rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :], tgt_all, timesteps)
-                rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
-                rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_context_aware_1369[i, :, :, :], tgt_all, timesteps)
+                predictions_context_aware_13612[i, :, :, :], flag = make_predictions(context_aware_model_13612, tgt_all,
+                                                                                    tgt_all_input, flag, test_en,
+                                                                                    test_de, test_id, test_y_output,
+                                                                                    test_y_input)
+
+                predictions_context_aware_13615[i, :, :, :], flag = make_predictions(context_aware_model_13615, tgt_all,
+                                                                                    tgt_all_input, flag, test_en,
+                                                                                    test_de, test_id, test_y_output,
+                                                                                    test_y_input)
+
+                predictions_context_aware_13618[i, :, :, :], flag = make_predictions(context_aware_model_13618, tgt_all,
+                                                                                    tgt_all_input, flag, test_en,
+                                                                                    test_de, test_id, test_y_output,
+                                                                                    test_y_input)'''
+
+                predictions_context_aware_13621[i, :, :, :], flag = make_predictions(context_aware_model_13621, tgt_all,
+                                                                                    tgt_all_input, flag, test_en,
+                                                                                    test_de, test_id, test_y_output,
+                                                                                    test_y_input)
+
+                predictions_context_aware_13624[i, :, :, :], flag = make_predictions(context_aware_model_13624, tgt_all,
+                                                                                    tgt_all_input, flag, test_en,
+                                                                                    test_de, test_id, test_y_output,
+                                                                                    test_y_input)
+
+                '''f_linear_1[i, :, :, :], flag = make_predictions(f_linear_1_model, tgt_all,
+                                                                                     tgt_all_input, flag, test_en,
+                                                                                     test_de, test_id, test_y_output,
+                                                                                     test_y_input)
+
+                f_linear_3[i, :, :, :], flag = make_predictions(f_linear_3_model, tgt_all,
+                                                                tgt_all_input, flag, test_en,
+                                                                test_de, test_id, test_y_output,
+                                                                test_y_input)
+
+                f_linear_6[i, :, :, :], flag = make_predictions(f_linear_6_model, tgt_all,
+                                                                tgt_all_input, flag, test_en,
+                                                                test_de, test_id, test_y_output,
+                                                                test_y_input)
+
+                f_linear_9[i, :, :, :], flag = make_predictions(f_linear_9_model, tgt_all,
+                                                                tgt_all_input, flag, test_en,
+                                                                test_de, test_id, test_y_output,
+                                                                test_y_input)'''
+
+                # rmse_lstm[i, :] = calculate_loss_per_step(predictions_lstm[i, :, :, :], tgt_all, timesteps)
+                # rmse_attn[i, :] = calculate_loss_per_step(predictions_attn[i, :, :, :], tgt_all, timesteps)
+                # rmse_attn_multi[i, :] = calculate_loss_per_step(predictions_attn_multi[i, :, :, :], tgt_all, timesteps)
+                # rmse_attn_conv[i, :] = calculate_loss_per_step(predictions_attn_conv[i, :, :, :], tgt_all, timesteps)
+                # rmse_attn_temp_cutoff[i, :] = calculate_loss_per_step(predictions_context_aware_1369[i, :, :, :], tgt_all, timesteps)
 
                 '''errors_new_test["lstm_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_lstm[i, :, :, :], tgt_all)
                 errors_new_test["attn_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn[i, :, :, :], tgt_all)
                 errors_new_test["attn_multi_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn_multi[i, :, :, :], tgt_all)
                 errors_new_test["attn_conv_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_attn_conv[i, :, :, :], tgt_all)
-                errors_new_test["context_aware_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_1369[i, :, :, :], tgt_all)'''
+                errors_new_test["f_linear_1_{}_{}".format(timesteps, seed)] = cal_mse_mae(f_linear_1[i, :, :, :], tgt_all)
+                errors_new_test["f_linear_3_{}_{}".format(timesteps, seed)] = cal_mse_mae(f_linear_3[i, :, :, :], tgt_all)
+                errors_new_test["f_linear_6_{}_{}".format(timesteps, seed)] = cal_mse_mae(f_linear_6[i, :, :, :], tgt_all)
+                errors_new_test["f_linear_9_{}_{}".format(timesteps, seed)] = cal_mse_mae(f_linear_9[i, :, :, :], tgt_all)
 
-            lstm = np.mean(rmse_lstm, axis=0)
-            lstm_err = np.std(rmse_lstm, axis=0)
-            attn = np.mean(rmse_attn, axis=0)
-            attn_err = np.std(rmse_attn, axis=0)
-            attn_multi = np.mean(rmse_attn_multi, axis=0)
-            attn_multi_err = np.std(rmse_attn_multi, axis=0)
-            attn_conv = np.mean(rmse_attn_conv, axis=0)
-            attn_conv_err = np.std(rmse_attn_conv, axis=0)
-            attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
-            attn_temp_cutoff_err = np.std(rmse_attn_temp_cutoff, axis=0)
+                errors_new_test["context_aware_1369_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_1369[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_13612_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_13612[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_13615_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_13615[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_13618_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_13618[i, :, :, :], tgt_all)'''
+                errors_new_test["context_aware_13621_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_13621[i, :, :, :], tgt_all)
+                errors_new_test["context_aware_13624_{}_{}".format(timesteps, seed)] = cal_mse_mae(predictions_context_aware_13624[i, :, :, :], tgt_all)
 
-            return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff, lstm_err, attn_err, attn_multi_err, \
-                   attn_conv_err, attn_temp_cutoff_err
+            # lstm = np.mean(rmse_lstm, axis=0)
+            # lstm_err = np.std(rmse_lstm, axis=0)
+            # attn = np.mean(rmse_attn, axis=0)
+            # attn_err = np.std(rmse_attn, axis=0)
+            # attn_multi = np.mean(rmse_attn_multi, axis=0)
+            # attn_multi_err = np.std(rmse_attn_multi, axis=0)
+            # attn_conv = np.mean(rmse_attn_conv, axis=0)
+            # attn_conv_err = np.std(rmse_attn_conv, axis=0)
+            # attn_temp_cutoff = np.mean(rmse_attn_temp_cutoff, axis=0)
+            # attn_temp_cutoff_err = np.std(rmse_attn_temp_cutoff, axis=0)
 
-        lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24,  \
-            lstm_err_24, attn_err_24, attn_multi_err_24, attn_conv_err_24, attn_temp_cutoff_err_24 = get_preds_steps(24)
-        lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
-        lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)
-        x_1 = [0, 8, 16, 24]
-        x_2 = [0, 8, 16, 24, 32, 40, 48]
-        plt.rc('axes', labelsize=14)
-        plt.rc('axes', titlesize=14)
-        plt.rc('legend', fontsize=12)
+            # return lstm, attn, attn_multi, attn_conv, attn_temp_cutoff, lstm_err, attn_err, attn_multi_err, \
+            #        attn_conv_err, attn_temp_cutoff_err
 
-        plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", color='darkblue')
-        eb1 = plt.errorbar(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]),
-                     np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), color='darkblue')
-        eb1[-1][0].set_linestyle('-.')
-        plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", color='darksalmon')
-        eb2 = plt.errorbar(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]),
-                     np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), color='darksalmon')
-        eb2[-1][0].set_linestyle('-.')
-        plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", color='lightgreen')
-        eb3 = plt.errorbar(x_1, np.append(attn_24[0::8], attn_24[-1]),
-                     np.append(attn_err_24[0::8], attn_err_24[-1]), color='lightgreen')
-        eb3[-1][0].set_linestyle('-.')
-        plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", color='plum')
-        eb4 = plt.errorbar(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]),
-                     np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), color='plum')
-        eb4[-1][0].set_linestyle('-.')
-        plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", color='lightblue')
-        eb5 = plt.errorbar(x_1, np.append(lstm_24[0::8], lstm_24[-1]),
-                 np.append(lstm_err_24[0::8], lstm_err_24[-1]), color='lightblue')
-        eb5[-1][0].set_linestyle('-.')
-        plt.xlabel("Output Length")
-        plt.ylabel("RMSE Score")
-        plt.legend(['ACAT (Ours)', 'CNN-trans',
-                    'Transformer',
-                    'Trans-multi',
-                    'LSTM'
-                    ], bbox_to_anchor=(1, 1), loc='best')
-        plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
-        plt.close()
+        # lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24,  \
+        #     lstm_err_24, attn_err_24, attn_multi_err_24, attn_conv_err_24, attn_temp_cutoff_err_24 = get_preds_steps(24)
+        # lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
+        # lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)
+        # x_1 = [0, 8, 16, 24]
+        # x_2 = [0, 8, 16, 24, 32, 40, 48]
+        # plt.rc('axes', labelsize=14)
+        # plt.rc('axes', titlesize=14)
+        # plt.rc('legend', fontsize=12)
+        #
+        # plt.plot(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]), marker="o", linestyle="-", color='darkblue')
+        # eb1 = plt.errorbar(x_1, np.append(attn_temp_cutoff_24[0::8], attn_temp_cutoff_24[-1]),
+        #              np.append(attn_temp_cutoff_err_24[0::8], attn_temp_cutoff_err_24[-1]), color='darkblue')
+        # eb1[-1][0].set_linestyle('-.')
+        # plt.plot(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]), marker="o", linestyle="-", color='darksalmon')
+        # eb2 = plt.errorbar(x_1, np.append(attn_conv_24[0::8], attn_conv_24[-1]),
+        #              np.append(attn_conv_err_24[0::8], attn_conv_err_24[-1]), color='darksalmon')
+        # eb2[-1][0].set_linestyle('-.')
+        # plt.plot(x_1, np.append(attn_24[0::8], attn_24[-1]), marker="o", linestyle="-", color='lightgreen')
+        # eb3 = plt.errorbar(x_1, np.append(attn_24[0::8], attn_24[-1]),
+        #              np.append(attn_err_24[0::8], attn_err_24[-1]), color='lightgreen')
+        # eb3[-1][0].set_linestyle('-.')
+        # plt.plot(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]), marker="o", linestyle="-", color='plum')
+        # eb4 = plt.errorbar(x_1, np.append(attn_multi_24[0::8], attn_multi_24[-1]),
+        #              np.append(attn_multi_err_24[0::8], attn_multi_err_24[-1]), color='plum')
+        # eb4[-1][0].set_linestyle('-.')
+        # plt.plot(x_1, np.append(lstm_24[0::8], lstm_24[-1]), marker="o", linestyle="-", color='lightblue')
+        # eb5 = plt.errorbar(x_1, np.append(lstm_24[0::8], lstm_24[-1]),
+        #          np.append(lstm_err_24[0::8], lstm_err_24[-1]), color='lightblue')
+        # eb5[-1][0].set_linestyle('-.')
+        # plt.xlabel("Output Length")
+        # plt.ylabel("RMSE Score")
+        # plt.legend(['ACAT', 'CNN-trans',
+        #             'Transformer',
+        #             'Trans-multi',
+        #             'LSTM'
+        #             ], bbox_to_anchor=(1, 1), loc='best')
+        # plt.tight_layout()
+        # plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
+        # plt.close()
+        #
+        # plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
+        #          color='darkblue')
+        # eb1 = plt.errorbar(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]),
+        #              np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), color='darkblue')
+        # eb1[-1][0].set_linestyle('-.')
+        # plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
+        # eb2 = plt.errorbar(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]),
+        #              np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), color='darksalmon')
+        # eb2[-1][0].set_linestyle('-.')
+        # plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
+        # eb3 = plt.errorbar(x_2, np.append(attn_48[0::8], attn_48[-1]),
+        #              np.append(attn_err_48[0::8], attn_err_48[-1]), color='lightgreen')
+        # eb3[-1][0].set_linestyle('-.')
+        # plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
+        # eb4 = plt.errorbar(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]),
+        #              np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), color='plum')
+        # eb4[-1][0].set_linestyle('-.')
+        # plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
+        # eb5 = plt.errorbar(x_2, np.append(lstm_48[0::8], lstm_48[-1]),
+        #              np.append(lstm_err_48[0::8], lstm_err_48[-1]), color='lightblue')
+        # eb5[-1][0].set_linestyle('-.')
+        # plt.xlabel("Output Length")
+        # plt.ylabel("RMSE Score")
+        # plt.legend(['ACAT', 'CNN-trans',
+        #             'Transformer',
+        #             'Trans-multi',
+        #             'LSTM',
+        #             ],  bbox_to_anchor=(1, 1), loc='best')
+        # plt.tight_layout()
+        # plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 48)), dpi=1000)
+        # plt.close()
 
-        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
-                 color='darkblue')
-        eb1 = plt.errorbar(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]),
-                     np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), color='darkblue')
-        eb1[-1][0].set_linestyle('-.')
-        plt.plot(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]), marker="o", linestyle="-", color='darksalmon')
-        eb2 = plt.errorbar(x_2, np.append(attn_conv_48[0::8], attn_conv_48[-1]),
-                     np.append(attn_conv_err_48[0::8], attn_conv_err_48[-1]), color='darksalmon')
-        eb2[-1][0].set_linestyle('-.')
-        plt.plot(x_2, np.append(attn_48[0::8], attn_48[-1]), marker="o", linestyle="-", color='lightgreen')
-        eb3 = plt.errorbar(x_2, np.append(attn_48[0::8], attn_48[-1]),
-                     np.append(attn_err_48[0::8], attn_err_48[-1]), color='lightgreen')
-        eb3[-1][0].set_linestyle('-.')
-        plt.plot(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]), marker="o", linestyle="-", color='plum')
-        eb4 = plt.errorbar(x_2, np.append(attn_multi_48[0::8], attn_multi_48[-1]),
-                     np.append(attn_multi_err_48[0::8], attn_multi_err_48[-1]), color='plum')
-        eb4[-1][0].set_linestyle('-.')
-        plt.plot(x_2, np.append(lstm_48[0::8], lstm_48[-1]), marker="o", linestyle="-", color='lightblue')
-        eb5 = plt.errorbar(x_2, np.append(lstm_48[0::8], lstm_48[-1]),
-                     np.append(lstm_err_48[0::8], lstm_err_48[-1]), color='lightblue')
-        eb5[-1][0].set_linestyle('-.')
-        plt.xlabel("Output Length")
-        plt.ylabel("RMSE Score")
-        plt.legend(['ACAT (Ours)', 'CNN-trans',
-                    'Transformer',
-                    'Trans-multi',
-                    'LSTM',
-                    ],  bbox_to_anchor=(1, 1), loc='best')
-        plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 48)), dpi=1000)
-        plt.close()
-
-        '''with open("{}_errors_new_test.json".format(args.exp_name), "w") as json_file:
-            json.dump(errors_new_test, json_file)'''
+        get_preds_steps(24)
+        get_preds_steps(48)
+        with open("{}_errors_new_test_2.json".format(args.exp_name), "w") as json_file:
+            json.dump(errors_new_test, json_file)
 
         '''
 
