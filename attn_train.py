@@ -59,6 +59,7 @@ def train(args, model, train_en, train_de, train_y,
           val_inner_loss, optimizer, train_loss_list,
           config, config_num, best_config, criterion, path):
 
+    model_state_dict = dict()
     stop = False
     try:
         model.train()
