@@ -287,8 +287,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         lstm_24, attn_24, attn_multi_24, attn_conv_24, attn_temp_cutoff_24,  \
             lstm_err_24, attn_err_24, attn_multi_err_24, attn_conv_err_24, attn_temp_cutoff_err_24 = get_preds_steps(24)
-        '''lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
-        lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)'''
+        lstm_48, attn_48, attn_multi_48, attn_conv_48, attn_temp_cutoff_48, \
+        lstm_err_48, attn_err_48, attn_multi_err_48, attn_conv_err_48, attn_temp_cutoff_err_48 = get_preds_steps(48)
         x_1 = [0, 8, 16, 24]
         x_2 = [0, 8, 16, 24, 32, 40, 48]
         plt.rc('axes', labelsize=14)
@@ -315,8 +315,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         eb5 = plt.errorbar(x_1, np.append(lstm_24[0::8], lstm_24[-1]),
                  np.append(lstm_err_24[0::8], lstm_err_24[-1]), color='lightblue')
         eb5[-1][0].set_linestyle('-.')
-        plt.xlabel("Output Length")
-        plt.ylabel("RMSE Score")
+        plt.xlabel("Forecasting Horizon")
+        plt.ylabel("NRMSE")
         plt.legend(['ACAT (Ours)', 'CNN-trans',
                     'Transformer',
                     'Trans-multi',
@@ -326,7 +326,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
         plt.close()
 
-        '''plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
+        plt.plot(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]), marker="o", linestyle="-",
                  color='darkblue')
         eb1 = plt.errorbar(x_2, np.append(attn_temp_cutoff_48[0::8], attn_temp_cutoff_48[-1]),
                      np.append(attn_temp_cutoff_err_48[0::8], attn_temp_cutoff_err_48[-1]), color='darkblue')
@@ -347,16 +347,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         eb5 = plt.errorbar(x_2, np.append(lstm_48[0::8], lstm_48[-1]),
                      np.append(lstm_err_48[0::8], lstm_err_48[-1]), color='lightblue')
         eb5[-1][0].set_linestyle('-.')
-        plt.xlabel("Output Length")
-        plt.ylabel("RMSE Score")
+        plt.xlabel("Forecasting Horizon")
+        plt.ylabel("NRMSE")
         plt.legend(['ACAT (Ours)', 'CNN-trans',
                     'Transformer',
                     'Trans-multi',
-                    'LSTM',
-                    ],  bbox_to_anchor=(1, 1))
+                    'LSTM'
+                    ], bbox_to_anchor=(1, 1), loc='upper left')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 48)), dpi=1000)
-        plt.close()'''
+        plt.close()
 
         '''with open("{}_errors_new_test.json".format(args.exp_name), "w") as json_file:
             json.dump(errors_new_test, json_file)'''
