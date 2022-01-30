@@ -321,7 +321,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     'Transformer',
                     'Trans-multi',
                     'LSTM'
-                    ], bbox_to_anchor=(1, 1), loc='upper right')
+                    ], bbox_to_anchor=(1, 1))
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 24)), dpi=1000)
         plt.close()
@@ -353,7 +353,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     'Transformer',
                     'Trans-multi',
                     'LSTM',
-                    ],  bbox_to_anchor=(1, 1), loc='best')
+                    ],  bbox_to_anchor=(1, 1))
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'rmses_{}_{}.pdf'.format(args.exp_name, 48)), dpi=1000)
         plt.close()'''
