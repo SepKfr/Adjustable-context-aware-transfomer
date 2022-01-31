@@ -759,13 +759,13 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     min(pred_attn[ind, :]),
                     min(pred_attn_multi[ind, :]),
                     min(pred_attn_conv[ind, :]),
-                    min(predictions_context_aware_1369[ind, :]))
+                    min(pred_context_aware_1369[ind, :]))
         y_max = max(max(tgt_all[ind, :]),
                     max(tgt_all_input[ind, :]),
                     max(pred_attn[ind, :]),
                     max(pred_attn_multi[ind, :]),
                     max(pred_attn_conv[ind, :]),
-                    max(predictions_context_aware_1369[ind, :]))
+                    max(pred_context_aware_1369[ind, :]))
 
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
