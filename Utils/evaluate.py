@@ -776,7 +776,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='gray')
-        ax.plot(np.arange(0, total_len - enc_step), predictions_context_aware_1369[ind, :], color='darkblue')
+        ax.plot(np.arange(0, total_len - enc_step), pred_context_aware_1369[ind, :], color='darkblue')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='lightgreen')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='plum')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
