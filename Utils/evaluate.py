@@ -144,7 +144,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         return flat_prediction
 
     def make_predictions(model, targets_all, targets_all_input, flg,
-                         test_en, test_de, test_id, test_y_output, test_input):
+                         test_en, test_de, test_id, test_y_output, test_y_input):
 
         model.eval()
 
