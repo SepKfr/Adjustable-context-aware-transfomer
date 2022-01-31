@@ -632,8 +632,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
         ind = 0
-        loss = 1e9
-        for i in range(15872):
+        loss_temp = 1e9
+        diff = 0
+        ind = random.randint(0, 15872)
+        ''''for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_context_aware_1369[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
             loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
@@ -645,11 +647,15 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
                                                   torch.from_numpy(tgt_all[i, :])))
 
-            if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
+            if loss_attn_temp < loss_temp and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi and loss_attn_temp < loss_lstm:
-                    loss = loss_attn_temp
+                loss_temp = loss_attn_temp
+                if loss_attn - loss_attn_temp > diff:
+                    diff = loss_attn - loss_attn_temp
                     ind = i
-            '''if loss_attn_temp < loss:
+        
+                    
+            if loss_attn_temp < loss:
                     loss = loss_attn_temp
                     ind = i'''
 
