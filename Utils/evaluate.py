@@ -552,7 +552,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
 
-        self_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
+        '''self_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
         enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))
 
@@ -566,50 +566,54 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         self_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
-        enc_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))
+        enc_attn_temp_cutoff_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_en.shape[2], test_en.shape[2]))'''
 
+        predictions_lstm = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn_multi = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         predictions_attn_conv = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        predictions_attn_temp_cutoff = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        predictions_context_aware_1369 = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2]))
 
         tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
         tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
+        flag = False
         for i, seed in enumerate([21, 9, 1992]):
-
             torch.manual_seed(seed)
+            input_size = test_en.shape[3]
+            output_size = test_de.shape[3]
 
+            lstm_model = load_lstm(seed, configs_2["lstm_new_{}".format(seed)],
+                                   input_size, output_size, models_path)
             attn_model = load_attn(seed, configs_2["attn_new_{}".format(seed)],
                                    input_size, output_size, models_path, "attn", "attn_new")
             attn_multi_model = load_attn(seed, configs_2["attn_multi_new_{}".format(seed)],
                                          input_size, output_size, models_path, "attn", "attn_multi_new")
             attn_conv_model = load_attn(seed, configs_2["attn_conv_1369_new_{}".format(seed)],
                                         input_size, output_size, models_path, "conv_attn", "attn_conv_1369_new")
-            attn_temp_cutoff_model = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
-                                               input_size, output_size,
-                                               models_path, "context_aware_uniform",
-                                               "context_aware_uniform_1369")
+            context_aware_model_1369 = load_attn(seed, configs["context_aware_uniform_1369_{}".format(seed)],
+                                                 input_size, output_size,
+                                                 models_path, "context_aware_uniform",
+                                                 "context_aware_uniform_1369")
 
-            flg = False
-            predictions_attn[i, :, :, :], enc_attn_scores[i, :, :, :], \
-                self_attn_scores[i, :, :, :, :], dec_enc_attn_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
-                        test_y_output, test_y_input, flg)
-            predictions_attn_multi[i, :, :, :], enc_attn_multi_scores[i, :, :, :],\
-                self_attn_multi_scores[i, :, :, :, :], dec_enc_attn_multi_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_multi_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
-                        test_y_output, test_y_input, flg)
-            predictions_attn_conv[i, :, :, :], enc_attn_conv_scores[i, :, :, :], \
-                self_attn_conv_scores[i, :, :, :, :], dec_enc_attn_conv_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_conv_model, tgt_all_input, tgt_all, test_de, test_en, test_id,
-                        test_y_output, test_y_input, flg)
-            predictions_attn_temp_cutoff[i, :, :, :], enc_attn_temp_cutoff_scores[i, :, :, :],\
-                self_attn_temp_cutoff_scores[i, :, :, :, :], dec_enc_attn_temp_cutoff_scores[i, :, :, :, :], flg = \
-                get_attn_scores(attn_temp_cutoff_model, tgt_all_input, tgt_all,test_de, test_en, test_id,
-                        test_y_output, test_y_input, flg)
+            predictions_lstm[i, :, :, :], flag = make_predictions(lstm_model, tgt_all, tgt_all_input, flag,
+                                                                  test_en, test_de, test_id, test_y_output,
+                                                                  test_y_input)
+            predictions_attn[i, :, :, :], flag = make_predictions(attn_model, tgt_all, tgt_all_input, flag,
+                                                                  test_en, test_de, test_id, test_y_output,
+                                                                  test_y_input)
+            predictions_attn_multi[i, :, :, :], flag = make_predictions(attn_multi_model, tgt_all, tgt_all_input, flag,
+                                                                        test_en, test_de, test_id, test_y_output,
+                                                                        test_y_input)
+            predictions_attn_conv[i, :, :, :], flag = make_predictions(attn_conv_model, tgt_all, tgt_all_input, flag,
+                                                                       test_en, test_de, test_id, test_y_output,
+                                                                       test_y_input)
+            predictions_context_aware_1369[i, :, :, :], flag = make_predictions(context_aware_model_1369, tgt_all,
+                                                                                tgt_all_input, flag, test_en,
+                                                                                test_de, test_id, test_y_output,
+                                                                                test_y_input)
 
-        enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
+        '''enc_attn_scores, self_attn_scores, dec_enc_attn_scores = \
             np.mean(np.mean(enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1], -1),\
             np.mean(np.mean(self_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
             np.mean(np.mean(dec_enc_attn_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
@@ -625,22 +629,20 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             np.mean(np.mean(enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0] * test_de.shape[1],
                                                                                     -1),\
             np.mean(np.mean(self_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1), \
-            np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)
+            np.mean(np.mean(dec_enc_attn_temp_cutoff_scores, axis=0), axis=-2).reshape(test_de.shape[0]*test_de.shape[1], -1)'''
 
+        pred_lstm = np.mean(predictions_lstm, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn = np.mean(predictions_attn, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_multi = np.mean(predictions_attn_multi, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         pred_attn_conv = np.mean(predictions_attn_conv, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
-        pred_attn_temp_cutoff = np.mean(predictions_attn_temp_cutoff, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
+        pred_context_aware_1369 = np.mean(predictions_context_aware_1369, axis=0).reshape(test_de.shape[0]*test_de.shape[1], -1)
         tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
 
         ind = 0
-        diff_1 = 0
-        diff_2 = 0
-        diff_3 = 0
         loss = 1e9
         for i in range(15872):
-            loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_attn_temp_cutoff[i, :]),
+            loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_context_aware_1369[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
             loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
@@ -648,22 +650,19 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                                  torch.from_numpy(tgt_all[i, :])))
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
+            loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
+                                                  torch.from_numpy(tgt_all[i, :])))
 
             '''if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
                     loss = loss_attn_temp
                     ind = i'''
             if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
-                    loss_attn_temp < loss_attn_multi:
-                if loss_attn - loss_attn_temp > diff_1 and loss_attn_multi - loss_attn_temp > diff_2 \
-                        and loss_attn_conv - loss_attn_temp > diff_3:
+                    loss_attn_temp < loss_attn_multi and loss_attn_temp < loss_lstm:
                     loss = loss_attn_temp
-                    diff_1 = loss_attn - loss_attn_temp
-                    diff_2 = loss_attn_multi - loss_attn_temp
-                    diff_3 = loss_attn_conv - loss_attn_temp
                     ind = i
 
-        y_max = max(max(enc_attn_scores[ind, :]),
+        '''y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
                     max(enc_attn_multi_scores[ind, :]),
                     max(enc_attn_temp_cutoff_scores[ind, :]),
@@ -681,7 +680,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     min(self_attn_conv_scores[ind, :]),
                     min(self_attn_multi_scores[ind, :]),
                     min(self_attn_temp_cutoff_scores[ind, :]
-                    ))
+                    ))'''
 
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
@@ -695,7 +694,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         spl = make_interp_spline(x, enc_attn_temp_cutoff_scores[ind,], k=3)
         enc_self_smooth = spl(xnew)'''
 
-        xnew_1 = np.linspace(min(x_1), max(x_1), 300)
+        '''xnew_1 = np.linspace(min(x_1), max(x_1), 300)
         spl = make_interp_spline(x_1, self_attn_temp_cutoff_scores[ind,], k=3)
         dec_self_smooth = spl(xnew_1)
 
@@ -735,9 +734,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', titlesize=16)
 
         fig, ax_2 = plt.subplots()
-        '''xnew = np.linspace(min(x), max(x), 300)
+        xnew = np.linspace(min(x), max(x), 300)
         spl = make_interp_spline(x, dec_enc_attn_temp_cutoff_scores[ind, ], k=3)
-        power_smooth = spl(xnew)'''
+        power_smooth = spl(xnew)
 
         ax_2.plot(x, dec_enc_attn_temp_cutoff_scores[ind,], color='darkblue')
         ax_2.plot(x, dec_enc_attn_scores[ind, ], color='lightgreen')
@@ -753,20 +752,20 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'cross_attn_scores_{}_{}.pdf'.format(args.exp_name, args.len_pred)),
                     dpi=1000)
-        plt.close()
+        plt.close()'''
 
         y_min = min(min(tgt_all[ind, :]),
                     min(tgt_all_input[ind, :]),
                     min(pred_attn[ind, :]),
                     min(pred_attn_multi[ind, :]),
                     min(pred_attn_conv[ind, :]),
-                    min(pred_attn_temp_cutoff[ind, :]))
+                    min(predictions_context_aware_1369[ind, :]))
         y_max = max(max(tgt_all[ind, :]),
                     max(tgt_all_input[ind, :]),
                     max(pred_attn[ind, :]),
                     max(pred_attn_multi[ind, :]),
                     max(pred_attn_conv[ind, :]),
-                    max(pred_attn_temp_cutoff[ind, :]))
+                    max(predictions_context_aware_1369[ind, :]))
 
         params = {'mathtext.default': 'regular'}
         plt.rcParams.update(params)
@@ -777,13 +776,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ax.plot(np.arange(-enc_step, total_len - enc_step), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                  color='gray')
-        ax.plot(np.arange(0, total_len - enc_step), pred_attn_temp_cutoff[ind, :], color='darkblue')
+        ax.plot(np.arange(0, total_len - enc_step), predictions_context_aware_1369[ind, :], color='darkblue')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn[ind, :], color='lightgreen')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_multi[ind, :], color='plum')
         ax.plot(np.arange(0, total_len - enc_step), pred_attn_conv[ind, :], color='darksalmon')
+        ax.plot(np.arange(0, total_len - enc_step), pred_lstm[ind, :], color='skyblue')
         ax.vlines(0, ymin=y_min, ymax=y_max, colors='black')
 
-        ax.legend(['Ground Truth', 'ACAT (Ours)', 'Transformer', 'Trans-multi', 'CNN-trans'], loc="upper left")
+        ax.legend(['Ground Truth', 'ACAT (Ours)', 'Transformer', 'Trans-multi', 'CNN-trans', 'LSTM'], loc="upper left")
 
         ax.set_ylabel("Solute Concentration") if args.exp_name == "watershed" \
             else ax.set_ylabel("Electricity Consumption") if args.exp_name == "electricity" \
@@ -1020,9 +1020,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    #create_attn_score_plots()
+    create_attn_score_plots()
     #create_rmse_plot()
-    create_attn_matrix(48)
+    #create_attn_matrix(48)
 
 
 def main():
