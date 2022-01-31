@@ -636,22 +636,22 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_context_aware_1369[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
-            '''loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
+            loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
             loss_attn_conv = math.sqrt(criterion(torch.from_numpy(pred_attn_conv[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
             loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
-                                                  torch.from_numpy(tgt_all[i, :])))'''
+                                                  torch.from_numpy(tgt_all[i, :])))
 
-            '''if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
-                    loss_attn_temp < loss_attn_multi:
-                    loss = loss_attn_temp
-                    ind = i'''
-            if loss_attn_temp < loss:
+            if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
+                    loss_attn_temp < loss_attn_multi and loss_attn_temp < loss_lstm:
                     loss = loss_attn_temp
                     ind = i
+            '''if loss_attn_temp < loss:
+                    loss = loss_attn_temp
+                    ind = i'''
 
         '''y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
