@@ -551,6 +551,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_y_output = test_y[:, :, -args.len_pred:, :]
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
+        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], args.len_pred))
+        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
         '''self_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
@@ -657,8 +659,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_temp < loss_attn_multi:
                     loss = loss_attn_temp
                     ind = i'''
-            if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
-                    loss_attn_temp < loss_attn_multi and loss_attn_temp < loss_lstm:
+            if loss_attn_temp < loss:
                     loss = loss_attn_temp
                     ind = i
 
