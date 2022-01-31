@@ -164,18 +164,10 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 targets = extract_numerical_data(
                     formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')
 
-                '''x = extract_numerical_data(
-                    formatter.format_predictions(format_outputs(test_en[j, :, :, 4].unsqueeze(-1), test_id[j]))
-                )'''
-                '''flow_rate_prefix[j, :, :] = x
-                flow_rate_postfix[j, :, :] = extract_numerical_data(
-                    formatter.format_predictions(format_outputs(test_de[j, :, :, 3].unsqueeze(-1), test_id[j]))
-                )'''
                 targets_all[j, :, :] = targets
-
-                '''targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
-                                                                    (format_outputs(test_y_input[j], test_id[j]))).\
-                    to_numpy().astype('float32')'''
+                targets_all_input[j, :, :] = extract_numerical_data(formatter.format_predictions
+                                                                    (format_outputs(test_y_input[j], test_id[j]))). \
+                    to_numpy().astype('float32')
 
                 preds = output_map["predictions"]
                 df_list.append(preds["identifier"])
@@ -551,8 +543,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         test_y_output = test_y[:, :, -args.len_pred:, :]
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
-        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], args.len_pred))
-        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
 
         '''self_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_de.shape[2]))
         dec_enc_attn_scores = np.zeros((3, test_de.shape[0], test_de.shape[1], test_de.shape[2], test_en.shape[2]))
@@ -646,14 +636,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_context_aware_1369[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
-            loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
+            '''loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
             loss_attn_conv = math.sqrt(criterion(torch.from_numpy(pred_attn_conv[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
             loss_attn_multi = math.sqrt(criterion(torch.from_numpy(pred_attn_multi[i, :]),
                                             torch.from_numpy(tgt_all[i, :])))
             loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
-                                                  torch.from_numpy(tgt_all[i, :])))
+                                                  torch.from_numpy(tgt_all[i, :])))'''
 
             '''if loss_attn_temp < loss and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi:
@@ -688,9 +678,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.rc('axes', labelsize=16)
         plt.rc('axes', titlesize=16)
 
-        fig, ax_1 = plt.subplots()
+        '''fig, ax_1 = plt.subplots()
         x = np.arange(-enc_step, 0)
-        x_1 = np.arange(0, total_len - enc_step)
+        x_1 = np.arange(0, total_len - enc_step)'''
         '''xnew = np.linspace(min(x), max(x), 300)
         spl = make_interp_spline(x, enc_attn_temp_cutoff_scores[ind,], k=3)
         enc_self_smooth = spl(xnew)'''
