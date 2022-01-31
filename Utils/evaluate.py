@@ -634,8 +634,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         ind = 0
         loss_temp = 1e9
         diff = 0
-        ind = random.randint(0, 15872)
-        ''''for i in range(15872):
+        for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_context_aware_1369[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
             loss_attn = math.sqrt(criterion(torch.from_numpy(pred_attn[i, :]),
@@ -653,11 +652,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 if loss_attn - loss_attn_temp > diff:
                     diff = loss_attn - loss_attn_temp
                     ind = i
-        
-                    
-            if loss_attn_temp < loss:
-                    loss = loss_attn_temp
-                    ind = i'''
 
         '''y_max = max(max(enc_attn_scores[ind, :]),
                     max(enc_attn_conv_scores[ind, :]),
