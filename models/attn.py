@@ -242,7 +242,7 @@ class MultiHeadAttention(nn.Module):
                                                   filter_length=self.filter_length)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
-        index = index.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
+        index = index.transpose(1, 2).contiguous().view(batch_size, self.n_heads * self.d_v, index.shape[-2], -1)
         output = self.fc(context)
         return output, attn, index
 
