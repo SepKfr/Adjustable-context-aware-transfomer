@@ -149,10 +149,11 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
+        indexes = np.zeros((test_de.shape[0], test_de.shape[1], 8, test_de.shape[2], test_de.shape[3]))
 
         k = 0
         for j in range(test_en.shape[0]):
-            output, index = model(test_en[j], test_de[j])
+            output, indexes[j] = model(test_en[j], test_de[j])
             output_map = inverse_output(output.cpu().detach().numpy(),
                                         test_y_output[j].cpu().detach().numpy(), test_id[j])
             forecast = extract_numerical_data(
@@ -175,7 +176,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         flg = True
 
-        return predictions, index, flg
+        return predictions, indexes, flg
 
     def create_rmse_plot():
 
@@ -857,7 +858,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            input_size, output_size,
                                            models_path, "context_aware_uniform",
                           "context_aware_uniform_1369")
-        prediction, index, _ = make_predictions(model, tgt_all, tgt_all_input, False,
+        prediction, indexes, _ = make_predictions(model, tgt_all, tgt_all_input, False,
                                          test_en, test_de, test_id, test_y_output, test_y_input)
 
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
@@ -866,17 +867,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ind = 0
         loss_attn_temp = 1e9
-        for i in range(15872):
-            loss = math.sqrt(criterion(torch.from_numpy(prediction[i, :]),
-                                                 torch.from_numpy(tgt_all[i, :])))
-            if loss < loss_attn_temp:
-                loss_attn_temp = loss
-                ind = i
+        for i in range(test_de.shape[0]):
+            for j in range(test_de.shape[1]):
+                loss = math.sqrt(criterion(torch.from_numpy(prediction[i, j, :]),
+                                                     torch.from_numpy(tgt_all[i, j, :])))
+
+                if loss < loss_attn_temp:
+                    loss_attn_temp = loss
+                    ind = i, j
 
         model.eval()
-        ind_2 = random.randint(0, 256)
         ind3 = random.randint(0, 8)
-        index = index[ind_2, ind3, :, :]
+        index = indexes[ind[0], ind[1], ind3, :, :]
         index = index.detach().cpu().numpy()
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
@@ -909,28 +911,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         y_min = min(min(tgt_all_input[ind, :]), min(tgt_all[ind, :]))
         y_max = max(max(tgt_all_input[ind, :]), max(tgt_all[ind, :]))
-
-        def plot_scatter(start, end, stop, data):
-            for j in range(start, end, stop):
-                y = data[ind, j]
-                x = j
-                plt.plot(j, y)
-                if j == 0:
-                    x = -0.01
-                else:
-                    x = x * (1 + 0.01)
-                plt.text(x, y * (1 + 0.01), j, fontsize=12)
-            y = data[ind, 0]
-            plt.plot(end, y)
-            j = end
-            if end == 0:
-                end = -0.01
-            else:
-                end = end * (1 + 0.01)
-            plt.text(end, y * (1 + 0.01), j, fontsize=12)
-
-        plot_scatter(-168, 0, 9, tgt_all_input)
-        plot_scatter(0, 48, 4, tgt_all)
+        plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]), color='darkviolet')
+        plt.scatter(np.append(np.arange(0, 48, 4), 47), np.append(tgt_all[ind, 0::4], tgt_all[ind, -1]), color='darkorange')
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                 color='blue')
         plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
