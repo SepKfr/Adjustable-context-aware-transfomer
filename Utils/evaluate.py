@@ -633,9 +633,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         ind = 0
         loss_temp = 1e9
-        diff_1 = 0
-        diff_2 = 0
-        diff_3 = 0
+        diff_1 = 1e9
+        diff_2 = 1e9
+        diff_3 = 1e9
         for i in range(15872):
             loss_attn_temp = math.sqrt(criterion(torch.from_numpy(pred_context_aware_1369[i, :]),
                                                  torch.from_numpy(tgt_all[i, :])))
@@ -648,11 +648,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             loss_lstm = math.sqrt(criterion(torch.from_numpy(pred_lstm[i, :]),
                                                   torch.from_numpy(tgt_all[i, :])))
 
-            if loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
+            if loss_attn_temp < loss_temp < loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi and loss_attn_temp < loss_lstm:
 
-                if loss_attn - loss_attn_temp > diff_1 and \
-                        loss_attn_conv - loss_attn_temp > diff_2 and loss_lstm - loss_attn_temp > diff_3:
+                loss_temp = loss_attn_temp
+                if loss_attn - loss_attn_temp < diff_1 and \
+                        loss_attn_conv - loss_attn_temp < diff_2 and loss_lstm - loss_attn_temp < diff_3:
                     diff_1 = loss_attn - loss_attn_temp
                     diff_2 = loss_attn_conv - loss_attn_temp
                     diff_3 = loss_lstm - loss_attn_temp
