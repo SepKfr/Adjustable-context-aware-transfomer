@@ -862,9 +862,19 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
         tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
+        prediction = prediction.reshape(test_de.shape[0]*test_de.shape[1], -1)
+
+        ind = 0
+        loss_attn_temp = 1e9
+        for i in range(15872):
+            loss = math.sqrt(criterion(torch.from_numpy(prediction[i, :]),
+                                                 torch.from_numpy(tgt_all[i, :])))
+            if loss < loss_attn_temp:
+                loss_attn_temp = loss
+                ind = i
+
         model.eval()
 
-        ind = random.randint(0, test_en.shape[0])
         output, dec_enc_index = model(test_en[ind], test_de[ind])
         ind_2 = random.randint(0, 256)
         ind3 = random.randint(0, 8)
@@ -901,8 +911,18 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         y_min = min(min(tgt_all_input[ind, :]), min(tgt_all[ind, :]))
         y_max = max(max(tgt_all_input[ind, :]), max(tgt_all[ind, :]))
-        plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]), color='darkviolet')
-        plt.scatter(np.append(np.arange(0, 48, 4), 47), np.append(tgt_all[ind, 0::4], tgt_all[ind, -1]), color='darkorange')
+
+        def plot_scatter(start, end, stop, data):
+            for x in range(start, end, stop):
+                y = data[ind, x]
+                plt.plot(x, y)
+                plt.text(x * (1 + 0.01), y * (1 + 0.01), x, fontsize=12)
+            y = data[ind, 0]
+            plt.plot(end, y)
+            plt.text(end * (1 + 0.01), y * (1 + 0.01), end, fontsize=12)
+
+        plot_scatter(-168, 0, 9, tgt_all_input)
+        plot_scatter(0, 48, 4, tgt_all)
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                 color='blue')
         plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
