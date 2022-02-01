@@ -842,9 +842,14 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
     def create_attn_matrix(len_pred):
 
-        total_len = len_pred + 168
-        test_en, test_de, test_y, test_id = get_test_data(total_len)
         configs, _, models_path = get_config(len_pred)
+        test_en, test_de, test_y, test_id = get_test_data(len_pred + 168)
+        test_y_input = test_y[:, :, :-len_pred, :]
+        test_y_output = test_y[:, :, -len_pred:, :]
+        tgt_all = np.zeros((test_de.shape[0], test_de.shape[1], len_pred))
+        tgt_all_input = np.zeros((test_en.shape[0], test_en.shape[1], test_en.shape[2]))
+
+        total_len = len_pred + 168
         input_size = test_en.shape[3]
         output_size = test_de.shape[3]
         seed = 21
@@ -852,6 +857,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            input_size, output_size,
                                            models_path, "context_aware_uniform",
                           "context_aware_uniform_1369")
+        prediction, _ = make_predictions(model, tgt_all, tgt_all_input, False,
+                         test_en, test_de, test_id, test_y_output, test_y_input)
+
         model.eval()
 
         ind = random.randint(0, test_en.shape[0])
@@ -888,8 +896,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tickz = norm_bins[:-1] + diff / 2
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
-        mat = plt.matshow(index, cmap=cm, norm=norm)
+        plt.xticks(np.arange(-168, total_len - 168, 9))
+        plt.scatter(np.arange(-168, total_len - 168, 9), tgt_all_input[ind, 0::9])
+        plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
+                color='gray')
+        plt.tight_layout()
+        plt.savefig(os.path.join(args.path_to_save, 'gt_{}_{}.pdf'.format(args.exp_name, len_pred)),
+                    dpi=1000)
+        plt.close()
         # tell the colorbar to tick at integers
+        mat = plt.matshow(index, cmap=cm, norm=norm)
         plt.colorbar(mat, format=fmt, ticks=tickz)
         plt.ylabel("Key")
         plt.xlabel("Query")
@@ -1016,9 +1032,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
     #create_rmse_plot()
     #print("Done exp rmse")
     #plot_train_loss(48)
-    create_attn_score_plots()
+    #create_attn_score_plots()
     #create_rmse_plot()
-    #create_attn_matrix(48)
+    create_attn_matrix(48)
 
 
 def main():
