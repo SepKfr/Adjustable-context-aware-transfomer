@@ -862,10 +862,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         prediction, indexes, _ = make_predictions(model, tgt_all, tgt_all_input, False,
                                          test_en, test_de, test_id, test_y_output, test_y_input)
 
-        tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
-        tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
-        prediction = prediction.reshape(test_de.shape[0]*test_de.shape[1], -1)
-
         ind = 0
         loss_attn_temp = 1e9
         for i in range(test_de.shape[0]):
@@ -876,6 +872,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 if loss < loss_attn_temp:
                     loss_attn_temp = loss
                     ind = i, j
+
+        tgt_all_input = tgt_all_input.reshape(test_en.shape[0] * test_en.shape[1], -1)
+        tgt_all = tgt_all.reshape(test_de.shape[0] * test_de.shape[1], -1)
 
         model.eval()
         ind3 = random.randint(0, 8)
