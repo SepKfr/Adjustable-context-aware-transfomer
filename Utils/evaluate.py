@@ -149,7 +149,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        indexes = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2], 20))
+        indexes = np.zeros((test_de.shape[0], test_de.shape[1], 8, test_de.shape[2], 20))
 
         k = 0
         for j in range(test_en.shape[0]):
@@ -873,7 +873,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_temp = loss
                     ind = i, j
         model.eval()
-        index = indexes[ind[0], ind[1], :, :]
+        ind3 = random.randint(0, 8)
+        index = indexes[ind[0], ind[1], ind3, :, :]
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
