@@ -898,10 +898,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tickz = norm_bins[:-1] + diff / 2
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
-        plt.xticks(np.arange(-168, total_len - 168, 9))
-        plt.scatter(np.arange(-168, 0, 9), tgt_all_input[ind, 0::9])
+        y_min = min(tgt_all_input[ind, :], tgt_all[ind, :])
+        y_max = max(tgt_all_input[ind, :], tgt_all[ind, :])
+        plt.scatter(np.arange(-168, 0, 9), np.concatenate(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]))
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                 color='gray')
+        plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'gt_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
