@@ -898,8 +898,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tickz = norm_bins[:-1] + diff / 2
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
-        y_min = min(tgt_all_input[ind, :], tgt_all[ind, :])
-        y_max = max(tgt_all_input[ind, :], tgt_all[ind, :])
+        y_min = min(min(tgt_all_input[ind, :]), min(tgt_all[ind, :]))
+        y_max = max(max(tgt_all_input[ind, :]), max(tgt_all[ind, :]))
         plt.scatter(np.arange(-168, 0, 9), np.concatenate(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]))
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                 color='gray')
