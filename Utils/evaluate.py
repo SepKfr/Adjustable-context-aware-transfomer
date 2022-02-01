@@ -905,11 +905,12 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         tickz = norm_bins[:-1] + diff / 2
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
-        y_min = min(min(tgt_all_input[ind, :]), min(tgt_all[ind, :]))
-        y_max = max(max(tgt_all_input[ind, :]), max(tgt_all[ind, :]))
-        plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]), color='darkviolet')
-        plt.scatter(np.append(np.arange(0, 48, 4), 47), np.append(tgt_all[ind, 0::4], tgt_all[ind, -1]), color='darkorange')
-        plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
+        y_min = min(min(tgt_all_input[ind[0], ind[1], :]), min(tgt_all[ind[0], ind[1], :]))
+        y_max = max(max(tgt_all_input[ind[0], ind[1], :]), max(tgt_all[ind[0], ind[1], :]))
+        plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind[0], ind[1], 0::9],
+                                                                   tgt_all_input[ind[0], ind[1], -1]), color='darkviolet')
+        plt.scatter(np.append(np.arange(0, 48, 4), 47), np.append(tgt_all[ind[0], ind[1], 0::4], tgt_all[ind, -1]), color='darkorange')
+        plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind[0], ind[1], :], tgt_all[ind, :])),
                 color='blue')
         plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         plt.tight_layout()
