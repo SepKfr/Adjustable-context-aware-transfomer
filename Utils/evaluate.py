@@ -655,7 +655,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                         loss_attn_conv - loss_attn_temp > diff_2 and loss_lstm - loss_attn_temp > diff_3:
                     diff_1 = loss_attn - loss_attn_temp
                     diff_2 = loss_attn_conv - loss_attn_temp
-                    diff_2 = loss_lstm - loss_attn_temp
+                    diff_3 = loss_lstm - loss_attn_temp
                     ind = i
 
         '''y_max = max(max(enc_attn_scores[ind, :]),
