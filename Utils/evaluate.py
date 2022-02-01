@@ -153,7 +153,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         k = 0
         for j in range(test_en.shape[0]):
-            output, indexes[j] = model(test_en[j], test_de[j])
+            output, index = model(test_en[j], test_de[j])
+            indexes[j] = index.cpu().detach().numpy()
             output_map = inverse_output(output.cpu().detach().numpy(),
                                         test_y_output[j].cpu().detach().numpy(), test_id[j])
             forecast = extract_numerical_data(
