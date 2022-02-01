@@ -149,7 +149,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
 
         predictions = np.zeros((test_de.shape[0], test_de.shape[1], test_de.shape[2]))
-        indexes = np.zeros((test_de.shape[0], test_de.shape[1], 8, test_de.shape[2], test_de.shape[3]))
+        indexes = np.zeros((test_de.shape[0], test_de.shape[1], 8, test_de.shape[2], 20))
 
         k = 0
         for j in range(test_en.shape[0]):
