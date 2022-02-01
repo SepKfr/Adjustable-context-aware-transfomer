@@ -860,6 +860,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         prediction, _ = make_predictions(model, tgt_all, tgt_all_input, False,
                          test_en, test_de, test_id, test_y_output, test_y_input)
 
+        tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
+        tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
         model.eval()
 
         ind = random.randint(0, test_en.shape[0])
@@ -897,8 +899,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
         plt.xticks(np.arange(-168, total_len - 168, 9))
-        print(len(np.arange(-168, 0, 9)))
-        print(len(tgt_all_input[ind, 0::9]))
         plt.scatter(np.arange(-168, 0, 9), tgt_all_input[ind, 0::9])
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                 color='gray')
