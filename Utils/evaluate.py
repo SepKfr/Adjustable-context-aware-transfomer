@@ -652,12 +652,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             if loss_attn_temp < loss_temp and loss_attn_temp < loss_attn and loss_attn_temp < loss_attn_conv and \
                     loss_attn_temp < loss_attn_multi and loss_attn_temp < loss_lstm:
                 loss_temp = loss_attn_temp
-                if loss_attn - loss_attn_temp > diff_1 and loss_lstm - loss_attn_temp > diff_2 \
-                        and loss_attn_conv - loss_attn_temp > diff_3 and loss_attn_multi - loss_attn_temp > diff_4:
+                if loss_attn - loss_attn_temp > diff_1:
                     diff_1 = loss_attn - loss_attn_temp
-                    diff_2 = loss_lstm - loss_attn_temp
-                    diff_3 = loss_attn_conv - loss_attn_temp
-                    diff_4 = loss_attn_multi - loss_attn_temp
                     ind = i
 
         '''y_max = max(max(enc_attn_scores[ind, :]),
