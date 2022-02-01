@@ -919,8 +919,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         # tell the colorbar to tick at integers
         mat = plt.matshow(index, cmap=cm, norm=norm)
         plt.colorbar(mat, format=fmt, ticks=tickz)
-        plt.ylabel("Key")
-        plt.xlabel("Query")
+        plt.ylabel("Query")
+        plt.xlabel("Key")
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.format(args.exp_name, len_pred)),
                     dpi=1000)
