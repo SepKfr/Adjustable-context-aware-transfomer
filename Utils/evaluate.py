@@ -872,7 +872,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 if loss < loss_attn_temp:
                     loss_attn_temp = loss
                     ind = i, j
-        print(loss_attn_temp)
         model.eval()
         ind3 = random.randint(0, 8)
         index = indexes[ind[0], ind[1], ind3, :, :]
