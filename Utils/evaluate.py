@@ -897,6 +897,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: labels[norm(x)])
 
         plt.xticks(np.arange(-168, total_len - 168, 9))
+        print(len(np.arange(-168, 0, 9)))
+        print(len(tgt_all_input[ind, 0::9]))
         plt.scatter(np.arange(-168, 0, 9), tgt_all_input[ind, 0::9])
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
                 color='gray')
