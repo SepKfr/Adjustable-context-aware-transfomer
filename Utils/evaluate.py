@@ -900,9 +900,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         y_min = min(min(tgt_all_input[ind, :]), min(tgt_all[ind, :]))
         y_max = max(max(tgt_all_input[ind, :]), max(tgt_all[ind, :]))
-        plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]))
+        plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind, 0::9], tgt_all_input[ind, -1]), color='darkviolet')
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind, :], tgt_all[ind, :])),
-                color='gray')
+                color='blue')
         plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
         plt.tight_layout()
         plt.savefig(os.path.join(args.path_to_save, 'gt_{}_{}.pdf'.format(args.exp_name, len_pred)),
