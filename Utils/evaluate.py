@@ -152,7 +152,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         k = 0
         for j in range(test_en.shape[0]):
-            output, _ = model(test_en[j], test_de[j])
+            output, index = model(test_en[j], test_de[j])
             output_map = inverse_output(output.cpu().detach().numpy(),
                                         test_y_output[j].cpu().detach().numpy(), test_id[j])
             forecast = extract_numerical_data(
@@ -175,7 +175,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
 
         flg = True
 
-        return predictions, flg
+        return predictions, index, flg
 
     def create_rmse_plot():
 
@@ -857,8 +857,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                                            input_size, output_size,
                                            models_path, "context_aware_uniform",
                           "context_aware_uniform_1369")
-        prediction, _ = make_predictions(model, tgt_all, tgt_all_input, False,
-                         test_en, test_de, test_id, test_y_output, test_y_input)
+        prediction, index, _ = make_predictions(model, tgt_all, tgt_all_input, False,
+                                         test_en, test_de, test_id, test_y_output, test_y_input)
 
         tgt_all_input = tgt_all_input.reshape(test_en.shape[0]*test_en.shape[1], -1)
         tgt_all = tgt_all.reshape(test_de.shape[0]*test_de.shape[1], -1)
@@ -874,11 +874,9 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                 ind = i
 
         model.eval()
-
-        output, dec_enc_index = model(test_en[ind], test_de[ind])
         ind_2 = random.randint(0, 256)
         ind3 = random.randint(0, 8)
-        index = dec_enc_index[ind_2, ind3, :, :]
+        index = index[ind_2, ind3, :, :]
         index = index.detach().cpu().numpy()
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
@@ -913,13 +911,23 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         y_max = max(max(tgt_all_input[ind, :]), max(tgt_all[ind, :]))
 
         def plot_scatter(start, end, stop, data):
-            for x in range(start, end, stop):
-                y = data[ind, x]
-                plt.plot(x, y)
-                plt.text(x * (1 + 0.01), y * (1 + 0.01), x, fontsize=12)
+            for j in range(start, end, stop):
+                y = data[ind, j]
+                x = j
+                plt.plot(j, y)
+                if j == 0:
+                    x = -0.01
+                else:
+                    x = x * (1 + 0.01)
+                plt.text(x, y * (1 + 0.01), j, fontsize=12)
             y = data[ind, 0]
             plt.plot(end, y)
-            plt.text(end * (1 + 0.01), y * (1 + 0.01), end, fontsize=12)
+            j = end
+            if end == 0:
+                end = -0.01
+            else:
+                end = end * (1 + 0.01)
+            plt.text(end, y * (1 + 0.01), j, fontsize=12)
 
         plot_scatter(-168, 0, 9, tgt_all_input)
         plot_scatter(0, 48, 4, tgt_all)
