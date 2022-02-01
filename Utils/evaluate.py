@@ -909,7 +909,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         y_max = max(max(tgt_all_input[ind[0], ind[1], :]), max(tgt_all[ind[0], ind[1], :]))
         plt.scatter(np.append(np.arange(-168, 0, 9), 0), np.append(tgt_all_input[ind[0], ind[1], 0::9],
                                                                    tgt_all_input[ind[0], ind[1], -1]), color='darkviolet')
-        plt.scatter(np.append(np.arange(0, 48, 4), 47), np.append(tgt_all[ind[0], ind[1], 0::4], tgt_all[ind[0], ind[1], -1]), color='darkorange')
+        plt.scatter(np.append(np.arange(0, 48, 4), 47), np.append(tgt_all[ind[0], ind[1], 0::4],
+                                                                  tgt_all[ind[0], ind[1], -1]), color='darkorange')
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind[0], ind[1], :], tgt_all[ind[0], ind[1], :])),
                 color='blue')
         plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
@@ -1064,7 +1065,6 @@ def main():
         os.makedirs(args.path_to_save)
 
     np.random.seed(21)
-    random.seed(21)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
 
