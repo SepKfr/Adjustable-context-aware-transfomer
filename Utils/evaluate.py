@@ -873,9 +873,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_temp = loss
                     ind = i, j
 
-        tgt_all_input = tgt_all_input.reshape(test_en.shape[0] * test_en.shape[1], -1)
-        tgt_all = tgt_all.reshape(test_de.shape[0] * test_de.shape[1], -1)
-
         model.eval()
         ind3 = random.randint(0, 8)
         index = indexes[ind[0], ind[1], ind3, :, :]
