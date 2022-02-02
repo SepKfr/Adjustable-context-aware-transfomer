@@ -875,16 +875,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
         ind3 = random.randint(0, 8)
         index = indexes[ind[0], ind[1], ind3, :, :]
-        indexes = np.zeros((8, int(index.shape[0]/3), index.shape[1]))
+        inds = np.zeros((8, int(index.shape[0]/3), index.shape[1]))
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
         for i in range(8):
-            indexes[i] = np.where(index == 3, 9, index)
-            indexes[i] = np.where(index == 1, 3, index)
-            indexes[i] = np.where(index == 0, 1, index)
-            indexes[i] = np.where(index == 2, 6, index)
-            indexes[i] = index[0::3, :]
+            tmp = np.where(index == 3, 9, index)
+            tmp = np.where(index == 1, 3, index)
+            tmp = np.where(index == 0, 1, index)
+            tmp = np.where(index == 2, 6, index)
+            inds[i] = tmp[0::3, :]
 
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
@@ -918,7 +918,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         plt.close()
         # tell the colorbar to tick at integers
         for i in range(8):
-            mat = plt.matshow(index[i], cmap=cm, norm=norm)
+            mat = plt.matshow(inds[i], cmap=cm, norm=norm)
             plt.colorbar(mat, format=fmt, ticks=tickz)
             plt.ylabel("Query")
             plt.xlabel("Key")
