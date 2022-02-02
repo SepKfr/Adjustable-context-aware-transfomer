@@ -875,7 +875,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         model.eval()
         ind3 = random.randint(0, 8)
         index = indexes[ind[0], ind[1], ind3, :, :]
-        indexes = np.zeros((8, index.shape[0], index.shape[1]))
+        indexes = np.zeros((8, int(index.shape[0]/3), index.shape[1]))
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
