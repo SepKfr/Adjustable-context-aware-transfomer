@@ -874,7 +874,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_temp = loss
                     ind = i, j
         model.eval()
-        inds = np.zeros((8, 16, 19))
+        inds = np.zeros((8, 6, 19))
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
