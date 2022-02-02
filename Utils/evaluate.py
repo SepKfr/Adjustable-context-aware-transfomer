@@ -863,16 +863,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         prediction, indexes, _ = make_predictions(model, tgt_all, tgt_all_input, False,
                                          test_en, test_de, test_id, test_y_output, test_y_input)
 
-        ind = random.randint(0, 4),random.randint(0, 256)
+        ind = random.randint(0, 62),random.randint(0, 256)
         loss_attn_temp = 1e9
-        for i in range(test_de.shape[0]):
+        '''for i in range(test_de.shape[0]):
             for j in range(test_de.shape[1]):
                 loss = math.sqrt(criterion(torch.from_numpy(prediction[i, j, :]),
                                                      torch.from_numpy(tgt_all[i, j, :])))
 
                 if loss < loss_attn_temp:
                     loss_attn_temp = loss
-                    ind = i, j
+                    ind = i, j'''
         model.eval()
         inds = np.zeros((8, 6, 19))
         '''mask = np.triu(np.ones(index.shape), k=1)
