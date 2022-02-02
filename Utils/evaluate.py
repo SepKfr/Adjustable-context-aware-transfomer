@@ -862,7 +862,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         prediction, indexes, _ = make_predictions(model, tgt_all, tgt_all_input, False,
                                          test_en, test_de, test_id, test_y_output, test_y_input)
 
-        ind = random.randint(0, 62),random.randint(0, 256)
+        ind = random.randint(0, 4),random.randint(0, 256)
         #loss_attn_temp = 1e9
         '''for i in range(test_de.shape[0]):
             for j in range(test_de.shape[1]):
