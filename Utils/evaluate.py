@@ -923,8 +923,8 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             plt.ylabel("Query")
             plt.xlabel("Key")
             plt.tight_layout()
-            plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.
-                                     format(args.exp_name, len_pred)),
+            plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}_{}.pdf'.
+                                     format(args.exp_name, len_pred, i)),
                         dpi=1000)
 
             plt.close()
