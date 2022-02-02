@@ -873,17 +873,16 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_temp = loss
                     ind = i, j
         model.eval()
-        ind3 = random.randint(0, 8)
-        index = indexes[ind[0], ind[1], ind3, :, :]
-        inds = np.zeros((8, int(index.shape[0]/3), index.shape[1]))
+        inds = np.zeros((8, 16, 20))
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
         for i in range(8):
+            index = indexes[ind[0], ind[1], i, :, :]
             tmp = np.where(index == 3, 9, index)
-            tmp = np.where(index == 1, 3, index)
-            tmp = np.where(index == 0, 1, index)
-            tmp = np.where(index == 2, 6, index)
+            tmp = np.where(index == 1, 3, tmp)
+            tmp = np.where(index == 0, 1, tmp)
+            tmp = np.where(index == 2, 6, tmp)
             inds[i] = tmp[0::3, :]
 
         #index = np.where(index == 5, -2, index)
