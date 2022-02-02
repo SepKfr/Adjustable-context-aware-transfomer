@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import pickle
 from matplotlib import colors
+from scipy import stats
 
 
 def batching(batch_size, x_en, x_de, y_t, test_id, tot_input):
@@ -885,7 +886,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             tmp = np.where(index == 2, 6, tmp)
             inds[i] = tmp[0::3, 1:]
 
-        inds = np.max(inds, axis=0)
+        ind_mode, _ = stats.mode(inds, axis=0)
 
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
@@ -918,7 +919,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
         # tell the colorbar to tick at integers
-        mat = plt.matshow(inds, cmap=cm, norm=norm)
+        mat = plt.matshow(ind_mode, cmap=cm, norm=norm)
         plt.colorbar(mat, format=fmt, ticks=tickz)
         plt.ylabel("Query")
         plt.xlabel("Key")
