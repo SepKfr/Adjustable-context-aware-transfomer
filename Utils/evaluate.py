@@ -887,6 +887,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             inds[i] = tmp[0::3, 1:]
 
         ind_mode, _ = stats.mode(inds, axis=0)
+        print(ind_mode.shape)
 
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
