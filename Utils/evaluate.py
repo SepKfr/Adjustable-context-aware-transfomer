@@ -873,7 +873,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     loss_attn_temp = loss
                     ind = i, j'''
         model.eval()
-        inds = np.zeros((8, 16, 20))
+        inds = np.zeros((8, 16, 19))
         '''mask = np.triu(np.ones(index.shape), k=1)
         mask = mask * 5
         index = index + mask'''
@@ -883,7 +883,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             tmp = np.where(index == 1, 3, tmp)
             tmp = np.where(index == 0, 1, tmp)
             tmp = np.where(index == 2, 6, tmp)
-            inds[i] = tmp[0::3, :]
+            inds[i] = tmp[0::3, 1:]
 
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
