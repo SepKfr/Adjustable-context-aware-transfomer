@@ -886,9 +886,6 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             tmp = np.where(index == 2, 6, tmp)
             inds[i] = tmp[0::3, 1:]
 
-        ind_mode, _ = stats.mode(inds, axis=0)
-        ind_mode = np.squeeze(ind_mode, axis=0)
-
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
         norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
@@ -920,16 +917,17 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
                     dpi=1000)
         plt.close()
         # tell the colorbar to tick at integers
-        mat = plt.matshow(ind_mode, cmap=cm, norm=norm)
-        plt.colorbar(mat, format=fmt, ticks=tickz)
-        plt.ylabel("Query")
-        plt.xlabel("Key")
-        plt.tight_layout()
-        plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.
-                                 format(args.exp_name, len_pred)),
-                    dpi=1000)
+        for i in range(8):
+            mat = plt.matshow(inds[i], cmap=cm, norm=norm)
+            plt.colorbar(mat, format=fmt, ticks=tickz)
+            plt.ylabel("Query")
+            plt.xlabel("Key")
+            plt.tight_layout()
+            plt.savefig(os.path.join(args.path_to_save, 'matrix_{}_{}.pdf'.
+                                     format(args.exp_name, len_pred)),
+                        dpi=1000)
 
-        plt.close()
+            plt.close()
 
     def creat_c_q_plots():
 
