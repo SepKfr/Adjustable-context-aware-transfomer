@@ -908,7 +908,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
         y_min = min(min(tgt_all_input[ind[0], ind[1], :]), min(tgt_all[ind[0], ind[1], :]))
         y_max = max(max(tgt_all_input[ind[0], ind[1], :]), max(tgt_all[ind[0], ind[1], :]))
         plt.scatter(np.arange(-159, 0, 9), tgt_all_input[ind[0], ind[1], 9::9], color='darkviolet')
-        plt.scatter(np.arange(0, 48, 3), tgt_all[ind[0], ind[1], 0::3], color='darkorange')
+        plt.scatter(np.arange(0, 48, 3), tgt_all[ind[0], ind[1], 3::3], color='darkorange')
         plt.plot(np.arange(-168, total_len - 168), np.concatenate((tgt_all_input[ind[0], ind[1], :], tgt_all[ind[0], ind[1], :])),
                 color='blue')
         plt.vlines(0, ymin=y_min, ymax=y_max, colors='black')
