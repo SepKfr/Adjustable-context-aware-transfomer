@@ -884,7 +884,7 @@ def perform_evaluation(args, device, params, test, valid_max, formatter):
             tmp = np.where(index == 1, 3, tmp)
             tmp = np.where(index == 0, 1, tmp)
             tmp = np.where(index == 2, 6, tmp)
-            inds[i] = tmp[0::3, 1:]
+            inds[i] = tmp[3::3, 1:]
 
         #index = np.where(index == 5, -2, index)
         norm_bins = np.sort([1, 3, 6, 9]) + 0.5
