@@ -54,13 +54,12 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, d
 
         targets_all[j, :, :] = targets
 
-    test_loss = mse(predictions.to(device), targets_all.to(device)).item()
     normaliser = targets_all.to(device).abs().mean()
-    test_loss = math.sqrt(test_loss) / normaliser
+    test_loss = mse(predictions.to(device), targets_all.to(device)).item()
+    test_loss = math.sqrt(test_loss) / normaliser.item()
 
     mae_loss = mae(predictions.to(device), targets_all.to(device)).item()
-    normaliser = targets_all.to(device).abs().mean()
-    mae_loss = mae_loss / normaliser
+    mae_loss = mae_loss / normaliser.item()
 
     return test_loss, mae_loss
 
