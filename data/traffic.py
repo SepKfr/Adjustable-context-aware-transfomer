@@ -176,7 +176,6 @@ class TrafficFormatter(GenericDataFormatter):
             'max_gradient_norm': 100.,
             'num_heads': 8,
             'stack_size': 1,
-            'kernel': [1, 3, 9]
         }
 
         return model_params
