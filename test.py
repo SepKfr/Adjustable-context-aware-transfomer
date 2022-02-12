@@ -110,7 +110,7 @@ def main():
     error_file[args.name].append(nrmse)
     error_file[args.name].append(nmae)
 
-    config_path = "configs_{}_{}.json".format(args.exp_name,
+    config_path = "results_{}_{}.json".format(args.exp_name,
                                               params['total_time_steps'] - params['num_encoder_steps'])
 
     if os.path.exists(config_path):
