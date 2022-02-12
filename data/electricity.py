@@ -208,14 +208,11 @@ class ElectricityFormatter(GenericDataFormatter):
         """Returns default optimised model parameters."""
 
         model_params = {
-            'dropout_rate': 0.3,
             'hidden_layer_size': [16, 32],
-            'learning_rate': 0.001,
             'minibatch_size': [256],
-            'max_gradient_norm': 100.,
             'num_heads': 8,
             'stack_size': 1,
-            'kernel': [1, 3, 9]
+            'context_lengths': [1, 3, 6, 9]
         }
 
         return model_params

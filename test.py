@@ -31,7 +31,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, d
                  d_ff=d_model * 4,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
                  n_layers=model_params['stack_size'], src_pad_index=0,
-                 tgt_pad_index=0, device=device, filter_lengths=args.filter_lengths).to(device)
+                 tgt_pad_index=0, device=device,  context_lengths=model_params['context_lengths']).to(device)
 
     checkpoint = torch.load(os.path.join(path, args.name))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -67,7 +67,6 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, d
 def main():
 
     parser = argparse.ArgumentParser(description="train context-aware attention")
-    parser.add_argument("--context_lengths", type=list, default=[1, 3, 6, 9])
     parser.add_argument("--name", type=str, default='context-aware-attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--seed", type=int, default=21)
