@@ -83,15 +83,15 @@ def main():
 
     data_csv_path = "{}.csv".format(args.exp_name)
 
-
     print("Loading & splitting data...")
     raw_data = pd.read_csv(data_csv_path, index_col=0)
     _, _, test = formatter.split_data(raw_data)
     _, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
 
-    with open('configs_{}_{}.json'.format(args.exp_name,
-                                          params['total_time_steps'] - params['num_encoder_steps']), 'r') as json_file:
+    with open('configs_{}_{}_{}.json'.format(args.exp_name,
+                                          params['total_time_steps'] -
+                                          params['num_encoder_steps'], args.seed), 'r') as json_file:
         configs = json.load(json_file)
         configs = configs[args.name]
 
