@@ -70,6 +70,7 @@ def main():
     parser.add_argument("--name", type=str, default='context-aware-attn')
     parser.add_argument("--exp_name", type=str, default='watershed')
     parser.add_argument("--seed", type=int, default=21)
+    parser.add_argument("--cuda", type=str, default='cuda:0')
     args = parser.parse_args()
 
     config = ExperimentConfig(args.exp_name)
@@ -126,6 +127,7 @@ def main():
     else:
         with open(res_path, "w") as json_file:
             json.dump(error_file, json_file)
+
 
 if __name__ == '__main__':
     main()
