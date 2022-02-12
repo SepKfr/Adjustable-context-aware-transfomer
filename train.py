@@ -11,7 +11,7 @@ import sys
 import random
 import pandas as pd
 from data.data_loader import ExperimentConfig
-from base_train import batching, batch_sampled_data
+from Utils.base_train import batching, batch_sampled_data
 
 
 class NoamOpt:

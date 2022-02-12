@@ -143,14 +143,3 @@ def inverse_output(predictions, outputs, test_id):
 
     process_map = {'predictions': format_outputs(predictions), 'targets': format_outputs(outputs)}
     return process_map
-
-
-def quantile_loss(y, y_pred, quantile, device):
-
-    zeros = torch.zeros(y.shape).to(device)
-    prediction_underflow = y - y_pred
-    q_loss = quantile * torch.max(prediction_underflow, zeros) + \
-             (1 - quantile) * torch.max(-prediction_underflow, zeros)
-    q_loss = q_loss.mean()
-    normaliser = y.abs().mean()
-    return 2 * q_loss / normaliser
