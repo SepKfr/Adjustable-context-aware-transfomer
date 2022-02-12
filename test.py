@@ -89,11 +89,11 @@ def main():
     _, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
 
-    with open('configs_{}_{}_{}.json'.format(args.exp_name,
+    with open('configs_{}_{}.json'.format(args.exp_name,
                                           params['total_time_steps'] -
-                                          params['num_encoder_steps'], args.seed), 'r') as json_file:
+                                          params['num_encoder_steps']), 'r') as json_file:
         configs = json.load(json_file)
-        configs = configs[args.name]
+        configs = configs["{}_{}".format(args.name, args.seed)]
 
     batch_size = configs[0]
 
