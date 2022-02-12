@@ -110,19 +110,22 @@ def main():
     error_file[args.name].append(nrmse)
     error_file[args.name].append(nmae)
 
-    config_path = "results_{}_{}.json".format(args.exp_name,
+    res_path = "results_{}_{}.json".format(args.exp_name,
                                               params['total_time_steps'] - params['num_encoder_steps'])
 
-    if os.path.exists(config_path):
-        with open(config_path) as json_file:
+    if os.path.exists(res_path):
+        with open(res_path) as json_file:
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
                 json_dat[args.name] = list()
             json_dat[args.name].append(nrmse)
             json_dat[args.name].append(nmae)
 
-        with open(config_path, "w") as json_file:
+        with open(res_path, "w") as json_file:
             json.dump(json_dat, json_file)
     else:
-        with open(config_path, "w") as json_file:
+        with open(res_path, "w") as json_file:
             json.dump(error_file, json_file)
+
+if __name__ == '__main__':
+    main()
