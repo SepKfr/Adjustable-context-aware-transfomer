@@ -8,6 +8,8 @@ from Utils.base_train import batching, batch_sampled_data, inverse_output
 import math
 import pandas as pd
 from data.data_loader import ExperimentConfig
+import numpy as np
+import random
 
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, device):
@@ -76,6 +78,11 @@ def main():
     config = ExperimentConfig(args.exp_name)
     formatter = config.make_data_formatter()
     error_file = dict()
+
+    np.random.seed(21)
+    random.seed(21)
+
+    torch.manual_seed(args.seed)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
