@@ -31,7 +31,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, d
                  d_ff=d_model * 4,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
                  n_layers=model_params['stack_size'], src_pad_index=0,
-                 tgt_pad_index=0, device=device,  context_lengths=model_params['context_lengths']).to(device)
+                 tgt_pad_index=0, device=device,
+                 context_lengths=model_params['context_lengths']).to(device)
 
     checkpoint = torch.load(os.path.join(path, "{}_{}".format(args.name, args.seed)))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -99,9 +100,9 @@ def main():
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
-    test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
-                                        torch.from_numpy(sample_data['dec_inputs']).to(device), \
-                                        torch.from_numpy(sample_data['outputs']).to(device), \
+    test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']), \
+                                        torch.from_numpy(sample_data['dec_inputs']), \
+                                        torch.from_numpy(sample_data['outputs']), \
                                         sample_data['identifier']
 
     path = "models_{}_{}".format(args.exp_name, params['total_time_steps'] - params['num_encoder_steps'])
@@ -109,14 +110,15 @@ def main():
     test_en_b, test_de_b, test_y_b, test_id_b = batching(batch_size, test_en,
                                                          test_de, test_y, test_id)
 
-    nrmse, nmae = evaluate(configs, args, test_en_b, test_de_b, test_y_b, test_id_b, formatter, path, device)
+    nrmse, nmae = \
+        evaluate(configs, args, test_en_b.to(device), test_de_b.to(device), test_y_b.to(device), test_id_b, formatter, path, device)
 
     error_file[args.name] = list()
     error_file[args.name].append(nrmse)
     error_file[args.name].append(nmae)
 
     res_path = "results_{}_{}.json".format(args.exp_name,
-                                              params['total_time_steps'] - params['num_encoder_steps'])
+                                        params['total_time_steps'] - params['num_encoder_steps'])
 
     if os.path.exists(res_path):
         with open(res_path) as json_file:
