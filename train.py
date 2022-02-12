@@ -210,9 +210,9 @@ def main():
     print("best_config: {}".format(best_config))
 
     config_file[args.name] = list()
+    config_file[args.name].append(batch_size)
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
-    config_file[args.name].append(batch_size)
 
     config_path = "configs_{}_{}.json".format(args.exp_name, seq_len)
 
@@ -221,9 +221,9 @@ def main():
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
                 json_dat[args.name] = list()
+            json_dat[args.name].append(batch_size)
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
-            json_dat[args.name].append(batch_size)
 
         with open(config_path, "w") as json_file:
             json.dump(json_dat, json_file)

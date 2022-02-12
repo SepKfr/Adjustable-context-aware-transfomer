@@ -12,7 +12,7 @@ from data.data_loader import ExperimentConfig
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, device):
 
-    batch_size, n_heads, d_model = config
+    batch_size, n_heads, d_model = config[0], config[1], config[2]
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
     mse = nn.MSELoss()
@@ -83,12 +83,19 @@ def main():
 
     data_csv_path = "{}.csv".format(args.exp_name)
 
+
     print("Loading & splitting data...")
     raw_data = pd.read_csv(data_csv_path, index_col=0)
     _, _, test = formatter.split_data(raw_data)
     _, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
     model_params = formatter.get_default_model_params()
+
+    with open('configs_{}_{}.json'.format(args.exp_name,
+                                          params['total_time_steps'] - params['num_encoder_steps']), 'r') as json_file:
+        configs = json.load(json_file)
+
+    batch_size = configs[0]
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
@@ -99,12 +106,8 @@ def main():
 
     path = "models_{}_{}".format(args.exp_name, params['total_time_steps'] - params['num_encoder_steps'])
 
-    test_en_b, test_de_b, test_y_b, test_id_b = batching(model_params['minibatch_size'], test_en,
+    test_en_b, test_de_b, test_y_b, test_id_b = batching(batch_size, test_en,
                                                          test_de, test_y, test_id)
-
-    with open('configs_{}_{}.json'.format(args.exp_name,
-             params['total_time_steps'] - params['num_encoder_steps']), 'r') as json_file:
-        configs = json.load(json_file)
 
     nrmse, nmae = evaluate(configs, args, test_en_b, test_de_b, test_y_b, test_id_b, formatter, path, device)
 
