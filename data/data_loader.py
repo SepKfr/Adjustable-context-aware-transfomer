@@ -27,7 +27,6 @@ import gc
 import glob
 import datetime
 
-
 from data import electricity, traffic, watershed
 
 np.random.seed(21)

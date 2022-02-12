@@ -88,6 +88,7 @@ def main():
     _, _, test = formatter.split_data(raw_data)
     _, valid_max = formatter.get_num_samples_for_calibration()
     params = formatter.get_experiment_params()
+    model_params = formatter.get_default_model_params()
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
                                      params['num_encoder_steps'], params["column_definition"])
@@ -98,7 +99,7 @@ def main():
 
     path = "models_{}_{}".format(args.exp_name, params['total_time_steps'] - params['num_encoder_steps'])
 
-    test_en_b, test_de_b, test_y_b, test_id_b = batching(params['minibatch_size'], test_en,
+    test_en_b, test_de_b, test_y_b, test_id_b = batching(model_params['minibatch_size'], test_en,
                                                          test_de, test_y, test_id)
 
     with open('configs_{}_{}.json'.format(args.exp_name,
