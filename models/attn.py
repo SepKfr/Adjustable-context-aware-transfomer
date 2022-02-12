@@ -430,5 +430,5 @@ class Attn(nn.Module):
         enc_outputs, enc_self_attns, _ = self.encoder(enc_inputs)
         dec_outputs, dec_self_attns, dec_enc_attns, index = self.decoder(dec_inputs, enc_outputs)
         dec_logits = self.projection(dec_outputs)
-        return dec_logits, index
+        return dec_logits
 
