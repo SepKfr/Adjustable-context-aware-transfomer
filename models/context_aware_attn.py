@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
+import random
 
 
 def get_attn_subsequent_mask(seq):
@@ -9,18 +10,6 @@ def get_attn_subsequent_mask(seq):
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)
     subsequent_mask = torch.from_numpy(subsequent_mask).int()
     return subsequent_mask
-
-
-def get_con_vecs(seq, cutoff):
-
-    batch_size, n_h, seq_len, d_k = seq.shape
-    seq = seq.reshape(batch_size, seq_len, n_h*d_k)
-    seq_pad = F.pad(seq, pad=(cutoff, cutoff, cutoff, cutoff))
-
-    seq_out = seq_pad.unfold(1, cutoff, 1)
-    seq_out = seq_out[:, :seq_len, :n_h*d_k, :]
-    seq_out = seq_out.reshape(batch_size, n_h, seq_len, cutoff, d_k)
-    return seq_out
 
 
 class PositionalEncoding(nn.Module):
@@ -56,50 +45,69 @@ class ScaledDotProductAttention(nn.Module):
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
-        self.context_lengths = context_lengths
-        self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
-        self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
+        self.softmax = nn.Softmax(dim=-1)
+        if attn_tp == "ACAT":
+            self.context_lengths = context_lengths
+            self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
+            self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
 
     def forward(self, Q, K, V, attn_mask):
 
-        b, h, l, d_k = Q.shape
-        l_k = K.shape[2]
+        if attn_tp == "ACAT":
+            def get_unfold(t, k):
 
-        len_n_k = len(self.context_lengths)
+                t = F.pad(t, pad=(k - 1, 0, 0, 0))
+                t = t.unfold(-1, k, 1).reshape(b, h, -1, d_k, k)
+                return t
 
-        x = lambda a, b, ind: self.linear_list_q[ind](get_con_vecs(a, b).transpose(-2, -1)).squeeze(-1)
-        Q_l = [x(Q, k, i) for i, k in enumerate(self.context_lengths)]
-        K_l = [x(K, k, i) for i, k in enumerate(self.context_lengths)]
-        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
-        K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
-        m_f = max(self.context_lengths)
-        K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
+            b, h, l, d_k = Q.shape
+            l_k = K.shape[2]
 
-        scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
-        if attn_mask is not None:
-            attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
-            attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+            len_n_k = len(self.context_lengths)
 
-        if attn_mask is not None:
+            x = lambda a, b, ind: self.linear_list_q[ind](get_unfold(a, b)).squeeze(-1)
+            Q_l = [x(Q, k, i) for i, k in enumerate(self.context_lengths)]
+            K_l = [x(K, k, i) for i, k in enumerate(self.context_lengths)]
+            Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
+            K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
+            m_f = max(self.context_lengths)
+            K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
 
-            attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-            attn_mask = attn_mask.to(self.device)
-            scores.masked_fill_(attn_mask, -1e9)
+            scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
+            if attn_mask is not None:
+                attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
+                attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
-        attn = nn.Softmax(dim=-1)(scores)
+            if attn_mask is not None:
 
-        attn_f = torch.ones(b, h, l, l_k).to(self.device)
-        attn, index = torch.max(attn, dim=2)
-        attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
-        attn_f[:, :, :, -1] = attn[:, :, :, -1]
-        ind = np.arange(0, l_k)
-        ind = ind[np.where(ind % m_f != 0)]
-        ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
+                attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+                attn_mask = attn_mask.to(self.device)
+                scores.masked_fill_(attn_mask, -1e9)
 
-        attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
-        attn_f = nn.Softmax(dim=-1)(attn_f)
-        context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
-        return context, attn_f
+            attn = nn.Softmax(dim=-1)(scores)
+
+            attn_f = torch.zeros(b, h, l, l_k).to(self.device)
+            attn, index = torch.max(attn, dim=2)
+            attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
+            attn_f[:, :, :, -1] = attn[:, :, :, -1]
+            ind = np.arange(0, l_k)
+            ind = ind[np.where(ind % m_f != 0)]
+            ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
+
+            attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
+            attn_f = self.softmax(attn_f)
+            context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
+            return context, attn_f
+
+        else:
+            scores = torch.einsum('bhqd, bhkd -> bhqk', Q, K) / np.sqrt(self.d_k)
+            if attn_mask is not None:
+                attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+                attn_mask = attn_mask.to(self.device)
+                scores.masked_fill_(attn_mask, -1e9)
+            attn = self.softmax(scores)
+            context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+            return context, attn
 
 
 class MultiHeadAttention(nn.Module):
@@ -285,8 +293,15 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, context_lengths):
+                 tgt_pad_index, device, context_lengths, seed, attn_type):
         super(Attn, self).__init__()
+
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
+        global attn_tp
+        attn_tp = attn_type
 
         self.encoder = Encoder(
             d_model=d_model, d_ff=d_ff,

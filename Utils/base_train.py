@@ -14,34 +14,43 @@
 # limitations under the License.
 
 # Lint as: python3
+from itertools import chain
+from itertools import groupby
 
 import torch
 import numpy as np
 from Utils import utils, base
 import pandas as pd
+import math
+import random
+
 InputTypes = base.InputTypes
 
 
 def batching(batch_size, x_en, x_de, y_t, test_id):
 
-    batch_n = int(x_en.shape[0] / batch_size)
-    start = x_en.shape[0] % batch_n
+    batch_n = math.floor(x_en.shape[0] / batch_size)
+    start = 0
     X_en = torch.zeros(batch_n, batch_size, x_en.shape[1], x_en.shape[2])
     X_de = torch.zeros(batch_n, batch_size, x_de.shape[1], x_de.shape[2])
     Y_t = torch.zeros(batch_n, batch_size, y_t.shape[1], y_t.shape[2])
     tst_id = np.empty((batch_n, batch_size, test_id.shape[1], x_en.shape[2]), dtype=object)
+    i = 0
+    while start+batch_size <= x_en.shape[0]:
 
-    for i in range(batch_n):
         X_en[i, :, :, :] = x_en[start:start+batch_size, :, :]
         X_de[i, :, :, :] = x_de[start:start+batch_size, :, :]
         Y_t[i, :, :, :] = y_t[start:start+batch_size, :, :]
         tst_id[i, :, :, :] = test_id[start:start+batch_size, :, :]
         start += batch_size
+        i += 1
 
     return X_en, X_de, Y_t, tst_id
 
 
-def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_definition):
+def batch_sampled_data(data, max_samples, time_steps,
+                       num_encoder_steps, column_definition,
+                       seed):
     """Samples segments into a compatible format.
     Args:
       data: Sources data to sample and batch
@@ -49,6 +58,9 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
     Returns:
       Dictionary of batched data with the maximum samples specified.
     """
+
+    np.random.seed(seed)
+    random.seed(seed)
 
     if max_samples < 1:
         raise ValueError(
@@ -72,14 +84,17 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
             split_data_map[identifier] = df
 
     if 0 < max_samples < len(valid_sampling_locations):
+
         ranges = [
           valid_sampling_locations[i] for i in np.random.choice(
               len(valid_sampling_locations), max_samples, replace=False)
         ]
+
     else:
-        print('Max samples={} exceeds # available segments={}'.format(
-          max_samples, len(valid_sampling_locations)))
-        ranges = valid_sampling_locations
+        ranges = [
+            valid_sampling_locations[i] for i in np.random.choice(
+                len(valid_sampling_locations), len(valid_sampling_locations), replace=False)
+        ]
 
     id_col = utils.get_single_col_by_input_type(InputTypes.ID, column_definition)
     time_col = utils.get_single_col_by_input_type(InputTypes.TIME, column_definition)
