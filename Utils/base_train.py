@@ -51,7 +51,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
 
     if max_samples < 1:
         raise ValueError(
-          'Illegal number of samples specified! samples={}'.format(max_samples))
+            'Illegal number of samples specified! samples={}'.format(max_samples))
     id_col = utils.get_single_col_by_input_type(InputTypes.ID, column_definition)
     time_col = utils.get_single_col_by_input_type(InputTypes.TIME, column_definition)
     data.sort_values(by=[id_col, time_col], inplace=True)
@@ -67,12 +67,12 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
             split_data_map[identifier] = df
     if 0 < max_samples < len(valid_sampling_locations):
         ranges = [
-          valid_sampling_locations[i] for i in np.random.choice(
-              len(valid_sampling_locations), max_samples, replace=False)
+            valid_sampling_locations[i] for i in np.random.choice(
+                len(valid_sampling_locations), max_samples, replace=False)
         ]
     else:
         print('Max samples={} exceeds # available segments={}'.format(
-          max_samples, len(valid_sampling_locations)))
+            max_samples, len(valid_sampling_locations)))
         ranges = valid_sampling_locations
     id_col = utils.get_single_col_by_input_type(InputTypes.ID, column_definition)
     time_col = utils.get_single_col_by_input_type(InputTypes.TIME, column_definition)
@@ -99,7 +99,7 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
             print(i + 1, 'of', max_samples, 'samples done...')
         identifier, start_idx = tup
         sliced = split_data_map[identifier].iloc[start_idx -
-                                               time_steps:start_idx]
+                                                 time_steps:start_idx]
         enc_inputs[i, :, :] = sliced[enc_input_cols].iloc[:num_encoder_steps]
         dec_inputs[i, :, :] = sliced[dec_input_cols].iloc[num_encoder_steps:]
         inputs[i, :, :] = sliced[enc_input_cols]
@@ -116,7 +116,6 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
         'identifier': identifiers
     }
     return sampled_data
-
 
 def inverse_output(predictions, outputs, test_id):
     def format_outputs(preds):

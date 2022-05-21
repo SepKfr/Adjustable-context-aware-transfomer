@@ -12,6 +12,7 @@ def get_attn_subsequent_mask(seq):
 
 
 def get_con_vecs(seq, cutoff):
+
     batch_size, n_h, seq_len, d_k = seq.shape
     seq = seq.reshape(batch_size, n_h*d_k, seq_len)
     seq_pad = F.pad(seq, pad=(cutoff - 1, 0, 0, 0))
