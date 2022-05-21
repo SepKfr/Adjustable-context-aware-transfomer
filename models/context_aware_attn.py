@@ -84,17 +84,12 @@ class ScaledDotProductAttention(nn.Module):
                 attn_mask = attn_mask.to(self.device)
                 scores.masked_fill_(attn_mask, -1e9)
 
-            attn = nn.Softmax(dim=-1)(scores)
+            attn = self.softmax(scores)
 
             attn_f = torch.zeros(b, h, l, l_k).to(self.device)
             attn, index = torch.max(attn, dim=2)
             attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
             attn_f[:, :, :, -1] = attn[:, :, :, -1]
-            ind = np.arange(0, l_k)
-            ind = ind[np.where(ind % m_f != 0)]
-            ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
-
-            attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
             attn_f = self.softmax(attn_f)
             context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
             return context, attn_f
@@ -108,7 +103,6 @@ class ScaledDotProductAttention(nn.Module):
             attn = self.softmax(scores)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
             return context, attn
-
 
 class MultiHeadAttention(nn.Module):
 
