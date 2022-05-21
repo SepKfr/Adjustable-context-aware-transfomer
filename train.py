@@ -1,3 +1,5 @@
+import math
+
 from models.context_aware_attn import Attn
 from torch.optim import Adam
 import torch.nn as nn
@@ -11,7 +13,7 @@ import sys
 import random
 import pandas as pd
 from data.data_loader import ExperimentConfig
-from Utils.base_train import batching, batch_sampled_data
+from Utils.base_train import batching, batch_sampled_data, inverse_output
 
 
 class NoamOpt:
@@ -43,6 +45,62 @@ class NoamOpt:
         for param_group in self._optimizer.param_groups:
             param_group['lr'] = lr
 
+
+def evaluate(d_model, args, test_en, test_de, test_y, test_id, formatter, path, device):
+
+    n_heads = 8
+    d_k = int(d_model / n_heads)
+    mae = nn.L1Loss()
+    mse = nn.MSELoss()
+    model_params = formatter.get_default_model_params()
+
+    def extract_numerical_data(data):
+        """Strips out forecast time and identifier columns."""
+        return data[[
+            col for col in data.columns
+            if col not in {"forecast_time", "identifier"}
+        ]]
+
+    model = Attn(src_input_size=test_en.shape[3],
+                 tgt_input_size=test_de.shape[3],
+                 d_model=d_model,
+                 d_ff=d_model * 4,
+                 d_k=d_k, d_v=d_k, n_heads=n_heads,
+                 n_layers=model_params['stack_size'], src_pad_index=0,
+                 tgt_pad_index=0, device=device,
+                 context_lengths=model_params['context_lengths'],
+                 attn_type=args.attn_type, seed=args.seed).to(device)
+
+    checkpoint = torch.load(os.path.join(path, "{}_{}".format(args.name, args.seed)))
+    model.load_state_dict(checkpoint["model_state_dict"])
+
+    model.eval()
+
+    predictions = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
+    targets_all = torch.zeros(test_y.shape[0], test_y.shape[1], test_y.shape[2])
+
+    for j in range(test_en.shape[0]):
+        output = model(test_en[j], test_de[j])
+        output_map = inverse_output(output, test_y[j], test_id[j])
+        forecast = torch.from_numpy(extract_numerical_data(
+            formatter.format_predictions(output_map["predictions"])).to_numpy().astype('float32')).to(device)
+
+        predictions[j, :, :] = forecast
+        targets = torch.from_numpy(extract_numerical_data(
+            formatter.format_predictions(output_map["targets"])).to_numpy().astype('float32')).to(device)
+
+        targets_all[j, :, :] = targets
+
+    normaliser = targets_all.to(device).abs().mean()
+    test_loss = mse(predictions.to(device), targets_all.to(device)).item()
+    test_loss = math.sqrt(test_loss) / normaliser.item()
+
+    mae_loss = mae(predictions.to(device), targets_all.to(device)).item()
+    mae_loss = mae_loss / normaliser.item()
+
+    return test_loss, mae_loss
+
+
 def train(args, model, train_en, train_de, train_y,
           test_en, test_de, test_y, epoch, e, val_loss,
           val_inner_loss, optimizer, train_loss_list,
@@ -71,7 +129,7 @@ def train(args, model, train_en, train_de, train_y,
             if val_inner_loss < val_loss:
                 val_loss = val_inner_loss
                 best_config = config
-                torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, args.name))
+                torch.save({'model_state_dict': model.state_dict()}, os.path.join(path, "{}_{}".format(args.name, str(args.seed))))
             e = epoch
         if epoch - e > 5:
             stop = True
@@ -85,6 +143,7 @@ def train(args, model, train_en, train_de, train_y,
         }, os.path.join(path, "{}_continue".format(args.name)))
         sys.exit(0)
     return best_config, val_loss, val_inner_loss, stop, e
+
 
 def create_config(hyper_parameters):
 
@@ -128,6 +187,14 @@ def main():
                                             torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                  torch.from_numpy(sample_data['outputs']).to(device), \
                                  sample_data['identifier']
+
+    sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
+                                     params['num_encoder_steps'], params["column_definition"], args.seed)
+    test_en, test_de, test_y, test_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['dec_inputs']).to(device), \
+                                            torch.from_numpy(sample_data['outputs']).to(device), \
+                                            sample_data['identifier']
+
     model_params = formatter.get_default_model_params()
     seq_len = params['total_time_steps'] - params['num_encoder_steps']
     path = "models_{}_{}".format(args.exp_name, seq_len)
@@ -171,11 +238,14 @@ def main():
                       optim, train_loss_list, conf, i, best_config, criterion, path)
             if stop:
                 break
-    batch_size, heads, d_model = best_config
+
+    d_model = best_config
+    test_en, test_de, test_y, test_id = batching(batch_size, test_en,
+                                                             test_de, test_y, test_id)
+    nrmse, nmae = evaluate(d_model, args, test_en, test_de, test_y, test_id, formatter, path, device)
+
     print("best_config: {}".format(best_config))
     config_file[args.name] = list()
-    config_file[args.name].append(batch_size)
-    config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
     config_path = "configs_{}_{}.json".format(args.exp_name, seq_len)
     if os.path.exists(config_path):
@@ -183,14 +253,36 @@ def main():
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
                 json_dat[args.name] = list()
-            json_dat[args.name].append(batch_size)
-            json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
         with open(config_path, "w") as json_file:
             json.dump(json_dat, json_file)
     else:
         with open(config_path, "w") as json_file:
             json.dump(config_file, json_file)
+
+    error_file = dict()
+    key = "{}_{}".format(args.name, args.seed)
+    error_file[key] = list()
+    error_file[key].append("{:.3f}".format(nrmse))
+    error_file[key].append("{:.3f}".format(nmae))
+
+    res_path = "results_{}_{}.json".format(args.exp_name,
+                                           args.total_steps - params['num_encoder_steps'])
+
+    if os.path.exists(res_path):
+        with open(res_path) as json_file:
+            json_dat = json.load(json_file)
+            if json_dat.get(key) is None:
+                json_dat[key] = list()
+            json_dat[key].append("{:.3f}".format(nrmse))
+            json_dat[key].append("{:.3f}".format(nmae))
+
+        with open(res_path, "w") as json_file:
+            json.dump(json_dat, json_file)
+    else:
+        with open(res_path, "w") as json_file:
+            json.dump(error_file, json_file)
+
 
 if __name__ == '__main__':
     main()

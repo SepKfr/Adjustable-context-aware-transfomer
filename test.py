@@ -34,7 +34,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, formatter, path, d
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
                  n_layers=model_params['stack_size'], src_pad_index=0,
                  tgt_pad_index=0, device=device,
-                 context_lengths=model_params['context_lengths']).to(device)
+                 context_lengths=model_params['context_lengths'], seed=args.seed).to(device)
 
     checkpoint = torch.load(os.path.join(path, "{}_{}".format(args.name, args.seed)))
     model.load_state_dict(checkpoint["model_state_dict"])
