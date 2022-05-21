@@ -46,6 +46,9 @@ def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_
       Dictionary of batched data with the maximum samples specified.
     """
 
+    np.random.seed(seed)
+    random.seed(seed)
+
     if max_samples < 1:
         raise ValueError(
           'Illegal number of samples specified! samples={}'.format(max_samples))
