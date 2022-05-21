@@ -145,7 +145,7 @@ def objective(trial):
 
     d_model = trial.suggest_categorical("d_model", [16, 32])
     if "ACAT" in args.attn_type:
-        context_length = [1, 3, 6, args.max_length]
+        context_length = [3, 6, args.max_length]
     else:
         context_length = [1]
 

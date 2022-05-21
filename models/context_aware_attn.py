@@ -54,7 +54,7 @@ class ScaledDotProductAttention(nn.Module):
 
     def forward(self, Q, K, V, attn_mask):
 
-        if attn_tp == "ACAT" and not self.cross_attn:
+        if attn_tp == "ACAT":
             def get_unfold(t, k):
 
                 t = t.reshape(b, h*d_k, -1)
@@ -296,10 +296,6 @@ class Attn(nn.Module):
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, context_lengths, seed, attn_type):
         super(Attn, self).__init__()
-
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
 
         global attn_tp
         attn_tp = attn_type
