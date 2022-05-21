@@ -56,6 +56,7 @@ class ScaledDotProductAttention(nn.Module):
         if attn_tp == "ACAT":
             def get_unfold(t, k):
 
+                t = t.reshape(b, h*d_k, -1)
                 t = F.pad(t, pad=(k - 1, 0, 0, 0))
                 t = t.unfold(-1, k, 1).reshape(b, h, -1, d_k, k)
                 return t
