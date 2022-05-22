@@ -49,11 +49,30 @@ class PositionalEncoding(nn.Module):
         return x + self.pos_table[:, :x.size(1)].clone().detach()
 
 
-class ScaledDotProductAttention(nn.Module):
+class BasicAttention(nn.Module):
+
+    def __init__(self, d_k, device):
+        super(BasicAttention, self).__init__()
+        self.d_k = d_k
+        self.device = device
+
+    def forward(self, Q, K, V, attn_mask):
+
+        scores = torch.einsum('bhqd, bhkd -> bhqk', Q, K) / np.sqrt(self.d_k)
+        if attn_mask is not None:
+            attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+            attn_mask = attn_mask.to(self.device)
+            scores.masked_fill_(attn_mask, -1e9)
+        attn = nn.Softmax(dim=-1)(scores)
+        context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+        return context, attn
+
+
+class ACAT(nn.Module):
 
     def __init__(self, d_k, device, context_lengths):
 
-        super(ScaledDotProductAttention, self).__init__()
+        super(ACAT, self).__init__()
         self.device = device
         self.d_k = d_k
         self.context_lengths = context_lengths
@@ -130,8 +149,11 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
-        context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
-                                                         context_lengths=self.context_lengths)(
+        if attn_tp == "ACAT":
+            context, attn = ACAT(d_k=self.d_k, device=self.device, context_lengths=self.context_lengths)(
+                Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
+        else:
+            context, attn = BasicAttention(d_k=self.d_k, device=self.device)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
@@ -285,9 +307,11 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, context_lengths):
+                 tgt_pad_index, device, context_lengths, attn_type):
         super(Attn, self).__init__()
 
+        global attn_tp
+        attn_tp = attn_type
         self.encoder = Encoder(
             d_model=d_model, d_ff=d_ff,
             d_k=d_k, d_v=d_v, n_heads=n_heads,

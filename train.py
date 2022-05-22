@@ -113,6 +113,7 @@ def main():
     parser.add_argument("--seed", type=int, default=21)
     parser.add_argument("--cuda", type=str, default='cuda:0')
     parser.add_argument("--total_steps", type=int, default=192)
+    parser.add_argument("--attn_type", type=str, default='ACAT')
     args = parser.parse_args()
     config_file = dict()
 
@@ -186,7 +187,7 @@ def main():
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
                      n_layers=model_params['stack_size'], src_pad_index=0,
                      tgt_pad_index=0, device=device,
-                     context_lengths=model_params['context_lengths'])
+                     context_lengths=model_params['context_lengths'], attn_type=args.attn_type)
         model.to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
