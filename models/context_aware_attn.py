@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -9,16 +11,6 @@ def get_attn_subsequent_mask(seq):
     subsequent_mask = np.triu(np.ones(attn_shape), k=1)
     subsequent_mask = torch.from_numpy(subsequent_mask).int()
     return subsequent_mask
-
-
-def get_con_vecs(seq, cutoff):
-
-    batch_size, n_h, seq_len, d_k = seq.shape
-    seq = seq.reshape(batch_size, n_h*d_k, seq_len)
-    seq_pad = F.pad(seq, pad=(cutoff - 1, 0, 0, 0))
-    seq_out = seq_pad.unfold(-1, cutoff, 1)
-    seq_out = seq_out.reshape(batch_size, n_h, seq_len, cutoff, d_k)
-    return seq_out
 
 
 class PositionalEncoding(nn.Module):
@@ -42,12 +34,17 @@ class PositionalEncoding(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
 
-    def __init__(self, d_k, device, context_lengths):
+    def __init__(self, d_k, n_heads, device, context_lengths):
         super(ScaledDotProductAttention, self).__init__()
         self.device = device
         self.d_k = d_k
         self.context_lengths = context_lengths
-        self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
+        p = lambda f: math.ceil((f-1)/2) if f % 2 == 0 else math.floor((f-1)/2)
+        self.conv_list_q = nn.ModuleList([nn.Conv1d(in_channels=d_k*n_heads,
+                                                    out_channels=d_k*n_heads,
+                                                    kernel_size=f,
+                                                    padding=p(f))
+                                            for f in self.context_lengths]).to(device)
         self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
         self.softmax = nn.Softmax(dim=-1)
 
@@ -58,9 +55,9 @@ class ScaledDotProductAttention(nn.Module):
             b, h, l, d_k = Q.shape
             l_k = K.shape[2]
             len_n_k = len(self.context_lengths)
-            x = lambda a, b, ind: self.linear_list_q[ind](get_con_vecs(a, b).transpose(-2, -1)).squeeze(-1)
-            Q_l = [x(Q, k, i) for i, k in enumerate(self.context_lengths)]
-            K_l = [x(K, k, i) for i, k in enumerate(self.context_lengths)]
+            x = lambda a, ind, l: self.conv_list_q[ind](a.reshape(b, h*d_k, -1)).reshape(b, h, -1, d_k)[:, :, :l, :]
+            Q_l = [x(Q, i, l) for i, k in enumerate(self.context_lengths)]
+            K_l = [x(K, i, l_k) for i, k in enumerate(self.context_lengths)]
             Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
             K_p = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
 
@@ -108,7 +105,8 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         context, attn = ScaledDotProductAttention(d_k=self.d_k, device=self.device,
-                                                         context_lengths=self.context_lengths)(
+                                                 context_lengths=self.context_lengths,
+                                                 n_heads=self.n_heads)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)

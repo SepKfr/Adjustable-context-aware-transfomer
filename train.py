@@ -157,7 +157,7 @@ def main():
     parser.add_argument("--exp_name", type=str, default='electricity')
     parser.add_argument("--seed", type=int, default=21)
     parser.add_argument("--cuda", type=str, default='cuda:0')
-    parser.add_argument("--attn_type", type=str, default='ACAT')
+    parser.add_argument("--attn_type", type=str, default='basic')
     parser.add_argument("--total_steps", type=int, default=192)
     args = parser.parse_args()
     config_file = dict()
@@ -242,7 +242,8 @@ def main():
     d_model = best_config
     test_en, test_de, test_y, test_id = batching(batch_size, test_en,
                                                              test_de, test_y, test_id)
-    nrmse, nmae = evaluate(d_model, args, test_en, test_de, test_y, test_id, formatter, path, device)
+    nrmse, nmae = evaluate(d_model, args, test_en.to(device),
+                           test_de.to(device), test_y.to(device), test_id, formatter, path, device)
 
     print("best_config: {}".format(best_config))
     config_file[args.name] = list()
