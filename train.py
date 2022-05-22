@@ -118,7 +118,7 @@ L1Loss = nn.L1Loss()
 
 
 def define_model(d_model, context_length, n_heads,
-                 stack_size, dr, src_input_size,
+                 stack_size, dr, w_shared, src_input_size,
                  tgt_input_size):
 
     d_k = int(d_model / n_heads)
@@ -133,7 +133,7 @@ def define_model(d_model, context_length, n_heads,
                seed=args.seed,
                context_lengths=context_length,
                attn_type=args.attn_type,
-               dr=dr)
+               dr=dr, w_sh=w_shared)
     mdl.to(device)
     return mdl
 
@@ -146,12 +146,13 @@ def objective(trial):
 
     d_model = trial.suggest_categorical("d_model", [16, 32])
     dr = trial.suggest_categorical("dr", [0])
+    w_shared = trial.suggest_categorical("w_shared", [True])
     if "ACAT" in args.attn_type:
         context_length = [1, 3, 6, 9]
     else:
         context_length = [1]
 
-    if [d_model, dr] in param_history or n_distinct_trial > 4:
+    if [d_model, dr, w_shared] in param_history or n_distinct_trial > 4:
         raise optuna.exceptions.TrialPruned()
     else:
         n_distinct_trial += 1
@@ -180,7 +181,7 @@ def objective(trial):
     valid_en, valid_de, valid_y, valid_id = \
         valid_en.to(device), valid_de.to(device), valid_y.to(device), valid_id
 
-    model = define_model(d_model, context_length, n_heads, stack_size, dr, train_en.shape[3], train_de.shape[3])
+    model = define_model(d_model, context_length, n_heads, stack_size, dr, w_shared, train_en.shape[3], train_de.shape[3])
 
     optimizer = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
 

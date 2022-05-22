@@ -117,13 +117,16 @@ class MultiHeadAttention(nn.Module):
 
         super(MultiHeadAttention, self).__init__()
 
-        self.WQ = nn.Linear(d_model, d_k * n_heads, bias=False)
-        self.WK = nn.Linear(d_model, d_k * n_heads, bias=False)
-        self.WV = nn.Linear(d_model, d_v * n_heads, bias=False)
+        if w_shared:
+            self.W = nn.Linear(d_model, d_k * n_heads, bias=False)
+        else:
+            self.WQ = nn.Linear(d_model, d_k * n_heads, bias=False)
+            self.WK = nn.Linear(d_model, d_k * n_heads, bias=False)
+            self.WV = nn.Linear(d_model, d_v * n_heads, bias=False)
         self.fc = nn.Linear(n_heads * d_v, d_model, bias=False)
 
         self.device = device
-
+        self.w_shared = w_shared
         self.d_model = d_model
         self.d_k = d_k
         self.d_v = d_v
@@ -133,9 +136,15 @@ class MultiHeadAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         batch_size = Q.shape[0]
-        q_s = self.WQ(Q).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
-        k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
-        v_s = self.WV(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1, 2)
+
+        if self.w_shared:
+            q_s = self.W(Q).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
+            k_s = q_s.clone()
+            v_s = q_s.clone()
+        else:
+            q_s = self.WQ(Q).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
+            k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
+            v_s = self.WV(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1, 2)
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
@@ -306,13 +315,15 @@ class Attn(nn.Module):
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
                  tgt_pad_index, device, context_lengths, attn_type,
-                 seed, dr):
+                 seed, dr, w_sh):
         super(Attn, self).__init__()
 
         np.random.seed(seed)
         random.seed(seed)
         torch.manual_seed(seed)
 
+        global w_shared
+        w_shared = w_sh
         global attn_tp
         attn_tp = attn_type
         self.encoder = Encoder(
