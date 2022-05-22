@@ -76,18 +76,12 @@ class ACAT(nn.Module):
         self.device = device
         self.d_k = d_k
         self.context_lengths = context_lengths
-        self.conv_list_q = nn.ModuleList(
+        self.conv_list = nn.ModuleList(
             [nn.Conv1d(in_channels=d_k*n_heads,
                        out_channels=d_k*n_heads,
                        kernel_size=f,
                        padding=int(f/2)) for f in self.context_lengths]).to(device)
-        self.conv_list_k = nn.ModuleList(
-            [nn.Conv1d(in_channels=d_k*n_heads,
-                       out_channels=d_k*n_heads,
-                       kernel_size=f,
-                       padding=int(f/2)) for f in self.context_lengths]).to(device)
-        self.linear_Q = nn.Linear(len(context_lengths), 1, bias=False).to(device)
-        self.linear_K = nn.Linear(len(context_lengths), 1, bias=False).to(device)
+        self.linear = nn.Linear(len(context_lengths), 1, bias=False).to(device)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, Q, K, V, attn_mask):
@@ -95,14 +89,14 @@ class ACAT(nn.Module):
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        Q_l = [self.conv_list_q[i](Q.reshape(b, h*d_k, l))[:, :, :l]
+        Q_l = [self.conv_list[i](Q.reshape(b, h*d_k, l))[:, :, :l]
                for i in range(len(self.context_lengths))]
-        K_l = [self.conv_list_k[i](K.reshape(b, h*d_k, l_k))[:, :, :l_k]
+        K_l = [self.conv_list[i](K.reshape(b, h*d_k, l_k))[:, :, :l_k]
                for i in range(len(self.context_lengths))]
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, -1)
         K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, -1)
-        Q = F.relu(self.linear_Q(Q_p)).squeeze(-1) + Q
-        K = F.relu(self.linear_K(K_p)).squeeze(-1) + K
+        Q = F.relu(self.linear(Q_p)).squeeze(-1) + Q
+        K = F.relu(self.linear(K_p)).squeeze(-1) + K
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
