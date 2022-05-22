@@ -159,7 +159,7 @@ def main():
 
     criterion = nn.MSELoss()
     hyper_param = list([model_params['minibatch_size'], [model_params['num_heads']],
-                        model_params['hidden_layer_size'], args.filter_lengths])
+                        model_params['hidden_layer_size']])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
@@ -184,7 +184,7 @@ def main():
                      d_model=d_model,
                      d_ff=d_model*4,
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
-                     n_layers=params['stack_size'], src_pad_index=0,
+                     n_layers=model_params['stack_size'], src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      context_lengths=model_params['context_lengths'])
         model.to(device)
