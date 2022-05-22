@@ -144,7 +144,7 @@ def objective(trial):
     global val_loss
     global n_distinct_trial
 
-    d_model = trial.suggest_categorical("d_model", [16, 32, 8])
+    d_model = trial.suggest_categorical("d_model", [16, 32, 64])
     dr = trial.suggest_categorical("dr", [0])
     if "ACAT" in args.attn_type:
         context_length = [1, 3, 6, 9]
