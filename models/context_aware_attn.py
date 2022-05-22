@@ -86,17 +86,14 @@ class ACAT(nn.Module):
 
         len_n_k = len(self.context_lengths)
 
-        x = lambda a, b, ind: self.linear_list_q[ind](get_con_vecs(a, b).transpose(-2, -1)).squeeze(-1)
+        x = lambda a, b, ind: F.relu(self.linear_list_q[ind](get_con_vecs(a, b).transpose(-2, -1))).squeeze(-1)
         Q_l = [x(Q, k, i) for i, k in enumerate(self.context_lengths)]
         K_l = [x(K, k, i) for i, k in enumerate(self.context_lengths)]
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
-        K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
-        m_f = max(self.context_lengths)
-        K_p = torch.cat((K_tmp[:, :, :, 0::m_f, :], K_tmp[:, :, :, -1:, :]), dim=3)
+        K_p = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
 
         scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
         if attn_mask is not None:
-            attn_mask = torch.cat((attn_mask[:, :, :, 0::m_f], attn_mask[:, :, :, -1:]), dim=-1)
             attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
 
         if attn_mask is not None:
@@ -106,19 +103,9 @@ class ACAT(nn.Module):
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = nn.Softmax(dim=-1)(scores)
-
-        attn_f = torch.ones(b, h, l, l_k).to(self.device)
-        attn, index = torch.max(attn, dim=2)
-        attn_f[:, :, :, 0::m_f] = attn[:, :, :, :-1]
-        attn_f[:, :, :, -1] = attn[:, :, :, -1]
-        ind = np.arange(0, l_k)
-        ind = ind[np.where(ind % m_f != 0)]
-        ind = ind[:-1] if (l_k - 1) % m_f != 0 else ind
-
-        attn_f[:, :, :, ind] = attn_f[:, :, :, ind] / l_k
-        attn_f = nn.Softmax(dim=-1)(attn_f)
-        context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
-        return context, attn_f
+        attn, _ = torch.max(attn, dim=2)
+        context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
+        return context, attn
 
 
 class MultiHeadAttention(nn.Module):
