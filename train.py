@@ -145,17 +145,17 @@ def objective(trial):
     global n_distinct_trial
 
     d_model = trial.suggest_categorical("d_model", [16, 32])
-    dr = trial.suggest_categorical("dr", [0, 0.1])
+    dr = trial.suggest_categorical("dr", [0])
     if "ACAT" in args.attn_type:
         context_length = [1, 3, 6, 9]
     else:
         context_length = [1]
 
-    if [d_model] in param_history or n_distinct_trial > 4:
+    if [d_model, dr] in param_history or n_distinct_trial > 4:
         raise optuna.exceptions.TrialPruned()
     else:
         n_distinct_trial += 1
-    param_history.append([d_model])
+    param_history.append([d_model, dr])
     n_heads = model_params["num_heads"]
     stack_size = model_params["stack_size"]
 

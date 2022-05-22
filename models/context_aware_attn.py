@@ -70,29 +70,39 @@ class BasicAttention(nn.Module):
 
 class ACAT(nn.Module):
 
-    def __init__(self, d_k, device, context_lengths):
+    def __init__(self, d_k, device, context_lengths, n_heads):
 
         super(ACAT, self).__init__()
         self.device = device
         self.d_k = d_k
         self.context_lengths = context_lengths
-        self.linear_list_q = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
-        self.linear_list_k = nn.ModuleList([nn.Linear(f, 1) for f in self.context_lengths]).to(device)
-        self.linear_Q = nn.Linear(len(context_lengths), 1).to(device)
-        self.linear_K = nn.Linear(len(context_lengths), 1).to(device)
+        self.conv_list_q = nn.ModuleList(
+            [nn.Conv1d(in_channels=d_k*n_heads,
+                       out_channels=d_k*n_heads,
+                       kernel_size=f,
+                       padding=int(f/2)) for f in self.context_lengths]).to(device)
+        self.conv_list_k = nn.ModuleList(
+            [nn.Conv1d(in_channels=d_k*n_heads,
+                       out_channels=d_k*n_heads,
+                       kernel_size=f,
+                       padding=int(f/2)) for f in self.context_lengths]).to(device)
+        self.linear_Q = nn.Parameter(torch.rand(len(context_lengths), device=device))
+        self.linear_K = nn.Parameter(torch.rand(len(context_lengths), device=device))
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, Q, K, V, attn_mask):
 
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        x = lambda a, b, ind: F.relu(self.linear_list_q[ind](get_con_vecs(a, b).transpose(-2, -1))).squeeze(-1)
-        Q_l = [x(Q, k, i) for i, k in enumerate(self.context_lengths)]
-        K_l = [x(K, k, i) for i, k in enumerate(self.context_lengths)]
-        Q_p = torch.cat(Q_l, dim=0).reshape(b, h*d_k, l, -1)
-        K_p = torch.cat(K_l, dim=0).reshape(b, h*d_k, l_k, -1)
-        Q = F.relu(self.linear_Q(Q_p)).reshape(b, h, l, d_k) + Q
-        K = F.relu(self.linear_K(K_p)).reshape(b, h, l_k, d_k) + K
+        Q_l = [self.conv_list_q[i](Q.reshape(b, h*d_k, l))[:, :, :l]
+               for i in range(len(self.context_lengths))]
+        K_l = [self.conv_list_k[i](K.reshape(b, h*d_k, l_k))[:, :, :l_k]
+               for i in range(len(self.context_lengths))]
+        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, -1)
+        K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, -1)
+        Q = torch.einsum('bhqdm, m-> bhqd', Q_p, self.linear_Q) + Q
+        K = torch.einsum('bhqdm, m-> bhqd', K_p, self.linear_K) + K
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
@@ -136,7 +146,8 @@ class MultiHeadAttention(nn.Module):
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         if attn_tp == "ACAT":
-            context, attn = ACAT(d_k=self.d_k, device=self.device, context_lengths=self.context_lengths)(
+            context, attn = ACAT(d_k=self.d_k, device=self.device, context_lengths=self.context_lengths
+                                 ,n_heads=self.n_heads)(
                 Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
         else:
             context, attn = BasicAttention(d_k=self.d_k, device=self.device)(
