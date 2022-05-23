@@ -81,7 +81,8 @@ class ACAT(nn.Module):
                        out_channels=d_k*n_heads,
                        kernel_size=f,
                        padding=int(f/2)) for f in self.context_lengths]).to(device)
-        self.linear = nn.Linear(len(context_lengths), 1, bias=False).to(device)
+        self.linear_q = nn.Linear(len(context_lengths)+1, 1, bias=False).to(device)
+        self.linear_k = nn.Linear(len(context_lengths)+1, 1, bias=False).to(device)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, Q, K, V, attn_mask):
@@ -91,12 +92,16 @@ class ACAT(nn.Module):
 
         Q_l = [self.conv_list[i](Q.reshape(b, h*d_k, l))[:, :, :l]
                for i in range(len(self.context_lengths))]
+        Q_l.append(Q.reshape(b, h*d_k, l))
         K_l = [self.conv_list[i](K.reshape(b, h*d_k, l_k))[:, :, :l_k]
                for i in range(len(self.context_lengths))]
+        K_l.append(K.reshape(b, h*d_k, l_k))
+
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, -1)
+
         K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, -1)
-        Q = self.linear(Q_p).squeeze(-1) + Q
-        K = self.linear(K_p).squeeze(-1) + K
+        Q = self.linear_q(Q_p).squeeze(-1)
+        K = self.linear_k(K_p).squeeze(-1)
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
