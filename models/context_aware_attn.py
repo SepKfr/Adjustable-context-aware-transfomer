@@ -89,9 +89,6 @@ class ACAT(nn.Module):
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        Q = torch.nn.functional.normalize(Q, p=2.0, dim=-1)
-        K = torch.nn.functional.normalize(K, p=2.0, dim=-1)
-
         Q_l = [self.conv_list[i](Q.reshape(b, h*d_k, l))[:, :, :l]
                for i in range(len(self.context_lengths))]
         K_l = [self.conv_list[i](K.reshape(b, h*d_k, l_k))[:, :, :l_k]
