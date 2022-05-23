@@ -95,9 +95,8 @@ class ACAT(nn.Module):
                for i in range(len(self.context_lengths))]
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, -1)
         K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, -1)
-        w = self.softmax(self.linear)
-        Q = torch.einsum('bhqdn, n-> bhqd', Q_p, w) + Q
-        K = torch.einsum('bhqdn, n-> bhqd', K_p, w) + K
+        Q = torch.einsum('bhqdn, n-> bhqd', Q_p, self.linear) + Q
+        K = torch.einsum('bhqdn, n-> bhqd', K_p, self.linear) + K
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
