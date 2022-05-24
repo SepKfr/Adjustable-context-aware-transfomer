@@ -79,17 +79,10 @@ class ScaledDotProductAttention(nn.Module):
             scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
             if attn_mask is not None:
                 attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
-
-        else:
-            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
-
-        if attn_mask is not None:
-
-            attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-            attn_mask = attn_mask.to(self.device)
-            scores.masked_fill_(attn_mask, -1e9)
-
-        if "ACAT" in self.attn_type:
+                if attn_mask is not None:
+                    attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+                    attn_mask = attn_mask.to(self.device)
+                    scores.masked_fill_(attn_mask, -1e9)
 
             attn = self.softmax(scores)
             attn, _ = torch.max(attn, dim=2)
@@ -98,6 +91,11 @@ class ScaledDotProductAttention(nn.Module):
             return context, attn
 
         else:
+            scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / (np.sqrt(self.d_k))
+            if attn_mask is not None:
+                attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+                attn_mask = attn_mask.to(self.device)
+                scores.masked_fill_(attn_mask, -1e9)
             attn = self.softmax(scores)
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
             return context, attn
