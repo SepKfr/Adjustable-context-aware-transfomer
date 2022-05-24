@@ -131,8 +131,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
                  n_layers=stack_size, src_pad_index=0,
                  tgt_pad_index=0, device=device,
-                 attn_type=args.attn_type,
-                 kernel=1, seed=args.seed).to(device)
+                 attn_type=args.attn_type, seed=args.seed).to(device)
 
     checkpoint = torch.load(os.path.join(path, "{}_{}".format(args.name, args.seed)))
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -168,7 +167,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--attn_type", type=str, default='basic')
+    parser.add_argument("--attn_type", type=str, default='ACAT')
     parser.add_argument("--name", type=str, default='attn')
     parser.add_argument("--exp_name", type=str, default='electricity')
     parser.add_argument("--cuda", type=str, default="cuda:0")
@@ -260,8 +259,7 @@ def main():
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
                      n_layers=stack_size, src_pad_index=0,
                      tgt_pad_index=0, device=device,
-                     attn_type=args.attn_type,
-                     kernel=1, seed=args.seed)
+                     attn_type=args.attn_type, seed=args.seed)
         model.to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
