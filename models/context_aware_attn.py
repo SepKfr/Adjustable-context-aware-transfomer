@@ -47,15 +47,18 @@ class ScaledDotProductAttention(nn.Module):
         self.d_k = d_k
         self.attn_type = attn_type
         self.kernel = kernel
-        self.filter_length = [1, 3, 6, 9]
-        self.conv_list_q = nn.ModuleList(
-            [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
-                       kernel_size=f,
-                       padding=int(f/2)) for f in self.filter_length]).to(device)
-        self.conv_list_k = nn.ModuleList(
-            [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
-                       kernel_size=f,
-                       padding=int(f/2)) for f in self.filter_length]).to(device)
+        self.softmax = nn.Softmax(dim=-1)
+        if "context_aware" in self.attn_type:
+
+            self.filter_length = [1, 3, 6, 9]
+            self.conv_list_q = nn.ModuleList(
+                [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
+                           kernel_size=f,
+                           padding=int(f/2)) for f in self.filter_length]).to(device)
+            self.conv_list_k = nn.ModuleList(
+                [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
+                           kernel_size=f,
+                           padding=int(f/2)) for f in self.filter_length]).to(device)
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -66,8 +69,10 @@ class ScaledDotProductAttention(nn.Module):
 
             len_n_k = len(self.filter_length)
 
-            Q_l = [self.conv_list_q[i](Q.reshape(b, h*d_k, l))[:, :, :l] for i in range(len(self.filter_length))]
-            K_l = [self.conv_list_q[i](K.reshape(b, h * d_k, l_k))[:, :, :l_k] for i in range(len(self.filter_length))]
+            Q_l = [self.conv_list_q[i](Q.reshape(b, h*d_k, l))[:, :, :l]
+                   for i in range(len(self.filter_length))]
+            K_l = [self.conv_list_k[i](K.reshape(b, h * d_k, l_k))[:, :, :l_k]
+                   for i in range(len(self.filter_length))]
             Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
             K_p = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
 
@@ -84,19 +89,17 @@ class ScaledDotProductAttention(nn.Module):
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
 
-        attn = nn.Softmax(dim=-1)(scores)
-
         if "context_aware" in self.attn_type:
 
+            attn = self.softmax(scores)
             attn, _ = torch.max(attn, dim=2)
-            attn = nn.Softmax(dim=-1)(attn)
+            attn = self.softmax(attn)
             context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
             return context, attn
 
         else:
-
+            attn = self.softmax(scores)
             context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
-
             return context, attn
 
 
@@ -294,8 +297,12 @@ class Attn(nn.Module):
 
     def __init__(self, src_input_size, tgt_input_size, d_model,
                  d_ff, d_k, d_v, n_heads, n_layers, src_pad_index,
-                 tgt_pad_index, device, attn_type, kernel):
+                 tgt_pad_index, device, attn_type, kernel, seed):
         super(Attn, self).__init__()
+
+        torch.manual_seed(seed)
+        random.seed(seed)
+        np.random.seed(seed)
 
         self.encoder = Encoder(
             d_model=d_model, d_ff=d_ff,

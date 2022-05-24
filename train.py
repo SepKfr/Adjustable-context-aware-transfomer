@@ -13,8 +13,6 @@ import pandas as pd
 import math
 from data.data_loader import ExperimentConfig
 from Utils.base_train import batching, batch_sampled_data, inverse_output
-import time
-from time import ctime
 
 
 class NoamOpt:
@@ -115,7 +113,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    n_layers, batch_size, n_heads, d_model, kernel = config
+    batch_size, n_heads, d_model = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
 
@@ -131,12 +129,12 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  d_model=d_model,
                  d_ff=d_model * 4,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
-                 n_layers=n_layers, src_pad_index=0,
+                 n_layers=1, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
-                 kernel=kernel, filter_length=args.filter_length).to(device)
+                 kernel=1, seed=args.seed).to(device)
 
-    checkpoint = torch.load(os.path.join(path, args.name))
+    checkpoint = torch.load(os.path.join(path, "{}_{}".format(args.name, args.seed)))
     model.load_state_dict(checkpoint["model_state_dict"])
 
     model.eval()
@@ -178,8 +176,8 @@ def main():
     parser.add_argument("--total_time_steps", type=int, default=192)
     args = parser.parse_args()
 
-    np.random.seed(21)
-    random.seed(21)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
     torch.manual_seed(args.seed)
 
     device = torch.device(args.cuda if torch.cuda.is_available() else "cpu")
@@ -199,21 +197,21 @@ def main():
     params['total_time_steps'] = args.total_time_steps
 
     sample_data = batch_sampled_data(train_data, train_max, params['total_time_steps'],
-                       params['num_encoder_steps'], params["column_definition"])
+                       params['num_encoder_steps'], params["column_definition"], args.seed)
     train_en, train_de, train_y, train_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
                                             torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                  torch.from_numpy(sample_data['outputs']).to(device), \
                                  sample_data['identifier']
 
     sample_data = batch_sampled_data(valid, valid_max, params['total_time_steps'],
-                                     params['num_encoder_steps'], params["column_definition"])
+                                     params['num_encoder_steps'], params["column_definition"], args.seed)
     valid_en, valid_de, valid_y, valid_id = torch.from_numpy(sample_data['enc_inputs']).to(device), \
                                             torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                  torch.from_numpy(sample_data['outputs']).to(device), \
                                  sample_data['identifier']
 
     sample_data = batch_sampled_data(test, valid_max, params['total_time_steps'],
-                                     params['num_encoder_steps'], params["column_definition"])
+                                     params['num_encoder_steps'], params["column_definition"], args.seed)
     test_en, test_de, test_y, test_id =torch.from_numpy(sample_data['enc_inputs']).to(device), \
                                             torch.from_numpy(sample_data['dec_inputs']).to(device), \
                                  torch.from_numpy(sample_data['outputs']).to(device), \
@@ -259,7 +257,7 @@ def main():
                      n_layers=1, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      attn_type=args.attn_type,
-                     kernel=1)
+                     kernel=1, seed=args.seed)
         model.to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
@@ -287,7 +285,7 @@ def main():
                                    test_de_p.to(device), test_y_p.to(device),
                                    test_id_p, criterion, formatter, path, device)
 
-    layers, batch_size, heads, d_model, kernel = best_config
+    batch_size, heads, d_model = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
@@ -295,7 +293,6 @@ def main():
     erros[args.name].append(float("{:.5f}".format(test_loss)))
     erros[args.name].append(float("{:.5f}".format(mae_loss)))
     config_file[args.name] = list()
-    config_file[args.name].append(layers)
     config_file[args.name].append(heads)
     config_file[args.name].append(d_model)
 
@@ -322,10 +319,8 @@ def main():
             json_dat = json.load(json_file)
             if json_dat.get(args.name) is None:
                 json_dat[args.name] = list()
-            json_dat[args.name].append(layers)
             json_dat[args.name].append(heads)
             json_dat[args.name].append(d_model)
-            json_dat[args.name].append(kernel)
 
         with open(config_path, "w") as json_file:
             json.dump(json_dat, json_file)
