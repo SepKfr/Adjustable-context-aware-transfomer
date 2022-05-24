@@ -82,10 +82,10 @@ class ACAT(nn.Module):
                        kernel_size=f,
                        padding=int(f/2)) for f in self.context_lengths]).to(device)
         ln = len(context_lengths)
-        self.conv2d = nn.Conv2d(in_channels=d_k*n_heads,
+        '''self.conv2d = nn.Conv2d(in_channels=d_k*n_heads,
                                 out_channels=d_k*n_heads,
                                 kernel_size=(1, ln),
-                                padding=(0, int(ln/2))).to(device)
+                                padding=(0, int(ln/2))).to(device)'''
         self.maxpool2d = nn.MaxPool2d(kernel_size=(1, ln), padding=(0, 0))
 
         self.softmax = nn.Softmax(dim=-1)
@@ -101,8 +101,8 @@ class ACAT(nn.Module):
                for i in range(len(self.context_lengths))]
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h*d_k, l, -1)
         K_p = torch.cat(K_l, dim=0).reshape(b, h*d_k, l_k, -1)
-        Q_p = self.maxpool2d(self.conv2d(Q_p)).reshape(b, h, -1, d_k)
-        K_p = self.maxpool2d(self.conv2d(K_p)).reshape(b, h, -1, d_k)
+        Q_p = self.maxpool2d(Q_p).reshape(b, h, -1, d_k)
+        K_p = self.maxpool2d(K_p).reshape(b, h, -1, d_k)
         Q = Q_p + Q
         K = K_p + K
 
