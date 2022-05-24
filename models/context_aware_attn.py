@@ -48,7 +48,7 @@ class ScaledDotProductAttention(nn.Module):
         self.attn_type = attn_type
         self.kernel = kernel
         self.softmax = nn.Softmax(dim=-1)
-        if "context_aware" in self.attn_type:
+        if "ACAT" in self.attn_type:
 
             self.filter_length = [1, 3, 6, 9]
             self.conv_list_q = nn.ModuleList(
@@ -65,7 +65,7 @@ class ScaledDotProductAttention(nn.Module):
         b, h, l, d_k = Q.shape
         l_k = K.shape[2]
 
-        if "context_aware" in self.attn_type:
+        if "ACAT" in self.attn_type:
 
             len_n_k = len(self.filter_length)
 
@@ -89,7 +89,7 @@ class ScaledDotProductAttention(nn.Module):
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
 
-        if "context_aware" in self.attn_type:
+        if "ACAT" in self.attn_type:
 
             attn = self.softmax(scores)
             attn, _ = torch.max(attn, dim=2)
