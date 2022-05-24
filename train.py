@@ -113,7 +113,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    batch_size, n_heads, d_model = config
+    stack_size, batch_size, n_heads, d_model = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
 
@@ -129,7 +129,7 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
                  d_model=d_model,
                  d_ff=d_model * 4,
                  d_k=d_k, d_v=d_k, n_heads=n_heads,
-                 n_layers=1, src_pad_index=0,
+                 n_layers=stack_size, src_pad_index=0,
                  tgt_pad_index=0, device=device,
                  attn_type=args.attn_type,
                  kernel=1, seed=args.seed).to(device)
@@ -225,7 +225,11 @@ def main():
         os.makedirs(path)
 
     criterion = nn.MSELoss()
-    hyper_param = list([model_params['minibatch_size'], [model_params['num_heads']],
+    if args.attn_type == "ACAT":
+        model_params['stack_size'] = [1]
+    hyper_param = list([model_params['stack_size'],
+                        model_params['minibatch_size'],
+                        [model_params['num_heads']],
                         model_params['hidden_layer_size']])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
@@ -237,7 +241,7 @@ def main():
     for i, conf in enumerate(configs, config_num):
         print('config {}: {}'.format(i+1, conf))
 
-        batch_size, n_heads, d_model = conf
+        stack_size, batch_size, n_heads, d_model = conf
         d_k = int(d_model / n_heads)
 
         train_en_p, train_de_p, train_y_p, train_id_p = batching(batch_size, train_en,
@@ -254,7 +258,7 @@ def main():
                      d_model=d_model,
                      d_ff=d_model*4,
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
-                     n_layers=1, src_pad_index=0,
+                     n_layers=stack_size, src_pad_index=0,
                      tgt_pad_index=0, device=device,
                      attn_type=args.attn_type,
                      kernel=1, seed=args.seed)
@@ -285,7 +289,7 @@ def main():
                                    test_de_p.to(device), test_y_p.to(device),
                                    test_id_p, criterion, formatter, path, device)
 
-    batch_size, heads, d_model = best_config
+    stack_size, batch_size, heads, d_model = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()

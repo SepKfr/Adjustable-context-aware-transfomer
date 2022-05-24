@@ -211,7 +211,7 @@ class ElectricityFormatter(GenericDataFormatter):
             'hidden_layer_size': [16, 32],
             'minibatch_size': [256],
             'num_heads': 8,
-            'stack_size': 1,
+            'stack_size': [1, 3],
             'context_lengths': [3, 6, 9]
         }
 
@@ -235,4 +235,4 @@ class ElectricityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 128000, 16000
+        return 256, 256
