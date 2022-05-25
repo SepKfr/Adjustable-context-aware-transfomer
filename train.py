@@ -53,8 +53,8 @@ config_file = dict()
 
 
 def train(args, model, train_en, train_de, train_y,
-          test_en, test_de, test_y, epoch, e, num_epochs, val_loss,
-          val_inner_loss, optimizer, train_loss_list,
+          test_en, test_de, test_y, epoch, e
+          , val_loss, val_inner_loss, optimizer,
           config, config_num, best_config, criterion, path):
 
     stop = False
@@ -65,7 +65,6 @@ def train(args, model, train_en, train_de, train_y,
         for batch_id in range(train_en.shape[0]):
             output = model(train_en[batch_id], train_de[batch_id])
             loss = criterion(output, train_y[batch_id])
-            train_loss_list.append(loss.item())
             total_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -268,15 +267,14 @@ def main():
 
         val_inner_loss = 1e10
         e = 0
-        train_loss_list = list()
 
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en_p.to(device), train_de_p.to(device),
                       train_y_p.to(device), valid_en_p.to(device), valid_de_p.to(device),
-                      valid_y_p.to(device), epoch, e, params['num_epochs'], val_loss, val_inner_loss,
-                      optim, train_loss_list, conf, i, best_config, criterion, path)
+                      valid_y_p.to(device), epoch, e, val_loss, val_inner_loss,
+                      optim, conf, i, best_config, criterion, path)
 
             if stop:
                 break
