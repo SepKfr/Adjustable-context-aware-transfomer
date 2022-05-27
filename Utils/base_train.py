@@ -46,10 +46,10 @@ def batching(batch_size, x_en, x_de, y_t, test_id):
 def batch_sampled_data(data, max_samples, time_steps, num_encoder_steps, column_definition, seed):
     """Samples segments into a compatible format.
     Args:
-      data: Sources data to sample and batch
+      data: Sources data_set to sample and batch
       max_samples: Maximum number of samples in batch
     Returns:
-      Dictionary of batched data with the maximum samples specified.
+      Dictionary of batched data_set with the maximum samples specified.
     """
 
     np.random.seed(seed)

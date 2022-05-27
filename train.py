@@ -187,7 +187,7 @@ def main():
 
     data_csv_path = "{}.csv".format(args.exp_name)
 
-    print("Loading & splitting data...")
+    print("Loading & splitting data_set...")
     raw_data = pd.read_csv(data_csv_path)
     train_data, valid, test = formatter.split_data(raw_data)
     train_max, valid_max = formatter.get_num_samples_for_calibration()

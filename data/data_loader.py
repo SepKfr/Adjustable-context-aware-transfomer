@@ -25,16 +25,14 @@ import sys
 import random
 import gc
 import glob
-import datetime
 
-from data import electricity, traffic, watershed
 
-np.random.seed(21)
-random.seed(21)
+from data import electricity, traffic, watershed, camel
 
 
 class ExperimentConfig(object):
-    default_experiments = ['electricity', 'traffic', 'air_quality', 'favorita', 'watershed', 'solar']
+    default_experiments = ['electricity', 'traffic', 'air_quality', 'camel',
+                           'favorita', 'watershed', 'solar', 'ETTm2', 'weather']
 
     def __init__(self, experiment='electricity', root_folder=None):
 
@@ -64,13 +62,16 @@ class ExperimentConfig(object):
             'air_quality': 'hourly_air_quality.csv',
             'favorita': 'favorita_consolidated.csv',
             'watershed': 'watershed.csv',
-            'solar': 'solar.csv'
+            'solar': 'solar.csv',
+            'ETTm2': 'ETT.csv',
+            'weather': 'weather.csv',
+            'camel': 'camel.csv'
         }
 
         return os.path.join(self.data_folder, csv_map[self.experiment])
 
     def make_data_formatter(self):
-        """Gets a data formatter object for experiment.
+        """Gets a data_set formatter object for experiment.
         Returns:
           Default DataFormatter per experiment.
         """
@@ -78,7 +79,12 @@ class ExperimentConfig(object):
         data_formatter_class = {
             'electricity': electricity.ElectricityFormatter,
             'traffic': traffic.TrafficFormatter,
+            'air_quality': air_quality.AirQualityFormatter,
             'watershed': watershed.WatershedFormatter,
+            'solar': solar.SolarFormatter,
+            'ETTm2': ett.ETTFormatter,
+            'weather': weather.weatherFormatter,
+            'camel': camel.camelFormatter
         }
 
         return data_formatter_class[self.experiment]()
@@ -87,7 +93,7 @@ class ExperimentConfig(object):
 def download_from_url(url, output_path):
     """Downloads a file from url."""
 
-    print('Pulling data from {} to {}'.format(url, output_path))
+    print('Pulling data_set from {} to {}'.format(url, output_path))
     wget.download(url, output_path)
     print('done')
 
@@ -110,7 +116,7 @@ def download_and_unzip(url, zip_path, csv_path, data_folder):
     url: Web address
     zip_path: Path to download zip file
     csv_path: Expected path to csv file
-    data_folder: Folder in which data is stored.
+    data_folder: Folder in which data_set is stored.
     """
 
     download_from_url(url, zip_path)
@@ -133,7 +139,7 @@ def process_watershed(config):
     for i, site in enumerate(sites):
 
         df = pd.read_csv('{}/{}_WQual_Level4.csv'.format(data_path, site), index_col=0, sep=',')
-        df_list.append(df.iloc[:, :])
+        df_list.append(df.iloc[0::4, :])
 
     output = pd.concat(df_list, axis=0)
     output.index = pd.to_datetime(output.Date)
@@ -144,10 +150,9 @@ def process_watershed(config):
     start_date = pd.to_datetime('2013-03-28')
     earliest_time = start_date
     output = output[output.index >= start_date]
-    date = pd.to_datetime(output.index)
+
+    date = output.index
     output['day_of_week'] = date.dayofweek
-    output['d'] = ["{}{}{}{}{}{}".format(str(x)[0:4], str(x)[5:7], str(x)[8:10],
-                                         str(x)[11:13], str(x)[14:16], str(x)[17:19]) for x in date.values]
     output['hour'] = date.hour
     output['id'] = output['Site']
     output['categorical_id'] = output['Site']
@@ -163,6 +168,258 @@ def process_watershed(config):
     print('Done.')
 
 
+def download_weather(args):
+
+    """Downloads weather dataset from bgc jenna for 2020"""
+    data_folder = args.data_folder
+
+    def get_dfs(url, csv, zip):
+        csv_path = os.path.join(data_folder, csv)
+        zip_path = os.path.join(data_folder, zip)
+        download_and_unzip(url, zip_path, csv_path, data_folder)
+        return pd.read_csv(csv_path, index_col=0, encoding='unicode_escape')
+
+    url_list = ['https://www.bgc-jena.mpg.de/wetter/mpi_roof_2008a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2008b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2009a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2009b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2010a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2010b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2011a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2011b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2012a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2012b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2013a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2013b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2014a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2014b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2015a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2015b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2016a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2016b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2017a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2017b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2018a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2018b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2019a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2019b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2020a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2020b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2021a.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2021b.zip',
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof.zip']
+
+    csv_zip_list = ['mpi_roof_2008a', 'mpi_roof_2008b',
+                    'mpi_roof_2009a', 'mpi_roof_2009b',
+                    'mpi_roof_2010a', 'mpi_roof_2010b',
+                    'mpi_roof_2011a', 'mpi_roof_2011b',
+                    'mpi_roof_2012a', 'mpi_roof_2012b',
+                    'mpi_roof_2013a', 'mpi_roof_2013b',
+                    'mpi_roof_2014a', 'mpi_roof_2014b',
+                    'mpi_roof_2015a', 'mpi_roof_2015b',
+                    'mpi_roof_2016a', 'mpi_roof_2016b',
+                    'mpi_roof_2017a', 'mpi_roof_2017b',
+                    'mpi_roof_2018a','mpi_roof_2018b',
+                    'mpi_roof_2019a', 'mpi_roof_2019b',
+                    'mpi_roof_2020a', 'mpi_roof_2020b',
+                    'mpi_roof_2021a', 'mpi_roof_2021b',
+                    'mpi_roof']
+    df_list = []
+    for i in range(len(url_list)):
+        df = get_dfs(url_list[i], csv_zip_list[i] + ".csv", csv_zip_list[i] + ".zip")
+        df_list.append(df)
+
+    output = pd.concat(df_list, axis=0, join='outer')
+    output.index = pd.to_datetime(output.index)
+    output.sort_index(inplace=True)
+
+    output = output.resample('1h').mean().replace(0., np.nan)
+
+    earliest_time = output.index.min()
+    start_date = min(output.fillna(method='ffill').dropna().index)
+    end_date = max(output.fillna(method='bfill').dropna().index)
+
+    active_range = (output.index >= start_date) & (output.index <= end_date)
+    output = output[active_range].fillna(0.)
+
+    date = output.index
+
+    output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
+    output['id'] = 1
+    output['categorical_id'] = output['id']
+    output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
+            date - earliest_time).days * 24
+    output['days_from_start'] = (date - earliest_time).days
+    output.to_csv("weather.csv")
+
+
+def download_ett(args):
+
+    """Downloads ETT dataset from github"""
+    url = 'https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTm2.csv'
+    data_folder = args.data_folder
+    data_path = os.path.join(data_folder, "ETT.csv")
+    download_from_url(url, data_path)
+
+    df = pd.read_csv(os.path.join(data_path, "ETTm2.csv"), index_col=0)
+    df.index = pd.to_datetime(df.index)
+    df.sort_index(inplace=True)
+
+    # used to determine the start and end dates of a series
+    output = df.resample('15min').mean().replace(0., np.nan)
+
+    earliest_time = output.index.min()
+    start_date = min(output.fillna(method='ffill').dropna().index)
+    end_date = max(output.fillna(method='bfill').dropna().index)
+
+    active_range = (output.index >= start_date) & (output.index <= end_date)
+    output = output[active_range].fillna(0.)
+
+    date = output.index
+
+    output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
+    output['id'] = 1
+    output['categorical_id'] = output['id']
+    output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
+            date - earliest_time).days * 24
+    output['days_from_start'] = (date - earliest_time).days
+    output.to_csv("ETTm2.csv")
+
+
+def download_camel(args):
+
+    """Downloads camels dataset"""
+    '''url = "https://ral.ucar.edu/sites/default/files/public/product-tool/camels-catchment-attributes-and-meteorology-for-large-sample-studies-dataset-downloads/basin_timeseries_v1p2_metForcing_obsFlow.zip"
+    data_folder = args.data_folder
+    data_path = os.path.join(data_folder, 'basin_timeseries_v1p2_metForcing_obsFlow.zip')
+    zip_path = data_path
+    download_and_unzip(url, zip_path, data_path, data_folder)'''
+    df_list = []
+    data_folder = os.path.join(args.data_folder, 'basin_dataset_public_v1p2', 'usgs_streamflow')
+    for dir in os.listdir(data_folder):
+        for file in os.listdir(os.path.join(data_folder, dir)):
+            f = os.path.join(data_folder, dir, file)
+            arrays = []
+            for line in open(f):
+                arrays.append(np.array([val for val in line.rstrip('\n').split(' ') if val != '']))
+            arrays = np.asarray(arrays)
+            arrays = arrays[:, :-1]
+            date = pd.DataFrame(["{}-{}-{}".format(a[1], a[2], a[3]) for a in arrays], columns=["date"])
+            id = pd.DataFrame(arrays[:, 0], columns=["id"])
+            streamflow = pd.DataFrame(arrays[:, -1], columns=["streamflow"])
+            df = pd.concat((date, id), axis=1)
+            df = pd.concat((df, streamflow), axis=1)
+            df.index = pd.to_datetime(df.date)
+            df.sort_index(inplace=True)
+            df.loc[df['streamflow'] == '-999.00', 'streamflow'] = np.nan
+            start_date = min(df.fillna(method='ffill').dropna().index)
+            end_date = max(df.fillna(method='bfill').dropna().index)
+
+            active_range = (df.index >= start_date) & (df.index <= end_date)
+            df = df[active_range].fillna(0.)
+            earliest_time = df.index.min()
+            date = df.index
+            df['day_of_week'] = date.dayofweek
+            df['hour'] = date.hour
+            df['categorical_id'] = df['id']
+            df['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
+                    date - earliest_time).days * 24
+            df['days_from_start'] = (date - earliest_time).days
+            df_list.append(df)
+
+    output = pd.concat(df_list, axis=0, join='outer')
+    output.sort_index(inplace=True)
+    output.to_csv("camel.csv")
+
+
+def download_air_quality(args):
+
+    """Downloads air quality dataset from UCI repository"""
+
+    url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00501/PRSA2017_Data_20130301-20170228.zip'
+
+    sites = ['Wanshouxigong', 'Wanliu', 'Shunyi', 'Nongzhanguan', 'Huairou', 'Gucheng',
+             'Guanyuan', 'Dongsi', 'Dingling', 'Changping', 'Aotizhongxin']
+    data_folder = args.data_folder
+    data_path = os.path.join(data_folder, 'PRSA_Data_20130301-20170228')
+    zip_path = data_path + '.zip'
+    download_and_unzip(url, zip_path, data_path, data_folder)
+    df_list = []
+
+    for i, site in enumerate(sites):
+
+        df = pd.read_csv('{}/PRSA_Data_{}_20130301-20170228.csv'.format(data_path, site),
+                         index_col=0, sep=',')
+        df_list.append(df)
+
+    output = pd.concat(df_list, axis=0)
+    output.index = pd.to_datetime(output[['year','month','day']])
+    output.sort_index(inplace=True)
+    earliest_time = output.index.min()
+
+    start_date = min(output.fillna(method='ffill').dropna().index)
+    end_date = max(output.fillna(method='bfill').dropna().index)
+
+    active_range = (output.index >= start_date) & (output.index <= end_date)
+    output = output[active_range].fillna(0.)
+
+    date = output.index
+
+    output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
+    output['id'] = output['station']
+    output['categorical_id'] = output['station']
+    output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
+            date - earliest_time).days * 24
+    output['days_from_start'] = (date - earliest_time).days
+    output.to_csv("air_quality.csv")
+
+    print('Done.')
+
+
+def download_solar(args):
+
+    url = 'https://www.nrel.gov/grid/assets/downloads/al-pv-2006.zip'
+    data_folder = args.data_folder
+    csv_path = os.path.join(data_folder, 'al-pv-2006')
+    zip_path = csv_path + '.zip'
+
+    download_and_unzip(url, zip_path, csv_path, data_folder)
+
+    df_list = []
+
+    for file in os.listdir(csv_path):
+
+        parts = file.split("_")
+        df = pd.read_csv(file, index_col=0, sep=',')
+        df_hr = df.iloc[0::12, :]
+        df_sub = df_hr.copy()
+        df_sub['latitude'] = parts[1]
+        df_sub['longtitude'] = parts[2]
+        df_sub['id'] = parts[1] + "_" + parts[2]
+        df_sub['capacity'] = parts[5]
+        df_list.append(df_sub)
+
+    output = pd.concat(df_list, axis=0)
+    output.index = pd.to_datetime(output.index)
+    output.sort_index(inplace=True)
+    earliest_time = output.index.min()
+    date = output.index
+
+    output['day_of_week'] = date.dayofweek
+    output['hour'] = date.hour
+    output['hours_from_start'] = (date - earliest_time).seconds / 60 / 60 + (
+            date - earliest_time).days * 24
+    output['days_from_start'] = (date - earliest_time).days
+    output['categorical_id'] = output['id']
+
+    output.to_csv("solar.csv")
+
+    print('Done.')
+
+
 def download_electricity(args):
     """Downloads electricity dataset from UCI repository."""
 
@@ -174,7 +431,7 @@ def download_electricity(args):
 
     download_and_unzip(url, zip_path, csv_path, data_folder)
 
-    print('Aggregating to hourly data')
+    print('Aggregating to hourly data_set')
 
     df = pd.read_csv(csv_path, index_col=0, sep=';', decimal=',')
     df.index = pd.to_datetime(df.index)
@@ -222,7 +479,7 @@ def download_electricity(args):
     output = output[(output['days_from_start'] >= 1096)
                     & (output['days_from_start'] < 1346)].copy()
 
-    output.to_csv("electricity.csv".format(args.data_folder))
+    output.to_csv("electricity.csv")
 
     print('Done.')
 
@@ -238,7 +495,7 @@ def download_traffic(args):
 
     download_and_unzip(url, zip_path, csv_path, data_folder)
 
-    print('Aggregating to hourly data')
+    print('Aggregating to hourly data_set')
 
     def process_list(s, variable_type=int, delimiter=None):
         """Parses a line in the PEMS format to a list."""
@@ -312,7 +569,7 @@ def download_traffic(args):
     hourly_list = []
     for day, day_matrix in enumerate(combined_tensor):
 
-        # Hourly data
+        # Hourly data_set
         hourly = pd.DataFrame(day_matrix.T, columns=labels)
         hourly['hour_on_day'] = [int(i / 6) for i in hourly.index
                                 ]  # sampled at 10 min intervals
@@ -381,6 +638,163 @@ def download_traffic(args):
     print('Done.')
 
 
+def process_favorita(config):
+    """Processes Favorita dataset.
+    Makes use of the raw files should be manually downloaded from Kaggle @
+    https://www.kaggle.com/c/favorita-grocery-sales-forecasting/data
+    Args:
+    config: Default experiment config for Favorita
+    """
+
+    url = 'https://www.kaggle.com/c/favorita-grocery-sales-forecasting/data'
+
+    data_folder = config.data_folder
+
+    # Save manual download to root folder to avoid deleting when re-processing.
+    zip_file = os.path.join(data_folder,
+                          'favorita-grocery-sales-forecasting.zip')
+
+    if not os.path.exists(zip_file):
+        raise ValueError(
+            'Favorita zip file not found in {}!'.format(zip_file) +
+            ' Please manually download data_set from Kaggle @ {}'.format(url))
+
+    # Unpack main zip file
+    outputs_file = os.path.join(data_folder, 'train.csv.7z')
+    unzip(zip_file, outputs_file, data_folder)
+
+    # Unpack individually zipped files
+    for file in glob.glob(os.path.join(data_folder, '*.7z')):
+
+        csv_file = file.replace('.7z', '')
+
+        unzip(file, csv_file, data_folder)
+
+    print('Unzipping complete, commencing data_set processing...')
+
+    # Extract only a subset of data_set to save/process for efficiency
+    start_date = pd.datetime(2015, 1, 1)
+    end_date = pd.datetime(2016, 6, 1)
+
+    print('Regenerating data_set...')
+
+    # load temporal data_set
+    temporal = pd.read_csv(os.path.join(data_folder, 'train.csv'), index_col=0)
+
+    store_info = pd.read_csv(os.path.join(data_folder, 'stores.csv'), index_col=0)
+    oil = pd.read_csv(
+      os.path.join(data_folder, 'oil.csv'), index_col=0).iloc[:, 0]
+    holidays = pd.read_csv(os.path.join(data_folder, 'holidays_events.csv'))
+    items = pd.read_csv(os.path.join(data_folder, 'items.csv'), index_col=0)
+    transactions = pd.read_csv(os.path.join(data_folder, 'transactions.csv'))
+
+    # Take first 6 months of data_set
+    temporal['date'] = pd.to_datetime(temporal['date'])
+
+    # Filter dates to reduce storage space requirements
+    if start_date is not None:
+        temporal = temporal[(temporal['date'] >= start_date)]
+    if end_date is not None:
+        temporal = temporal[(temporal['date'] < end_date)]
+
+    dates = temporal['date'].unique()
+
+    # Add trajectory identifier
+    temporal['traj_id'] = temporal['store_nbr'].apply(
+      str) + '_' + temporal['item_nbr'].apply(str)
+    temporal['unique_id'] = temporal['traj_id'] + '_' + temporal['date'].apply(
+      str)
+
+    # Remove all IDs with negative returns
+    print('Removing returns data_set')
+    min_returns = temporal['unit_sales'].groupby(temporal['traj_id']).min()
+    valid_ids = set(min_returns[min_returns >= 0].index)
+    selector = temporal['traj_id'].apply(lambda traj_id: traj_id in valid_ids)
+    new_temporal = temporal[selector].copy()
+    del temporal
+    gc.collect()
+    temporal = new_temporal
+    temporal['open'] = 1
+
+    # Resampling
+    print('Resampling to regular grid')
+    resampled_dfs = []
+    for traj_id, raw_sub_df in temporal.groupby('traj_id'):
+        print('Resampling', traj_id)
+        sub_df = raw_sub_df.set_index('date', drop=True).copy()
+        sub_df = sub_df.resample('1d').last()
+        sub_df['date'] = sub_df.index
+        sub_df[['store_nbr', 'item_nbr', 'onpromotion']] \
+            = sub_df[['store_nbr', 'item_nbr', 'onpromotion']].fillna(method='ffill')
+        sub_df['open'] = sub_df['open'].fillna(
+            0)  # flag where sales data_set is unknown
+        sub_df['log_sales'] = np.log(sub_df['unit_sales'])
+
+        resampled_dfs.append(sub_df.reset_index(drop=True))
+
+    new_temporal = pd.concat(resampled_dfs, axis=0)
+    del temporal
+    gc.collect()
+    temporal = new_temporal
+
+    print('Adding oil')
+    oil.name = 'oil'
+    oil.index = pd.to_datetime(oil.index)
+    temporal = temporal.join(
+      oil.reindex(dates).fillna(method='ffill'), on='date', how='left')
+    temporal['oil'] = temporal['oil'].fillna(-1)
+
+    print('Adding store info')
+    temporal = temporal.join(store_info, on='store_nbr', how='left')
+
+    print('Adding item info')
+    temporal = temporal.join(items, on='item_nbr', how='left')
+
+    transactions['date'] = pd.to_datetime(transactions['date'])
+    temporal = temporal.merge(
+      transactions,
+      left_on=['date', 'store_nbr'],
+      right_on=['date', 'store_nbr'],
+      how='left')
+    temporal['transactions'] = temporal['transactions'].fillna(-1)
+
+    # Additional date info
+    temporal['day_of_week'] = pd.to_datetime(temporal['date'].values).dayofweek
+    temporal['day_of_month'] = pd.to_datetime(temporal['date'].values).day
+    temporal['month'] = pd.to_datetime(temporal['date'].values).month
+
+    # Add holiday info
+    print('Adding holidays')
+    holiday_subset = holidays[holidays['transferred'].apply(
+      lambda x: not x)].copy()
+    holiday_subset.columns = [
+      s if s != 'type' else 'holiday_type' for s in holiday_subset.columns
+    ]
+    holiday_subset['date'] = pd.to_datetime(holiday_subset['date'])
+    local_holidays = holiday_subset[holiday_subset['locale'] == 'Local']
+    regional_holidays = holiday_subset[holiday_subset['locale'] == 'Regional']
+    national_holidays = holiday_subset[holiday_subset['locale'] == 'National']
+
+    temporal['national_hol'] = temporal.merge(
+      national_holidays, left_on=['date'], right_on=['date'],
+      how='left')['description'].fillna('')
+    temporal['regional_hol'] = temporal.merge(
+      regional_holidays,
+      left_on=['state', 'date'],
+      right_on=['locale_name', 'date'],
+      how='left')['description'].fillna('')
+    temporal['local_hol'] = temporal.merge(
+      local_holidays,
+      left_on=['city', 'date'],
+      right_on=['locale_name', 'date'],
+      how='left')['description'].fillna('')
+
+    temporal.sort_values('unique_id', inplace=True)
+
+    print('Saving processed file to {}'.format(config.data_csv_path))
+    temporal.to_csv("retail.csv")
+
+
 def main(expt_name, force_download, output_folder):
 
     print('#### Running download script ###')
@@ -389,9 +803,8 @@ def main(expt_name, force_download, output_folder):
     if os.path.exists(expt_config.data_csv_path) and not force_download:
         print('Data has been processed for {}. Skipping download...'.format(
             expt_name))
-        sys.exit(0)
     else:
-        print('Resetting data folder...')
+        print('Resetting data_set folder...')
         #shutil.rmtree(expt_config.data_csv_path)
         os.makedirs(expt_config.data_csv_path)
 
@@ -399,7 +812,13 @@ def main(expt_name, force_download, output_folder):
     download_functions = {
         'electricity': download_electricity,
         'traffic': download_traffic,
+        'air_quality': download_air_quality,
+        'favorita': process_favorita,
         'watershed': process_watershed,
+        'solar': download_solar,
+        'ETTm2': download_ett,
+        'weather': download_weather,
+        'camel': download_camel
     }
 
     if expt_name not in download_functions:
@@ -407,8 +826,8 @@ def main(expt_name, force_download, output_folder):
 
     download_function = download_functions[expt_name]
 
-    # Run data download
-    print('Getting {} data...'.format(expt_name))
+    # Run data_set download
+    print('Getting {} data_set...'.format(expt_name))
     download_function(expt_config)
 
     print('Download completed.')
@@ -432,20 +851,20 @@ if __name__ == '__main__':
             type=str,
             nargs='?',
             default='.',
-            help='Path to folder for data download')
+            help='Path to folder for data_set download')
         parser.add_argument(
             '--force_download',
             type=str,
             nargs='?',
             choices=['yes', 'no'],
             default='yes',
-            help='Whether to re-run data download')
+            help='Whether to re-run data_set download')
 
         args = parser.parse_args()
 
         root_folder = None if args.output_folder == '.' else args.output_folder
 
-        return args.expt_name, args.force_download == 'yes', root_folder
+        return args.expt_name, args.force_download == 'no', root_folder
 
 
     name, force, folder = get_args()
