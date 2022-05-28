@@ -112,7 +112,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    stack_size, batch_size, n_heads, d_model = config
+    stack_size, batch_size, n_heads, d_model, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
 
@@ -166,8 +166,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--attn_type", type=str, default='ProbAttention')
-    parser.add_argument("--name", type=str, default='ProbAttention')
+    parser.add_argument("--attn_type", type=str, default='ACAT')
+    parser.add_argument("--name", type=str, default='ACAT')
     parser.add_argument("--exp_name", type=str, default='electricity')
     parser.add_argument("--cuda", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=21)
@@ -223,12 +223,17 @@ def main():
         os.makedirs(path)
 
     criterion = nn.MSELoss()
-    if args.attn_type == "ACAT":
-        model_params['stack_size'] = [1]
+    if args.attn_type == "basic_attn":
+        model_params['stack_size'] = [1, 3]
+    if args.attn_type == "conv_attn":
+        kernels = [1, 3, 6, 9]
+    else:
+        kernels = [1]
     hyper_param = list([model_params['stack_size'],
                         model_params['minibatch_size'],
                         [model_params['num_heads']],
-                        model_params['hidden_layer_size']])
+                        model_params['hidden_layer_size'],
+                        kernels])
     configs = create_config(hyper_param)
     print('number of config: {}'.format(len(configs)))
 
@@ -239,7 +244,7 @@ def main():
     for i, conf in enumerate(configs, config_num):
         print('config {}: {}'.format(i+1, conf))
 
-        stack_size, batch_size, n_heads, d_model = conf
+        stack_size, batch_size, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
 
         train_en_p, train_de_p, train_y_p, train_id_p = batching(batch_size, train_en,
@@ -258,7 +263,7 @@ def main():
                      d_k=d_k, d_v=d_k, n_heads=n_heads,
                      n_layers=stack_size, src_pad_index=0,
                      tgt_pad_index=0, device=device,
-                     attn_type=args.attn_type, seed=args.seed)
+                     attn_type=args.attn_type, seed=args.seed, kernel=kernel)
         model.to(device)
 
         optim = NoamOpt(Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9), 2, d_model, 4000)
@@ -285,7 +290,7 @@ def main():
                                    test_de_p.to(device), test_y_p.to(device),
                                    test_id_p, criterion, formatter, path, device)
 
-    stack_size, batch_size, heads, d_model = best_config
+    stack_size, batch_size, heads, d_model, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
