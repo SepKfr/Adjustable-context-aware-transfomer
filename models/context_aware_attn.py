@@ -63,10 +63,6 @@ class ProbAttention(nn.Module):
 
     def _prob_QK(self, Q, K, sample_k, n_top):  # n_top: c*ln(L_q)
         # Q [B, H, L, D]
-
-        K = K.permute(0, 2, 1, 3)
-        Q = Q.permute(0, 2, 1, 3)
-
         B, H, L_K, E = K.shape
         _, _, L_Q, _ = Q.shape
 
@@ -122,12 +118,8 @@ class ProbAttention(nn.Module):
             return (context_in, None)
 
     def forward(self, queries, keys, values, attn_mask):
-        B, L_Q, H, D = queries.shape
-        _, L_K, _, _ = keys.shape
-
-        queries = queries.transpose(2, 1)
-        keys = keys.transpose(2, 1)
-        values = values.transpose(2, 1)
+        B, H, L_Q, D = queries.shape
+        _, _, L_K, _ = keys.shape
 
         U_part = self.factor * np.ceil(np.log(L_K)).astype('int').item()  # c*ln(L_k)
         u = self.factor * np.ceil(np.log(L_Q)).astype('int').item()  # c*ln(L_q)
