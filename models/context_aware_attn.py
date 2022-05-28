@@ -209,8 +209,8 @@ class ACAT(nn.Module):
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=f,
                        padding=int(f/2)) for f in self.filter_length]).to(device)
-        self.linear_q = nn.Linear(len(self.filter_length), 1)
-        self.linear_k = nn.Linear(len(self.filter_length), 1)
+        self.linear_q = nn.Linear(len(self.filter_length), 1).to(device)
+        self.linear_k = nn.Linear(len(self.filter_length), 1).to(device)
 
     def forward(self, Q, K, V, attn_mask):
 
