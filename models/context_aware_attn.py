@@ -139,7 +139,7 @@ class ProbAttention(nn.Module):
         # update the context with selected top_k queries
         context, attn = self._update_context(context, values, scores_top, index, L_Q, attn_mask)
 
-        return context.transpose(2, 1).contiguous(), attn
+        return context, attn
 
 
 class ConvAttn(nn.Module):
@@ -364,8 +364,8 @@ class Encoder(nn.Module):
             enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
             enc_self_attns.append(enc_self_attn)
 
-        enc_self_attns = torch.stack(enc_self_attns)
-        enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])
+        '''enc_self_attns = torch.stack(enc_self_attns)
+        enc_self_attns = enc_self_attns.permute([1, 0, 2, 3, 4])'''
         return enc_outputs, enc_self_attns
 
 
@@ -437,11 +437,11 @@ class Decoder(nn.Module):
             )
             dec_self_attns.append(dec_self_attn)
             dec_enc_attns.append(dec_enc_attn)
-        dec_self_attns = torch.stack(dec_self_attns)
+        '''dec_self_attns = torch.stack(dec_self_attns)
         dec_enc_attns = torch.stack(dec_enc_attns)
 
         dec_self_attns = dec_self_attns.permute([1, 0, 2, 3, 4])
-        dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])
+        dec_enc_attns = dec_enc_attns.permute([1, 0, 2, 3, 4])'''
 
         return dec_outputs, dec_self_attns, dec_enc_attns
 
