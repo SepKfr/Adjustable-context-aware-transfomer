@@ -64,8 +64,8 @@ class ProbAttention(nn.Module):
     def _prob_QK(self, Q, K, sample_k, n_top):  # n_top: c*ln(L_q)
         # Q [B, H, L, D]
 
-        K = K.permute(1, 2)
-        Q = Q.permute(1, 2)
+        K = K.permute(0, 2, 1, 3)
+        Q = Q.permute(0, 2, 1, 3)
 
         B, H, L_K, E = K.shape
         _, _, L_Q, _ = Q.shape
