@@ -82,7 +82,7 @@ class ExperimentConfig(object):
             'watershed': watershed.WatershedFormatter,
             'camel': camel.camelFormatter,
             'weather': weather.weatherFormatter,
-            'ett': ett.ETTFormatter
+            'ETTm2': ett.ETTFormatter
         }
 
         return data_formatter_class[self.experiment]()
