@@ -27,7 +27,7 @@ import gc
 import glob
 
 
-from data import electricity, traffic, watershed, camel
+from data import electricity, traffic, watershed, camel, weather
 
 
 class ExperimentConfig(object):
@@ -80,7 +80,8 @@ class ExperimentConfig(object):
             'electricity': electricity.ElectricityFormatter,
             'traffic': traffic.TrafficFormatter,
             'watershed': watershed.WatershedFormatter,
-            'camel': camel.camelFormatter
+            'camel': camel.camelFormatter,
+            'weather': weather.weatherFormatter
         }
 
         return data_formatter_class[self.experiment]()
