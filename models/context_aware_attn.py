@@ -70,9 +70,9 @@ class ProbAttention(nn.Module):
         K_expand = K.unsqueeze(-3).expand(B, H, L_Q, L_K, E)
         index_sample = torch.randint(L_K, (L_Q, sample_k))  # real U = U_part(factor*ln(L_k))*L_q
         K_sample = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
-        print(Q.shape)
-        print(K.shape)
-        Q_K_sample = torch.matmul(Q.unsqueeze(-2), K_sample.transpose(-2, -1)).squeeze(-2)
+        Q = Q.reshape(B, H, L_Q, -1)
+        K = K.reshape(B, H, L_K, -1)
+        Q_K_sample = torch.einsum('bhqd, bhkd -> bhqk', Q, K)
 
         # find the Top_k query with sparisty measurement
         M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K)
@@ -82,7 +82,7 @@ class ProbAttention(nn.Module):
         Q_reduce = Q[torch.arange(B)[:, None, None],
                    torch.arange(H)[None, :, None],
                    M_top, :]  # factor*ln(L_q)
-        Q_K = torch.matmul(Q_reduce, K.transpose(-2, -1))  # factor*ln(L_q)*L_k
+        Q_K = torch.einsum('bhqd, bhkd -> bhqk', Q_reduce, K)  # factor*ln(L_q)*L_k
 
         return Q_K, M_top
 
