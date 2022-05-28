@@ -176,51 +176,11 @@ def download_weather(args):
         download_and_unzip(url, zip_path, csv_path, data_folder)
         return pd.read_csv(csv_path, index_col=0, encoding='unicode_escape')
 
-    url_list = ['https://www.bgc-jena.mpg.de/wetter/mpi_roof_2008a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2008b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2009a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2009b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2010a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2010b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2011a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2011b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2012a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2012b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2013a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2013b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2014a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2014b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2015a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2015b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2016a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2016b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2017a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2017b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2018a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2018b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2019a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2019b.zip',
+    url_list = [
                 'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2020a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2020b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2021a.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2021b.zip',
-                'https://www.bgc-jena.mpg.de/wetter/mpi_roof.zip']
+                'https://www.bgc-jena.mpg.de/wetter/mpi_roof_2020b.zip']
 
-    csv_zip_list = ['mpi_roof_2008a', 'mpi_roof_2008b',
-                    'mpi_roof_2009a', 'mpi_roof_2009b',
-                    'mpi_roof_2010a', 'mpi_roof_2010b',
-                    'mpi_roof_2011a', 'mpi_roof_2011b',
-                    'mpi_roof_2012a', 'mpi_roof_2012b',
-                    'mpi_roof_2013a', 'mpi_roof_2013b',
-                    'mpi_roof_2014a', 'mpi_roof_2014b',
-                    'mpi_roof_2015a', 'mpi_roof_2015b',
-                    'mpi_roof_2016a', 'mpi_roof_2016b',
-                    'mpi_roof_2017a', 'mpi_roof_2017b',
-                    'mpi_roof_2018a','mpi_roof_2018b',
-                    'mpi_roof_2019a', 'mpi_roof_2019b',
-                    'mpi_roof_2020a', 'mpi_roof_2020b',
-                    'mpi_roof_2021a', 'mpi_roof_2021b',
-                    'mpi_roof']
+    csv_zip_list = ['mpi_roof_2020a', 'mpi_roof_2020b']
     df_list = []
     for i in range(len(url_list)):
         df = get_dfs(url_list[i], csv_zip_list[i] + ".csv", csv_zip_list[i] + ".zip")
