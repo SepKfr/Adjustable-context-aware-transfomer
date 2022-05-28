@@ -148,7 +148,6 @@ class ConvAttn(nn.Module):
         super(ConvAttn, self).__init__()
         self.device = device
         self.d_k = d_k
-        self.softmax = nn.Softmax(dim=-1)
         self.conv_q = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=kernel,
                        padding=int(kernel/2)).to(device)
@@ -169,7 +168,7 @@ class ConvAttn(nn.Module):
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
-        attn = self.softmax(scores)
+        attn = torch.softmax(scores, -1)
         context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
 
@@ -181,7 +180,6 @@ class BasicAttn(nn.Module):
         super(BasicAttn, self).__init__()
         self.device = device
         self.d_k = d_k
-        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -190,7 +188,7 @@ class BasicAttn(nn.Module):
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
-        attn = self.softmax(scores)
+        attn = torch.softmax(scores, -1)
         context = torch.einsum('bhqk,bhvd->bhqd', attn, V)
         return context, attn
 
@@ -202,7 +200,6 @@ class ACAT(nn.Module):
         super(ACAT, self).__init__()
         self.device = device
         self.d_k = d_k
-        self.softmax = nn.Softmax(dim=-1)
         self.filter_length = [1, 3, 6, 9]
         self.conv_list_q = nn.ModuleList(
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
@@ -212,6 +209,8 @@ class ACAT(nn.Module):
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=f,
                        padding=int(f/2)) for f in self.filter_length]).to(device)
+        self.linear_q = nn.Linear(len(self.filter_length), 1)
+        self.linear_k = nn.Linear(len(self.filter_length), 1)
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -224,28 +223,20 @@ class ACAT(nn.Module):
                for i in range(len(self.filter_length))]
         K_l = [self.conv_list_k[i](K.reshape(b, h * d_k, l_k))[:, :, :l_k]
                for i in range(len(self.filter_length))]
-        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
-        K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
+        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, len_n_k)
+        K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, len_n_k)
+        Q = F.relu(self.linear_q(Q_p)).squeeze(-1)
+        K = F.relu(self.linear_k(K_p)).squeeze(-1)
 
-        m_f = max(self.filter_length)
-        K_p = K_tmp[:, :, :, 0::m_f, :]
+        scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
-        scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
         if attn_mask is not None:
-            attn_mask = attn_mask[:, :, :, 0::m_f]
-            attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
+            attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
+            attn_mask = attn_mask.to(self.device)
+            scores.masked_fill_(attn_mask, -1e9)
 
-            if attn_mask is not None:
-                attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
-                attn_mask = attn_mask.to(self.device)
-                scores.masked_fill_(attn_mask, -1e9)
-
-        attn = self.softmax(scores)
-        attn, _ = torch.max(attn, dim=2)
-        attn_f = torch.zeros(b, h, l, l_k).to(self.device)
-        attn_f[:, :, :, 0::m_f] = attn
-        attn_f = self.softmax(attn_f)
-        context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
+        attn = torch.softmax(scores, -1)
+        context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
         return context, attn
 
 
