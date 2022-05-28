@@ -63,9 +63,9 @@ class ProbAttention(nn.Module):
 
     def _prob_QK(self, Q, K, sample_k, n_top):  # n_top: c*ln(L_q)
         # Q [B, H, L, D]
-        B, H, L_K, E = K.shape
-        _, _, L_Q, _ = Q.shape
-        print(Q.shape)
+        B, L_K, H, E = K.shape
+        _, L_Q, _, _ = Q.shape
+
 
         # calculate the sampled Q_K
         K_expand = K.unsqueeze(-3).expand(B, H, L_Q, L_K, E)
