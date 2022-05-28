@@ -72,7 +72,7 @@ class ProbAttention(nn.Module):
         K_sample = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
         Q = Q.reshape(B, H, L_Q, -1)
         K = K.reshape(B, H, L_K, -1)
-        Q_K_sample = torch.einsum('bhqd, bhkd -> bhqk', Q, K)
+        Q_K_sample = torch.einsum('bhqd, bhkd -> bhqk', Q, K_sample)
 
         # find the Top_k query with sparisty measurement
         M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K)
