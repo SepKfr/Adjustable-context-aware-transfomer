@@ -71,7 +71,7 @@ class ProbAttention(nn.Module):
         index_sample = torch.randint(L_K, (L_Q, sample_k))  # real U = U_part(factor*ln(L_k))*L_q
         K_sample = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
         Q = Q.reshape(B, H, L_Q, -1)
-        K = K.reshape(B, H, L_K, -1)
+        K_sample = K_sample.reshape(B, H, -1, E)
         Q_K_sample = torch.einsum('bhqd, bhkd -> bhqk', Q, K_sample)
 
         # find the Top_k query with sparisty measurement
