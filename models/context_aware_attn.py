@@ -208,15 +208,21 @@ class ACAT(nn.Module):
         self.conv_list_q = nn.ModuleList(
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=f,
-                       padding=int(f/2)) for f in self.filter_length]).to(device)
+                       padding=int(f/2),
+                       bias=False) for f in self.filter_length]).to(device)
         self.conv_list_k = nn.ModuleList(
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=f,
-                       padding=int(f/2)) for f in self.filter_length]).to(device)
-        self.linear_q = nn.Linear(len(self.filter_length), 1).to(device)
-        self.linear_k = nn.Linear(len(self.filter_length), 1).to(device)
+                       padding=int(f/2),
+                       bias=False) for f in self.filter_length]).to(device)
+        self.linear_q = nn.Linear(len(self.filter_length), 1, bias=False).to(device)
+        self.linear_k = nn.Linear(len(self.filter_length), 1, bias=False).to(device)
         self.norm = nn.BatchNorm1d(h * d_k).to(device)
         self.activation = nn.ELU().to(device)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv1d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='leaky_relu')
 
     def forward(self, Q, K, V, attn_mask):
 
