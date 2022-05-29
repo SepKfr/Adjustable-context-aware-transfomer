@@ -150,20 +150,29 @@ class ConvAttn(nn.Module):
         super(ConvAttn, self).__init__()
         self.device = device
         self.d_k = d_k
+        self.h = h
         self.conv_q = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=kernel,
                        padding=int(kernel/2)).to(device)
         self.conv_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h,
                                 kernel_size=kernel,
                                 padding=int(kernel / 2)).to(device)
+        self.conv_v = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h,
+                                kernel_size=1).to(device)
+
+        self.norm = nn.BatchNorm1d(h * d_k)
+        self.activation = nn.ELU()
 
     def forward(self, Q, K, V, attn_mask):
 
-        b, h, l, d_k = Q.shape
-        l_k = K.shape[2]
+        b, l, d = Q.shape
+        l_k = K.shape[1]
 
-        Q = self.conv_q(Q.reshape(b, h*d_k, l))[:, :, :l].reshape(b, h, l, d_k)
-        K = self.conv_k(K.reshape(b, h*d_k, l_k))[:, :, :l_k].reshape(b, h, l_k, d_k)
+        Q = self.activation(self.norm(self.conv_q(Q.reshape(b, self.h*self.d_k, l))))[:, :, :l].reshape(b, self.h, l, self.d_k)
+        K = self.activation(self.norm(self.conv_k(K.reshape(b, self.h*self.d_k, l_k))))[:, :, :l_k].\
+            reshape(b, self.h, l_k, self.d_k)
+        V = self.activation(self.norm(self.conv_v(V.reshape(b, self.h*self.d_k, l_k)))).\
+            reshape(b, self.h, l_k, self.d_k)
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
         if attn_mask is not None:
@@ -177,13 +186,24 @@ class ConvAttn(nn.Module):
 
 class BasicAttn(nn.Module):
 
-    def __init__(self, d_k, device):
+    def __init__(self, d_k, n_heads, device):
 
         super(BasicAttn, self).__init__()
+
+        self.WQ = nn.Linear(d_k * n_heads, d_k * n_heads, bias=False).to(device)
+        self.WK = nn.Linear(d_k * n_heads, d_k * n_heads, bias=False).to(device)
+        self.WV = nn.Linear(d_k * n_heads, d_k * n_heads, bias=False).to(device)
         self.device = device
         self.d_k = d_k
+        self.n_heads = n_heads
 
     def forward(self, Q, K, V, attn_mask):
+
+        b, l_q, d = Q.shape
+        b, l_k, d = K.shape
+        Q = self.WQ(Q).reshape(b, self.n_heads, l_q, self.d_k)
+        K = self.WK(K).reshape(b, self.n_heads, l_k, self.d_k)
+        V = self.WV(V).reshape(b, self.n_heads, l_k, self.d_k)
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
         if attn_mask is not None:
@@ -202,6 +222,7 @@ class ACAT(nn.Module):
         super(ACAT, self).__init__()
         self.device = device
         self.d_k = d_k
+        self.h = h
         self.filter_length = [1, 3, 6, 9]
         self.conv_list_q = nn.ModuleList(
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
@@ -211,6 +232,8 @@ class ACAT(nn.Module):
             [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=f,
                        padding=int(f/2)) for f in self.filter_length]).to(device)
+        self.conv_v = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h,
+                                kernel_size=1).to(device)
         self.linear_q = nn.Linear(len(self.filter_length), 1).to(device)
         self.linear_k = nn.Linear(len(self.filter_length), 1).to(device)
         self.norm = nn.BatchNorm1d(h * d_k)
@@ -218,19 +241,20 @@ class ACAT(nn.Module):
 
     def forward(self, Q, K, V, attn_mask):
 
-        b, h, l, d_k = Q.shape
-        l_k = K.shape[2]
+        b, l, d = Q.shape
+        l_k = K.shape[1]
 
         len_n_k = len(self.filter_length)
 
-        Q_l = [self.activation(self.norm(self.conv_list_q[i](Q.reshape(b, h*d_k, l))))[:, :, :l]
+        Q_l = [self.activation(self.norm(self.conv_list_q[i](Q.reshape(b, self.h*self.d_k, l))))[:, :, :l]
                for i in range(len(self.filter_length))]
-        K_l = [self.activation(self.norm(self.conv_list_k[i](K.reshape(b, h * d_k, l_k))))[:, :, :l_k]
+        K_l = [self.activation(self.norm(self.conv_list_k[i](K.reshape(b, self.h * self.d_k, l_k))))[:, :, :l_k]
                for i in range(len(self.filter_length))]
-        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, len_n_k)
-        K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, len_n_k)
-        Q = F.elu(self.linear_q(Q_p)).squeeze(-1) + Q
-        K = F.elu(self.linear_k(K_p)).squeeze(-1) + K
+        V = self.activation(self.norm(self.conv_v(V.reshape(b, self.h*self.d_k, l_k)))).reshape(b, self.h, l_k, self.d_k)
+        Q_p = torch.cat(Q_l, dim=0).reshape(b, self.h, l, self.d_k, len_n_k)
+        K_p = torch.cat(K_l, dim=0).reshape(b, self.h, l_k, self.d_k, len_n_k)
+        Q = F.elu(self.linear_q(Q_p)).squeeze(-1) + Q.reshape(b, self.h, l, -1)
+        K = F.elu(self.linear_k(K_p)).squeeze(-1) + K.reshape(b, self.h, l_k, -1)
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
@@ -250,9 +274,6 @@ class MultiHeadAttention(nn.Module):
 
         super(MultiHeadAttention, self).__init__()
 
-        self.WQ = nn.Linear(d_model, d_k * n_heads, bias=False)
-        self.WK = nn.Linear(d_model, d_k * n_heads, bias=False)
-        self.WV = nn.Linear(d_model, d_v * n_heads, bias=False)
         self.fc = nn.Linear(n_heads * d_v, d_model, bias=False)
 
         self.device = device
@@ -267,21 +288,22 @@ class MultiHeadAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         batch_size = Q.shape[0]
-
-
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
+
         if self.attn_type == "ACAT":
             context, attn = ACAT(d_k=self.d_k, device=self.device, h=self.n_heads)(
                 Q=Q, K=K, V=V, attn_mask=attn_mask)
+
         elif self.attn_type == "basic_attn":
-            context, attn = BasicAttn(d_k=self.d_k, device=self.device)(
+
+            context, attn = BasicAttn(d_k=self.d_k, device=self.device, n_heads=self.n_heads)(
             Q=Q, K=K, V=V, attn_mask=attn_mask)
+
         elif self.attn_type == "conv_attn":
             context, attn = ConvAttn(d_k=self.d_k, device=self.device, kernel=self.kernel, h=self.n_heads)(
                 Q=Q, K=K, V=V, attn_mask=attn_mask)
-        else:
-            context, attn = AutoCorrelation()(Q, K, V, attn_mask)
+
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
         return output, attn
