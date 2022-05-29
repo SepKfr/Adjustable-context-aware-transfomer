@@ -236,8 +236,8 @@ class ACAT(nn.Module):
                                 kernel_size=1).to(device)
         self.linear_q = nn.Linear(len(self.filter_length), 1).to(device)
         self.linear_k = nn.Linear(len(self.filter_length), 1).to(device)
-        self.norm = nn.BatchNorm1d(h * d_k)
-        self.activation = nn.ELU()
+        self.norm = nn.BatchNorm1d(h * d_k).to(device)
+        self.activation = nn.ELU().to(device)
 
     def forward(self, Q, K, V, attn_mask):
 
