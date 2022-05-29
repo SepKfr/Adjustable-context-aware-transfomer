@@ -195,125 +195,6 @@ class BasicAttn(nn.Module):
         return context, attn
 
 
-class AutoCorrelation(nn.Module):
-    """
-    AutoCorrelation Mechanism with the following two phases:
-    (1) period-based dependencies discovery
-    (2) time delay aggregation
-    This block can replace the self-attention family mechanism seamlessly.
-    """
-    def __init__(self, mask_flag=True, factor=1, scale=None, attention_dropout=0.1, output_attention=False):
-        super(AutoCorrelation, self).__init__()
-        self.factor = factor
-        self.scale = scale
-        self.mask_flag = mask_flag
-        self.output_attention = output_attention
-        self.dropout = nn.Dropout(attention_dropout)
-
-    def time_delay_agg_training(self, values, corr):
-        """
-        SpeedUp version of Autocorrelation (a batch-normalization style design)
-        This is for the training phase.
-        """
-        head = values.shape[1]
-        channel = values.shape[2]
-        length = values.shape[3]
-        # find top k
-        top_k = int(self.factor * math.log(length))
-        mean_value = torch.mean(torch.mean(corr, dim=1), dim=1)
-        index = torch.topk(torch.mean(mean_value, dim=0), top_k, dim=-1)[1]
-        weights = torch.stack([mean_value[:, index[i]] for i in range(top_k)], dim=-1)
-        # update corr
-        tmp_corr = torch.softmax(weights, dim=-1)
-        # aggregation
-        tmp_values = values
-        delays_agg = torch.zeros_like(values).float()
-        for i in range(top_k):
-            pattern = torch.roll(tmp_values, -int(index[i]), -1)
-            delays_agg = delays_agg + pattern * \
-                         (tmp_corr[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length))
-        return delays_agg
-
-    def time_delay_agg_inference(self, values, corr):
-        """
-        SpeedUp version of Autocorrelation (a batch-normalization style design)
-        This is for the inference phase.
-        """
-        batch = values.shape[0]
-        head = values.shape[1]
-        channel = values.shape[2]
-        length = values.shape[3]
-        # index init
-        init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).cuda()
-        # find top k
-        top_k = int(self.factor * math.log(length))
-        mean_value = torch.mean(torch.mean(corr, dim=1), dim=1)
-        weights, delay = torch.topk(mean_value, top_k, dim=-1)
-        # update corr
-        tmp_corr = torch.softmax(weights, dim=-1)
-        # aggregation
-        tmp_values = values.repeat(1, 1, 1, 2)
-        delays_agg = torch.zeros_like(values).float()
-        for i in range(top_k):
-            tmp_delay = init_index + delay[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length)
-            pattern = torch.gather(tmp_values, dim=-1, index=tmp_delay)
-            delays_agg = delays_agg + pattern * \
-                         (tmp_corr[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length))
-        return delays_agg
-
-    def time_delay_agg_full(self, values, corr):
-        """
-        Standard version of Autocorrelation
-        """
-        batch = values.shape[0]
-        head = values.shape[1]
-        channel = values.shape[2]
-        length = values.shape[3]
-        # index init
-        init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).cuda()
-        # find top k
-        top_k = int(self.factor * math.log(length))
-        weights, delay = torch.topk(corr, top_k, dim=-1)
-        # update corr
-        tmp_corr = torch.softmax(weights, dim=-1)
-        # aggregation
-        tmp_values = values.repeat(1, 1, 1, 2)
-        delays_agg = torch.zeros_like(values).float()
-        for i in range(top_k):
-            tmp_delay = init_index + delay[..., i].unsqueeze(-1)
-            pattern = torch.gather(tmp_values, dim=-1, index=tmp_delay)
-            delays_agg = delays_agg + pattern * (tmp_corr[..., i].unsqueeze(-1))
-        return delays_agg
-
-    def forward(self, queries, keys, values, attn_mask):
-        B, L, H, E = queries.shape
-        _, S, _, D = values.shape
-        if L > S:
-            zeros = torch.zeros_like(queries[:, :(L - S), :]).float()
-            values = torch.cat([values, zeros], dim=1)
-            keys = torch.cat([keys, zeros], dim=1)
-        else:
-            values = values[:, :L, :, :]
-            keys = keys[:, :L, :, :]
-
-        # period-based dependencies
-        q_fft = torch.fft.rfft(queries.permute(0, 2, 3, 1).contiguous(), dim=-1)
-        k_fft = torch.fft.rfft(keys.permute(0, 2, 3, 1).contiguous(), dim=-1)
-        res = q_fft * torch.conj(k_fft)
-        corr = torch.fft.irfft(res, dim=-1)
-
-        # time delay agg
-        if self.training:
-            V = self.time_delay_agg_training(values.permute(0, 2, 3, 1).contiguous(), corr).permute(0, 3, 1, 2)
-        else:
-            V = self.time_delay_agg_inference(values.permute(0, 2, 3, 1).contiguous(), corr).permute(0, 3, 1, 2)
-
-        if self.output_attention:
-            return (V.contiguous(), corr.permute(0, 3, 1, 2))
-        else:
-            return (V.contiguous(), None)
-
-
 class ACAT(nn.Module):
 
     def __init__(self, d_k, device, h):
@@ -332,6 +213,8 @@ class ACAT(nn.Module):
                        padding=int(f/2)) for f in self.filter_length]).to(device)
         self.linear_q = nn.Linear(len(self.filter_length), 1).to(device)
         self.linear_k = nn.Linear(len(self.filter_length), 1).to(device)
+        self.norm = nn.BatchNorm1d(h * d_k)
+        self.activation = nn.ELU()
 
     def forward(self, Q, K, V, attn_mask):
 
@@ -340,14 +223,14 @@ class ACAT(nn.Module):
 
         len_n_k = len(self.filter_length)
 
-        Q_l = [self.conv_list_q[i](Q.reshape(b, h*d_k, l))[:, :, :l]
+        Q_l = [self.activation(self.norm(self.conv_list_q[i](Q.reshape(b, h*d_k, l))))[:, :, :l]
                for i in range(len(self.filter_length))]
-        K_l = [self.conv_list_k[i](K.reshape(b, h * d_k, l_k))[:, :, :l_k]
+        K_l = [self.activation(self.norm(self.conv_list_k[i](K.reshape(b, h * d_k, l_k))))[:, :, :l_k]
                for i in range(len(self.filter_length))]
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, len_n_k)
         K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, len_n_k)
-        Q = F.relu(self.linear_q(Q_p)).squeeze(-1)
-        K = F.relu(self.linear_k(K_p)).squeeze(-1)
+        Q = F.elu(self.linear_q(Q_p)).squeeze(-1) + Q
+        K = F.elu(self.linear_k(K_p)).squeeze(-1) + K
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
@@ -384,25 +267,21 @@ class MultiHeadAttention(nn.Module):
     def forward(self, Q, K, V, attn_mask):
 
         batch_size = Q.shape[0]
-        q_s = self.WQ(Q).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
-        k_s = self.WK(K).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
-        v_s = self.WV(V).view(batch_size, -1, self.n_heads, self.d_v).transpose(1, 2)
+
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
         if self.attn_type == "ACAT":
             context, attn = ACAT(d_k=self.d_k, device=self.device, h=self.n_heads)(
-                Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
+                Q=Q, K=K, V=V, attn_mask=attn_mask)
         elif self.attn_type == "basic_attn":
             context, attn = BasicAttn(d_k=self.d_k, device=self.device)(
-            Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
+            Q=Q, K=K, V=V, attn_mask=attn_mask)
         elif self.attn_type == "conv_attn":
             context, attn = ConvAttn(d_k=self.d_k, device=self.device, kernel=self.kernel, h=self.n_heads)(
-                Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
+                Q=Q, K=K, V=V, attn_mask=attn_mask)
         else:
-            context, attn = AutoCorrelation()(q_s.transpose(1, 2),
-                                              k_s.transpose(1, 2),
-                                              v_s.transpose(1, 2), attn_mask)
+            context, attn = AutoCorrelation()(Q, K, V, attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
         return output, attn
