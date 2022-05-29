@@ -238,7 +238,7 @@ class ACAT(nn.Module):
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, len_n_k)
         K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, len_n_k)
         Q = F.relu(self.linear_q(Q_p)).squeeze(-1) + Q
-        K = F.relu(self.linear_k(K_p)).squeeze(-1) + Q
+        K = F.relu(self.linear_k(K_p)).squeeze(-1) + K
 
         scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
 
@@ -290,7 +290,9 @@ class MultiHeadAttention(nn.Module):
         elif self.attn_type == "conv_attn":
             context, attn = ConvAttn(d_k=self.d_k, device=self.device, kernel=self.kernel, h=self.n_heads)(
                 Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
-
+        else:
+            mask_flag = True if Q.shape[1] == K.shape[1] else False
+            context, attn = ProbAttention(mask_flag=mask_flag)(q_s, k_s, v_s, attn_mask)
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads * self.d_v)
         output = self.fc(context)
         return output, attn

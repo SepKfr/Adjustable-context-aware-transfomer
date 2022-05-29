@@ -112,7 +112,7 @@ def create_config(hyper_parameters):
 
 def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatter, path, device):
 
-    stack_size, batch_size, n_heads, d_model, kernel = config
+    stack_size, n_heads, d_model, kernel = config
     d_k = int(d_model / n_heads)
     mae = nn.L1Loss()
 
@@ -166,8 +166,8 @@ def evaluate(config, args, test_en, test_de, test_y, test_id, criterion, formatt
 def main():
 
     parser = argparse.ArgumentParser(description="preprocess argument parser")
-    parser.add_argument("--attn_type", type=str, default='ACAT')
-    parser.add_argument("--name", type=str, default='ACAT')
+    parser.add_argument("--attn_type", type=str, default='basic_attn')
+    parser.add_argument("--name", type=str, default='basic_attn')
     parser.add_argument("--exp_name", type=str, default='electricity')
     parser.add_argument("--cuda", type=str, default="cuda:0")
     parser.add_argument("--seed", type=int, default=21)
@@ -231,7 +231,6 @@ def main():
     else:
         kernels = [1]
     hyper_param = list([model_params['stack_size'],
-                        model_params['minibatch_size'],
                         [model_params['num_heads']],
                         model_params['hidden_layer_size'],
                         kernels])
@@ -242,20 +241,22 @@ def main():
     best_config = configs[0]
     config_num = 0
 
+    batch_size = model_params['minibatch_size'][0]
+
+    train_en_p, train_de_p, train_y_p, train_id_p = batching(batch_size, train_en,
+                                                             train_de, train_y, train_id)
+
+    valid_en_p, valid_de_p, valid_y_p, valid_id_p = batching(batch_size, valid_en,
+                                                             valid_de, valid_y, valid_id)
+
+    test_en_p, test_de_p, test_y_p, test_id_p = batching(batch_size, test_en,
+                                                         test_de, test_y, test_id)
+
     for i, conf in enumerate(configs, config_num):
         print('config {}: {}'.format(i+1, conf))
 
-        stack_size, batch_size, n_heads, d_model, kernel = conf
+        stack_size, n_heads, d_model, kernel = conf
         d_k = int(d_model / n_heads)
-
-        train_en_p, train_de_p, train_y_p, train_id_p = batching(batch_size, train_en,
-                                                         train_de, train_y, train_id)
-
-        valid_en_p, valid_de_p, valid_y_p, valid_id_p = batching(batch_size, valid_en,
-                                                         valid_de, valid_y, valid_id)
-
-        test_en_p, test_de_p, test_y_p, test_id_p = batching(batch_size, test_en,
-                                                     test_de, test_y, test_id)
 
         model = Attn(src_input_size=train_en_p.shape[3],
                      tgt_input_size=train_de_p.shape[3],
@@ -291,7 +292,7 @@ def main():
                                    test_de_p.to(device), test_y_p.to(device),
                                    test_id_p, criterion, formatter, path, device)
 
-    stack_size, batch_size, heads, d_model, kernel = best_config
+    stack_size, heads, d_model, kernel = best_config
     print("best_config: {}".format(best_config))
 
     erros[args.name] = list()
