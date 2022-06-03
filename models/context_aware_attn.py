@@ -431,6 +431,27 @@ class PoswiseFeedForwardNet(nn.Module):
         return self.w_2(F.relu(self.w_1(inputs)))
 
 
+class ConvLayer(nn.Module):
+    def __init__(self, c_in):
+        super(ConvLayer, self).__init__()
+        self.downConv = nn.Conv1d(in_channels=c_in,
+                                  out_channels=c_in,
+                                  kernel_size=3,
+                                  padding=2,
+                                  padding_mode='circular')
+        self.norm = nn.BatchNorm1d(c_in)
+        self.activation = nn.ELU()
+        self.maxPool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
+
+    def forward(self, x):
+        x = self.downConv(x.permute(0, 2, 1))
+        x = self.norm(x)
+        x = self.activation(x)
+        x = self.maxPool(x)
+        x = x.transpose(1, 2)
+        return x
+
+
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
@@ -476,6 +497,8 @@ class Encoder(nn.Module):
                 device=device,
                 attn_type=attn_type, kernel=kernel)
             self.layers.append(encoder_layer)
+            if attn_type == "informer":
+                self.conv_layer = ConvLayer(d_k * n_heads)
         self.layers = nn.ModuleList(self.layers)
 
     def forward(self, enc_input):
@@ -487,6 +510,8 @@ class Encoder(nn.Module):
         enc_self_attns = []
         for layer in self.layers:
             enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
+            if self.attn_type == "informer":
+                enc_outputs = self.conv_layer(enc_outputs)
             enc_self_attns.append(enc_self_attn)
 
         '''enc_self_attns = torch.stack(enc_self_attns)
