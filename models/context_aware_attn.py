@@ -15,29 +15,20 @@ def get_attn_subsequent_mask(seq):
 
 
 class PositionalEncoding(nn.Module):
-
-    def __init__(self, d_hid, device, n_position=512):
+    """Positional encoding."""
+    def __init__(self, d_hid, device, max_len=1000):
         super(PositionalEncoding, self).__init__()
-        self.device = device
+        # Create a long enough `P`
+        self.P = torch.zeros((1, max_len, d_hid)).to(device)
+        X = torch.arange(max_len, dtype=torch.float32).reshape(
+            -1, 1) / torch.pow(10000, torch.arange(
+            0, d_hid, 2, dtype=torch.float32) / d_hid)
+        self.P[:, :, 0::2] = torch.sin(X)
+        self.P[:, :, 1::2] = torch.cos(X)
 
-        # Not a parameter
-        self.register_buffer('pos_table', self._get_sinusoid_encoding_table(n_position, d_hid))
-
-    def _get_sinusoid_encoding_table(self, n_position, d_hid):
-        ''' Sinusoid position encoding table '''
-        # TODO: make it with torch instead of numpy
-
-        def get_position_angle_vec(position):
-            return [position / np.power(10000, 2 * (hid_j // 2) / d_hid) for hid_j in range(d_hid)]
-
-        sinusoid_table = np.array([get_position_angle_vec(pos_i) for pos_i in range(n_position)])
-        sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
-        sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
-
-        return torch.FloatTensor(sinusoid_table).unsqueeze(0).to(self.device)
-
-    def forward(self, x):
-        return x + self.pos_table[:, :x.size(1)].clone().detach()
+    def forward(self, X):
+        X = X + self.P[:, :X.shape[1], :].to(X.device)
+        return X
 
 
 class ProbMask():
@@ -431,27 +422,6 @@ class PoswiseFeedForwardNet(nn.Module):
         return self.w_2(F.relu(self.w_1(inputs)))
 
 
-class ConvLayer(nn.Module):
-    def __init__(self, c_in):
-        super(ConvLayer, self).__init__()
-        self.downConv = nn.Conv1d(in_channels=c_in,
-                                  out_channels=c_in,
-                                  kernel_size=3,
-                                  padding=2,
-                                  padding_mode='circular')
-        self.norm = nn.BatchNorm1d(c_in)
-        self.activation = nn.ELU()
-        self.maxPool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
-
-    def forward(self, x):
-        x = self.downConv(x.permute(0, 2, 1))
-        x = self.norm(x)
-        x = self.activation(x)
-        x = self.maxPool(x)
-        x = x.transpose(1, 2)
-        return x
-
-
 class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_ff, d_k, d_v, n_heads,
@@ -497,8 +467,6 @@ class Encoder(nn.Module):
                 device=device,
                 attn_type=attn_type, kernel=kernel)
             self.layers.append(encoder_layer)
-            if attn_type == "informer":
-                self.conv_layer = ConvLayer(d_k * n_heads)
         self.layers = nn.ModuleList(self.layers)
 
     def forward(self, enc_input):
@@ -510,8 +478,6 @@ class Encoder(nn.Module):
         enc_self_attns = []
         for layer in self.layers:
             enc_outputs, enc_self_attn = layer(enc_outputs, enc_self_attn_mask)
-            if self.attn_type == "informer":
-                enc_outputs = self.conv_layer(enc_outputs)
             enc_self_attns.append(enc_self_attn)
 
         '''enc_self_attns = torch.stack(enc_self_attns)

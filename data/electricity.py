@@ -197,7 +197,16 @@ class ElectricityFormatter(GenericDataFormatter):
 
             for col in column_names:
                 if col not in {'identifier'}:
-                    sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
+                    try:
+                        sliced_copy[col] = target_scaler.inverse_transform(sliced_copy[col])
+                    except ValueError:
+                        if len(sliced_copy[col]) == 1:
+                           pred = sliced_copy[col].to_numpy().reshape(1, -1)
+                        else:
+                           pred = sliced_copy[col].to_numpy().reshape(-1, 1)
+
+                        sliced_copy[col] = target_scaler.inverse_transform(pred)
+
             df_list.append(sliced_copy)
 
         output = pd.concat(df_list, axis=0)
@@ -208,7 +217,7 @@ class ElectricityFormatter(GenericDataFormatter):
         """Returns default optimised model parameters."""
 
         model_params = {
-            'hidden_layer_size': [16, 32],
+            'hidden_layer_size': [16],
             'minibatch_size': [128],
             'num_heads': 8,
             'stack_size': [1],
@@ -223,7 +232,7 @@ class ElectricityFormatter(GenericDataFormatter):
         fixed_params = {
             'total_time_steps': 9 * 24,
             'num_encoder_steps': 7 * 24,
-            'num_epochs': 50,
+            'num_epochs': 1,
         }
 
         return fixed_params
@@ -235,4 +244,4 @@ class ElectricityFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 128000, 16384
+        return 128, 128

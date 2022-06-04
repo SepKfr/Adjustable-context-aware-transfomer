@@ -148,6 +148,15 @@ class TrafficFormatter(GenericDataFormatter):
         for col in column_names:
             if col not in {'identifier'}:
                 output[col] = self._target_scaler.inverse_transform(predictions[col])
+                try:
+                    output[col] = self._target_scaler.inverse_transform(output[col])
+                except ValueError:
+                    if len(output[col]) == 1:
+                        pred = output[col].to_numpy().reshape(1, -1)
+                    else:
+                        pred = output[col].to_numpy().reshape(-1, 1)
+
+                    output[col] = self._target_scaler.inverse_transform(pred)
 
         return output
 
