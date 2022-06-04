@@ -243,10 +243,10 @@ class ConvAttn(nn.Module):
         self.d_k = d_k
         self.conv_q = nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
                        kernel_size=kernel,
-                       padding=int(kernel/2)).to(device)
+                       padding=int(kernel/2), bias=False).to(device)
         self.conv_k = nn.Conv1d(in_channels=d_k * h, out_channels=d_k * h,
                                 kernel_size=kernel,
-                                padding=int(kernel / 2)).to(device)
+                                padding=int(kernel / 2), bias=False).to(device)
         self.norm = nn.BatchNorm1d(h * d_k).to(device)
         self.activation = nn.ELU().to(device)
 
