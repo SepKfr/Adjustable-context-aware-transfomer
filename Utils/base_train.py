@@ -150,6 +150,6 @@ def inverse_output(predictions, outputs, test_id):
         flat_prediction['identifier'] = test_id[:, 0, 0]
         return flat_prediction
 
-    process_map = {'predictions': format_outputs(predictions.detach().numpy()),
-                   'targets': format_outputs(outputs.detach().numpy())}
+    process_map = {'predictions': format_outputs(predictions.cpu().detach().numpy()),
+                   'targets': format_outputs(outputs.cpu().detach().numpy())}
     return process_map
