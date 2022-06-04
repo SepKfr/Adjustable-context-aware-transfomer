@@ -31,20 +31,6 @@ class PositionalEncoding(nn.Module):
         return X
 
 
-class ProbMask():
-    def __init__(self, B, H, L, index, scores, device="cpu"):
-        _mask = torch.ones(L, scores.shape[-1], dtype=torch.bool).to(device).triu(1)
-        _mask_ex = _mask[None, None, :].expand(B, H, L, scores.shape[-1])
-        indicator = _mask_ex[torch.arange(B)[:, None, None],
-                    torch.arange(H)[None, :, None],
-                    index, :].to(device)
-        self._mask = indicator.view(scores.shape).to(device)
-
-    @property
-    def mask(self):
-        return self._mask
-
-
 class AutoCorrelation(nn.Module):
     """
     AutoCorrelation Mechanism with the following two phases:
@@ -178,7 +164,6 @@ class ProbAttention(nn.Module):
         B, H, L_K, E = K.shape
         _, _, L_Q, _ = Q.shape
 
-
         # calculate the sampled Q_K
         K_expand = K.unsqueeze(-3).expand(B, H, L_Q, L_K, E)
         index_sample = torch.randint(L_K, (L_Q, sample_k))  # real U = U_part(factor*ln(L_k))*L_q
@@ -212,10 +197,6 @@ class ProbAttention(nn.Module):
 
     def _update_context(self, context_in, V, scores, index, L_Q, attn_mask):
         B, H, L_V, D = V.shape
-
-        if self.mask_flag:
-            attn_mask = ProbMask(B, H, L_Q, index, scores, device=V.device)
-            scores.masked_fill_(attn_mask.mask, -np.inf)
 
         attn = torch.softmax(scores, dim=-1)  # nn.Softmax(dim=-1)(scores)
 
