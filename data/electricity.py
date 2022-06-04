@@ -217,7 +217,7 @@ class ElectricityFormatter(GenericDataFormatter):
         """Returns default optimised model parameters."""
 
         model_params = {
-            'hidden_layer_size': [16],
+            'hidden_layer_size': [16, 32],
             'minibatch_size': [128],
             'num_heads': 8,
             'stack_size': [1],
@@ -232,7 +232,7 @@ class ElectricityFormatter(GenericDataFormatter):
         fixed_params = {
             'total_time_steps': 9 * 24,
             'num_encoder_steps': 7 * 24,
-            'num_epochs': 1,
+            'num_epochs': 50,
         }
 
         return fixed_params
