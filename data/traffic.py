@@ -147,7 +147,16 @@ class TrafficFormatter(GenericDataFormatter):
 
         for col in column_names:
             if col not in {'identifier'}:
-                output[col] = self._target_scaler.inverse_transform(predictions[col])
+                try:
+                    output[col] = self._target_scaler.inverse_transform(output[col])
+                except ValueError:
+                    if len(output[col]) == 1:
+                        pred = output[col].to_numpy().reshape(1, -1)
+                    else:
+                        pred = output[col].to_numpy().reshape(-1, 1)
+
+                    output[col] = self._target_scaler.inverse_transform(pred)
+
         return output
 
     # Default params
@@ -157,7 +166,7 @@ class TrafficFormatter(GenericDataFormatter):
         fixed_params = {
             'total_time_steps': 9 * 24,
             'num_encoder_steps': 7 * 24,
-            'num_epochs': 1,
+            'num_epochs': 50,
             'early_stopping_patience': 5,
             'multiprocessing_workers': 5
         }
@@ -184,6 +193,6 @@ class TrafficFormatter(GenericDataFormatter):
         Returns:
           Tuple of (training samples, validation samples)
         """
-        return 128, 128
+        return 128000, 16384
 
 
