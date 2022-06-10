@@ -326,21 +326,27 @@ class ACAT(nn.Module):
                for i in range(len(self.filter_length))]
         K_l = [self.activation(self.norm(self.conv_list_k[i](K.reshape(b, h * d_k, l_k))))[:, :, :l_k]
                for i in range(len(self.filter_length))]
-        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, l, d_k, len_n_k)
-        K_p = torch.cat(K_l, dim=0).reshape(b, h, l_k, d_k, len_n_k)
-        Q = F.relu(self.linear_q(Q_p)).squeeze(-1) + Q
-        K = F.relu(self.linear_k(K_p)).squeeze(-1) + K
+        Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
+        K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
 
-        scores = torch.einsum('bhqd,bhkd->bhqk', Q, K) / np.sqrt(self.d_k)
+        m_f = max(self.filter_length)
+        K_p = K_tmp[:, :, :, 0::m_f, :]
+
+        scores = torch.einsum('bhpqd,bhpkd->bhpqk', Q_p, K_p) / np.sqrt(self.d_k)
 
         if attn_mask is not None:
+            attn_mask = attn_mask[:, :, :, 0::m_f]
+            attn_mask = attn_mask.unsqueeze(2).repeat(1, 1, len_n_k, 1, 1)
             attn_mask = torch.as_tensor(attn_mask, dtype=torch.bool)
             attn_mask = attn_mask.to(self.device)
             scores.masked_fill_(attn_mask, -1e9)
 
         attn = torch.softmax(scores, -1)
-        context = torch.einsum('bhqk,bhkd->bhqd', attn, V)
-        return context, attn
+        attn, _ = torch.max(attn, dim=2)
+        attn_f = torch.zeros(b, h, l, l_k).to(self.device)
+        attn_f[:, :, :, 0::m_f] = attn
+        context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
+        return context, attn_f
 
 
 class MultiHeadAttention(nn.Module):
