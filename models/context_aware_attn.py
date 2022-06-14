@@ -345,6 +345,7 @@ class ACAT(nn.Module):
         attn, _ = torch.max(attn, dim=2)
         attn_f = torch.zeros(b, h, l, l_k).to(self.device)
         attn_f[:, :, :, 0::m_f] = attn
+        attn_f = torch.softmax(attn_f, -1)
         context = torch.einsum('bhqk,bhkd->bhqd', attn_f, V)
         return context, attn_f
 
