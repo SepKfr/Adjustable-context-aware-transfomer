@@ -296,19 +296,22 @@ class ACAT(nn.Module):
         self.device = device
         self.d_k = d_k
         self.filter_length = [80]
+        s_d = int(d_k*h / 8)
+        self.proj_q = nn.Linear(d_k*h, s_d, bias=False)
+        self.proj_k = nn.Linear(d_k*h, s_d, bias=False)
+        self.proj_b_q = nn.Linear(s_d, d_k*h, bias=False)
+        self.proj_b_k = nn.Linear(s_d, d_k*h, bias=False)
         self.conv_list_q = nn.ModuleList(
-            [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
+            [nn.Conv1d(in_channels=s_d, out_channels=s_d,
                        kernel_size=f,
                        padding=int(f/2),
                        bias=False) for f in self.filter_length]).to(device)
         self.conv_list_k = nn.ModuleList(
-            [nn.Conv1d(in_channels=d_k*h, out_channels=d_k*h,
+            [nn.Conv1d(in_channels=s_d, out_channels=s_d,
                        kernel_size=f,
                        padding=int(f/2),
                        bias=False) for f in self.filter_length]).to(device)
-        self.linear_q = nn.Linear(len(self.filter_length), 1, bias=False).to(device)
-        self.linear_k = nn.Linear(len(self.filter_length), 1, bias=False).to(device)
-        self.norm = nn.BatchNorm1d(h * d_k).to(device)
+        self.norm = nn.BatchNorm1d(s_d).to(device)
         self.activation = nn.ELU().to(device)
 
         for m in self.modules():
@@ -322,10 +325,19 @@ class ACAT(nn.Module):
 
         len_n_k = len(self.filter_length)
 
-        Q_l = [self.activation(self.norm(self.conv_list_q[i](Q.reshape(b, h*d_k, l))))[:, :, :l]
+        Q = self.proj_q(Q.reshape(b, l, h*d_k)).reshape(b, -1, l)
+        K = self.proj_k(K.reshape(b, l_k, h*d_k)).reshape(b, -1, l_k)
+
+        Q_l = [self.proj_b_q(
+               self.activation(self.norm(
+               self.conv_list_q[i](Q)))
+               [:, :, :l].reshape(b, l, -1))
                for i in range(len(self.filter_length))]
-        K_l = [self.activation(self.norm(self.conv_list_k[i](K.reshape(b, h * d_k, l_k))))[:, :, :l_k]
+        K_l = [self.proj_b_k(
+               self.activation(self.norm(
+               self.conv_list_k[i](K)))[:, :, :l_k].reshape(b, l_k, -1))
                for i in range(len(self.filter_length))]
+
         Q_p = torch.cat(Q_l, dim=0).reshape(b, h, len_n_k, l, d_k)
         K_tmp = torch.cat(K_l, dim=0).reshape(b, h, len_n_k, l_k, d_k)
 
