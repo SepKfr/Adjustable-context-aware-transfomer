@@ -297,22 +297,24 @@ class ACAT(nn.Module):
         self.d_k = d_k
         self.filter_length = [80]
         s_d = int(d_k*h / 8)
-        self.proj_q = nn.Linear(d_k*h, s_d, bias=False)
-        self.proj_k = nn.Linear(d_k*h, s_d, bias=False)
-        self.proj_b_q = nn.Linear(s_d, d_k*h, bias=False)
-        self.proj_b_k = nn.Linear(s_d, d_k*h, bias=False)
+        self.proj_q = nn.Linear(d_k*h, s_d, bias=False, device=device)
+        self.proj_k = nn.Linear(d_k*h, s_d, bias=False, device=device)
+        self.proj_b_q = nn.Linear(s_d, d_k*h, bias=False, device=device)
+        self.proj_b_k = nn.Linear(s_d, d_k*h, bias=False, device=device)
         self.conv_list_q = nn.ModuleList(
             [nn.Conv1d(in_channels=s_d, out_channels=s_d,
                        kernel_size=f,
                        padding=int(f/2),
-                       bias=False) for f in self.filter_length]).to(device)
+                       bias=False,
+                       device=device) for f in self.filter_length])
         self.conv_list_k = nn.ModuleList(
             [nn.Conv1d(in_channels=s_d, out_channels=s_d,
                        kernel_size=f,
                        padding=int(f/2),
-                       bias=False) for f in self.filter_length]).to(device)
-        self.norm = nn.BatchNorm1d(s_d).to(device)
-        self.activation = nn.ELU().to(device)
+                       bias=False,
+                       device=device) for f in self.filter_length])
+        self.norm = nn.BatchNorm1d(s_d, device=device)
+        self.activation = nn.ELU()
 
         for m in self.modules():
             if isinstance(m, nn.Conv1d):
