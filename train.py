@@ -59,7 +59,6 @@ def train(args, model, train_en, train_de, train_y,
 
     stop = False
     try:
-        model.train()
         total_loss = 0
 
         for batch_id in range(train_en.shape[0]):
@@ -277,6 +276,7 @@ def main():
 
         for epoch in range(epoch_start, params['num_epochs'], 1):
 
+            model.train()
             best_config, val_loss, val_inner_loss, stop, e = \
                 train(args, model, train_en_p.to(device), train_de_p.to(device),
                       train_y_p.to(device), valid_en_p.to(device), valid_de_p.to(device),
