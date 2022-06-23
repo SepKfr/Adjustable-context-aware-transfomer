@@ -174,12 +174,15 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.n_heads, 1, 1)
+        # Our ACAT attention
         if self.attn_type == "ACAT":
             context, attn = ACAT(d_k=self.d_k, device=self.device, h=self.n_heads)(
                 Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
+        # Basic Attention
         elif self.attn_type == "basic_attn":
             context, attn = BasicAttn(d_k=self.d_k, device=self.device)(
             Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)
+        # Convolution Attention
         elif self.attn_type == "conv_attn":
             context, attn = ConvAttn(d_k=self.d_k, device=self.device, kernel=self.kernel, h=self.n_heads)(
                 Q=q_s, K=k_s, V=v_s, attn_mask=attn_mask)

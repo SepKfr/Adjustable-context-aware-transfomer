@@ -1,4 +1,4 @@
-from models.context_aware_attn import Attn
+from models.Transformer import Attn
 from torch.optim import Adam
 import torch.nn as nn
 import numpy as np
