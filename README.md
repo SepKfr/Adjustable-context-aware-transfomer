@@ -13,7 +13,7 @@ Furthermore, we exploit redundancies arising from incorporating the temporal con
 ## How to Run
 
 ```
-git clone https://github.com/anonymous-1992/Context-Aware-Transformer.git
+git clone https://github.com/SepKfr/Adjustable-context-aware-transfomer.git
 bash run.sh
 ```
 ## Containerized Research Artifact
