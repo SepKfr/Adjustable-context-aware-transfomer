@@ -16,4 +16,11 @@ Furthermore, we exploit redundancies arising from incorporating the temporal con
 git clone https://github.com/anonymous-1992/Context-Aware-Transformer.git
 bash run.sh
 ```
+## Containerized Research Artifact
 
+A containerized snapshot of the research code and reproducibility materials is
+available through the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/sepkfr/adjustable-context-aware-transfomer:v0.1.0
+```
